@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import threading
 from contextlib import closing
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # ✅ Allow cross-origin requests
@@ -13,7 +14,7 @@ DATABASE = "sabiway.db"
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "sabiway1@gmail.com"
-SMTP_PASS = "fflg gaow uwpw snfr"  # ⚠️ For real use, keep this in env vars
+SMTP_PASS = "fflg gaow uwpw snfr"  # ⚠️ Move to environment variables in production!
 FROM_NAME = "SabiWay"
 FROM_EMAIL = SMTP_USER
 
@@ -56,10 +57,21 @@ def send_confirmation_email(name: str, email: str):
         f"We'll email you when we launch.\n\n— The SabiWay Team"
     )
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.starttls()
-        smtp.login(SMTP_USER, SMTP_PASS)
-        smtp.send_message(msg)
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:  # ⏱ Timeout added
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.send_message(msg)
+            app.logger.info(f"Confirmation email sent to {email}")
+    except Exception as e:
+        app.logger.error(f"Email sending failed for {email}: {e}")
+
+
+def send_email_async(name: str, email: str):
+    """Send email in a background thread (non-blocking)."""
+    thread = threading.Thread(target=send_confirmation_email, args=(name, email))
+    thread.daemon = True
+    thread.start()
 
 # -----------------------------
 # API Routes
@@ -85,17 +97,13 @@ def join_waitlist():
     except sqlite3.IntegrityError:
         return jsonify({"status": "error", "message": "This email is already on the waitlist."}), 409
 
-    # Try sending confirmation email
-    try:
-        send_confirmation_email(name, email)
-    except Exception as e:
-        app.logger.exception("Failed to send email")
-        return jsonify({
-            "status": "warning",
-            "message": "You were added to the waitlist, but the confirmation email failed."
-        }), 202
+    # ✅ Kick off background email sending
+    send_email_async(name, email)
 
-    return jsonify({"status": "success", "message": "Signed up! Check your inbox for confirmation."}), 201
+    return jsonify({
+        "status": "success",
+        "message": "Signed up! If email delivery works, you’ll get a confirmation."
+    }), 201
 
 
 @app.route("/api/waitlist", methods=["GET"])

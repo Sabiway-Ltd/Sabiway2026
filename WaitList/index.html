@@ -39,10 +39,11 @@
   <header id="site-header" class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-black/10">
     <div class="container mx-auto flex items-center justify-between px-4 sm:px-6 min-h-16">
       <div class="flex items-center text-green font-bold">
-        <picture>
-          <source srcset="/assets/logo.svg?v=2" type="image/svg+xml">
-          <img class="h-9 sm:h-8" src="/assets/logo.png?v=2" alt="SabiWay logo" loading="eager">
-        </picture>
+        <div>
+          
+          <img class="h-9 sm:h-8" src="https://res.cloudinary.com/devqbjptr/image/upload/v1758667850/Group_3_2_27_h0iaai.png" alt="SabiWay logo" loading="eager">
+        </div>
+
       </div>
 
       <nav class="hidden md:flex gap-6 font-semibold">
@@ -52,7 +53,9 @@
         <a href="#perks">Perks</a>
       </nav>
 
-      <button id="menuBtn" class="md:hidden w-10 h-10 flex items-center justify-center border rounded-lg border-black/10 bg-white" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
+      <!-- Mobile menu button -->
+      <button id="menuBtn" class="md:hidden w-10 h-10 flex items-center justify-center border rounded-lg border-black/10 bg-white"
+              aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
         <svg width="24" height="24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#0E1A15" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
 
@@ -62,12 +65,13 @@
       </a>
     </div>
 
-    <div id="mobile-nav" class="hidden flex-col bg-white border-b shadow-md md:hidden" role="dialog" aria-label="Mobile menu">
+    <!-- Mobile nav -->
+    <div id="mobile-nav" class="hidden flex-col bg-white border-b shadow-md md:hidden" role="dialog" aria-label="Mobile menu" aria-hidden="true">
       <nav class="container mx-auto px-4">
-        <a href="#about" class="block py-3 font-bold border-t" onclick="closeMenu()">About</a>
-        <a href="#join" class="block py-3 font-bold border-t" onclick="closeMenu()">Join</a>
-        <a href="#why" class="block py-3 font-bold border-t" onclick="closeMenu()">Why</a>
-        <a href="#perks" class="block py-3 font-bold border-t" onclick="closeMenu()">Perks</a>
+        <a href="#about" class="block py-3 font-bold border-t">About</a>
+        <a href="#join" class="block py-3 font-bold border-t">Join</a>
+        <a href="#why" class="block py-3 font-bold border-t">Why</a>
+        <a href="#perks" class="block py-3 font-bold border-t">Perks</a>
       </nav>
     </div>
   </header>
@@ -109,7 +113,7 @@
           <h2 class="text-2xl sm:text-3xl font-bold">Join the Waitlist</h2>
           <p class="text-muted mt-2">Be first to get the app and community when we launch.<br>We’ll only email you important updates, no spam.</p>
 
-          <form id="join-form" action="/join" method="POST" class="mt-6 space-y-4">
+          <form id="join-form" class="mt-6 space-y-4">
             <!-- Full Name -->
             <div class="flex flex-col">
               <label for="name" class="font-semibold text-left text-ink mb-1">Full Name</label>
@@ -146,10 +150,6 @@
               </button>
             </div>
           </form>
-
-
-
-          <p id="thanks" class="hidden text-green font-bold mt-3">You’re on the list! Check your inbox for confirmation.</p>
         </div>
       </div>
     </section>
@@ -219,35 +219,121 @@
     </div>
   </footer>
 
+  <!-- Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  
   <script>
+  document.addEventListener('DOMContentLoaded', function () {
     // Year
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Demo success if placeholder endpoint
-    (function(){
-      const form = document.getElementById('join-form');
-      if(!form) return;
-      form.addEventListener('submit', function(e){
-        const action = form.getAttribute('action') || '';
-        if(action.includes('your-form-id') || action === '#'){
-          e.preventDefault();
-          document.getElementById('thanks').classList.remove('hidden');
-        }
-      });
-    })();
-
     // Mobile menu
-    const header = document.getElementById('site-header');
     const btn = document.getElementById('menuBtn');
     const nav = document.getElementById('mobile-nav');
-    function closeMenu(){ nav.classList.add('hidden'); btn.setAttribute('aria-expanded','false'); }
-    window.closeMenu = closeMenu;
-    btn.addEventListener('click', ()=>{
+
+    function openMenu() {
+      nav.classList.remove('hidden');
+      nav.setAttribute('aria-hidden', 'false');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeMenu() {
+      nav.classList.add('hidden');
+      nav.setAttribute('aria-hidden', 'true');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', () => {
       const isHidden = nav.classList.contains('hidden');
-      nav.classList.toggle('hidden');
-      btn.setAttribute('aria-expanded', !isHidden);
+      isHidden ? openMenu() : closeMenu();
     });
-    window.addEventListener('resize', ()=>{ if(window.innerWidth > 900) closeMenu(); });
+
+    nav.addEventListener('click', (e) => {
+      if (e.target.closest('a')) closeMenu();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!nav.contains(e.target) && !btn.contains(e.target) && !nav.classList.contains('hidden')) closeMenu();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !nav.classList.contains('hidden')) closeMenu();
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768) closeMenu();
+    });
+
+    // Join form
+    const form = document.getElementById('join-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!name || !email) {
+        showPopup("Missing Info ⚠️", "Please enter your name and email.", false);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Joining...";
+
+      try {
+        const res = await axios.post("https://sabiwaywaitlist.onrender.com/api/waitlist", { name, email });
+
+        if (res.data.status === "success" || res.data.success) {
+          showPopup("Success 🎉", "You’re on the list! Check your inbox for confirmation.", true);
+          form.reset();
+        } else {
+          showPopup("Oops 😕", res.data.message || "Something went wrong.", false);
+        }
+      } catch (err) {
+        if (err.response) {
+          showPopup("Error ❌", err.response.data.message || "Error: " + err.response.status, false);
+        } else {
+          showPopup("Network Error 🌐", "Please try again.", false);
+        }
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Join Waitlist ✨";
+    });
+
+    // POPUP FUNCTIONS
+    function showPopup(title, message, success = true) {
+      const popup = document.getElementById("popup");
+      const titleEl = document.getElementById("popup-title");
+      const msgEl = document.getElementById("popup-message");
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+
+      titleEl.className = "text-xl font-bold " + (success ? "text-green" : "text-red-600");
+      popup.classList.remove("hidden");
+    }
+
+    window.closePopup = function () {
+      document.getElementById("popup").classList.add("hidden");
+    };
+  });
   </script>
+
+  <!-- POPUP -->
+  <div id="popup" class="hidden fixed inset-0 flex items-center justify-center bg-black/50 z-[9999]">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center">
+      <h3 id="popup-title" class="text-xl font-bold"></h3>
+      <p id="popup-message" class="mt-2 text-muted"></p>
+      <button 
+        onclick="closePopup()" 
+        class="mt-4 px-6 py-2 bg-green text-white rounded-xl font-extrabold shadow hover:-translate-y-0.5 transition"
+      >
+        OK
+      </button>
+    </div>
+  </div>
 </body>
 </html>
