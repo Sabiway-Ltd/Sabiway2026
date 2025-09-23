@@ -2,6 +2,7 @@ import os
 import sqlite3
 from contextlib import closing
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # ✅ Allow cross-origin requests
 from email.message import EmailMessage
 import smtplib
 
@@ -12,11 +13,12 @@ DATABASE = "sabiway.db"
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "sabiway1@gmail.com"
-SMTP_PASS = "fflg gaow uwpw snfr"  # ⚠️ For real use, keep this in env var instead
+SMTP_PASS = "fflg gaow uwpw snfr"  # ⚠️ For real use, keep this in env vars
 FROM_NAME = "SabiWay"
 FROM_EMAIL = SMTP_USER
 
 app = Flask(__name__)
+CORS(app)  # ✅ Enable CORS for all routes
 
 # -----------------------------
 # Database setup
@@ -39,18 +41,41 @@ def init_db():
 init_db()
 
 # -----------------------------
+# Helpers
+# -----------------------------
+def send_confirmation_email(name: str, email: str):
+    """Send confirmation email to new waitlist member"""
+    first_name = name.split()[0]
+
+    msg = EmailMessage()
+    msg["Subject"] = "Thanks for joining the SabiWay waitlist!"
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+    msg["To"] = email
+    msg.set_content(
+        f"Hi {first_name},\n\nThanks for joining the SabiWay waitlist. "
+        f"We'll email you when we launch.\n\n— The SabiWay Team"
+    )
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+        smtp.starttls()
+        smtp.login(SMTP_USER, SMTP_PASS)
+        smtp.send_message(msg)
+
+# -----------------------------
 # API Routes
 # -----------------------------
 @app.route("/api/waitlist", methods=["POST"])
-def join():
-    data = request.get_json(force=True)
+def join_waitlist():
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
+
     name = data.get("name", "").strip()
     email = data.get("email", "").strip().lower()
 
     if not name or not email:
         return jsonify({"status": "error", "message": "Name and email are required."}), 400
-
-    first_name = name.split()[0]
 
     try:
         with sqlite3.connect(DATABASE) as conn:
@@ -60,22 +85,15 @@ def join():
     except sqlite3.IntegrityError:
         return jsonify({"status": "error", "message": "This email is already on the waitlist."}), 409
 
+    # Try sending confirmation email
     try:
-        msg = EmailMessage()
-        msg["Subject"] = "Thanks for joining the SabiWay waitlist!"
-        msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
-        msg["To"] = email
-        msg.set_content(
-            f"Hi {first_name},\n\nThanks for joining the SabiWay waitlist. We'll email you when we launch.\n\n— The SabiWay Team"
-        )
-
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-            smtp.starttls()
-            smtp.login(SMTP_USER, SMTP_PASS)
-            smtp.send_message(msg)
-    except Exception:
+        send_confirmation_email(name, email)
+    except Exception as e:
         app.logger.exception("Failed to send email")
-        return jsonify({"status": "warning", "message": "Joined but confirmation email failed."}), 202
+        return jsonify({
+            "status": "warning",
+            "message": "You were added to the waitlist, but the confirmation email failed."
+        }), 202
 
     return jsonify({"status": "success", "message": "Signed up! Check your inbox for confirmation."}), 201
 
@@ -86,10 +104,12 @@ def list_waitlist():
         c = conn.cursor()
         c.execute("SELECT id, name, email, created_at FROM waitlist ORDER BY created_at DESC")
         rows = c.fetchall()
+
     result = [
-        {"id": r[0], "name": r[1], "email": r[2], "created_at": r[3]} for r in rows
+        {"id": r[0], "name": r[1], "email": r[2], "created_at": r[3]}
+        for r in rows
     ]
-    return jsonify(result)
+    return jsonify({"status": "success", "data": result}), 200
 
 
 @app.route("/api/waitlist/<int:entry_id>", methods=["DELETE"])
@@ -105,7 +125,11 @@ def delete_entry(entry_id):
 
 @app.route("/api/waitlist/<int:entry_id>", methods=["PUT"])
 def update_entry(entry_id):
-    data = request.get_json(force=True)
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
+
     name = data.get("name", "").strip()
     email = data.get("email", "").strip().lower()
 
@@ -122,6 +146,7 @@ def update_entry(entry_id):
             elif email:
                 c.execute("UPDATE waitlist SET email = ? WHERE id = ?", (email, entry_id))
             conn.commit()
+
             if c.rowcount == 0:
                 return jsonify({"status": "error", "message": "Entry not found."}), 404
     except sqlite3.IntegrityError:
