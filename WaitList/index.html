@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SabiWay — Waitlist</title>
+  <meta name="description" content="SabiWay helps Nigerians at home and in the diaspora find trusted professionals and pay safely through escrow. Join the waitlist." />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: '#FAAB2C',
+            green: '#008753',
+            ink: '#0E1A15',
+            muted: '#667a70',
+          }
+        }
+      }
+    }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body{ font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+    .gradient { background: linear-gradient(90deg, #FAAB2C, #008753); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .breath { animation: glow 2.4s ease-in-out infinite; }
+    @keyframes glow {
+      0%,100%{ box-shadow:0 10px 24px rgba(0,135,83,.26); }
+      50%{ box-shadow:0 12px 32px rgba(0,135,83,.35); }
+    }
+  </style>
+</head>
+<body class="bg-white text-ink overflow-x-hidden">
+  <!-- HEADER -->
+  <header id="site-header" class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-black/10">
+    <div class="container mx-auto flex items-center justify-between px-4 sm:px-6 min-h-16">
+      <div class="flex items-center text-green font-bold">
+        <picture>
+          <source srcset="/assets/logo.svg?v=2" type="image/svg+xml">
+          <img class="h-9 sm:h-8" src="/assets/logo.png?v=2" alt="SabiWay logo" loading="eager">
+        </picture>
+      </div>
+
+      <nav class="hidden md:flex gap-6 font-semibold">
+        <a href="#about">About</a>
+        <a href="#join">Join</a>
+        <a href="#why">Why</a>
+        <a href="#perks">Perks</a>
+      </nav>
+
+      <button id="menuBtn" class="md:hidden w-10 h-10 flex items-center justify-center border rounded-lg border-black/10 bg-white" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
+        <svg width="24" height="24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#0E1A15" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+
+      <a href="#join" class="hidden sm:inline-flex items-center gap-1 bg-green text-white rounded-xl px-4 py-2 font-extrabold shadow-lg hover:-translate-y-0.5 transition">
+        Join Waitlist
+        <svg width="16" height="16" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <div id="mobile-nav" class="hidden flex-col bg-white border-b shadow-md md:hidden" role="dialog" aria-label="Mobile menu">
+      <nav class="container mx-auto px-4">
+        <a href="#about" class="block py-3 font-bold border-t" onclick="closeMenu()">About</a>
+        <a href="#join" class="block py-3 font-bold border-t" onclick="closeMenu()">Join</a>
+        <a href="#why" class="block py-3 font-bold border-t" onclick="closeMenu()">Why</a>
+        <a href="#perks" class="block py-3 font-bold border-t" onclick="closeMenu()">Perks</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="relative border-b bg-[radial-gradient(rgba(0,0,0,.05)_1px,transparent_1px),linear-gradient(180deg,rgba(250,171,44,.06),rgba(0,135,83,.06))] bg-[length:22px_22px,100%_100%] bg-[-10px_-10px,0_0]">
+      <div class="container mx-auto px-4 py-16 min-h-[66vh] grid place-items-center">
+        <div class="text-center max-w-2xl">
+          <span class="inline-block px-3 py-1 rounded-full border border-gold/40 bg-gold/20 text-sm font-bold text-amber-900">Welcome</span>
+          <h1 class="font-black text-3xl sm:text-4xl md:text-5xl my-3 gradient">SabiWay</h1>
+          <p class="text-xl sm:text-2xl font-extrabold">Find trusted pros. Pay safely with escrow.</p>
+          <p class="text-xl sm:text-2xl font-extrabold text-green">Smart. Safe. Sabi.</p>
+          <p class="text-muted max-w-xl mx-auto mt-2">Made for Nigerians at home and in the diaspora.</p>
+          <div class="flex flex-wrap gap-3 justify-center mt-6">
+            <a href="#join" class="btn primary breath inline-flex items-center bg-green text-white px-5 py-3 rounded-xl font-extrabold shadow-lg">Join Waitlist</a>
+            <a href="#about" class="inline-flex items-center px-5 py-3 rounded-xl font-extrabold border-2 border-green text-green">About SabiWay</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="py-16 text-center">
+      <div class="container mx-auto px-4 max-w-3xl">
+        <h2 class="text-2xl sm:text-3xl font-bold">About SabiWay</h2>
+        <p class="mt-4 text-muted text-lg">
+          SabiWay is a new platform that helps Nigerians — both at home and in the diaspora — find trusted professionals and pay safely through escrow.
+          Whether you need an electrician, tailor, designer, or any skilled provider, SabiWay makes it easy to connect, book, and pay with confidence.
+          We’re building a safe, smart, and supportive community where clients and providers work together stress-free.
+        </p>
+      </div>
+    </section>
+
+    <!-- JOIN -->
+    <section id="join" class="py-16 bg-gradient-to-r from-gold/10 to-green/10">
+      <div class="container mx-auto px-4">
+        <div class="bg-white rounded-2xl shadow-xl border p-6 md:p-10 max-w-2xl mx-auto text-center">
+          <h2 class="text-2xl sm:text-3xl font-bold">Join the Waitlist</h2>
+          <p class="text-muted mt-2">Be first to get the app and community when we launch.<br>We’ll only email you important updates, no spam.</p>
+
+          <form id="join-form" action="/join" method="POST" class="mt-6 space-y-4">
+            <!-- Full Name -->
+            <div class="flex flex-col">
+              <label for="name" class="font-semibold text-left text-ink mb-1">Full Name</label>
+              <input 
+                id="name" 
+                name="name" 
+                type="text" 
+                placeholder="Enter your full name" 
+                required 
+                class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green focus:border-green outline-none"
+              />
+            </div>
+
+            <!-- Email -->
+            <div class="flex flex-col">
+              <label for="email" class="font-semibold text-left text-ink mb-1">Email</label>
+              <input 
+                id="email" 
+                name="email" 
+                type="email" 
+                placeholder="Enter your email" 
+                required 
+                class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green focus:border-green outline-none"
+              />
+            </div>
+
+            <!-- Button -->
+            <div>
+              <button 
+                type="submit" 
+                class="w-full bg-green text-white rounded-xl font-extrabold shadow-lg px-6 py-3 breath hover:-translate-y-0.5 transition"
+              >
+                Join Waitlist ✨
+              </button>
+            </div>
+          </form>
+
+
+
+          <p id="thanks" class="hidden text-green font-bold mt-3">You’re on the list! Check your inbox for confirmation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY -->
+    <section id="why" class="py-16 text-center">
+      <div class="container mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl font-bold">Why SabiWay?</h2>
+        <div class="grid gap-6 md:grid-cols-3 mt-8">
+          <div class="p-6 bg-white rounded-2xl shadow-md border">
+            <div class="w-12 h-12 mx-auto flex items-center justify-center rounded-lg bg-green/20 text-2xl">🔒</div>
+            <h3 class="font-bold mt-3">Secure Payments</h3>
+            <p class="text-muted">Funds are only released when the job is done.</p>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-md border">
+            <div class="w-12 h-12 mx-auto flex items-center justify-center rounded-lg bg-gold/20 text-2xl">✅</div>
+            <h3 class="font-bold mt-3">Verified Talent</h3>
+            <p class="text-muted">Hire trusted, reviewed professionals with confidence.</p>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-md border">
+            <div class="w-12 h-12 mx-auto flex items-center justify-center rounded-lg bg-green/20 text-2xl">🌍</div>
+            <h3 class="font-bold mt-3">Built for Nigerians Everywhere</h3>
+            <p class="text-muted">Whether at home or abroad, SabiWay connects you to reliable people.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERKS -->
+    <section id="perks" class="py-16 bg-gradient-to-b from-green/5 to-white text-center">
+      <div class="container mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl font-bold">Early Access Perks</h2>
+        <div class="grid gap-6 md:grid-cols-3 mt-8">
+          <div class="p-6 bg-white rounded-2xl shadow-md border">
+            <div class="w-12 h-12 mx-auto flex items-center justify-center rounded-lg bg-gold/20 text-2xl">🚀</div>
+            <h3 class="font-bold mt-3">Priority access at launch</h3>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-md border">
+            <div class="w-12 h-12 mx-auto flex items-center justify-center rounded-lg bg-green/20 text-2xl">👥</div>
+            <h3 class="font-bold mt-3">Exclusive SabiForum invites</h3>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-md border">
+            <div class="w-12 h-12 mx-auto flex items-center justify-center rounded-lg bg-gold/20 text-2xl">✨</div>
+            <h3 class="font-bold mt-3">First to try new features</h3>
+          </div>
+        </div>
+        <div class="mt-6">
+          <a href="#join" class="inline-flex items-center bg-green text-white rounded-xl px-5 py-3 font-extrabold shadow-lg hover:-translate-y-0.5 transition">Get Early Access</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t py-6 text-muted text-sm">
+    <div class="container mx-auto px-4 flex flex-wrap justify-between items-center gap-4">
+      <div>Join thousands already waiting.</div>
+      <div class="flex gap-3 font-bold">
+        <a href="https://www.linkedin.com/company/sabiway/" target="_blank" rel="noopener">LinkedIn</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://www.instagram.com/sabiway_?igsh=eTJnODVtNTBwdjVx.." target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="container mx-auto px-4 mt-4 flex flex-wrap justify-between items-center gap-3">
+      <div>SabiWay Technologies Ltd. © <span id="year"></span></div>
+      <div><a href="mailto:info@sabiway.com">info@sabiway.com</a></div>
+    </div>
+  </footer>
+
+  <script>
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Demo success if placeholder endpoint
+    (function(){
+      const form = document.getElementById('join-form');
+      if(!form) return;
+      form.addEventListener('submit', function(e){
+        const action = form.getAttribute('action') || '';
+        if(action.includes('your-form-id') || action === '#'){
+          e.preventDefault();
+          document.getElementById('thanks').classList.remove('hidden');
+        }
+      });
+    })();
+
+    // Mobile menu
+    const header = document.getElementById('site-header');
+    const btn = document.getElementById('menuBtn');
+    const nav = document.getElementById('mobile-nav');
+    function closeMenu(){ nav.classList.add('hidden'); btn.setAttribute('aria-expanded','false'); }
+    window.closeMenu = closeMenu;
+    btn.addEventListener('click', ()=>{
+      const isHidden = nav.classList.contains('hidden');
+      nav.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', !isHidden);
+    });
+    window.addEventListener('resize', ()=>{ if(window.innerWidth > 900) closeMenu(); });
+  </script>
+</body>
+</html>
