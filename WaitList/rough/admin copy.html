@@ -2,112 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - SabiWay Waitlist</title>
+  <title>SabiWay Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-4 sm:p-6 bg-gray-50">
+<body class="bg-gray-100 p-4 sm:p-6">
 
-  <!-- Container -->
-  <div class="max-w-6xl mx-auto">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:gap-x-3 mb-6">
+    <img class="md:w-28 w-14 mb-2 sm:mb-0" 
+         src="https://res.cloudinary.com/devqbjptr/image/upload/v1758667850/Group_3_2_27_h0iaai.png" 
+         alt="SabiWay logo" loading="eager">
+    <h1 class="text-2xl sm:text-3xl font-bold">SabiWay Admin Dashboard</h1>
+  </div>
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:gap-x-3 mb-6">
-      <img class="w-16 sm:w-20 md:w-28 mb-2 sm:mb-0" 
-           src="https://res.cloudinary.com/devqbjptr/image/upload/v1758667850/Group_3_2_27_h0iaai.png" 
-           alt="SabiWay logo" loading="eager">
-      <h1 class="text-xl sm:text-2xl md:text-3xl font-bold">SabiWay Admin Dashboard</h1>
-    </div>
+  <!-- Add Entry Form -->
+  <form id="addForm" 
+        class="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2">
+    <input type="text" id="name" placeholder="Name" 
+           class="border p-2 rounded w-full" required>
+    <input type="email" id="email" placeholder="Email" 
+           class="border p-2 rounded w-full" required>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-[60%]">
+      Add
+    </button>
+  </form>
 
-    <!-- Download Button -->
-     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+  <!-- Table -->
+  <div class="bg-white p-4 rounded shadow">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
       <h2 class="text-lg sm:text-xl font-semibold">Waitlist</h2>
-      <a href="https://sabiwaywaitlist.onrender.com/api/waitlist/export" 
+      <a href="http://localhost:5000/api/waitlist/export" 
          class="bg-green-600 text-white px-4 py-2 rounded w-full sm:w-auto text-center">
          ⬇ Download Excel
       </a>
     </div>
 
-    <!-- Add Entry Form -->
-    <form id="addForm" class="mb-6 flex flex-col sm:flex-row gap-2">
-      <input type="text" id="name" placeholder="Name" required 
-             class="border p-2 rounded w-full sm:flex-1">
-      <input type="email" id="email" placeholder="Email" required 
-             class="border p-2 rounded w-full sm:flex-1">
-      <button type="submit" 
-              class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto">
-        Add
-      </button>
-    </form>
-
-    <!-- Responsive Table Wrapper -->
+    <!-- Make table scrollable on small screens -->
     <div class="overflow-x-auto">
-      <table class="w-full border-collapse border text-sm sm:text-base">
+      <table class="min-w-full border text-sm sm:text-base">
         <thead>
           <tr class="bg-gray-200 text-left">
             <th class="p-2 border">ID</th>
             <th class="p-2 border">Name</th>
             <th class="p-2 border">Email</th>
-            <th class="p-2 border">Created At</th>
+            <th class="p-2 border">Created</th>
             <th class="p-2 border">Actions</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
-
   </div>
 
-  <!-- Toast Notification -->
-  <div id="toast" 
-       class="fixed top-4 right-4 text-white px-4 py-2 rounded shadow opacity-0 transition-opacity duration-500 z-50">
-    Loading...
-  </div>
-
-  <!-- Your existing script (unchanged) -->
+  <!-- Script stays the same -->
   <script>
-    const API_URL = "https://sabiwaywaitlist.onrender.com/api/waitlist";
-
-    // ---------- TOAST FUNCTIONS ----------
-    function showToast(message = "Loading...", type = "info") {
-      const toast = document.getElementById("toast");
-      toast.textContent = message;
-
-      toast.classList.remove("bg-blue-600", "bg-green-600", "bg-red-600");
-      if (type === "info") toast.classList.add("bg-blue-600");
-      if (type === "success") toast.classList.add("bg-green-600");
-      if (type === "error") toast.classList.add("bg-red-600");
-
-      toast.classList.remove("opacity-0");
-      toast.classList.add("opacity-100");
-    }
-
-    function hideToast(delay = 1000) {
-      const toast = document.getElementById("toast");
-      setTimeout(() => {
-        toast.classList.remove("opacity-100");
-        toast.classList.add("opacity-0");
-      }, delay);
-    }
-
-    async function fetchWithToast(url, options = {}, messages = {loading: "Processing...", success: "Done!"}) {
-      showToast(messages.loading, "info");
-      try {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error(`Error ${res.status}`);
-        showToast(messages.success, "success");
-        hideToast();
-        return res;
-      } catch (err) {
-        console.error(err);
-        showToast("Something went wrong!", "error");
-        hideToast(2000);
-        throw err;
-      }
-    }
-
+    const API_URL = "http://localhost:5000/api/waitlist";
     async function fetchData() {
-      const res = await fetchWithToast(API_URL, {}, {loading: "Fetching data...", success: "Data loaded!"});
+      const res = await fetch(API_URL);
       const data = await res.json();
       const tbody = document.getElementById("tableBody");
       tbody.innerHTML = "";
@@ -137,11 +88,11 @@
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
 
-      await fetchWithToast(API_URL, {
+      await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email })
-      }, {loading: "Adding entry...", success: "Entry added!"});
+      });
 
       document.getElementById("addForm").reset();
       fetchData();
@@ -171,11 +122,11 @@
       const name = document.getElementById(`edit-name-${id}`).value;
       const email = document.getElementById(`edit-email-${id}`).value;
 
-      await fetchWithToast(`${API_URL}/${id}`, {
+      await fetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email })
-      }, {loading: "Saving changes...", success: "Changes saved!"});
+      });
 
       fetchData();
     }
@@ -196,8 +147,7 @@
     }
 
     async function deleteEntry(id) {
-      await fetchWithToast(`${API_URL}/${id}`, { method: "DELETE" }, 
-        {loading: "Deleting entry...", success: "Entry deleted!"});
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
       fetchData();
     }
 
