@@ -286,7 +286,7 @@
         const res = await axios.post("https://sabiwaywaitlist.onrender.com/api/waitlist", { name, email });
 
         if (res.data.status === "success" || res.data.success) {
-          showPopup("Success 🎉", "You’re on the list! Check your inbox for confirmation.", true);
+          showPopup("Success 🎉", "You’re on the waitlist! We'll be in touch soon.", true);
           form.reset();
         } else {
           showPopup("Oops 😕", res.data.message || "Something went wrong.", false);

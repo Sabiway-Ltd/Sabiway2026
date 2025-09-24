@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waitlist</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4 sm:p-6 bg-gray-50">
+
+  <!-- Container -->
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:gap-x-3 mb-6">
+      <img class="w-16 sm:w-20 md:w-28 mb-2 sm:mb-0" 
+           src="https://res.cloudinary.com/devqbjptr/image/upload/v1758667850/Group_3_2_27_h0iaai.png" 
+           alt="SabiWay logo" loading="eager">
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-bold">SabiWay Admin Dashboard</h1>
+    </div>
+
+    <!-- Add Entry Form -->
+    <form id="addForm" class="mb-6 flex flex-col sm:flex-row gap-2">
+      <input type="text" id="name" placeholder="Name" required 
+             class="border p-2 rounded w-full sm:flex-1">
+      <input type="email" id="email" placeholder="Email" required 
+             class="border p-2 rounded w-full sm:flex-1">
+      <button type="submit" 
+              class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto">
+        Add
+      </button>
+    </form>
+
+    <!-- Responsive Table Wrapper -->
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse border text-sm sm:text-base">
+        <thead>
+          <tr class="bg-gray-200 text-left">
+            <th class="p-2 border">ID</th>
+            <th class="p-2 border">Name</th>
+            <th class="p-2 border">Email</th>
+            <th class="p-2 border">Created At</th>
+            <th class="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" 
+       class="fixed top-4 right-4 text-white px-4 py-2 rounded shadow opacity-0 transition-opacity duration-500 z-50">
+    Loading...
+  </div>
+
+  <!-- Your existing script (unchanged) -->
+  <script>
+    const API_URL = "http://localhost:5000/api/waitlist";
+
+    // ---------- TOAST FUNCTIONS ----------
+    function showToast(message = "Loading...", type = "info") {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+
+      toast.classList.remove("bg-blue-600", "bg-green-600", "bg-red-600");
+      if (type === "info") toast.classList.add("bg-blue-600");
+      if (type === "success") toast.classList.add("bg-green-600");
+      if (type === "error") toast.classList.add("bg-red-600");
+
+      toast.classList.remove("opacity-0");
+      toast.classList.add("opacity-100");
+    }
+
+    function hideToast(delay = 1000) {
+      const toast = document.getElementById("toast");
+      setTimeout(() => {
+        toast.classList.remove("opacity-100");
+        toast.classList.add("opacity-0");
+      }, delay);
+    }
+
+    async function fetchWithToast(url, options = {}, messages = {loading: "Processing...", success: "Done!"}) {
+      showToast(messages.loading, "info");
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        showToast(messages.success, "success");
+        hideToast();
+        return res;
+      } catch (err) {
+        console.error(err);
+        showToast("Something went wrong!", "error");
+        hideToast(2000);
+        throw err;
+      }
+    }
+
+    async function fetchData() {
+      const res = await fetchWithToast(API_URL, {}, {loading: "Fetching data...", success: "Data loaded!"});
+      const data = await res.json();
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+
+      data.data.forEach(entry => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-id", entry.id);
+
+        tr.innerHTML = `
+          <td class="p-2 border">${entry.id}</td>
+          <td class="p-2 border"><span class="name">${entry.name}</span></td>
+          <td class="p-2 border"><span class="email">${entry.email}</span></td>
+          <td class="p-2 border">${entry.created_at}</td>
+          <td class="p-2 border flex flex-col sm:flex-row gap-2">
+            <button onclick="enableEdit(${entry.id})" 
+                    class="bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
+            <button onclick="deleteEntry(${entry.id})" 
+                    class="bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function addEntry(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+
+      await fetchWithToast(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email })
+      }, {loading: "Adding entry...", success: "Entry added!"});
+
+      document.getElementById("addForm").reset();
+      fetchData();
+    }
+
+    function enableEdit(id) {
+      const row = document.querySelector(`tr[data-id='${id}']`);
+      const name = row.querySelector(".name").textContent;
+      const email = row.querySelector(".email").textContent;
+
+      row.querySelector(".name").innerHTML =
+        `<input type="text" value="${name}" class="border p-1 rounded w-full" id="edit-name-${id}">`;
+      row.querySelector(".email").innerHTML =
+        `<input type="email" value="${email}" class="border p-1 rounded w-full" id="edit-email-${id}">`;
+
+      row.querySelector("td:last-child").innerHTML = `
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button onclick="saveEdit(${id})" 
+                  class="bg-green-600 text-white px-2 py-1 rounded">Save</button>
+          <button onclick="cancelEdit(${id}, '${name}', '${email}')" 
+                  class="bg-gray-500 text-white px-2 py-1 rounded">Cancel</button>
+        </div>
+      `;
+    }
+
+    async function saveEdit(id) {
+      const name = document.getElementById(`edit-name-${id}`).value;
+      const email = document.getElementById(`edit-email-${id}`).value;
+
+      await fetchWithToast(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email })
+      }, {loading: "Saving changes...", success: "Changes saved!"});
+
+      fetchData();
+    }
+
+    function cancelEdit(id, name, email) {
+      const row = document.querySelector(`tr[data-id='${id}']`);
+      row.querySelector(".name").textContent = name;
+      row.querySelector(".email").textContent = email;
+
+      row.querySelector("td:last-child").innerHTML = `
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button onclick="enableEdit(${id})" 
+                  class="bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
+          <button onclick="deleteEntry(${id})" 
+                  class="bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+        </div>
+      `;
+    }
+
+    async function deleteEntry(id) {
+      await fetchWithToast(`${API_URL}/${id}`, { method: "DELETE" }, 
+        {loading: "Deleting entry...", success: "Entry deleted!"});
+      fetchData();
+    }
+
+    document.getElementById("addForm").addEventListener("submit", addEntry);
+    fetchData();
+  </script>
+</body>
+</html>

@@ -1,64 +1,93 @@
 import os
-import sqlite3
 import threading
-from contextlib import closing
-from flask import Flask, request, jsonify
-from flask_cors import CORS  # ✅ Allow cross-origin requests
+import io
+import pandas as pd
+from datetime import datetime
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 from email.message import EmailMessage
 import smtplib
 
 # -----------------------------
 # Configuration
 # -----------------------------
-DATABASE = "sabiway.db"
+# ⚠️ In production, set DATABASE_URL in Render dashboard (Environment Variables)
+DEFAULT_DB_URL = (
+    "postgresql+psycopg2://sabiway_user:DhtvXbF3dYD5oatHiszqmQt0gHFyFhz4"
+    "@dpg-d39varbuibrs73f74oe0-a.oregon-postgres.render.com/sabiway"
+)
+
+app = Flask(__name__)
+CORS(app)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+# -----------------------------
+# Database Model
+# -----------------------------
+class Waitlist(db.Model):
+    __tablename__ = "waitlist"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+with app.app_context():
+    db.create_all()
+
+# -----------------------------
+# Email Config
+# -----------------------------
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "sabiway1@gmail.com"
-SMTP_PASS = "fflg gaow uwpw snfr"  # ⚠️ Move to environment variables in production!
+SMTP_PASS = "fflggaowuwpwsnfr"  # ⚠️ set as env var in production
 FROM_NAME = "SabiWay"
 FROM_EMAIL = SMTP_USER
-
-app = Flask(__name__)
-CORS(app)  # ✅ Enable CORS for all routes
+ADMIN_EMAIL = "info@sabiway.com"
 
 # -----------------------------
-# Database setup
-# -----------------------------
-def init_db():
-    with closing(sqlite3.connect(DATABASE)) as db:
-        c = db.cursor()
-        c.execute(
-            """
-            CREATE TABLE IF NOT EXISTS waitlist (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-        db.commit()
-
-init_db()
-
-# -----------------------------
-# Helpers
+# Email Helpers
 # -----------------------------
 def send_confirmation_email(name: str, email: str):
-    """Send confirmation email to new waitlist member"""
+    """Send welcome email to new waitlist member"""
     first_name = name.split()[0]
+    subject = "Welcome to SabiWay – You’re on the Waitlist"
+    body = f"""Hello {first_name},
+
+You’ve been added to the SabiWay waitlist, thank you for signing up.
+
+About SabiWay
+SabiWay makes it easier for Nigerians at home and abroad to find trusted professionals. From electricians, plumbers, tailors, caterers, and printers to barbers, hairstylists, and event planners, SabiWay connects you to people you can rely on.
+
+Our platform solves this by verifying professionals and securing payments through escrow, so services are delivered with trust and confidence.
+
+Join the Momentum
+SabiWay is more than an app, it’s a community. As we prepare to launch, we welcome partnerships, volunteers, and investment proposals. To get involved, reach us at info@sabiway.com.
+
+You’ll be among the first to hear from us when SabiWay officially launches.
+
+Thank you for joining us. Together, we’re building a smarter, safer way for Nigerians everywhere to connect and get things done.
+
+Warm regards,  
+The SabiWay Team  
+info@sabiway.com
+"""
 
     msg = EmailMessage()
-    msg["Subject"] = "Thanks for joining the SabiWay waitlist!"
+    msg["Subject"] = subject
     msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
     msg["To"] = email
-    msg.set_content(
-        f"Hi {first_name},\n\nThanks for joining the SabiWay waitlist. "
-        f"We'll email you when we launch.\n\n— The SabiWay Team"
-    )
+    msg.set_content(body)
 
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:  # ⏱ Timeout added
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
             smtp.starttls()
             smtp.login(SMTP_USER, SMTP_PASS)
             smtp.send_message(msg)
@@ -67,22 +96,56 @@ def send_confirmation_email(name: str, email: str):
         app.logger.error(f"Email sending failed for {email}: {e}")
 
 
-def send_email_async(name: str, email: str):
-    """Send email in a background thread (non-blocking)."""
-    thread = threading.Thread(target=send_confirmation_email, args=(name, email))
-    thread.daemon = True
-    thread.start()
+def send_admin_notification_email(name: str, email: str, created_at: str):
+    """Notify admin that a new user joined the waitlist"""
+    try:
+        pretty_time = datetime.fromisoformat(created_at).strftime("%b %d, %Y — %I:%M %p")
+    except Exception:
+        pretty_time = created_at
+
+    subject = "New Waitlist Signup – SabiWay"
+    body = f"""Hello Team,
+
+A new user has just joined the SabiWay waitlist.
+ • Name: {name}
+ • Email: {email}
+ • Date/Time: {pretty_time}
+
+They will be notified as soon as SabiWay officially launches.
+
+Every signup brings us closer to launch, let’s keep building the smarter, safer way for Nigerians everywhere to connect and get things done.
+
+Warm regards,  
+SabiWay Notifications
+"""
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+    msg["To"] = ADMIN_EMAIL
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.send_message(msg)
+            app.logger.info(f"Admin notified about {email}")
+    except Exception as e:
+        app.logger.error(f"Admin notification failed for {email}: {e}")
+
+
+def send_emails_async(name: str, email: str, created_at: str):
+    """Send user confirmation + admin notification in background threads."""
+    threading.Thread(target=send_confirmation_email, args=(name, email), daemon=True).start()
+    threading.Thread(target=send_admin_notification_email, args=(name, email, created_at), daemon=True).start()
 
 # -----------------------------
 # API Routes
 # -----------------------------
 @app.route("/api/waitlist", methods=["POST"])
 def join_waitlist():
-    try:
-        data = request.get_json(force=True)
-    except Exception:
-        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
-
+    data = request.get_json(force=True)
     name = data.get("name", "").strip()
     email = data.get("email", "").strip().lower()
 
@@ -90,78 +153,96 @@ def join_waitlist():
         return jsonify({"status": "error", "message": "Name and email are required."}), 400
 
     try:
-        with sqlite3.connect(DATABASE) as conn:
-            c = conn.cursor()
-            c.execute("INSERT INTO waitlist (name, email) VALUES (?, ?)", (name, email))
-            conn.commit()
-    except sqlite3.IntegrityError:
-        return jsonify({"status": "error", "message": "This email is already on the waitlist."}), 409
+        new_entry = Waitlist(name=name, email=email)
+        db.session.add(new_entry)
+        db.session.commit()
 
-    # ✅ Kick off background email sending
-    send_email_async(name, email)
+        created_at = new_entry.created_at.isoformat()
+        send_emails_async(name, email, created_at)
 
-    return jsonify({
-        "status": "success",
-        "message": "Signed up! If email delivery works, you’ll get a confirmation."
-    }), 201
+        return jsonify({
+            "status": "success",
+            "message": "Signed up! If email delivery works, you’ll get a confirmation."
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        if "unique constraint" in str(e).lower():
+            return jsonify({"status": "error", "message": "This email is already on the waitlist."}), 409
+        return jsonify({"status": "error", "message": "Database error"}), 500
 
 
 @app.route("/api/waitlist", methods=["GET"])
 def list_waitlist():
-    with sqlite3.connect(DATABASE) as conn:
-        c = conn.cursor()
-        c.execute("SELECT id, name, email, created_at FROM waitlist ORDER BY created_at DESC")
-        rows = c.fetchall()
-
+    entries = Waitlist.query.order_by(Waitlist.created_at.desc()).all()
     result = [
-        {"id": r[0], "name": r[1], "email": r[2], "created_at": r[3]}
-        for r in rows
+        {
+            "id": e.id,
+            "name": e.name,
+            "email": e.email,
+            "created_at": e.created_at.isoformat()
+        }
+        for e in entries
     ]
     return jsonify({"status": "success", "data": result}), 200
 
 
 @app.route("/api/waitlist/<int:entry_id>", methods=["DELETE"])
 def delete_entry(entry_id):
-    with sqlite3.connect(DATABASE) as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM waitlist WHERE id = ?", (entry_id,))
-        conn.commit()
-        if c.rowcount == 0:
-            return jsonify({"status": "error", "message": "Entry not found."}), 404
+    entry = Waitlist.query.get(entry_id)
+    if not entry:
+        return jsonify({"status": "error", "message": "Entry not found."}), 404
+
+    db.session.delete(entry)
+    db.session.commit()
     return jsonify({"status": "success", "message": f"Entry {entry_id} deleted."}), 200
 
 
 @app.route("/api/waitlist/<int:entry_id>", methods=["PUT"])
 def update_entry(entry_id):
-    try:
-        data = request.get_json(force=True)
-    except Exception:
-        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
-
+    data = request.get_json(force=True)
     name = data.get("name", "").strip()
     email = data.get("email", "").strip().lower()
 
-    if not name and not email:
-        return jsonify({"status": "error", "message": "Name or email must be provided."}), 400
+    entry = Waitlist.query.get(entry_id)
+    if not entry:
+        return jsonify({"status": "error", "message": "Entry not found."}), 404
+
+    if name:
+        entry.name = name
+    if email:
+        entry.email = email
 
     try:
-        with sqlite3.connect(DATABASE) as conn:
-            c = conn.cursor()
-            if name and email:
-                c.execute("UPDATE waitlist SET name = ?, email = ? WHERE id = ?", (name, email, entry_id))
-            elif name:
-                c.execute("UPDATE waitlist SET name = ? WHERE id = ?", (name, entry_id))
-            elif email:
-                c.execute("UPDATE waitlist SET email = ? WHERE id = ?", (email, entry_id))
-            conn.commit()
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"Entry {entry_id} updated."}), 200
+    except Exception as e:
+        db.session.rollback()
+        if "unique constraint" in str(e).lower():
+            return jsonify({"status": "error", "message": "This email is already in use."}), 409
+        return jsonify({"status": "error", "message": "Database error"}), 500
 
-            if c.rowcount == 0:
-                return jsonify({"status": "error", "message": "Entry not found."}), 404
-    except sqlite3.IntegrityError:
-        return jsonify({"status": "error", "message": "This email is already in use."}), 409
 
-    return jsonify({"status": "success", "message": f"Entry {entry_id} updated."}), 200
+@app.route("/api/waitlist/export", methods=["GET"])
+def export_waitlist():
+    entries = Waitlist.query.all()
+    df = pd.DataFrame([{
+        "id": e.id,
+        "name": e.name,
+        "email": e.email,
+        "created_at": e.created_at.strftime("%Y-%m-%d %H:%M:%S") if e.created_at else ""
+    } for e in entries])
 
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Waitlist")
+
+    output.seek(0)
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="waitlist.xlsx"
+    )
 
 # -----------------------------
 # Run
