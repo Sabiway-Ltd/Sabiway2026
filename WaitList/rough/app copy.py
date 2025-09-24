@@ -2,16 +2,17 @@ import os
 import threading
 import io
 import pandas as pd
-import requests
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from email.message import EmailMessage
+import smtplib
 
 # -----------------------------
 # Configuration
 # -----------------------------
-# ⚠️ In production, set DATABASE_URL and RESEND_API_KEY in your hosting environment (Render, Vercel, etc.)
+# ⚠️ In production, set DATABASE_URL in Render dashboard (Environment Variables)
 DEFAULT_DB_URL = (
     "postgresql+psycopg2://sabiway_user:DhtvXbF3dYD5oatHiszqmQt0gHFyFhz4"
     "@dpg-d39varbuibrs73f74oe0-a.oregon-postgres.render.com/sabiway"
@@ -41,18 +42,21 @@ with app.app_context():
     db.create_all()
 
 # -----------------------------
-# Resend Email Config
+# Email Config
 # -----------------------------
-RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ" # set in environment
-FROM_EMAIL = "info@sabiway.com"  # must be a verified domain in Resend
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = "sabiway1@gmail.com"
+SMTP_PASS = "fflggaowuwpwsnfr"  # ⚠️ set as env var in production
+FROM_NAME = "SabiWay"
+FROM_EMAIL = SMTP_USER
 ADMIN_EMAIL = "info@sabiway.com"
 
-
 # -----------------------------
-# Email Helpers (Resend)
+# Email Helpers
 # -----------------------------
 def send_confirmation_email(name: str, email: str):
-    """Send welcome email to new waitlist member via Resend"""
+    """Send welcome email to new waitlist member"""
     first_name = name.split()[0]
     subject = "Welcome to SabiWay – You’re on the Waitlist"
     body = f"""Hello {first_name},
@@ -76,20 +80,18 @@ The SabiWay Team
 info@sabiway.com
 """
 
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+    msg["To"] = email
+    msg.set_content(body)
+
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
-            json={
-                "from": f"SabiWay <{FROM_EMAIL}>",
-                "to": [email],
-                "subject": subject,
-                "text": body,
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
-        app.logger.info(f"Confirmation email sent to {email}")
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.send_message(msg)
+            app.logger.info(f"Confirmation email sent to {email}")
     except Exception as e:
         app.logger.error(f"Email sending failed for {email}: {e}")
 
@@ -117,20 +119,18 @@ Warm regards,
 SabiWay Notifications
 """
 
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+    msg["To"] = ADMIN_EMAIL
+    msg.set_content(body)
+
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
-            json={
-                "from": f"SabiWay <{FROM_EMAIL}>",
-                "to": [ADMIN_EMAIL],
-                "subject": subject,
-                "text": body,
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
-        app.logger.info(f"Admin notified about {email}")
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.send_message(msg)
+            app.logger.info(f"Admin notified about {email}")
     except Exception as e:
         app.logger.error(f"Admin notification failed for {email}: {e}")
 

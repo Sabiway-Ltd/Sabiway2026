@@ -44,7 +44,8 @@ with app.app_context():
 # Resend Email Config
 # -----------------------------
 RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ" # set in environment
-FROM_EMAIL = "info@sabiway.com"  # must be a verified domain in Resend
+# FROM_EMAIL = "info@sabiway.com"  # must be a verified domain in Resend
+FROM_EMAIL = "onboarding@resend.dev"
 ADMIN_EMAIL = "info@sabiway.com"
 
 

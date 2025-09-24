@@ -43,10 +43,17 @@ with app.app_context():
 # -----------------------------
 # Resend Email Config
 # -----------------------------
-RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ" # set in environment
-FROM_EMAIL = "info@sabiway.com"  # must be a verified domain in Resend
-ADMIN_EMAIL = "info@sabiway.com"
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ")
 
+# Switch between sandbox and custom domain
+USE_CUSTOM_DOMAIN = os.getenv("USE_CUSTOM_DOMAIN", "false").lower() == "true"
+
+if USE_CUSTOM_DOMAIN:
+    FROM_EMAIL = "info@sabiway.com"  # works only after sabiway.com is verified in Resend
+else:
+    FROM_EMAIL = "onboarding@resend.dev"  # always works for testing
+
+ADMIN_EMAIL = "info@sabiway.com"
 
 # -----------------------------
 # Email Helpers (Resend)
@@ -81,7 +88,7 @@ info@sabiway.com
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
             json={
-                "from": f"SabiWay <{FROM_EMAIL}>",
+                "from": FROM_EMAIL,   # ✅ sandbox or custom
                 "to": [email],
                 "subject": subject,
                 "text": body,
@@ -122,7 +129,7 @@ SabiWay Notifications
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
             json={
-                "from": f"SabiWay <{FROM_EMAIL}>",
+                "from": FROM_EMAIL,   # ✅ sandbox or custom
                 "to": [ADMIN_EMAIL],
                 "subject": subject,
                 "text": body,
