@@ -1,3 +1,5 @@
+# sabiway/settings.py
+
 """
 Django settings for sabiway project.
 
@@ -56,6 +58,7 @@ INSTALLED_APPS = [
 
     # Local apps
     "accounts",
+    "docs",
 
     # Third-party apps
     "rest_framework",

@@ -1,3 +1,5 @@
+# accounts/email_utils.py
+
 import resend
 from django.conf import settings
 
