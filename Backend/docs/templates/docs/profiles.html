@@ -1,0 +1,183 @@
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-4xl font-bold text-center mb-8">👤 Sabiway API Documentation - Profiles</h1>
+<p class="text-center text-gray-600 mb-12">
+  Endpoints for managing user profiles and follow system.
+</p>
+
+<div id="endpoints" class="space-y-6">
+
+  <!-- List Profiles -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/profiles/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Retrieve a list of all profiles.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 1,
+    "username": "johndoe",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "followers_count": 10,
+    "following_count": 5,
+    "posts_count": 3
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Get Own Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/profiles/me/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Retrieve the currently logged-in user’s profile.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "user_id": 1,
+  "username": "johndoe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3
+}</pre>
+    </div>
+  </div>
+
+  <!-- Retrieve Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Retrieve a single profile by ID.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "user_id": 2,
+  "username": "janedoe",
+  "full_name": "Jane Doe",
+  "email": "jane@example.com",
+  "followers_count": 15,
+  "following_count": 7,
+  "posts_count": 6
+}</pre>
+    </div>
+  </div>
+
+  <!-- Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PUT /api/profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Update your own profile details.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "full_name": "Johnny Doe"
+}
+
+Response:
+{
+  "user_id": 1,
+  "username": "johndoe",
+  "full_name": "Johnny Doe",
+  "email": "john@example.com"
+}</pre>
+    </div>
+  </div>
+
+    <!-- Partial Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /api/profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">
+        Partially update your own profile. Only send the fields you want to change.
+      </p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "whatsapp_number": "+2348012345678"
+}
+
+Response:
+{
+  "user_id": 1,
+  "username": "johndoe",
+  "full_name": "Johnny Doe",
+  "email": "john@example.com",
+  "whatsapp_number": "+2348012345678",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3
+}</pre>
+    </div>
+  </div>
+
+
+  <!-- Delete Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /api/profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Delete your own profile (irreversible).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "message": "Profile deleted successfully"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Follow Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /api/profiles/&lt;user_id&gt;/follow/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Follow another user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "message": "You are now following janedoe"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Unfollow Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /api/profiles/&lt;user_id&gt;/unfollow/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Unfollow a user you are currently following.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "message": "You have unfollowed janedoe"
+}</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

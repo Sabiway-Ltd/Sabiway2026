@@ -23,4 +23,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("docs/", include("docs.urls")),  # 👈 docs app
+    path("api/profiles/", include("profiles.urls"))
 ]

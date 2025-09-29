@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sabiway API Documentation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .endpoint-body { display: none; }
+    .endpoint.open .endpoint-body { display: block; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex">
+  <!-- Sidebar -->
+  <aside class="w-64 h-screen bg-white border-r border-gray-200 fixed">
+    <div class="p-6">
+      <h1 class="text-xl font-bold text-indigo-600">Sabiway API Docs</h1>
+    </div>
+    <nav class="px-4">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Public APIs</h2>
+      <ul class="mb-6">
+        <li>
+          <a href="{% url 'api-auth-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Auth</a>
+        </li>
+        <li>
+          <a href="{% url 'api-profile-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles</a>
+        </li>
+      </ul>
+
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Admin APIs</h2>
+      <ul>
+        <li>
+          <a href="{% url 'api-auth-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Auth Admin</a>
+        </li>
+        <li>
+          <a href="{% url 'api-profile-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles Admin</a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-64 flex-1 p-10 overflow-y-auto">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    // Toggle collapsible endpoint sections
+    document.querySelectorAll('.endpoint button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.parentElement.classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>
