@@ -11,6 +11,8 @@ from .serializers import ForgotPasswordSerializer, ConfirmCodeSerializer, ResetP
 from .models import PasswordReset, User
 from .serializers import SignupSerializer, LoginSerializer, GoogleAuthSerializer
 from .serializers import LogoutSerializer
+from urllib.parse import urlencode
+from django.http import JsonResponse
 
 
 class SignupView(generics.CreateAPIView):
@@ -121,6 +123,24 @@ class GoogleLoginView(APIView):
             "is_new_user": created
         }, status=status.HTTP_200_OK)
 
+
+class GenerateGoogleAuthURLView(APIView):
+    """
+    Returns the Google OAuth2 login URL
+    """
+
+    def get(self, request):
+        base_url = "https://accounts.google.com/o/oauth2/v2/auth"
+        params = {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",  # e.g. https://sabiway.onrender.com/api/auth/google-login/
+            "response_type": "code",
+            "scope": "openid email profile",
+            "access_type": "offline",  # so refresh_token is included
+            "prompt": "consent",       # forces Google to show account chooser
+        }
+        url = f"{base_url}?{urlencode(params)}"
+        return JsonResponse({"auth_url": url})
 
 class ForgotPasswordView(generics.GenericAPIView):
     serializer_class = ForgotPasswordSerializer

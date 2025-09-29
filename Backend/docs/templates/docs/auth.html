@@ -101,6 +101,25 @@ Response:
         </div>
       </div>
 
+
+      <!-- Generate Google OAuth URL -->
+    <div class="endpoint border rounded-2xl shadow-sm bg-white">
+      <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+        <span>GET /api/auth/generate-google-url/</span>
+        <span class="text-gray-500">➕</span>
+      </button>
+      <div class="endpoint-body px-6 pb-6">
+        <p class="mb-2 text-gray-700">Generate the Google OAuth2 authorization URL.  
+          Your frontend can call this to redirect users to Google’s login page.</p>
+        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+    Response:
+    {
+      "auth_url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=XXXX&redirect_uri=XXXX&response_type=code&scope=openid%20email%20profile"
+    }</pre>
+      </div>
+    </div>
+
+
       <!-- Forgot Password -->
       <div class="endpoint border rounded-2xl shadow-sm bg-white">
         <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
