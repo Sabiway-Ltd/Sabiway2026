@@ -79,7 +79,7 @@ class GoogleLoginView(APIView):
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": "http://127.0.0.1:8000/api/auth/google-login/",  # ✅ match Google Console
+            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",  # ✅ match Google Console
             "grant_type": "authorization_code",
         }
         r = requests.post(token_url, data=data)
