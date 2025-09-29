@@ -13,6 +13,19 @@ from .serializers import SignupSerializer, LoginSerializer, GoogleAuthSerializer
 from .serializers import LogoutSerializer
 from urllib.parse import urlencode
 from django.http import JsonResponse
+from django.utils.crypto import get_random_string
+from rest_framework import viewsets, permissions
+from .serializers import UserSerializer
+from django.contrib.auth.models import BaseUserManager
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    Admin-only endpoint to manage users
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]  # Only admins can manage users
 
 
 class SignupView(generics.CreateAPIView):
@@ -102,11 +115,18 @@ class GoogleLoginView(APIView):
         return self._handle_user(email, full_name)
 
     def _handle_user(self, email, full_name):
-        """Shared logic: create or get user, return JWT"""
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={"full_name": full_name}
-        )
+        user = User.objects.filter(email=email).first()
+        created = False
+
+        if not user:
+            signup_serializer = SignupSerializer(data={
+                "email": email,
+                "full_name": full_name,
+                "password": get_random_string(12)
+            })
+            signup_serializer.is_valid(raise_exception=True)
+            user = signup_serializer.save()
+            created = True
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -122,6 +142,9 @@ class GoogleLoginView(APIView):
             },
             "is_new_user": created
         }, status=status.HTTP_200_OK)
+
+
+
 
 
 class GenerateGoogleAuthURLView(APIView):
