@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "accounts",
     "docs",
     "profiles",
+    "posts",
 
     # Third-party apps
     "rest_framework",
