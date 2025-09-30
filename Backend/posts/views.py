@@ -3,14 +3,23 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import Post, Like, Comment, Reply, Hashtag
 from .serializers import (
     PostListSerializer, PostCreateSerializer, PostDetailSerializer,
-    LikeSerializer, CommentSerializer, ReplySerializer
+    LikeSerializer, CommentSerializer, ReplySerializer, HashtagSerializer
 )
+
+
+class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet to list and retrieve hashtags.
+    """
+    queryset = Hashtag.objects.all().order_by("-use_count")
+    serializer_class = HashtagSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class PostViewSet(viewsets.ModelViewSet):

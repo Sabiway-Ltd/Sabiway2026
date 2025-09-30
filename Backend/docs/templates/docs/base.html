@@ -1,3 +1,5 @@
+<!-- docs/templates/docs/base.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,6 +27,9 @@
         <li>
           <a href="{% url 'api-profile-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles</a>
         </li>
+        <li>
+          <a href="{% url 'api-posts-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Posts</a>
+        </li>
       </ul>
 
       <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Admin APIs</h2>
@@ -34,6 +39,9 @@
         </li>
         <li>
           <a href="{% url 'api-profile-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles Admin</a>
+        </li>
+        <li>
+          <a href="{% url 'api-posts-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Posts Admin</a>
         </li>
       </ul>
     </nav>
@@ -45,7 +53,6 @@
   </main>
 
   <script>
-    // Toggle collapsible endpoint sections
     document.querySelectorAll('.endpoint button').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.parentElement.classList.toggle('open');

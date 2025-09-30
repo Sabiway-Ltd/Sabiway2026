@@ -14,3 +14,12 @@ class ProfilesDocsView(TemplateView):
 
 class ProfilesAdminDocsView(TemplateView):
     template_name = "docs/profiles_admin.html"
+
+
+class PostsDocsView(TemplateView):
+    template_name = "docs/posts.html"
+
+
+class PostsAdminDocsView(TemplateView):
+    template_name = "docs/posts_admin.html"
+
