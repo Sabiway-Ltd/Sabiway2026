@@ -38,6 +38,7 @@ class Post(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     impressions_count = models.PositiveIntegerField(default=0)
+    reposts_count = models.PositiveIntegerField(default=0)   # 🔥 new field
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -111,3 +112,14 @@ class Bookmark(models.Model):
 
     class Meta:
         unique_together = ("user", "post")
+
+
+
+class Repost(models.Model):
+    user = models.ForeignKey("profiles.Profile", on_delete=models.CASCADE, related_name="reposts")
+    post = models.ForeignKey("posts.Post", on_delete=models.CASCADE, related_name="reposts")
+    message = models.TextField(blank=True, null=True)  # optional quote
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "post")  # prevent duplicate reposts

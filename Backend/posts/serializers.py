@@ -1,7 +1,7 @@
 # posts/serializers.py
 
 from rest_framework import serializers
-from .models import Post, Hashtag, Like, Comment, Reply, Bookmark
+from .models import Post, Hashtag, Like, Comment, Reply, Bookmark, Repost
 from profiles.models import Profile
 
 
@@ -19,7 +19,8 @@ class PostListSerializer(serializers.ModelSerializer):
         model = Post
         fields = [
             "id", "author", "content", "image",
-            "hashtags", "likes_count", "comments_count", "impressions_count",
+            "hashtags", "likes_count", "comments_count", 
+            "impressions_count", "reposts_count", 
             "created_at", "updated_at",
         ]
 
@@ -97,11 +98,15 @@ class PostDetailSerializer(PostListSerializer):
 
 
 class LikeSerializer(serializers.ModelSerializer):
+    user_id = serializers.SerializerMethodField()
+
     class Meta:
         model = Like
-        fields = ["id", "user", "post", "created_at"]
+        fields = ["id", "user_id", "post", "created_at"]
         read_only_fields = ["id", "created_at"]
 
+    def get_user_id(self, obj):
+        return obj.user.user.id  # Profile.user.id
 
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
@@ -160,9 +165,27 @@ class ReplySerializer(serializers.ModelSerializer):
         return reply
 
 
+
 class BookmarkSerializer(serializers.ModelSerializer):
-    post = serializers.PrimaryKeyRelatedField(read_only=True)
+    post = PostListSerializer(read_only=True)
 
     class Meta:
         model = Bookmark
         fields = ["id", "post", "created_at"]
+
+
+class RepostSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Repost
+        fields = ["id", "user", "post", "message", "created_at"]
+
+    def get_user(self, obj):
+        p = obj.user
+        return {
+            "user_id": p.user.id,
+            "username": p.username,
+            "full_name": p.full_name,
+            "profile_picture": str(p.profile_picture) if p.profile_picture else None,
+        }

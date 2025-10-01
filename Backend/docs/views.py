@@ -23,3 +23,11 @@ class PostsDocsView(TemplateView):
 class PostsAdminDocsView(TemplateView):
     template_name = "docs/posts_admin.html"
 
+
+class NotificationsDocsView(TemplateView):
+    template_name = "docs/notifications.html"
+
+
+
+class SearchDocsView(TemplateView):
+    template_name = "docs/search.html"

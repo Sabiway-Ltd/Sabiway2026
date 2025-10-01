@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     "docs",
     "profiles",
     "posts",
+    "search",
+    "notifications",
 
     # Third-party apps
     "rest_framework",

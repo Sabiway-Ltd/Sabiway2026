@@ -1,16 +1,16 @@
-# profiles/serializers.py
 from rest_framework import serializers
 from .models import Profile
 from django.utils.text import slugify
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(read_only=True)
+    # Pull email from related User
+    email = serializers.EmailField(source='user.email', read_only=True)
     initials = serializers.CharField(read_only=True)
     followers_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
-    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    user_id = serializers.IntegerField(source='pk', read_only=True)  # profile.id == user.id
 
     class Meta:
         model = Profile

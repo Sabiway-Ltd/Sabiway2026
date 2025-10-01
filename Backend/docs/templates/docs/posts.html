@@ -3,7 +3,7 @@
 {% block content %}
 <h1 class="text-4xl font-bold text-center mb-8">📝 Sabiway API Documentation - Posts</h1>
 <p class="text-center text-gray-600 mb-12">
-  Endpoints for creating, retrieving and interacting with posts, comments, likes and replies.
+  Endpoints for creating, retrieving and interacting with posts, comments, likes, replies, bookmarks, and reposts.
 </p>
 
 <div id="endpoints" class="space-y-6">
@@ -15,24 +15,20 @@
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve a paginated list of posts. <strong>Authentication required</strong>.</p>
+      <p class="mb-2 text-gray-700">Retrieve a paginated list of posts. <strong>Authentication optional for read.</strong></p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response (example):
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "author": {
-      "user_id": 5,
-      "username": "@johndoe",
-      "full_name": "John Doe",
-      "profile_picture": null
-    },
+    "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
     "content": "Hello World! #welcome",
     "image": null,
     "hashtags": [{"tag":"welcome","use_count":5}],
     "likes_count": 3,
     "comments_count": 1,
     "impressions_count": 20,
+    "reposts_count": 2,
     "created_at": "2025-09-25T12:00:00Z",
     "updated_at": "2025-09-25T12:00:00Z"
   }
@@ -47,7 +43,7 @@ Response (example):
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Create a new post. `content` and optional `image`. Hashtags are parsed from `content` automatically.</p>
+      <p class="mb-2 text-gray-700">Create a new post. `content` required, `image` optional. Hashtags are auto-parsed.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request (multipart/form-data or JSON):
 {
@@ -58,16 +54,17 @@ Request (multipart/form-data or JSON):
 Response (example):
 {
   "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe", "profile_picture": null },
+  "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
   "content": "This is my first post #first #sabiway",
   "image": null,
   "hashtags": [{"tag":"first","use_count":1},{"tag":"sabiway","use_count":1}],
   "likes_count": 0,
   "comments_count": 0,
   "impressions_count": 0,
+  "reposts_count": 0,
   "created_at": "2025-09-26T14:00:00Z"
 }</pre>
-      <p class="text-sm text-gray-500 mt-2">Notes: new hashtags created automatically; `profile.posts_count` is incremented.</p>
+      <p class="text-sm text-gray-500 mt-2">Note: new hashtags are created automatically; author's `posts_count` increments.</p>
     </div>
   </div>
 
@@ -78,9 +75,9 @@ Response (example):
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve a single post by UUID. Authentication required.</p>
+      <p class="mb-2 text-gray-700">Retrieve a single post by UUID.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-Response: (same shape as list item)
+Response: same shape as list item
 {
   "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
@@ -90,6 +87,7 @@ Response: (same shape as list item)
   "likes_count": 2,
   "comments_count": 1,
   "impressions_count": 10,
+  "reposts_count": 1,
   "created_at": "2025-09-26T14:00:00Z"
 }</pre>
     </div>
@@ -102,7 +100,7 @@ Response: (same shape as list item)
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Replace a post's content/image. When content is updated hashtags are re-parsed and hashtag counts adjusted.</p>
+      <p class="mb-2 text-gray-700">Replace a post's content/image. Hashtags are re-parsed and counts updated.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
@@ -121,7 +119,7 @@ Response: updated post object (same shape as retrieve)</pre>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Partially update a post. Send only fields to change (e.g. `content`).</p>
+      <p class="mb-2 text-gray-700">Partially update a post. Send only fields to modify.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 { "content": "Small edit #typo" }
@@ -137,7 +135,7 @@ Response: updated post object</pre>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Delete a post. <strong>perform_destroy</strong> decrements the author's `posts_count` and decrements `use_count` for attached hashtags.</p>
+      <p class="mb-2 text-gray-700">Delete a post. Decrements `posts_count` and hashtags `use_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 204 No Content (or { "detail": "Deleted" } depending on client)</pre>
@@ -151,7 +149,7 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Like a post. Creates a Like record if not present and increments post.likes_count.</p>
+      <p class="mb-2 text-gray-700">Like a post. Creates a Like if not already liked and increments `likes_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Responses:
 201 Created -> { "detail": "Liked" }
@@ -159,14 +157,40 @@ Responses:
     </div>
   </div>
 
-  <!-- Unlike Post (explicitly included) -->
+  <!-- Like endpoints (via LikeViewSet) -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /api/likes/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <p>Create a like via the direct Like endpoint (optional alternative to post/&lt;id&gt;/like/).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{
+  "post": "550e8400-e29b-41d4-a716-446655440000"
+}
+
+Response:
+201 Created
+{
+  "id": 12,
+  "user": { "user_id": 5, "username": "@johndoe" },
+  "post": "550e8400-e29b-41d4-a716-446655440000",
+  "created_at": "2025-09-26T15:00:00Z"
+}
+</pre>
+    </div>
+  </div>
+
+  <!-- Unlike Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
       <span>POST /api/posts/&lt;id&gt;/unlike/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Remove your like. Deletes the Like record and decrements post.likes_count.</p>
+      <p class="mb-2 text-gray-700">Remove your like. Decrements `likes_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Responses:
 200 OK  -> { "detail": "Unliked" }
@@ -174,146 +198,285 @@ Responses:
     </div>
   </div>
 
+  <!-- Bookmark Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /api/posts/&lt;id&gt;/bookmark/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Bookmark a post for the authenticated user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Responses:
+201 Created -> bookmarked object
+200 OK      -> { "detail": "Already bookmarked" }</pre>
+    </div>
+  </div>
 
-  <!-- Hashtags List -->
+  <!-- Unbookmark Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /api/posts/&lt;id&gt;/unbookmark/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Remove a bookmark.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Responses:
+204 No Content -> Unbookmarked
+400 Bad        -> { "detail": "Not bookmarked" }</pre>
+    </div>
+  </div>
+
+  <!-- My Bookmarks -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/posts/me/bookmarks/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">List bookmarks of the authenticated user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "post": { "id": "...", "content": "...", "author": {...} }, "created_at": "..." }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Repost Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /api/posts/&lt;id&gt;/repost/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Repost a post. Optional message.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{ "message": "Check this out!" } (optional)
+
+Responses:
+201 Created -> repost object
+400 Bad     -> { "detail": "Already reposted" }</pre>
+    </div>
+  </div>
+
+  <!-- Unrepost -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /api/posts/&lt;id&gt;/repost/&lt;repost_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Remove a repost.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+204 No Content -> repost removed</pre>
+    </div>
+  </div>
+
+  <!-- My Reposts -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/posts/me/reposts/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">List reposts of the authenticated user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "post": { "id": "...", "content": "...", "author": {...} }, "message": "...", "created_at": "..." }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Trending Hashtags -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/posts/hashtags/trending/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Get top 10 trending hashtags by `use_count`.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "tag": "first", "use_count": 12 },
+  { "tag": "welcome", "use_count": 10 }
+]</pre>
+    </div>
+  </div>
+
+    <!-- List Hashtags -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
       <span>GET /api/posts/hashtags/</span>
       <span class="text-gray-500">➕</span>
     </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve all hashtags. Authentication required. Returns each tag and its use_count.</p>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <p>List all hashtags (ordered by use_count descending).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 [
-  { "id": 1, "tag": "welcome", "use_count": 5 },
-  { "id": 2, "tag": "sabiway", "use_count": 3 }
-]</pre>
+  { "id": 1, "tag": "welcome", "use_count": 15 },
+  { "id": 2, "tag": "sabiway", "use_count": 8 },
+  { "id": 3, "tag": "firstpost", "use_count": 5 }
+]
+</pre>
     </div>
   </div>
 
-  <!-- Single Hashtag -->
+  <!-- Retrieve Hashtag -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
       <span>GET /api/posts/hashtags/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve a single hashtag by ID.</p>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <p>Retrieve a single hashtag by ID.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
-{ "id": 1, "tag": "welcome", "use_count": 5 }</pre>
+{
+  "id": 2,
+  "tag": "sabiway",
+  "use_count": 8
+}
+</pre>
     </div>
   </div>
 
-  <!-- Post-level Comments (list) -->
+  <!-- List Comments -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
       <span>GET /api/posts/&lt;id&gt;/comments/</span>
       <span class="text-gray-500">➕</span>
     </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">List comments for a specific post.</p>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <p>List comments on a post.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 [
   {
-    "id": "8a1b2c3d-....",
-    "user": { "user_id": 6, "username": "@janedoe", "full_name":"Jane Doe", "profile_picture": null },
-    "post": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    "content": "Great post!",
-    "likes_count": 0,
-    "created_at": "2025-09-26T15:00:00Z"
+    "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "user": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+    "post": "550e8400-e29b-41d4-a716-446655440000",
+    "content": "Great post! Really liked it.",
+    "likes_count": 2,
+    "created_at": "2025-09-26T15:05:00Z"
+  },
+  {
+    "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "user": { "user_id": 6, "username": "@janedoe", "full_name": "Jane Doe" },
+    "post": "550e8400-e29b-41d4-a716-446655440000",
+    "content": "Thanks for sharing!",
+    "likes_count": 1,
+    "created_at": "2025-09-26T15:10:00Z"
   }
-]</pre>
+]
+</pre>
     </div>
   </div>
 
-  <!-- Post-level Comments (create) -->
+  <!-- Add Comment -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
       <span>POST /api/posts/&lt;id&gt;/comments/</span>
       <span class="text-gray-500">➕</span>
     </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Create a comment on the post. The view auto-fills `post`.</p>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <p>Add a comment to a post.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-Request Body:
+Request:
 {
-  "content": "Nice explanation!"
+  "content": "Really insightful post!"
 }
 
 Response:
+201 Created
 {
-  "id": "8a1b2c3d-....",
-  "user": { "user_id": 6, "username": "@janedoe", "full_name":"Jane Doe" },
-  "post": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "content": "Nice explanation!",
+  "id": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+  "user": { "user_id": 7, "username": "@michael", "full_name": "Michael Smith" },
+  "post": "550e8400-e29b-41d4-a716-446655440000",
+  "content": "Really insightful post!",
   "likes_count": 0,
-  "created_at": "2025-09-26T15:00:00Z"
-}</pre>
-      <p class="text-sm text-gray-500 mt-2">Note: creating a comment increments the parent post's <code>comments_count</code>.</p>
+  "created_at": "2025-09-26T15:20:00Z"
+}
+</pre>
     </div>
   </div>
 
-  <!-- Post-level Replies (list) -->
+  <!-- List Replies -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
       <span>GET /api/posts/&lt;id&gt;/replies/</span>
       <span class="text-gray-500">➕</span>
     </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">List replies for all comments under the post.</p>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <p>List all replies on comments for a post.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 [
   {
-    "id": "a1b2c3d4-....",
-    "user": { "user_id": 7, "username": "@michael" },
-    "comment": "8a1b2c3d-....",
-    "content": "Thanks!",
+    "id": "b16f3585-6229-4d5b-bdc2-769202586a86",
+    "user": { "user_id": 6, "username": "@janedoe", "full_name": "Jane Doe" },
+    "comment": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "content": "I agree with you!",
+    "likes_count": 1,
+    "created_at": "2025-09-26T15:25:00Z"
+  },
+  {
+    "id": "c47ac10b-58cc-4372-a567-0e02b2c3d480",
+    "user": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+    "comment": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "content": "Thanks for your feedback!",
     "likes_count": 0,
-    "created_at": "2025-09-26T16:00:00Z"
+    "created_at": "2025-09-26T15:30:00Z"
   }
-]</pre>
+]
+</pre>
     </div>
   </div>
 
-  <!-- Comment top-level CRUD (CommentViewSet) -->
-  <div class="endpoint border rounded-2xl shadow-sm bg-white">
-    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>/api/posts/comments/  (CommentViewSet)</span>
-      <span class="text-gray-500">➕</span>
-    </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Top-level comment endpoints (router registered at <code>comments/</code>).</p>
-      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-GET    /api/posts/comments/          -> list all comments
-POST   /api/posts/comments/          -> create (body must include "post": UUID and "content")
-GET    /api/posts/comments/&lt;id&gt;/ -> retrieve
-PUT    /api/posts/comments/&lt;id&gt;/ -> replace
-PATCH  /api/posts/comments/&lt;id&gt;/ -> partial update
-DELETE /api/posts/comments/&lt;id&gt;/ -> delete (decrements post.comments_count)</pre>
-    </div>
-  </div>
+  <!-- Add Reply -->
+<div class="endpoint border rounded-2xl shadow-sm bg-white">
+  <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+    <span>POST /api/posts/replies/</span>
+    <span class="text-gray-500">➕</span>
+  </button>
+  <div class="endpoint-body px-6 pb-6 hidden">
+    <p>Add a reply to a specific comment.</p>
+    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{
+  "comment": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "content": "I totally agree with your comment!"
+}
 
-  <!-- Reply top-level CRUD (ReplyViewSet) -->
-  <div class="endpoint border rounded-2xl shadow-sm bg-white">
-    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>/api/posts/replies/  (ReplyViewSet)</span>
-      <span class="text-gray-500">➕</span>
-    </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Top-level reply endpoints (router registered at <code>replies/</code>).</p>
-      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-GET    /api/posts/replies/          -> list all replies
-POST   /api/posts/replies/          -> create (body must include "comment": UUID and "content")
-GET    /api/posts/replies/&lt;id&gt;/ -> retrieve
-PUT    /api/posts/replies/&lt;id&gt;/ -> replace
-PATCH  /api/posts/replies/&lt;id&gt;/ -> partial update
-DELETE /api/posts/replies/&lt;id&gt;/ -> delete</pre>
-    </div>
+Response:
+201 Created
+{
+  "id": "e12f3585-6229-4d5b-bdc2-769202586a87",
+  "user": { "user_id": 7, "username": "@michael", "full_name": "Michael Smith" },
+  "comment": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "content": "I totally agree with your comment!",
+  "likes_count": 0,
+  "created_at": "2025-09-26T15:35:00Z"
+}
+</pre>
   </div>
+</div>
+
+
 
 </div>
+
+<script>
+document.querySelectorAll('.endpoint button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const body = btn.nextElementSibling;
+    body.classList.toggle('hidden');
+  });
+});
+</script>
 {% endblock %}

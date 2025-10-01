@@ -1,0 +1,96 @@
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-4xl font-bold text-center mb-8">🔍 Sabiway API Documentation - Search</h1>
+<p class="text-center text-gray-600 mb-12">
+  Endpoints for searching posts, profiles, and hashtags.
+</p>
+
+<div id="endpoints" class="space-y-6">
+
+  <!-- Search -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/search/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">
+        Search posts, profiles, or hashtags. The <code>type</code> query parameter is optional and defaults to <code>posts</code> if omitted.
+      </p>
+      <p class="mb-2 text-gray-700">Query parameters:</p>
+      <ul class="mb-2 text-gray-700 list-disc list-inside">
+        <li><strong>q</strong> (string) — search keyword (required)</li>
+        <li><strong>type</strong> (string, optional) — search type: <code>posts</code>, <code>profiles</code>, <code>hashtags</code>. Defaults to <code>posts</code>.</li>
+      </ul>
+
+      <p class="mb-2 text-gray-700 font-semibold">Examples:</p>
+
+      <!-- Posts -->
+      <p class="mb-1 text-gray-700"><strong>Search Posts (default)</strong></p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+GET /api/search/?q=Django
+
+Response:
+[
+  {
+    "id": "b16f3585-6229-4d5b-bdc2-769202586a86",
+    "content": "Learning Django is fun! #django #python",
+    "author": {
+      "user_id": 1,
+      "username": "@johndoe",
+      "full_name": "John Doe",
+      "profile_picture": null
+    },
+    "created_at": "2025-10-01T16:00:00Z",
+    "likes_count": 5,
+    "comments_count": 2,
+    "reposts_count": 1
+  }
+]</pre>
+
+      <!-- Profiles -->
+      <p class="mb-1 text-gray-700"><strong>Search Profiles</strong></p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+GET /api/search/?q=John&type=profiles
+
+Response:
+[
+  {
+    "user_id": 1,
+    "username": "@johndoe",
+    "full_name": "John Doe",
+    "profile_picture": null
+  },
+  {
+    "user_id": 2,
+    "username": "@johnsmith",
+    "full_name": "John Smith",
+    "profile_picture": "https://res.cloudinary.com/demo/image/upload/v123456/johnsmith.jpg"
+  }
+]</pre>
+
+      <!-- Hashtags -->
+      <p class="mb-1 text-gray-700"><strong>Search Hashtags</strong></p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+GET /api/search/?q=django&type=hashtags
+
+Response:
+[
+  {
+    "id": 1,
+    "tag": "django",
+    "use_count": 120
+  },
+  {
+    "id": 2,
+    "tag": "django_rest_framework",
+    "use_count": 45
+  }
+]</pre>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@
 {% block content %}
 <h1 class="text-4xl font-bold text-center mb-8">👤 Sabiway API Documentation - Profiles</h1>
 <p class="text-center text-gray-600 mb-12">
-  Endpoints for managing user profiles and follow system.
+  Endpoints for managing user profiles, follow system, and top contributors.
 </p>
 
 <div id="endpoints" class="space-y-6">
@@ -17,18 +17,19 @@
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve a list of all profiles.</p>
+      <p>Retrieve a list of all profiles.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 [
   {
     "user_id": 1,
-    "username": "johndoe",
+    "username": "@johndoe",
     "full_name": "John Doe",
     "email": "john@example.com",
     "followers_count": 10,
     "following_count": 5,
-    "posts_count": 3
+    "posts_count": 3,
+    "whatsapp_number": "+2348012345678"
   }
 ]</pre>
     </div>
@@ -41,17 +42,18 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve the currently logged-in user’s profile.</p>
+      <p>Retrieve your own profile.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 {
   "user_id": 1,
-  "username": "johndoe",
+  "username": "@johndoe",
   "full_name": "John Doe",
   "email": "john@example.com",
   "followers_count": 10,
   "following_count": 5,
-  "posts_count": 3
+  "posts_count": 3,
+  "whatsapp_number": "+2348012345678"
 }</pre>
     </div>
   </div>
@@ -63,17 +65,18 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Retrieve a single profile by ID.</p>
+      <p>Retrieve a single profile by user ID.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 {
   "user_id": 2,
-  "username": "janedoe",
+  "username": "@janedoe",
   "full_name": "Jane Doe",
   "email": "jane@example.com",
   "followers_count": 15,
   "following_count": 7,
-  "posts_count": 6
+  "posts_count": 6,
+  "whatsapp_number": "+2348098765432"
 }</pre>
     </div>
   </div>
@@ -85,53 +88,56 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Update your own profile details.</p>
+      <p>Update your profile completely.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
-  "full_name": "Johnny Doe"
-}
-
-Response:
-{
-  "user_id": 1,
-  "username": "johndoe",
   "full_name": "Johnny Doe",
-  "email": "john@example.com"
-}</pre>
-    </div>
-  </div>
-
-    <!-- Partial Update Profile -->
-  <div class="endpoint border rounded-2xl shadow-sm bg-white">
-    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>PATCH /api/profiles/&lt;user_id&gt;/</span>
-      <span class="text-gray-500">➕</span>
-    </button>
-    <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">
-        Partially update your own profile. Only send the fields you want to change.
-      </p>
-      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-Request Body:
-{
+  "username": "@johnnydoe",
   "whatsapp_number": "+2348012345678"
 }
 
 Response:
 {
   "user_id": 1,
-  "username": "johndoe",
+  "username": "@johnnydoe",
   "full_name": "Johnny Doe",
   "email": "john@example.com",
-  "whatsapp_number": "+2348012345678",
   "followers_count": 10,
   "following_count": 5,
-  "posts_count": 3
+  "posts_count": 3,
+  "whatsapp_number": "+2348012345678"
 }</pre>
     </div>
   </div>
 
+  <!-- Partial Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /api/profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p>Partially update your profile. Send only the fields you want to change.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "whatsapp_number": "+2348098765432"
+}
+
+Response:
+{
+  "user_id": 1,
+  "username": "@johndoe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3,
+  "whatsapp_number": "+2348098765432"
+}</pre>
+    </div>
+  </div>
 
   <!-- Delete Profile -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
@@ -140,7 +146,7 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Delete your own profile (irreversible).</p>
+      <p>Delete your profile (irreversible).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 {
@@ -156,11 +162,11 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Follow another user.</p>
+      <p>Follow another user.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 {
-  "message": "You are now following janedoe"
+  "detail": "Followed"
 }</pre>
     </div>
   </div>
@@ -172,12 +178,89 @@ Response:
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
-      <p class="mb-2 text-gray-700">Unfollow a user you are currently following.</p>
+      <p>Unfollow a user you are currently following.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
 {
-  "message": "You have unfollowed janedoe"
+  "detail": "Unfollowed"
 }</pre>
+    </div>
+  </div>
+
+  <!-- List Followers -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/profiles/&lt;user_id&gt;/followers/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p>Retrieve a list of all followers of a user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 3,
+    "username": "@alice",
+    "full_name": "Alice Smith",
+    "email": "alice@example.com",
+    "followers_count": 5,
+    "following_count": 8,
+    "posts_count": 2
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- List Following -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/profiles/&lt;user_id&gt;/following/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p>Retrieve a list of all users that a profile is following.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 4,
+    "username": "@bob",
+    "full_name": "Bob Johnson",
+    "email": "bob@example.com",
+    "followers_count": 8,
+    "following_count": 10,
+    "posts_count": 4
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Top Contributors -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/profiles/contributors/top/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p>Retrieve top contributors (based on posts, comments, likes).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 1,
+    "username": "@johndoe",
+    "full_name": "John Doe",
+    "profile_picture": "https://res.cloudinary.com/demo/image/upload/profile1.jpg",
+    "score": 45
+  },
+  {
+    "user_id": 2,
+    "username": "@janedoe",
+    "full_name": "Jane Doe",
+    "profile_picture": "https://res.cloudinary.com/demo/image/upload/profile2.jpg",
+    "score": 38
+  }
+]</pre>
     </div>
   </div>
 

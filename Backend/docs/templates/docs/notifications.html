@@ -1,0 +1,93 @@
+<!-- docs/templates/docs/notifications.html -->
+
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-4xl font-bold text-center mb-8">🔔 Sabiway API Documentation - Notifications</h1>
+<p class="text-center text-gray-600 mb-12">
+  Endpoints for managing user notifications, including listing and marking them as read.
+</p>
+
+<div id="endpoints" class="space-y-6">
+
+  <!-- List Notifications -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /api/notifications/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Retrieve all notifications for the logged-in user, ordered by newest first.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "id": 101,
+    "type": "follow",
+    "actor": {
+      "user_id": 2,
+      "username": "@janedoe",
+      "full_name": "Jane Doe",
+      "profile_picture": "https://res.cloudinary.com/.../janedoe.jpg"
+    },
+    "target_type": null,
+    "target_id": null,
+    "message": "",
+    "is_read": false,
+    "created_at": "2025-10-01T17:20:10Z"
+  },
+  {
+    "id": 102,
+    "type": "like",
+    "actor": {
+      "user_id": 3,
+      "username": "@bobsmith",
+      "full_name": "Bob Smith",
+      "profile_picture": null
+    },
+    "target_type": "post",
+    "target_id": "b16f3585-6229-4d5b-bdc2-769202586a86",
+    "message": "",
+    "is_read": false,
+    "created_at": "2025-10-01T16:55:00Z"
+  },
+  {
+    "id": 103,
+    "type": "comment",
+    "actor": {
+      "user_id": 4,
+      "username": "@alicelee",
+      "full_name": "Alice Lee",
+      "profile_picture": null
+    },
+    "target_type": "comment",
+    "target_id": "7a2f458b-1b3a-4d5f-a7c1-29b7c32d1234",
+    "message": "Nice post!",
+    "is_read": true,
+    "created_at": "2025-10-01T15:45:30Z"
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Mark Notification as Read -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /api/notifications/&lt;id&gt;/read/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Mark a specific notification as read.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+PATCH /api/notifications/101/read/
+
+Response:
+{
+  "detail": "Notification marked as read"
+}</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

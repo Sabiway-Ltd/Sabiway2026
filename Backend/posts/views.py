@@ -1,15 +1,16 @@
 # posts/views.py
-
-from django.shortcuts import render
-from rest_framework import viewsets, status
+from django.shortcuts import render, get_object_or_404
+from rest_framework import viewsets, status, generics, serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .models import Post, Like, Comment, Reply, Hashtag
+from rest_framework.views import APIView
+
+from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost
 from .serializers import (
     PostListSerializer, PostCreateSerializer, PostDetailSerializer,
-    LikeSerializer, CommentSerializer, ReplySerializer, HashtagSerializer
+    LikeSerializer, CommentSerializer, ReplySerializer, HashtagSerializer, BookmarkSerializer,
+    RepostSerializer
 )
 
 
@@ -24,7 +25,8 @@ class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.select_related("author__user").prefetch_related("hashtags").all()
-    permission_classes = [IsAuthenticated]
+    # allow public read but require auth for write actions
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_serializer_class(self):
         if self.action in ("create",):
@@ -48,7 +50,7 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
         post = self.get_object()
-        profile = request.user.profile
+        profile = getattr(request.user, "profile", request.user)
         obj, created = Like.objects.get_or_create(user=profile, post=post)
         if created:
             post.likes_count = post.likes_count + 1
@@ -59,7 +61,7 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="unlike")
     def unlike(self, request, pk=None):
         post = self.get_object()
-        profile = request.user.profile
+        profile = getattr(request.user, "profile", request.user)
         deleted, _ = Like.objects.filter(user=profile, post=post).delete()
         if deleted:
             post.likes_count = max(0, post.likes_count - 1)
@@ -78,7 +80,7 @@ class PostViewSet(viewsets.ModelViewSet):
     def create_comment(self, request, pk=None):
         post = self.get_object()
         data = request.data.copy()
-        data["post"] = str(post.id)  # serializer expects PK; serializers will accept UUID str
+        data["post"] = str(post.id)  # serializer expects PK; serializers accept UUID str
         serializer = CommentSerializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         comment = serializer.save()
@@ -87,12 +89,9 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"], url_path="replies")
     def list_replies(self, request, pk=None):
         post = self.get_object()
-        # return all replies for all comments on the post (optional)
         replies = Reply.objects.filter(comment__post=post).select_related("user__user")
         serializer = ReplySerializer(replies, many=True)
         return Response(serializer.data)
-
-    # you can also create reply via comment-level endpoint (see CommentViewSet below)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -114,37 +113,56 @@ class ReplyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+class LikeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for creating, listing, and deleting likes directly.
+    (Optional — since you already have post/<id>/like endpoints.)
+    """
+    queryset = Like.objects.select_related("user__user", "post").all()
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        user = self.request.user  # always the auth user
+        post = serializer.validated_data["post"]
+
+        # Prevent duplicate likes by user_id + post_id
+        like, created = Like.objects.get_or_create(user=user, post=post)
+        if not created:
+            raise serializers.ValidationError({"detail": "Already liked"})
+        return like
+
+    def perform_destroy(self, instance):
+        # When a like is deleted, decrement the post likes_count
+        post = instance.post
+        if post.likes_count > 0:
+            post.likes_count = max(0, post.likes_count - 1)
+            post.save(update_fields=["likes_count"])
+        instance.delete()
 
 
-
-
-
-
-from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .models import Post, Bookmark
-from .serializers import BookmarkSerializer
 
 class BookmarkPostView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = BookmarkSerializer
 
     def post(self, request, *args, **kwargs):
-        post = get_object_or_404(Post, id=kwargs["id"])
-        bookmark, created = Bookmark.objects.get_or_create(user=request.user, post=post)
+        # accept either "id" or "pk" in URL kwargs
+        post = get_object_or_404(Post, id=kwargs.get("id") or kwargs.get("pk"))
+        user_obj = getattr(request.user, "profile", request.user)
+        bookmark, created = Bookmark.objects.get_or_create(user=user_obj, post=post)
         if not created:
             return Response({"detail": "Already bookmarked"}, status=status.HTTP_200_OK)
-        return Response(BookmarkSerializer(bookmark).data, status=status.HTTP_201_CREATED)
+        return Response(BookmarkSerializer(bookmark, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class UnbookmarkPostView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        post = get_object_or_404(Post, id=kwargs["id"])
-        deleted, _ = Bookmark.objects.filter(user=request.user, post=post).delete()
+        post = get_object_or_404(Post, id=kwargs.get("id") or kwargs.get("pk"))
+        user_obj = getattr(request.user, "profile", request.user)
+        deleted, _ = Bookmark.objects.filter(user=user_obj, post=post).delete()
         if deleted:
             return Response({"detail": "Unbookmarked"}, status=status.HTTP_204_NO_CONTENT)
         return Response({"detail": "Not bookmarked"}, status=status.HTTP_400_BAD_REQUEST)
@@ -155,4 +173,73 @@ class MyBookmarksView(generics.ListAPIView):
     serializer_class = BookmarkSerializer
 
     def get_queryset(self):
-        return Bookmark.objects.filter(user=self.request.user).select_related("post").order_by("-created_at")
+        user_obj = getattr(self.request.user, "profile", self.request.user)
+        return Bookmark.objects.filter(user=user_obj).select_related("post").order_by("-created_at")
+
+
+class RepostView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        profile = getattr(request.user, "profile", request.user)
+        post = get_object_or_404(Post, id=id)
+        message = request.data.get("message", None)
+
+        repost, created = Repost.objects.get_or_create(user=profile, post=post)
+        if not created:  # already reposted
+            return Response({"detail": "Already reposted"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if message:
+            repost.message = message
+            repost.save(update_fields=["message"])
+
+        # 🔥 increment reposts_count
+        post.reposts_count = post.reposts_count + 1
+        post.save(update_fields=["reposts_count"])
+
+        serializer = RepostSerializer(repost, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UnrepostView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id, repost_id):
+        profile = getattr(request.user, "profile", request.user)
+        repost = get_object_or_404(Repost, id=repost_id, user=profile, post_id=id)
+        post = repost.post
+        repost.delete()
+
+        # 🔥 decrement reposts_count safely
+        post.reposts_count = max(0, post.reposts_count - 1)
+        post.save(update_fields=["reposts_count"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+class MyRepostsView(generics.ListAPIView):
+    serializer_class = RepostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user_obj = getattr(self.request.user, "profile", self.request.user)
+        return Repost.objects.filter(user=user_obj).order_by("-created_at")
+    
+class RepostViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Public endpoint to list or retrieve reposts (all users).
+    """
+    queryset = Repost.objects.select_related("user__user", "post__author__user").all().order_by("-created_at")
+    serializer_class = RepostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+
+class TrendingHashtagsView(generics.ListAPIView):
+    serializer_class = HashtagSerializer
+
+    def get_queryset(self):
+        return Hashtag.objects.order_by("-use_count")[:10]
+

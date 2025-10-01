@@ -1,51 +1,68 @@
+# profiles/views.py
+
 from rest_framework import viewsets, status, generics, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Profile, Follow
+from .models import Profile, Follow, generate_initials
 from .serializers import ProfileSerializer
 from .permissions import IsProfileOwnerOrReadOnly
+from django.db.models import F
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.select_related("user").all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated, IsProfileOwnerOrReadOnly]
-    lookup_field = "user_id"   # we want to use the related User’s id in URLs
+    lookup_field = "user_id"
 
     def get_object(self):
-        """Override to fetch profile by user_id instead of profile pk."""
         user_id = self.kwargs.get(self.lookup_field)
         return get_object_or_404(Profile, user__id=user_id)
+
+    def get_or_create_profile(self, user):
+        """Ensure user always has a profile"""
+        profile, _ = Profile.objects.get_or_create(
+            user=user,
+            defaults={
+                "full_name": getattr(user, "full_name", None) or user.email.split("@")[0],
+                "initials": generate_initials(getattr(user, "full_name", None) or user.email.split("@")[0]),
+                "username": f"@{user.email.split('@')[0]}",
+            }
+        )
+        return profile
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def follow(self, request, user_id=None):
         target = self.get_object()
-        follower_profile = request.user.profile
+        follower_profile = self.get_or_create_profile(request.user)
 
         if follower_profile == target:
             return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
         obj, created = Follow.objects.get_or_create(follower=follower_profile, following=target)
         if created:
-            follower_profile.following_count += 1
+            # Update counts using the correct related_names
+            follower_profile.following_count = follower_profile.following_rel.count()
             follower_profile.save(update_fields=["following_count"])
-            target.followers_count += 1
+            target.followers_count = target.followers_rel.count()
             target.save(update_fields=["followers_count"])
             return Response({"detail": "Followed"}, status=status.HTTP_201_CREATED)
+
         return Response({"detail": "Already following"}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def unfollow(self, request, user_id=None):
         target = self.get_object()
-        follower_profile = request.user.profile
+        follower_profile = self.get_or_create_profile(request.user)
 
         deleted, _ = Follow.objects.filter(follower=follower_profile, following=target).delete()
         if deleted:
-            follower_profile.following_count = max(0, follower_profile.following_count - 1)
+            # Update counts using the correct related_names
+            follower_profile.following_count = follower_profile.following_rel.count()
             follower_profile.save(update_fields=["following_count"])
-            target.followers_count = max(0, target.followers_count - 1)
+            target.followers_count = target.followers_rel.count()
             target.save(update_fields=["followers_count"])
             return Response({"detail": "Unfollowed"}, status=status.HTTP_200_OK)
 
@@ -68,10 +85,37 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
-    queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user.profile
+        """Return the profile of the logged-in user"""
+        # Profile ID now matches User ID
+        profile, _ = Profile.objects.get_or_create(
+            user=self.request.user,
+            defaults={
+                "full_name": getattr(self.request.user, "full_name", None) or self.request.user.email.split("@")[0],
+                "initials": generate_initials(getattr(self.request.user, "full_name", None) or self.request.user.email.split("@")[0]),
+                "username": f"@{self.request.user.email.split('@')[0]}",
+            }
+        )
+        return profile
+
+
+class TopContributorsView(generics.ListAPIView):
+    def list(self, request):
+        contributors = Profile.objects.annotate(
+            score=F("posts_count") + F("comments_count") + F("likes_received")
+        ).order_by("-score")[:10]
+
+        data = [{
+            "user_id": p.pk,  # profile ID == user ID
+            "username": p.username,
+            "full_name": p.full_name,
+            "profile_picture": str(p.profile_picture) if p.profile_picture else None,
+            "score": p.score,
+        } for p in contributors]
+
+        return Response(data)

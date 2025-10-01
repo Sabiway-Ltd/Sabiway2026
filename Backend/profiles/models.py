@@ -1,7 +1,7 @@
-# profiles/models.py
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+from cloudinary.models import CloudinaryField
 
 User = settings.AUTH_USER_MODEL
 
@@ -24,18 +24,18 @@ def base_username_from_fullname(full_name: str) -> str:
     return slugify(base)
 
 
-from django.db import models
-from accounts.models import User
-from cloudinary.models import CloudinaryField
-
-
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    # Use the User FK as the primary key so profile.id == user.id
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name="profile"
+    )
     full_name = models.CharField(max_length=255)
     initials = models.CharField(max_length=5, blank=True)
-    email = models.EmailField()  # copied from user; read-only in API
     username = models.CharField(max_length=64, unique=True)  # stored like @first_last or @first_last_1
-    
+
     # Cloudinary field for profile pictures
     profile_picture = CloudinaryField("image", blank=True, null=True)
 
@@ -53,9 +53,7 @@ class Profile(models.Model):
         return f"{self.username} ({self.full_name})"
 
 
-
 class Follow(models.Model):
-    id = models.BigAutoField(primary_key=True)
     follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="following_rel")
     following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="followers_rel")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,6 +67,3 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"{self.follower.username} -> {self.following.username}"
-    
-
-    

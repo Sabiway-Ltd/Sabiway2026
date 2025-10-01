@@ -25,4 +25,8 @@ urlpatterns = [
     path("docs/", include("docs.urls")),  # 👈 docs app
     path("api/profiles/", include("profiles.urls")),
     path("api/posts/", include("posts.urls")),
+    path("api/search/", include("search.urls")),
+    path("api/notifications/", include("notifications.urls")),
+
+    
 ]
