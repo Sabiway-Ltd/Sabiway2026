@@ -7,6 +7,7 @@ import re
 import uuid
 import cloudinary.models
 
+
 # Profile model path
 from profiles.models import Profile
 
@@ -101,3 +102,12 @@ class Reply(models.Model):
 
     def __str__(self):
         return f"Reply {self.id} by {self.user.username}"
+
+
+class Bookmark(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookmarks")
+    post = models.ForeignKey("posts.Post", on_delete=models.CASCADE, related_name="bookmarked_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "post")

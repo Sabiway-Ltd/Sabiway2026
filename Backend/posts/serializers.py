@@ -1,7 +1,7 @@
 # posts/serializers.py
 
 from rest_framework import serializers
-from .models import Post, Hashtag, Like, Comment, Reply
+from .models import Post, Hashtag, Like, Comment, Reply, Bookmark
 from profiles.models import Profile
 
 
@@ -158,3 +158,11 @@ class ReplySerializer(serializers.ModelSerializer):
             user=profile, comment=comment, content=validated_data["content"]
         )
         return reply
+
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    post = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Bookmark
+        fields = ["id", "post", "created_at"]

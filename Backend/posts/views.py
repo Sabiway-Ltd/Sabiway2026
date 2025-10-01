@@ -112,3 +112,47 @@ class ReplyViewSet(viewsets.ModelViewSet):
     queryset = Reply.objects.select_related("user__user", "comment__post").all()
     serializer_class = ReplySerializer
     permission_classes = [IsAuthenticated]
+
+
+
+
+
+
+
+
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from .models import Post, Bookmark
+from .serializers import BookmarkSerializer
+
+class BookmarkPostView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
+
+    def post(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, id=kwargs["id"])
+        bookmark, created = Bookmark.objects.get_or_create(user=request.user, post=post)
+        if not created:
+            return Response({"detail": "Already bookmarked"}, status=status.HTTP_200_OK)
+        return Response(BookmarkSerializer(bookmark).data, status=status.HTTP_201_CREATED)
+
+
+class UnbookmarkPostView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, id=kwargs["id"])
+        deleted, _ = Bookmark.objects.filter(user=request.user, post=post).delete()
+        if deleted:
+            return Response({"detail": "Unbookmarked"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"detail": "Not bookmarked"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyBookmarksView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
+
+    def get_queryset(self):
+        return Bookmark.objects.filter(user=self.request.user).select_related("post").order_by("-created_at")

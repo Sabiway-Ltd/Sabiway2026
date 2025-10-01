@@ -24,5 +24,5 @@ urlpatterns = [
     path("api/auth/", include("accounts.urls")),
     path("docs/", include("docs.urls")),  # 👈 docs app
     path("api/profiles/", include("profiles.urls")),
-    path("api/posts/", include("posts.urls"))
+    path("api/posts/", include("posts.urls")),
 ]
