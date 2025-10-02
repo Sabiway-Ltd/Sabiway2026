@@ -53,7 +53,7 @@ export default function CommentThread({
           <p className="text-gray-800 text-sm">{content}</p>
 
           {/* Action bar */}
-          <div className="flex gap-x-6 justify-between text-gray-500 mt-2 ">
+          <div className="flex lg:gap-x-6 md:gap-x-4 gap-x-3 justify-between text-gray-800 mt-2 ">
             {/* Like */}
             <button
               className="flex items-center gap-1"

@@ -1,3 +1,5 @@
+// app/_components/PostBox.tsx
+
 "use client";
 
 import Image from "next/image";

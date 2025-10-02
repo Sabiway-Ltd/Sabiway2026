@@ -58,7 +58,7 @@ export default function PostCard({
     : content.slice(0, charLimit) + (shouldTruncate ? "..." : "");
 
   return (
-    <div className="border-b border-gray-200 p-4 bg-white rounded-xl shadow-sm">
+    <div className=" p-4 ">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Image
@@ -103,7 +103,7 @@ export default function PostCard({
       )}
 
       {/* Actions */}
-      <div className="flex justify-between text-gray-500 mt-3">
+      <div className="flex justify-between text-gray-800 mt-3 lg:w-[40%] md:w-[60%]">
         {/* Like */}
         <button
           className="flex items-center gap-1"

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Bell, Plus, Search, Menu, X } from "lucide-react";
-import PostBox from "./PostBox";
 
-export default function CommunityNavbar() {
+interface CommunityNavbarProps {
+  onCreatePost: () => void;
+}
+
+export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showPostBox, setShowPostBox] = useState(false);
 
   return (
     <>
@@ -39,7 +41,7 @@ export default function CommunityNavbar() {
           <div className="flex items-center space-x-3 sm:space-x-4">
             {/* Desktop Create Post */}
             <button
-              onClick={() => setShowPostBox(true)}
+              onClick={onCreatePost}
               className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
             >
               <span className="bg-white text-black text-xs w-7 h-7 flex items-center justify-center rounded-full font-semibold">
@@ -80,7 +82,7 @@ export default function CommunityNavbar() {
             onClick={() => setMenuOpen(false)}
           >
             <div
-              className="bg-white w-[60%] sm:w-1/2 max-w-xs h-full shadow-lg flex flex-col p-5"
+              className="bg-white w-[80%] sm:w-1/2 max-w-xs h-full shadow-lg flex flex-col p-5"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -104,7 +106,7 @@ export default function CommunityNavbar() {
               {/* Mobile Create Post */}
               <button
                 onClick={() => {
-                  setShowPostBox(true);
+                  onCreatePost();
                   setMenuOpen(false);
                 }}
                 className="flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-3 text-sm font-medium text-white"
@@ -119,9 +121,6 @@ export default function CommunityNavbar() {
           </div>
         )}
       </nav>
-
-      {/* PostBox (below navbar) */}
-      <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
     </>
   );
 }

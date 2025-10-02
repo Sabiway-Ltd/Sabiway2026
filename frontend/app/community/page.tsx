@@ -1,11 +1,14 @@
-// app/community/page.tsx
+"use client";
 
-'use client'
-
+import { useState } from "react";
 import CommunityNavbar from "../_components/CommunityNavbar";
 import PostCard from "../_components/feed/PostCard";
+import Aside from "../_components/feed/Aside";
+import PostBox from "../_components/PostBox";
 
 export default function Community() {
+  const [showPostBox, setShowPostBox] = useState(false);
+
   // Mock data (replace with API later)
   const posts = [
     {
@@ -15,8 +18,10 @@ export default function Community() {
         username: "johndoe",
         avatar: "https://i.pravatar.cc/150?img=1",
       },
-      content: "Lorem ipsum dolor, lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolorLorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor Show more",
-      image: "https://res.cloudinary.com/devqbjptr/image/upload/v1759402383/image_b8hxtw.png",
+      content:
+        "Lorem ipsum dolor, lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolorLorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor lorem ipusm dolor Show more",
+      image:
+        "https://res.cloudinary.com/devqbjptr/image/upload/v1759402383/image_b8hxtw.png",
       likes: 12,
       comments: 4,
       impressions: 150,
@@ -43,7 +48,6 @@ export default function Community() {
               content: "Agreed! Super clean UI 🚀",
               likes: 1,
               comments: 0,
-
               impressions: 5,
             },
           ],
@@ -58,7 +62,8 @@ export default function Community() {
         avatar: "https://i.pravatar.cc/150?img=4",
       },
       content: "Loving the new design! What do you guys think?",
-      image: "https://res.cloudinary.com/devqbjptr/image/upload/v1759402383/image_b8hxtw.png",
+      image:
+        "https://res.cloudinary.com/devqbjptr/image/upload/v1759402383/image_b8hxtw.png",
       likes: 30,
       comments: 10,
       impressions: 300,
@@ -85,7 +90,8 @@ export default function Community() {
         avatar: "https://i.pravatar.cc/150?img=6",
       },
       content: "Working on adding comments and replies to the feed 👨‍💻🔥",
-      image: "https://res.cloudinary.com/devqbjptr/image/upload/v1759402383/image_b8hxtw.png",
+      image:
+        "https://res.cloudinary.com/devqbjptr/image/upload/v1759402383/image_b8hxtw.png",
       likes: 7,
       comments: 1,
       impressions: 80,
@@ -112,7 +118,6 @@ export default function Community() {
               content: "That’s what I’m working on 😉",
               likes: 2,
               comments: 0,
-
               impressions: 10,
             },
           ],
@@ -124,29 +129,34 @@ export default function Community() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <CommunityNavbar />
+      <CommunityNavbar onCreatePost={() => setShowPostBox(true)} />
 
-        <section>
-      {/* Feed */}
-      <main className=" mt-4 bg-white border-x border-gray-200">
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            author={post.author}
-            content={post.content}
-            image={post.image}
-            likes={post.likes}
-            comments={post.comments}
-            impressions={post.impressions}
-            commentsData={post.commentsData}
-          />
-        ))}
-      </main>
+      <section className="flex justify-center gap-14 px-4">
+        {/* Feed */}
+        <main className="flex-[3] mt-4">
+          <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
-      <div>
-        <p>Hello Here</p>
-      </div>
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              author={post.author}
+              content={post.content}
+              image={post.image}
+              likes={post.likes}
+              comments={post.comments}
+              impressions={post.impressions}
+              commentsData={post.commentsData}
+            />
+          ))}
+        </main>
+
+        {/* Right Sidebar */}
+        <aside className="hidden lg:block flex-[1] mt-4 border-l border-gray-200 pl-6">
+          <Aside />
+        </aside>
       </section>
     </div>
+
+
   );
 }
