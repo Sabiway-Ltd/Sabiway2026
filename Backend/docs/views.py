@@ -2,6 +2,10 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
+
+class BaseDocsView(TemplateView):
+    template_name = "docs/base.html"
+
 class AuthDocsView(TemplateView):
     template_name = "docs/auth.html"
 

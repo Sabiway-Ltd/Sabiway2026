@@ -11,10 +11,11 @@
   <!-- List Posts -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/</span>
+      <span>GET /posts/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Retrieve a paginated list of posts. <strong>Authentication optional for read.</strong></p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response (example):
@@ -39,10 +40,11 @@ Response (example):
   <!-- Create Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/posts/</span>
+      <span>POST /posts/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Create a new post. `content` required, `image` optional. Hashtags are auto-parsed.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request (multipart/form-data or JSON):
@@ -71,10 +73,11 @@ Response (example):
   <!-- Retrieve Single Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/&lt;id&gt;/</span>
+      <span>GET /posts/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Retrieve a single post by UUID.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response: same shape as list item
@@ -96,10 +99,11 @@ Response: same shape as list item
   <!-- Update (PUT) Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>PUT /api/posts/&lt;id&gt;/</span>
+      <span>PUT /posts/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Replace a post's content/image. Hashtags are re-parsed and counts updated.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
@@ -115,10 +119,11 @@ Response: updated post object (same shape as retrieve)</pre>
   <!-- Partial Update (PATCH) Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>PATCH /api/posts/&lt;id&gt;/</span>
+      <span>PATCH /posts/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Partially update a post. Send only fields to modify.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
@@ -131,10 +136,11 @@ Response: updated post object</pre>
   <!-- Delete Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>DELETE /api/posts/&lt;id&gt;/</span>
+      <span>DELETE /posts/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Delete a post. Decrements `posts_count` and hashtags `use_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -145,10 +151,11 @@ Response:
   <!-- Like Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/posts/&lt;id&gt;/like/</span>
+      <span>POST /posts/&lt;id&gt;/like/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/like/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Like a post. Creates a Like if not already liked and increments `likes_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Responses:
@@ -160,10 +167,11 @@ Responses:
   <!-- Like endpoints (via LikeViewSet) -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/likes/</span>
+      <span>POST /posts/likes/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/likes/">Copy Endpoint</button>
       <p>Create a like via the direct Like endpoint (optional alternative to post/&lt;id&gt;/like/).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request:
@@ -186,10 +194,11 @@ Response:
   <!-- Unlike Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/posts/&lt;id&gt;/unlike/</span>
+      <span>POST /posts/&lt;id&gt;/unlike/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/unlike/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Remove your like. Decrements `likes_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Responses:
@@ -201,10 +210,11 @@ Responses:
   <!-- Bookmark Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/posts/&lt;id&gt;/bookmark/</span>
+      <span>POST /posts/&lt;id&gt;/bookmark/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/bookmark/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Bookmark a post for the authenticated user.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Responses:
@@ -216,10 +226,11 @@ Responses:
   <!-- Unbookmark Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>DELETE /api/posts/&lt;id&gt;/unbookmark/</span>
+      <span>DELETE /posts/&lt;id&gt;/unbookmark/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/unbookmark/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Remove a bookmark.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Responses:
@@ -231,10 +242,11 @@ Responses:
   <!-- My Bookmarks -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/me/bookmarks/</span>
+      <span>GET /posts/me/bookmarks/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/me/bookmarks/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">List bookmarks of the authenticated user.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -247,10 +259,11 @@ Response:
   <!-- Repost Post -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/posts/&lt;id&gt;/repost/</span>
+      <span>POST /posts/&lt;id&gt;/repost/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/repost/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Repost a post. Optional message.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request:
@@ -265,10 +278,11 @@ Responses:
   <!-- Unrepost -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>DELETE /api/posts/&lt;id&gt;/repost/&lt;repost_id&gt;/</span>
+      <span>DELETE /posts/&lt;id&gt;/repost/&lt;repost_id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/repost/<repost_id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Remove a repost.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 204 No Content -> repost removed</pre>
@@ -278,10 +292,11 @@ Responses:
   <!-- My Reposts -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/me/reposts/</span>
+      <span>GET /posts/me/reposts/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/me/reposts/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">List reposts of the authenticated user.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -294,10 +309,11 @@ Response:
   <!-- Trending Hashtags -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/hashtags/trending/</span>
+      <span>GET /posts/hashtags/trending/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/hashtags/trending/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Get top 10 trending hashtags by `use_count`.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -311,10 +327,11 @@ Response:
     <!-- List Hashtags -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/hashtags/</span>
+      <span>GET /posts/hashtags/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/hashtags/">Copy Endpoint</button>
       <p>List all hashtags (ordered by use_count descending).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -330,10 +347,11 @@ Response:
   <!-- Retrieve Hashtag -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/hashtags/&lt;id&gt;/</span>
+      <span>GET /posts/hashtags/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/hashtags/<id>/">Copy Endpoint</button>
       <p>Retrieve a single hashtag by ID.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -349,10 +367,11 @@ Response:
   <!-- List Comments -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/&lt;id&gt;/comments/</span>
+      <span>GET /posts/&lt;id&gt;/comments/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/<id>/comments/">Copy Endpoint</button>
       <p>List comments on a post.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -381,10 +400,11 @@ Response:
   <!-- Add Comment -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/posts/&lt;id&gt;/comments/</span>
+      <span>POST /posts/&lt;id&gt;/comments/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/<id>/comments/">Copy Endpoint</button>
       <p>Add a comment to a post.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request:
@@ -409,10 +429,11 @@ Response:
   <!-- List Replies -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/posts/&lt;id&gt;/replies/</span>
+      <span>GET /posts/&lt;id&gt;/replies/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/<id>/replies/">Copy Endpoint</button>
       <p>List all replies on comments for a post.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -441,10 +462,11 @@ Response:
   <!-- Add Reply -->
 <div class="endpoint border rounded-2xl shadow-sm bg-white">
   <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-    <span>POST /api/posts/replies/</span>
+    <span>POST /posts/replies/</span>
     <span class="text-gray-500">➕</span>
   </button>
   <div class="endpoint-body px-6 pb-6 hidden">
+    <button class="copyButton" data-url="/posts/replies/">Copy Endpoint</button>
     <p>Add a reply to a specific comment.</p>
     <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request:

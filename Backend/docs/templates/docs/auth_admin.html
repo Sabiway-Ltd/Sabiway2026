@@ -13,10 +13,11 @@
   <!-- List Users -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/auth/users/</span>
+      <span>GET /auth/users/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Retrieve a list of all users (admin only).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -44,10 +45,11 @@ Response:
   <!-- Retrieve Single User -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/auth/users/&lt;id&gt;/</span>
+      <span>GET /auth/users/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Retrieve details of a single user (admin only).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -65,10 +67,11 @@ Response:
   <!-- Create User -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>POST /api/auth/users/</span>
+      <span>POST /auth/users/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Create a new user (admin only).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
@@ -93,10 +96,11 @@ Response:
   <!-- Update User -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>PUT /api/auth/users/&lt;id&gt;/</span>
+      <span>PUT /auth/users/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Update an existing user (admin only).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
@@ -122,10 +126,11 @@ Response:
     <!-- Partial Update User -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>PATCH /api/auth/users/&lt;id&gt;/</span>
+      <span>PATCH /auth/users/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Partially update a user (admin only). Send only the fields you want to update.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
@@ -149,10 +154,11 @@ Response:
   <!-- Delete User -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>DELETE /api/auth/users/&lt;id&gt;/</span>
+      <span>DELETE /auth/users/&lt;id&gt;/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Delete a user (admin only).</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:

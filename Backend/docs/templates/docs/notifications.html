@@ -13,10 +13,11 @@
   <!-- List Notifications -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/notifications/</span>
+      <span>GET /notifications/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/notifications/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Retrieve all notifications for the logged-in user, ordered by newest first.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Response:
@@ -73,14 +74,15 @@ Response:
   <!-- Mark Notification as Read -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>PATCH /api/notifications/&lt;id&gt;/read/</span>
+      <span>PATCH /notifications/&lt;id&gt;/read/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/notifications/<id>/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">Mark a specific notification as read.</p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request:
-PATCH /api/notifications/101/read/
+PATCH /notifications/101/read/
 
 Response:
 {

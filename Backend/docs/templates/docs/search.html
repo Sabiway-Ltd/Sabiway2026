@@ -11,10 +11,11 @@
   <!-- Search -->
   <div class="endpoint border rounded-2xl shadow-sm bg-white">
     <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-      <span>GET /api/search/</span>
+      <span>GET /search/</span>
       <span class="text-gray-500">➕</span>
     </button>
     <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/search/">Copy Endpoint</button>
       <p class="mb-2 text-gray-700">
         Search posts, profiles, or hashtags. The <code>type</code> query parameter is optional and defaults to <code>posts</code> if omitted.
       </p>
@@ -29,7 +30,7 @@
       <!-- Posts -->
       <p class="mb-1 text-gray-700"><strong>Search Posts (default)</strong></p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-GET /api/search/?q=Django
+GET /search/?q=Django
 
 Response:
 [
@@ -52,7 +53,7 @@ Response:
       <!-- Profiles -->
       <p class="mb-1 text-gray-700"><strong>Search Profiles</strong></p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-GET /api/search/?q=John&type=profiles
+GET /search/?q=John&type=profiles
 
 Response:
 [
@@ -73,7 +74,7 @@ Response:
       <!-- Hashtags -->
       <p class="mb-1 text-gray-700"><strong>Search Hashtags</strong></p>
       <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-GET /api/search/?q=django&type=hashtags
+GET /search/?q=django&type=hashtags
 
 Response:
 [
