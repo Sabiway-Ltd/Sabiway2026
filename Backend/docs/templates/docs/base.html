@@ -13,13 +13,24 @@
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 flex">
-  <!-- Sidebar --> 
-  <aside class="w-64 h-screen bg-white border-r border-gray-200 fixed flex flex-col">
-    <div class="p-6">
-      <h1 class="text-xl font-bold text-indigo-600">
+
+  <!-- Mobile Navbar -->
+  <header class="lg:hidden w-full flex items-center justify-between bg-white border-b px-4 py-3 fixed top-0 left-0 z-50">
+    <h1 class="text-lg font-bold text-indigo-600">
+      <a href="{% url 'api-base-docs' %}">Sabiway API Docs</a>
+    </h1>
+    <button id="menu-toggle" class="text-gray-600 focus:outline-none">
+      ☰
+    </button>
+  </header>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 h-screen bg-white border-r border-gray-200 fixed flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-40">
+    <div class="p-6 pt-16 lg:pt-6"> <!-- add spacing for mobile navbar -->
+      <h1 class="text-xl font-bold text-indigo-600 hidden lg:block">
         <a href="{% url 'api-base-docs' %}">Sabiway API Docs</a>
       </h1>
-      
+
       <!-- Base URL -->
       <div class="mt-4 p-3 bg-gray-100 rounded border border-gray-200">
         <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Base URL</p>
@@ -35,161 +46,136 @@
     <nav class="px-4 flex-1 overflow-y-auto">
       <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Public APIs</h2>
       <ul class="mb-6">
-        <li>
-          <a href="{% url 'api-auth-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Auth</a>
-        </li>
-        <li>
-          <a href="{% url 'api-profile-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles</a>
-        </li>
-        <li>
-          <a href="{% url 'api-posts-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Posts</a>
-        </li>
-        <li>
-          <a href="{% url 'api-notifications-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Notifications</a>
-        </li>
-        <li>
-          <a href="{% url 'api-search-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Search</a>
-        </li>
+        <li><a href="{% url 'api-auth-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Auth</a></li>
+        <li><a href="{% url 'api-profile-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles</a></li>
+        <li><a href="{% url 'api-posts-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Posts</a></li>
+        <li><a href="{% url 'api-notifications-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Notifications</a></li>
+        <li><a href="{% url 'api-search-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Search</a></li>
       </ul>
 
       <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Admin APIs</h2>
       <ul>
-        <li>
-          <a href="{% url 'api-auth-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Auth Admin</a>
-        </li>
-        <li>
-          <a href="{% url 'api-profile-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles Admin</a>
-        </li>
-        <li>
-          <a href="{% url 'api-posts-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Posts Admin</a>
-        </li>
+        <li><a href="{% url 'api-auth-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Auth Admin</a></li>
+        <li><a href="{% url 'api-profile-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Profiles Admin</a></li>
+        <li><a href="{% url 'api-posts-admin-docs' %}" class="block py-2 px-2 rounded hover:bg-indigo-50 hover:text-indigo-600">Posts Admin</a></li>
       </ul>
     </nav>
   </aside>
 
   <!-- Toast Notification -->
-  <div id="toast" class="fixed top-5 right-5 bg-gray-800 text-white px-4 py-2 rounded shadow-lg text-sm opacity-0 transform translate-y-4 transition-all duration-300">
+  <div id="toast" class="fixed top-16 right-5 bg-gray-800 text-white px-4 py-2 rounded shadow-lg text-sm opacity-0 transform translate-y-4 transition-all duration-300">
     ✅ copied!
   </div>
 
- 
-
-
-
   <!-- Main Content -->
-  <main class="ml-64 flex-1 p-10 overflow-y-auto">
+  <main class="flex-1 p-6 lg:ml-64 mt-14 lg:mt-0 overflow-y-auto">
     {% block content %}
-    <!-- Hero Section -->
-    <section class="text-center mb-12">
-      <h1 class="text-4xl font-extrabold text-indigo-600">Welcome to the Sabiway API</h1>
-      <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-        The Sabiway API allows developers to build applications with access to authentication, user profiles, posts, notifications, and more.
-      </p>
-      <p class="mt-2 text-gray-500">
-        Base URL: <code class="text-indigo-600 font-mono">https://sabiway-9wq4.onrender.com/api</code>
-      </p>
-    </section>
+      <!-- Hero Section -->
+      <section class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold text-indigo-600">Welcome to the Sabiway API</h1>
+        <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+          The Sabiway API allows developers to build applications with access to authentication, user profiles, posts, notifications, and more.
+        </p>
+        <p class="mt-2 text-gray-500">
+          Base URL: <code class="text-indigo-600 font-mono">https://sabiway-9wq4.onrender.com/api</code>
+        </p>
+      </section>
 
-    <!-- Features / Endpoints Overview -->
-    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
-        <h2 class="text-xl font-semibold text-indigo-600">🔐 Authentication</h2>
-        <p class="text-gray-600 mt-2">Endpoints to handle user registration, login, logout, and token refresh.</p>
-        <a href="{% url 'api-auth-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
-      </div>
+      <!-- Features / Endpoints Overview -->
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
+          <h2 class="text-xl font-semibold text-indigo-600">🔐 Authentication</h2>
+          <p class="text-gray-600 mt-2">Endpoints to handle user registration, login, logout, and token refresh.</p>
+          <a href="{% url 'api-auth-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
+        </div>
 
-      <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
-        <h2 class="text-xl font-semibold text-indigo-600">👤 Profiles</h2>
-        <p class="text-gray-600 mt-2">Manage user profile data, including fetching and updating user information.</p>
-        <a href="{% url 'api-profile-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
-      </div>
+        <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
+          <h2 class="text-xl font-semibold text-indigo-600">👤 Profiles</h2>
+          <p class="text-gray-600 mt-2">Manage user profile data, including fetching and updating user information.</p>
+          <a href="{% url 'api-profile-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
+        </div>
 
-      <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
-        <h2 class="text-xl font-semibold text-indigo-600">📝 Posts</h2>
-        <p class="text-gray-600 mt-2">Create, read, update, and delete posts shared by users.</p>
-        <a href="{% url 'api-posts-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
-      </div>
+        <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
+          <h2 class="text-xl font-semibold text-indigo-600">📝 Posts</h2>
+          <p class="text-gray-600 mt-2">Create, read, update, and delete posts shared by users.</p>
+          <a href="{% url 'api-posts-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
+        </div>
 
-      <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
-        <h2 class="text-xl font-semibold text-indigo-600">🔔 Notifications</h2>
-        <p class="text-gray-600 mt-2">Stay updated with user activity through real-time notifications.</p>
-        <a href="{% url 'api-notifications-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
-      </div>
+        <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
+          <h2 class="text-xl font-semibold text-indigo-600">🔔 Notifications</h2>
+          <p class="text-gray-600 mt-2">Stay updated with user activity through real-time notifications.</p>
+          <a href="{% url 'api-notifications-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
+        </div>
 
-      <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
-        <h2 class="text-xl font-semibold text-indigo-600">🔎 Search</h2>
-        <p class="text-gray-600 mt-2">Powerful search functionality to discover users, posts, and more.</p>
-        <a href="{% url 'api-search-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
-      </div>
+        <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
+          <h2 class="text-xl font-semibold text-indigo-600">🔎 Search</h2>
+          <p class="text-gray-600 mt-2">Powerful search functionality to discover users, posts, and more.</p>
+          <a href="{% url 'api-search-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Docs →</a>
+        </div>
 
-      <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
-        <h2 class="text-xl font-semibold text-indigo-600">⚙️ Admin APIs</h2>
-        <p class="text-gray-600 mt-2">Administrative endpoints for managing users, posts, and system-level actions.</p>
-        <a href="{% url 'api-auth-admin-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Admin Docs →</a>
-      </div>
-    </section>
+        <div class="p-6 bg-white rounded-2xl shadow hover:shadow-md border border-gray-200">
+          <h2 class="text-xl font-semibold text-indigo-600">⚙️ Admin APIs</h2>
+          <p class="text-gray-600 mt-2">Administrative endpoints for managing users, posts, and system-level actions.</p>
+          <a href="{% url 'api-auth-admin-docs' %}" class="inline-block mt-3 text-sm text-indigo-600 hover:underline">View Admin Docs →</a>
+        </div>
+      </section>
 
-    <!-- Footer -->
-    <footer class="mt-16 text-center text-gray-500 text-sm border-t pt-6">
-      <p>&copy; 2025 <span class="font-semibold text-indigo-600">ChiAde Tech</span>. All rights reserved.</p>
-      <p class="mt-2">
-        Developed by 
-        <a href="mailto:adesinaolagunju557@gmail.com" class="text-indigo-600 hover:underline">
-          Adesina Olagunju
-        </a> 
-        &amp; 
-        <a href="mailto:chiamakanwankwu557@gmail.com" class="text-indigo-600 hover:underline">
-          Chiamaka Nwankwu
-        </a>
-      </p>
-    </footer>
+      <!-- Footer -->
+      <footer class="mt-16 text-center text-gray-500 text-sm border-t pt-6">
+        <p>&copy; 2025 <span class="font-semibold text-indigo-600">ChiAde Tech</span>. All rights reserved.</p>
+        <p class="mt-2">
+          Developed by 
+          <a href="mailto:adesinaolagunju557@gmail.com" class="text-indigo-600 hover:underline">
+            Adesina Olagunju
+          </a> 
+          &amp; 
+          <a href="mailto:chiamakanwankwo557@gmail.com" class="text-indigo-600 hover:underline">
+            Chiamaka Nwankwo
+          </a>
+        </p>
+      </footer>
 
-  {% endblock %}
-
+    {% endblock %}
   </main>
-  
 
   <!-- Script -->
   <script>
+    // Sidebar toggle for mobile
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("menu-toggle");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("-translate-x-full");
+    });
+
+    // Endpoint toggles
     document.querySelectorAll('.endpoint button').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.parentElement.classList.toggle('open');
       });
     });
 
-
-    // Attach styles + copy logic to all .copyButton
-  document.querySelectorAll('.copyButton').forEach(btn => {
-    // apply default styling
-    btn.classList.add(
-      "ml-2", "text-xs", "px-2", "py-1", "mb-2",
-      "bg-indigo-600", "text-white", "rounded",
-      "hover:bg-indigo-700", "focus:outline-none"
-    );
-
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const url = btn.dataset.url; // get url from data-url
-      copyUrlFunc(url, btn);
+    // Copy buttons
+    document.querySelectorAll('.copyButton').forEach(btn => {
+      btn.classList.add(
+        "ml-2", "text-xs", "px-2", "py-1", "mb-2",
+        "bg-indigo-600", "text-white", "rounded",
+        "hover:bg-indigo-700", "focus:outline-none"
+      );
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = btn.dataset.url;
+        copyUrlFunc(url, btn);
+      });
     });
-  });
 
     function copyUrlFunc(url, btn) {
       navigator.clipboard.writeText(url).then(() => {
         showToast("✅ Copied: " + url);
-
-        // Save original button text
         const originalText = btn.textContent;
-
-        // Change to "Copied!"
         btn.textContent = "Copied !";
-
-        // Disable button temporarily
         btn.disabled = true;
         btn.classList.add("bg-gray-500", "cursor-not-allowed");
         btn.classList.remove("bg-indigo-600", "hover:bg-indigo-700");
-
-        // Restore after 1.5s
         setTimeout(() => {
           btn.textContent = originalText;
           btn.disabled = false;
@@ -204,7 +190,6 @@
       toast.textContent = message;
       toast.classList.remove("opacity-0", "translate-y-4");
       toast.classList.add("opacity-100", "translate-y-0");
-
       setTimeout(() => {
         toast.classList.remove("opacity-100", "translate-y-0");
         toast.classList.add("opacity-0", "translate-y-4");
