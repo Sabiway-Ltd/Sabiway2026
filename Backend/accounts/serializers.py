@@ -12,6 +12,14 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "email", "is_active", "is_staff", "is_superuser"]
+        read_only_fields = ["id", "email"]  # prevent changing email once set
+
+
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 

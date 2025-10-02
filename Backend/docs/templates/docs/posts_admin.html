@@ -1,0 +1,70 @@
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h2 class="text-3xl font-bold text-center mb-8">👨‍💻 Sabiway API Documentation - Posts (Admin)</h2>
+<p class="text-center text-gray-600 mb-12">
+  Admin reference: Django Admin UI & API endpoints related to posts, hashtags, comments and replies.
+</p>
+
+<div id="admin-endpoints" class="space-y-6">
+
+  <!-- Admin: Posts -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>Admin UI — Posts</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Manage posts in Django admin.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Admin URL: /admin/posts/post/
+List display: id, author, likes_count, comments_count, created_at
+Readonly fields: likes_count, comments_count, impressions_count
+Search fields: author__username, content</pre>
+    </div>
+  </div>
+
+  <!-- Admin: Hashtags -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>Admin UI — Hashtags</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <p class="mb-2 text-gray-700">Manage hashtags in Django admin.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Admin URL: /admin/posts/hashtag/
+List display: tag, use_count
+Search fields: tag
+Note: use_count is updated automatically when posts are created, edited, or deleted.</pre>
+    </div>
+  </div>
+
+  <!-- Admin: Comments -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>Admin UI — Comments</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Admin URL: /admin/posts/comment/
+List display: id, user, post, created_at</pre>
+    </div>
+  </div>
+
+  <!-- Admin: Replies -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>Admin UI — Replies</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Admin URL: /admin/posts/reply/
+List display: id, user, comment, created_at</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

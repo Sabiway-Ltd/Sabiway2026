@@ -1,0 +1,504 @@
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-4xl font-bold text-center mb-8">📝 Sabiway API Documentation - Posts</h1>
+<p class="text-center text-gray-600 mb-12">
+  Endpoints for creating, retrieving and interacting with posts, comments, likes, replies, bookmarks, and reposts.
+</p>
+
+<div id="endpoints" class="space-y-6">
+
+  <!-- List Posts -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Retrieve a paginated list of posts. <strong>Authentication optional for read.</strong></p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response (example):
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+    "content": "Hello World! #welcome",
+    "image": null,
+    "hashtags": [{"tag":"welcome","use_count":5}],
+    "likes_count": 3,
+    "comments_count": 1,
+    "impressions_count": 20,
+    "reposts_count": 2,
+    "created_at": "2025-09-25T12:00:00Z",
+    "updated_at": "2025-09-25T12:00:00Z"
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Create Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Create a new post. `content` required, `image` optional. Hashtags are auto-parsed.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request (multipart/form-data or JSON):
+{
+  "content": "This is my first post #first #sabiway",
+  "image": (file, optional)
+}
+
+Response (example):
+{
+  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+  "content": "This is my first post #first #sabiway",
+  "image": null,
+  "hashtags": [{"tag":"first","use_count":1},{"tag":"sabiway","use_count":1}],
+  "likes_count": 0,
+  "comments_count": 0,
+  "impressions_count": 0,
+  "reposts_count": 0,
+  "created_at": "2025-09-26T14:00:00Z"
+}</pre>
+      <p class="text-sm text-gray-500 mt-2">Note: new hashtags are created automatically; author's `posts_count` increments.</p>
+    </div>
+  </div>
+
+  <!-- Retrieve Single Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Retrieve a single post by UUID.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response: same shape as list item
+{
+  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "author": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+  "content": "This is my first post #first",
+  "image": null,
+  "hashtags": [{"tag":"first","use_count":3}],
+  "likes_count": 2,
+  "comments_count": 1,
+  "impressions_count": 10,
+  "reposts_count": 1,
+  "created_at": "2025-09-26T14:00:00Z"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Update (PUT) Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PUT /posts/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Replace a post's content/image. Hashtags are re-parsed and counts updated.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "content": "Updated content #updated",
+  "image": (file or null)
+}
+
+Response: updated post object (same shape as retrieve)</pre>
+    </div>
+  </div>
+
+  <!-- Partial Update (PATCH) Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /posts/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Partially update a post. Send only fields to modify.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{ "content": "Small edit #typo" }
+
+Response: updated post object</pre>
+    </div>
+  </div>
+
+  <!-- Delete Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /posts/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Delete a post. Decrements `posts_count` and hashtags `use_count`.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+204 No Content (or { "detail": "Deleted" } depending on client)</pre>
+    </div>
+  </div>
+
+  <!-- Like Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/&lt;id&gt;/like/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/like/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Like a post. Creates a Like if not already liked and increments `likes_count`.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Responses:
+201 Created -> { "detail": "Liked" }
+200 OK      -> { "detail": "Already liked" }</pre>
+    </div>
+  </div>
+
+  <!-- Like endpoints (via LikeViewSet) -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/likes/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/likes/">Copy Endpoint</button>
+      <p>Create a like via the direct Like endpoint (optional alternative to post/&lt;id&gt;/like/).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{
+  "post": "550e8400-e29b-41d4-a716-446655440000"
+}
+
+Response:
+201 Created
+{
+  "id": 12,
+  "user": { "user_id": 5, "username": "@johndoe" },
+  "post": "550e8400-e29b-41d4-a716-446655440000",
+  "created_at": "2025-09-26T15:00:00Z"
+}
+</pre>
+    </div>
+  </div>
+
+  <!-- Unlike Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/&lt;id&gt;/unlike/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/unlike/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Remove your like. Decrements `likes_count`.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Responses:
+200 OK  -> { "detail": "Unliked" }
+400 Bad -> { "detail": "Not liked" }</pre>
+    </div>
+  </div>
+
+  <!-- Bookmark Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/&lt;id&gt;/bookmark/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/bookmark/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Bookmark a post for the authenticated user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Responses:
+201 Created -> bookmarked object
+200 OK      -> { "detail": "Already bookmarked" }</pre>
+    </div>
+  </div>
+
+  <!-- Unbookmark Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /posts/&lt;id&gt;/unbookmark/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/unbookmark/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Remove a bookmark.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Responses:
+204 No Content -> Unbookmarked
+400 Bad        -> { "detail": "Not bookmarked" }</pre>
+    </div>
+  </div>
+
+  <!-- My Bookmarks -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/me/bookmarks/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/me/bookmarks/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">List bookmarks of the authenticated user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "post": { "id": "...", "content": "...", "author": {...} }, "created_at": "..." }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Repost Post -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/&lt;id&gt;/repost/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/repost/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Repost a post. Optional message.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{ "message": "Check this out!" } (optional)
+
+Responses:
+201 Created -> repost object
+400 Bad     -> { "detail": "Already reposted" }</pre>
+    </div>
+  </div>
+
+  <!-- Unrepost -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /posts/&lt;id&gt;/repost/&lt;repost_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/<id>/repost/<repost_id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Remove a repost.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+204 No Content -> repost removed</pre>
+    </div>
+  </div>
+
+  <!-- My Reposts -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/me/reposts/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/me/reposts/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">List reposts of the authenticated user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "post": { "id": "...", "content": "...", "author": {...} }, "message": "...", "created_at": "..." }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Trending Hashtags -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/hashtags/trending/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/posts/hashtags/trending/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Get top 10 trending hashtags by `use_count`.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "tag": "first", "use_count": 12 },
+  { "tag": "welcome", "use_count": 10 }
+]</pre>
+    </div>
+  </div>
+
+    <!-- List Hashtags -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/hashtags/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/hashtags/">Copy Endpoint</button>
+      <p>List all hashtags (ordered by use_count descending).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  { "id": 1, "tag": "welcome", "use_count": 15 },
+  { "id": 2, "tag": "sabiway", "use_count": 8 },
+  { "id": 3, "tag": "firstpost", "use_count": 5 }
+]
+</pre>
+    </div>
+  </div>
+
+  <!-- Retrieve Hashtag -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/hashtags/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/hashtags/<id>/">Copy Endpoint</button>
+      <p>Retrieve a single hashtag by ID.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "id": 2,
+  "tag": "sabiway",
+  "use_count": 8
+}
+</pre>
+    </div>
+  </div>
+
+  <!-- List Comments -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/&lt;id&gt;/comments/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/<id>/comments/">Copy Endpoint</button>
+      <p>List comments on a post.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "user": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+    "post": "550e8400-e29b-41d4-a716-446655440000",
+    "content": "Great post! Really liked it.",
+    "likes_count": 2,
+    "created_at": "2025-09-26T15:05:00Z"
+  },
+  {
+    "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "user": { "user_id": 6, "username": "@janedoe", "full_name": "Jane Doe" },
+    "post": "550e8400-e29b-41d4-a716-446655440000",
+    "content": "Thanks for sharing!",
+    "likes_count": 1,
+    "created_at": "2025-09-26T15:10:00Z"
+  }
+]
+</pre>
+    </div>
+  </div>
+
+  <!-- Add Comment -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /posts/&lt;id&gt;/comments/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/<id>/comments/">Copy Endpoint</button>
+      <p>Add a comment to a post.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{
+  "content": "Really insightful post!"
+}
+
+Response:
+201 Created
+{
+  "id": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+  "user": { "user_id": 7, "username": "@michael", "full_name": "Michael Smith" },
+  "post": "550e8400-e29b-41d4-a716-446655440000",
+  "content": "Really insightful post!",
+  "likes_count": 0,
+  "created_at": "2025-09-26T15:20:00Z"
+}
+</pre>
+    </div>
+  </div>
+
+  <!-- List Replies -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /posts/&lt;id&gt;/replies/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6 hidden">
+      <button class="copyButton" data-url="/posts/<id>/replies/">Copy Endpoint</button>
+      <p>List all replies on comments for a post.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "id": "b16f3585-6229-4d5b-bdc2-769202586a86",
+    "user": { "user_id": 6, "username": "@janedoe", "full_name": "Jane Doe" },
+    "comment": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "content": "I agree with you!",
+    "likes_count": 1,
+    "created_at": "2025-09-26T15:25:00Z"
+  },
+  {
+    "id": "c47ac10b-58cc-4372-a567-0e02b2c3d480",
+    "user": { "user_id": 5, "username": "@johndoe", "full_name": "John Doe" },
+    "comment": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "content": "Thanks for your feedback!",
+    "likes_count": 0,
+    "created_at": "2025-09-26T15:30:00Z"
+  }
+]
+</pre>
+    </div>
+  </div>
+
+  <!-- Add Reply -->
+<div class="endpoint border rounded-2xl shadow-sm bg-white">
+  <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+    <span>POST /posts/replies/</span>
+    <span class="text-gray-500">➕</span>
+  </button>
+  <div class="endpoint-body px-6 pb-6 hidden">
+    <button class="copyButton" data-url="/posts/replies/">Copy Endpoint</button>
+    <p>Add a reply to a specific comment.</p>
+    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request:
+{
+  "comment": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "content": "I totally agree with your comment!"
+}
+
+Response:
+201 Created
+{
+  "id": "e12f3585-6229-4d5b-bdc2-769202586a87",
+  "user": { "user_id": 7, "username": "@michael", "full_name": "Michael Smith" },
+  "comment": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "content": "I totally agree with your comment!",
+  "likes_count": 0,
+  "created_at": "2025-09-26T15:35:00Z"
+}
+</pre>
+  </div>
+</div>
+
+
+
+</div>
+
+<script>
+document.querySelectorAll('.endpoint button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const body = btn.nextElementSibling;
+    body.classList.toggle('hidden');
+  });
+});
+</script>
+{% endblock %}

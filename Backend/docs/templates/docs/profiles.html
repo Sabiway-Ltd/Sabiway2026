@@ -1,0 +1,279 @@
+<!-- docs/templates/docs/profiles.html -->
+
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-4xl font-bold text-center mb-8">👤 Sabiway API Documentation - Profiles</h1>
+<p class="text-center text-gray-600 mb-12">
+  Endpoints for managing user profiles, follow system, and top contributors.
+</p>
+
+<div id="endpoints" class="space-y-6">
+
+  <!-- List Profiles -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/">Copy Endpoint</button>
+      <p>Retrieve a list of all profiles.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 1,
+    "username": "@johndoe",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "followers_count": 10,
+    "following_count": 5,
+    "posts_count": 3,
+    "whatsapp_number": "+2348012345678"
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Get Own Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/me/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/me/">Copy Endpoint</button>
+      <p>Retrieve your own profile.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "user_id": 1,
+  "username": "@johndoe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3,
+  "whatsapp_number": "+2348012345678"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Retrieve Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p>Retrieve a single profile by user ID.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "user_id": 2,
+  "username": "@janedoe",
+  "full_name": "Jane Doe",
+  "email": "jane@example.com",
+  "followers_count": 15,
+  "following_count": 7,
+  "posts_count": 6,
+  "whatsapp_number": "+2348098765432"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PUT /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p>Update your profile completely.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "full_name": "Johnny Doe",
+  "username": "@johnnydoe",
+  "whatsapp_number": "+2348012345678"
+}
+
+Response:
+{
+  "user_id": 1,
+  "username": "@johnnydoe",
+  "full_name": "Johnny Doe",
+  "email": "john@example.com",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3,
+  "whatsapp_number": "+2348012345678"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Partial Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p>Partially update your profile. Send only the fields you want to change.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "whatsapp_number": "+2348098765432"
+}
+
+Response:
+{
+  "user_id": 1,
+  "username": "@johndoe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3,
+  "whatsapp_number": "+2348098765432"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Delete Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p>Delete your profile (irreversible).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "message": "Profile deleted successfully"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Follow Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /profiles/&lt;user_id&gt;/follow/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/follow/">Copy Endpoint</button>
+      <p>Follow another user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "detail": "Followed"
+}</pre>
+    </div>
+  </div>
+
+  <!-- Unfollow Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /profiles/&lt;user_id&gt;/unfollow/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/unfollow/">Copy Endpoint</button>
+      <p>Unfollow a user you are currently following.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "detail": "Unfollowed"
+}</pre>
+    </div>
+  </div>
+
+  <!-- List Followers -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/&lt;user_id&gt;/followers/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/followers/">Copy Endpoint</button>
+      <p>Retrieve a list of all followers of a user.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 3,
+    "username": "@alice",
+    "full_name": "Alice Smith",
+    "email": "alice@example.com",
+    "followers_count": 5,
+    "following_count": 8,
+    "posts_count": 2
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- List Following -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/&lt;user_id&gt;/following/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/following/">Copy Endpoint</button>
+      <p>Retrieve a list of all users that a profile is following.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 4,
+    "username": "@bob",
+    "full_name": "Bob Johnson",
+    "email": "bob@example.com",
+    "followers_count": 8,
+    "following_count": 10,
+    "posts_count": 4
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Top Contributors -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/contributors/top/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/contributors/top/">Copy Endpoint</button>
+      <p>Retrieve top contributors (based on posts, comments, likes).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 1,
+    "username": "@johndoe",
+    "full_name": "John Doe",
+    "profile_picture": "https://res.cloudinary.com/demo/image/upload/profile1.jpg",
+    "score": 45
+  },
+  {
+    "user_id": 2,
+    "username": "@janedoe",
+    "full_name": "Jane Doe",
+    "profile_picture": "https://res.cloudinary.com/demo/image/upload/profile2.jpg",
+    "score": 38
+  }
+]</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -11,6 +11,21 @@ from .serializers import ForgotPasswordSerializer, ConfirmCodeSerializer, ResetP
 from .models import PasswordReset, User
 from .serializers import SignupSerializer, LoginSerializer, GoogleAuthSerializer
 from .serializers import LogoutSerializer
+from urllib.parse import urlencode
+from django.http import JsonResponse
+from django.utils.crypto import get_random_string
+from rest_framework import viewsets, permissions
+from .serializers import UserSerializer
+from django.contrib.auth.models import BaseUserManager
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    Admin-only endpoint to manage users
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]  # Only admins can manage users
 
 
 class SignupView(generics.CreateAPIView):
@@ -79,7 +94,7 @@ class GoogleLoginView(APIView):
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": "http://127.0.0.1:8000/api/auth/google-login/",  # ✅ match Google Console
+            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",  # ✅ match Google Console
             "grant_type": "authorization_code",
         }
         r = requests.post(token_url, data=data)
@@ -100,11 +115,18 @@ class GoogleLoginView(APIView):
         return self._handle_user(email, full_name)
 
     def _handle_user(self, email, full_name):
-        """Shared logic: create or get user, return JWT"""
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={"full_name": full_name}
-        )
+        user = User.objects.filter(email=email).first()
+        created = False
+
+        if not user:
+            signup_serializer = SignupSerializer(data={
+                "email": email,
+                "full_name": full_name,
+                "password": get_random_string(12)
+            })
+            signup_serializer.is_valid(raise_exception=True)
+            user = signup_serializer.save()
+            created = True
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -121,6 +143,27 @@ class GoogleLoginView(APIView):
             "is_new_user": created
         }, status=status.HTTP_200_OK)
 
+
+
+
+
+class GenerateGoogleAuthURLView(APIView):
+    """
+    Returns the Google OAuth2 login URL
+    """
+
+    def get(self, request):
+        base_url = "https://accounts.google.com/o/oauth2/v2/auth"
+        params = {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",  # e.g. https://sabiway.onrender.com/api/auth/google-login/
+            "response_type": "code",
+            "scope": "openid email profile",
+            "access_type": "offline",  # so refresh_token is included
+            "prompt": "consent",       # forces Google to show account chooser
+        }
+        url = f"{base_url}?{urlencode(params)}"
+        return JsonResponse({"auth_url": url})
 
 class ForgotPasswordView(generics.GenericAPIView):
     serializer_class = ForgotPasswordSerializer

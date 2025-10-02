@@ -1,0 +1,92 @@
+# notifications/signals.py
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.contenttypes.models import ContentType
+from profiles.models import Follow
+from posts.models import Like, Comment, Reply, Post
+from .models import Notification
+
+def create_notification(user, actor, notif_type, target=None):
+    """
+    Create a notification for the user if they are not the actor.
+    Compatible with SQLite (handles large integers/UUIDs).
+    """
+    if user != actor:
+        target_ct = ContentType.objects.get_for_model(target) if target else None
+        target_id = str(target.pk) if target else None
+
+        Notification.objects.create(
+            user=user,
+            actor=actor,
+            type=notif_type,
+            target_content_type=target_ct,
+            target_object_id=target_id
+        )
+
+# -------------------
+# FOLLOW
+# -------------------
+@receiver(post_save, sender=Follow)
+def new_follower(sender, instance, created, **kwargs):
+    if created:
+        create_notification(
+            user=instance.following,
+            actor=instance.follower,
+            notif_type="follow"
+        )
+
+# -------------------
+# LIKE
+# -------------------
+@receiver(post_save, sender=Like)
+def new_like(sender, instance, created, **kwargs):
+    if created:
+        create_notification(
+            user=instance.post.author,
+            actor=instance.user,
+            notif_type="like",
+            target=instance.post
+        )
+
+# -------------------
+# COMMENT
+# -------------------
+@receiver(post_save, sender=Comment)
+def new_comment(sender, instance, created, **kwargs):
+    if created:
+        create_notification(
+            user=instance.post.author,
+            actor=instance.user,  # <-- change from instance.author to instance.user
+            notif_type="comment",
+            target=instance
+        )
+
+
+# -------------------
+# REPLY
+# -------------------
+@receiver(post_save, sender=Reply)
+def new_reply(sender, instance, created, **kwargs):
+    if created:
+        create_notification(
+            user=instance.comment.user,  # or instance.comment.author depending on your model
+            actor=instance.user,          # or instance.author
+            notif_type="reply",
+            target=instance
+        )
+
+
+# -------------------
+# NEW POST FOR FOLLOWERS
+# -------------------
+@receiver(post_save, sender=Post)
+def notify_followers_new_post(sender, instance, created, **kwargs):
+    if created:
+        followers = [f.follower for f in instance.author.followers_rel.all()]
+        for follower in followers:
+            create_notification(
+                user=follower,
+                actor=instance.author,
+                notif_type="post",
+                target=instance
+            )

@@ -1,0 +1,153 @@
+<!-- docs/templates/docs/profiles_admin.html -->
+
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-center mb-8">👨‍💻 Sabiway API Documentation - Profiles (Admin Endpoints)</h1>
+<p class="text-center text-gray-600 mb-12">
+  Admin-only endpoints for managing user profiles.
+</p>
+
+<div id="admin-endpoints" class="space-y-6">
+
+  <!-- List All Profiles -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Retrieve all user profiles (admin only, with full details).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "user_id": 1,
+    "username": "@johndoe",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "followers_count": 10,
+    "following_count": 5,
+    "posts_count": 3,
+    "is_active": true
+  },
+  {
+    "user_id": 2,
+    "username": "@janedoe",
+    "full_name": "Jane Doe",
+    "email": "jane@example.com",
+    "followers_count": 15,
+    "following_count": 7,
+    "posts_count": 6,
+    "is_active": true
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Retrieve Single Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Retrieve detailed information of a single user profile (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "user_id": 2,
+  "username": "@janedoe",
+  "full_name": "Jane Doe",
+  "email": "jane@example.com",
+  "followers_count": 15,
+  "following_count": 7,
+  "posts_count": 6,
+  "is_active": true
+}</pre>
+    </div>
+  </div>
+
+  <!-- Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PUT /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Update a user’s profile details (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "full_name": "Jane Smith",
+  "is_active": false
+}
+
+Response:
+{
+  "user_id": 2,
+  "username": "@janedoe",
+  "full_name": "Jane Smith",
+  "email": "jane@example.com",
+  "followers_count": 15,
+  "following_count": 7,
+  "posts_count": 6,
+  "is_active": false
+}</pre>
+    </div>
+  </div>
+
+    <!-- Partial Update Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">
+        Partially update your own profile. Only send the fields you want to change.
+      </p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "whatsapp_number": "+2348012345678"
+}
+
+Response:
+{
+  "user_id": 1,
+  "username": "johndoe",
+  "full_name": "Johnny Doe",
+  "email": "john@example.com",
+  "whatsapp_number": "+2348012345678",
+  "followers_count": 10,
+  "following_count": 5,
+  "posts_count": 3
+}</pre>
+    </div>
+  </div>
+
+
+  <!-- Delete Profile -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /profiles/&lt;user_id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/profiles/<user_id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Delete a user’s profile (admin only, irreversible).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "message": "Profile deleted successfully by admin"
+}</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

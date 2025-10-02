@@ -1,0 +1,18 @@
+# DEBUG=True
+# SECRET_KEY=super-secret-key
+# ALLOWED_HOSTS=127.0.0.1,localhost,sabiway.onrender.com
+# GOOGLE_CLIENT_ID=62853499803-r7kkbq52ptk4u2j5mralkbbkquen4chh.apps.googleusercontent.com
+# GOOGLE_CLIENT_SECRET=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
+# DATABASE_URL=sqlite:///db.sqlite3
+# DATABASE_URL=postgres://user:password@dbhost:5432/dbname
+# DATABASE_URL=postgresql://sabiway:Y8iCotGBb63RjHe3RGhu5oRNM37ccGJD@dpg-d3es3opr0fns73cvbuq0-a.oregon-postgres.render.com/sabiway_37ve
+
+# RESEND_API_KEY=re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ
+# BACKEND_URL=http://127.0.0.1:8000
+# FRONTEND_URL=
+
+# CLOUDINARY_CLOUD_NAME=devqbjptr
+# CLOUDINARY_API_KEY=233511915335819
+# CLOUDINARY_API_SECRET=ZcbD-lTO22KamDmTWMhp-xPgLxU
+
+

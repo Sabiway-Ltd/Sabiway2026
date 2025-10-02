@@ -1,34 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sabiway API Documentation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .endpoint-body { display: none; }
-    .endpoint.open .endpoint-body { display: block; }
-  </style>
-</head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-4xl mx-auto py-10 px-6">
-    <h1 class="text-4xl font-bold text-center mb-8">🔐 Sabiway API Documentation - Authentication</h1>
-    <p class="text-center text-gray-600 mb-12">
-      Authentication endpoints for integrating with the Sabiway backend.
-    </p>
+<!-- docs/templates/docs/auth.html -->
 
-    <!-- Endpoint Component -->
-    <div id="endpoints" class="space-y-6">
-      
-      <!-- Signup -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/signup/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Create a new user account.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h1 class="text-4xl font-bold text-center mb-8">🔐 Sabiway API Documentation - Authentication</h1>
+<p class="text-center text-gray-600 mb-12">
+  Authentication endpoints for integrating with the Sabiway backend.
+</p>
+
+<div id="endpoints" class="space-y-6">
+
+  <!-- Signup -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/signup/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/signup/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Create a new user account.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
   "full_name": "John Doe",
@@ -38,25 +29,23 @@ Request Body:
 
 Response:
 {
-  "message": "User registered successfully",
-  "user": {
-    "id": 1,
-    "full_name": "John Doe",
-    "email": "john@example.com"
-  }
+  "id": 1,
+  "full_name": "John Doe",
+  "email": "john@example.com"
 }</pre>
-        </div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Login -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/login/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Authenticate a user and return a token.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+  <!-- Login -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/login/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/login/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Authenticate a user and return access + refresh tokens.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
   "email": "john@example.com",
@@ -65,25 +54,27 @@ Request Body:
 
 Response:
 {
-  "token": "jwt-or-session-token",
+  "refresh": "refresh-token",
+  "access": "access-token",
   "user": {
     "id": 1,
     "full_name": "John Doe",
     "email": "john@example.com"
   }
 }</pre>
-        </div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Google Login -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/google-login/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Login or signup using a Google token.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+  <!-- Google Login -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/google-login/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/google-login/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Login or signup using a Google ID token.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
   "token": "google-oauth-id-token"
@@ -91,25 +82,69 @@ Request Body:
 
 Response:
 {
-  "token": "jwt-or-session-token",
+  "refresh": "refresh-token",
+  "access": "access-token",
   "user": {
     "id": 1,
     "full_name": "Jane Doe",
     "email": "jane@gmail.com"
-  }
+  },
+  "is_new_user": false
 }</pre>
-        </div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Forgot Password -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/forgot-password/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Send a reset code to the user’s email.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+  <!-- Google Callback -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /auth/google/callback/?code=XXXX</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/google/callback/?code=XXXX">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Callback endpoint for Google OAuth2.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "refresh": "refresh-token",
+  "access": "access-token",
+  "user": {
+    "id": 1,
+    "full_name": "Jane Doe",
+    "email": "jane@gmail.com"
+  },
+  "is_new_user": true
+}</pre>
+    </div>
+  </div>
+
+  <!-- Generate Google OAuth URL -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /auth/generate-google-url/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/generate-google-url/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Generate the Google OAuth2 authorization URL.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "auth_url": "https://accounts.google.com/o/oauth2/v2/auth?...params..."
+}</pre>
+    </div>
+  </div>
+
+  <!-- Forgot Password -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/forgot-password/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/forgot-password/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Send a reset code to the user’s email.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
   "email": "john@example.com"
@@ -117,20 +152,21 @@ Request Body:
 
 Response:
 {
-  "message": "Reset code sent to email"
+  "message": "Password reset instructions sent to email"
 }</pre>
-        </div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Confirm Code -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/confirm-code/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Verify the 4-digit reset code.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+  <!-- Confirm Code -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/confirm-code/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/confirm-code/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Verify the 4-digit reset code.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
   "email": "john@example.com",
@@ -139,59 +175,56 @@ Request Body:
 
 Response:
 {
-  "message": "Code confirmed",
+  "message": "Code confirmed. You can now reset password.",
   "reset_token": "uuid-token"
 }</pre>
-        </div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Reset Password -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/reset-password/&lt;token&gt;/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Reset the user’s password using the reset token.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+  <!-- Reset Password -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/reset-password/&lt;token&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/reset-password/<token>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Reset the user’s password using the reset token.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
 Request Body:
 {
-  "password": "newsecurepassword"
+  "new_password": "newsecurepassword",
+  "confirm_password": "newsecurepassword"
 }
 
 Response:
 {
-  "message": "Password reset successful"
+  "message": "Password has been reset successfully"
 }</pre>
-        </div>
-      </div>
-
-      <!-- Logout -->
-      <div class="endpoint border rounded-2xl shadow-sm bg-white">
-        <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
-          <span>POST /api/auth/logout/</span>
-          <span class="text-gray-500">➕</span>
-        </button>
-        <div class="endpoint-body px-6 pb-6">
-          <p class="mb-2 text-gray-700">Logout the current user and invalidate token/session.</p>
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-Response:
-{
-  "message": "Successfully logged out"
-}</pre>
-        </div>
-      </div>
-
     </div>
   </div>
 
-  <script>
-    // Toggle collapsible endpoint sections
-    document.querySelectorAll('.endpoint button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        btn.parentElement.classList.toggle('open');
-      });
-    });
-  </script>
-</body>
-</html>
+  <!-- Logout -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/logout/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/logout/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Logout the current user and blacklist refresh token.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "refresh": "refresh-token"
+}
+
+Response:
+{
+  "detail": "Logout successful"
+}</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

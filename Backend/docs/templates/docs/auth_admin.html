@@ -1,0 +1,172 @@
+<!-- docs/templates/docs/auth_admin.html -->
+
+{% extends "docs/base.html" %}
+
+{% block content %}
+<h2 class="text-3xl font-bold text-center mb-8">👨‍💻 Sabiway API Documentation - Admin Endpoints</h2>
+<p class="text-center text-gray-600 mb-12">
+  Admin-only endpoints for managing users.
+</p>
+
+<div id="admin-endpoints" class="space-y-6">
+
+  <!-- List Users -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /auth/users/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Retrieve a list of all users (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+[
+  {
+    "id": 1,
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "is_active": true,
+    "is_staff": false,
+    "is_superuser": false
+  },
+  {
+    "id": 2,
+    "full_name": "Jane Smith",
+    "email": "jane@example.com",
+    "is_active": true,
+    "is_staff": true,
+    "is_superuser": false
+  }
+]</pre>
+    </div>
+  </div>
+
+  <!-- Retrieve Single User -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>GET /auth/users/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Retrieve details of a single user (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "id": 1,
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false
+}</pre>
+    </div>
+  </div>
+
+  <!-- Create User -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>POST /auth/users/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Create a new user (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "full_name": "Alice Johnson",
+  "email": "alice@example.com",
+  "password": "securepassword"
+}
+
+Response:
+{
+  "id": 3,
+  "full_name": "Alice Johnson",
+  "email": "alice@example.com",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false
+}</pre>
+    </div>
+  </div>
+
+  <!-- Update User -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PUT /auth/users/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Update an existing user (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "full_name": "Alice K. Johnson",
+  "is_active": true,
+  "is_staff": true
+}
+
+Response:
+{
+  "id": 3,
+  "full_name": "Alice K. Johnson",
+  "email": "alice@example.com",
+  "is_active": true,
+  "is_staff": true,
+  "is_superuser": false
+}</pre>
+    </div>
+  </div>
+
+
+    <!-- Partial Update User -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>PATCH /auth/users/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Partially update a user (admin only). Send only the fields you want to update.</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Request Body:
+{
+  "is_active": false
+}
+
+Response:
+{
+  "id": 3,
+  "full_name": "Alice K. Johnson",
+  "email": "alice@example.com",
+  "is_active": false,
+  "is_staff": true,
+  "is_superuser": false
+}</pre>
+    </div>
+  </div>
+
+
+  <!-- Delete User -->
+  <div class="endpoint border rounded-2xl shadow-sm bg-white">
+    <button class="w-full flex justify-between items-center px-6 py-4 text-lg font-semibold text-left">
+      <span>DELETE /auth/users/&lt;id&gt;/</span>
+      <span class="text-gray-500">➕</span>
+    </button>
+    <div class="endpoint-body px-6 pb-6">
+      <button class="copyButton" data-url="/auth/users/<id>/">Copy Endpoint</button>
+      <p class="mb-2 text-gray-700">Delete a user (admin only).</p>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+Response:
+{
+  "message": "User deleted successfully"
+}</pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

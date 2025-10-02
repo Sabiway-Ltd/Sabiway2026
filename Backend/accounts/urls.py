@@ -1,9 +1,15 @@
 # accounts/urls.py
 
-from django.urls import path
-from .views import SignupView, LoginView, GoogleLoginView, ForgotPasswordView, ConfirmCodeView, ResetPasswordView, LogoutView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import (
+    SignupView, LoginView, GoogleLoginView, ForgotPasswordView, 
+    ConfirmCodeView, ResetPasswordView, LogoutView, 
+    GenerateGoogleAuthURLView, UserViewSet
+)
 
-
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename="user")
 
 urlpatterns = [
     path("signup/", SignupView.as_view(), name="signup"),
@@ -14,4 +20,7 @@ urlpatterns = [
     path("confirm-code/", ConfirmCodeView.as_view(), name="confirm-code"),
     path("reset-password/<uuid:token>/", ResetPasswordView.as_view(), name="reset-password"),
     path("logout/", LogoutView.as_view(), name="logout"),
+    path("generate-google-url/", GenerateGoogleAuthURLView.as_view(), name="generate-google-url"),
+    path("", include(router.urls)),  # ✅ include user endpoints
 ]
+
