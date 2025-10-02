@@ -108,8 +108,10 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 # ---------------------------------------------------------------------
 # Use DATABASE_URL from .env if available, otherwise SQLite
 DATABASES = {
-    "default": env.db(default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    "default": env.db("DATABASE_URL")
 }
+
+
 
 # ---------------------------------------------------------------------
 # Password validation
