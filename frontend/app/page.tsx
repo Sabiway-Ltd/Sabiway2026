@@ -16,6 +16,7 @@ export default function Home() {
     "Tailors",
   ];
 
+  
   const reviews = [
     {
       text: "SabiWay helped me find a painter in less than 1 hour. Super fast and very trustworthy service!",
