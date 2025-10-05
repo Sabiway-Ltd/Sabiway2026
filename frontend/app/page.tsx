@@ -1,7 +1,8 @@
-"use client"; // Needed for animation
+"use client";
 import Image from "next/image";
 import { useState } from "react";
-import LandingNavbar from "./_components/LandingNavbar";
+import Navbar from "./_components/landing_page/Navbar";
+
 
 export default function Home() {
   const services = [
@@ -64,9 +65,11 @@ export default function Home() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
   return (
-    <main className="bg-white">
-      {/* ================= NAVBAR ================= */}
-      <LandingNavbar/>
+    <main className="bg-white overflow-x-hidden">
+      
+      {/* NAVBAR */}
+      <Navbar />
+
 
       {/* ================= HERO SECTION ================= */}
       <section className="w-screen grid grid-cols-12 gap-[32px] px-8 md:px-16 pt-20 pb-32 items-center relative">
@@ -76,7 +79,7 @@ export default function Home() {
             Than You <span className="text-[#008753]">Think</span>
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-lg font-medium">
-            From anywhere in the world, you can find trusted hands in Nigeria. 
+            From anywhere in the world, you can find trusted hands in Nigeria.
             SabiWay connects you to reliable local services — fast, easy, and secure.
           </p>
           <button className="mt-8 px-8 py-4 bg-[#008753] text-white rounded-[15px] font-semibold shadow hover:bg-[#006B42] transition">
@@ -111,8 +114,8 @@ export default function Home() {
       <section className="w-full text-center px-8 md:px-16 py-24">
         <h3 className="text-gray-500 font-medium mb-4">About Us</h3>
         <p className="text-2xl md:text-3xl font-medium text-gray-800 max-w-4xl mx-auto leading-relaxed">
-          SabiWay is a people-powered service platform built for Nigerians — at home and abroad. 
-          We believe everyone deserves access to fast, honest, and verified local services — 
+          SabiWay is a people-powered service platform built for Nigerians — at home and abroad.
+          We believe everyone deserves access to fast, honest, and verified local services —
           no matter where they are in the world.
         </p>
         <div className="flex justify-center mt-8">
@@ -122,13 +125,7 @@ export default function Home() {
           </div>
         </div>
         <div className="mt-12 flex justify-center">
-          <Image
-            src="/about-us-image.png"
-            alt="About Us"
-            width={400}
-            height={400}
-            className="rounded-xl"
-          />
+          <Image src="/about-us-image.png" alt="About Us" width={400} height={400} className="rounded-xl" />
         </div>
       </section>
 
@@ -154,7 +151,6 @@ export default function Home() {
           Real stories from customers and service providers
         </h2>
 
-        {/* Top Row - Moves Left */}
         <div className="overflow-hidden relative w-full mb-10">
           <div className="flex space-x-6 animate-marquee-left">
             {[...reviews, ...reviews].map((review, i) => (
@@ -164,13 +160,14 @@ export default function Home() {
               >
                 <p className="text-lg text-gray-700 italic">“{review.text}”</p>
                 <div className="flex justify-center mt-4 text-[#FAAB2C]">★★★★★</div>
-                <p className="mt-2 text-sm text-gray-600">-{review.name} from {review.location}</p>
+                <p className="mt-2 text-sm text-gray-600">
+                  -{review.name} from {review.location}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Bottom Row - Moves Right */}
         <div className="overflow-hidden relative w-full">
           <div className="flex space-x-6 animate-marquee-right">
             {[...reviews, ...reviews].map((review, i) => (
@@ -180,7 +177,9 @@ export default function Home() {
               >
                 <p className="text-lg text-gray-700 italic">“{review.text}”</p>
                 <div className="flex justify-center mt-4 text-[#FAAB2C]">★★★★★</div>
-                <p className="mt-2 text-sm text-gray-600">-{review.name} from {review.location}</p>
+                <p className="mt-2 text-sm text-gray-600">
+                  -{review.name} from {review.location}
+                </p>
               </div>
             ))}
           </div>
@@ -192,33 +191,126 @@ export default function Home() {
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12">FAQs</h2>
         <div className="max-w-3xl mx-auto space-y-6">
           {faqs.map((faq, i) => (
-            <div key={i} className="text-left">
+            <div key={i} className="bg-white rounded-[16px] shadow-md overflow-hidden transition-all duration-300">
               <button
                 onClick={() => setOpenFAQ(openFAQ === i ? null : i)}
-                className="w-full flex justify-between items-center bg-[#008753] text-white font-medium px-6 py-4 rounded-[12px] shadow-md"
+                className="w-full flex justify-between items-center bg-[#008753] text-white font-semibold px-6 py-4 rounded-t-[16px] focus:outline-none"
               >
-                {faq.question}
-                <span className="text-[#FAAB2C] text-xl">★</span>
+                <span className="text-[16px] md:text-[17px]">{faq.question}</span>
+                <Image src="/faqstar.png" alt="FAQ Star" width={20} height={20} />
               </button>
-              {openFAQ === i && (
-                <div className="mt-2 bg-white border-l-4 border-[#FAAB2C] rounded-lg p-4 text-gray-700 shadow">
+
+              <div
+                className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                  openFAQ === i ? "max-h-[300px] opacity-100 py-5" : "max-h-0 opacity-0 py-0"
+                }`}
+              >
+                <p className="text-gray-800 px-6 text-left leading-relaxed text-[15px] md:text-[16px]">
                   {faq.answer}
-                </div>
-              )}
+                </p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
+      {/* ================= DOWNLOAD APP SECTION ================= */}
+      <section className="w-full bg-white py-28 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+        <div className="md:w-1/2 text-left">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Book service providers <br /> from your phone
+          </h2>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            With SabiWay, whether you're in Lagos or London, booking reliable help
+            is now as easy as a tap.
+          </p>
+          <Image
+            src="/pstoreapple.png"
+            alt="Google Play and App Store"
+            width={240}
+            height={70}
+            className="mt-4"
+          />
+        </div>
+
+        <div className="md:w-1/2 flex justify-center items-end relative">
+          <Image
+            src="/Mockup.png"
+            alt="SabiWay App Mockup"
+            width={700}
+            height={800}
+            className="w-full max-w-[700px] h-auto"
+            priority
+          />
+        </div>
+      </section>
+
+        {/* ================= FOOTER SECTION ================= */}
+    <footer className="relative bg-[#008753] text-white py-12 px-8 md:px-16 -mt-55 z-20">
+      <div className="max-w-[2000px] mx-auto text-left">
+        {/* Navigation Links */}
+        <div className="flex flex-col gap-6">
+          {/* First Row */}
+          <div className="flex flex-wrap justify-between gap-x-8 gap-y-3 text-sm font-medium">
+            <a href="#">Home</a>
+            <a href="#">About Us</a>
+            <a href="#">For Clients</a>
+            <a href="#">For Service Providers</a>
+            <a href="#">FAQ</a>
+            <a href="#">Contact Us</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+          </div>
+
+          {/* Second Row */}
+          <div className="flex flex-wrap justify-start gap-x-10 gap-y-3 text-sm font-medium">
+            <a href="#">Instagram</a>
+            <a href="#">Facebook</a>
+            <a href="#">Report a Problem</a>
+          </div>
+        </div>
+
+        {/* Divider Line */}
+        <div className="border-t border-white/20 my-8"></div>
+
+        {/* Copyright */}
+        <p className="text-sm leading-relaxed mb-12">
+          © 2025 SabiWay. All Rights Reserved. <br />
+          Built for communities, powered by trust.
+        </p>
+
+        {/* Footer Logo */}
+        <div className="w-full flex justify-start mt-6">
+          <Image
+            src="/Footerlogo.svg"
+            alt="SabiWay Footer Logo"
+            width={3800}
+            height={1200}
+            className="w-full max-w-[1900px] h-auto"
+            priority
+          />
+        </div>
+      </div>
+    </footer>
+
       {/* ================= TAILWIND KEYFRAMES ================= */}
       <style jsx>{`
         @keyframes marquee-left {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
         }
         @keyframes marquee-right {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(50%); }
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(50%);
+          }
         }
         .animate-marquee-left {
           animation: marquee-left 25s linear infinite;

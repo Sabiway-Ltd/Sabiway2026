@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import CommunityNavbar from "../_components/CommunityNavbar";
+import CommunityNavbar from "../_components/feed/CommunityNavbar";
 import PostCard from "../_components/feed/PostCard";
 import Aside from "../_components/feed/Aside";
-import PostBox from "../_components/PostBox";
+import PostBox from "../_components/feed/PostBox";
 
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
