@@ -8,7 +8,7 @@ export default function Navbar() {
 
   return (
 
-    <nav className="fixed top-3 left-0 w-full z-50 bg-white/80 backdrop-blur-md " >
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md " >
       <div 
             className="flex items-center justify-between max-w-[1400px] mx-5  bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8 mt-2">
         {/* LOGO */}

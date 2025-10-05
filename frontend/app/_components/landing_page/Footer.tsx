@@ -1,10 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
 
 export default function Footer () {
     return(
-         <footer className="relative bg-[#008753] text-white py-12 px-8 md:px-16 -mt-55 z-20">
+      <footer className="relative bg-[#008753] text-white py-12 px-8 md:px-16 -mt-55 z-20">
       <div className="max-w-[2000px] mx-auto text-left">
         {/* Navigation Links */}
         <div className="flex flex-col gap-6">

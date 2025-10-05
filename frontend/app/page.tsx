@@ -1,13 +1,10 @@
 "use client";
-import Image from "next/image";
-import { useState } from "react";
 import Navbar from "./_components/landing_page/Navbar";
 import Herosection from "./_components/landing_page/Herosection";
 import Scrollingpath from "./_components/landing_page/Scrollingpath";
 import Aboutus from "./_components/landing_page/Aboutus";
 import Serviceprovider from "./_components/landing_page/Serviceprovider";
 import Reviewsection from "./_components/landing_page/Reviewsection";
-import { FaQ } from "react-icons/fa6";
 import Faqs from "./_components/landing_page/Faqs";
 import Appsection from "./_components/landing_page/Appsection";
 import Footer from "./_components/landing_page/Footer";
