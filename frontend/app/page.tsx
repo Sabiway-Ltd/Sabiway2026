@@ -3,7 +3,6 @@ import Image from "next/image";
 import { useState } from "react";
 import Navbar from "./_components/landing_page/Navbar";
 
-
 export default function Home() {
   const services = [
     "Cleaning",
@@ -16,7 +15,7 @@ export default function Home() {
     "Tailors",
   ];
 
-  
+
   const reviews = [
     {
       text: "SabiWay helped me find a painter in less than 1 hour. Super fast and very trustworthy service!",
