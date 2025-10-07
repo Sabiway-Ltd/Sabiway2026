@@ -31,7 +31,12 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ---------------------------------------------------------------------
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY", default="insecure-secret")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+    "localhost",
+    "127.0.0.1",
+    "sabiway-9wq4.onrender.com",
+])
+
 
 # Google OAuth
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="your-google-client-id.apps.googleusercontent.com")
@@ -88,7 +93,11 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://sabiway2025.vercel.app",
+    "https://sabiway-9wq4.onrender.com",
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+
 
 ROOT_URLCONF = "sabiway.urls"
 
