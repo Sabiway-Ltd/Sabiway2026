@@ -24,7 +24,7 @@ export default function Login() {
 
     if (result?.success) {
       toast.success("Welcome back!");
-      router.push("/dashboard"); // ✅ redirect to your app's main page
+      router.push("/community"); // ✅ redirect to your app's main page
     } else {
       toast.error(result?.error || "Login failed. Please check your credentials.");
     }

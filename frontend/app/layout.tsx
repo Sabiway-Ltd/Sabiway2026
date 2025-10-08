@@ -1,3 +1,5 @@
+// app/layout.tsx
+
 import "./globals.css";
 import { Montserrat } from "next/font/google";
 import { Toaster } from "react-hot-toast";
@@ -18,25 +20,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${montserrat.className}`}>{children}</body>
-      <Toaster
+    <html lang="en" suppressHydrationWarning>
+      <body className={montserrat.className}>
+        {children}
+        <Toaster
           position="top-right"
           toastOptions={{
             success: {
-              style: {
-                background: "#008753",
-                color: "#fff",
-              },
+              style: { background: "#008753", color: "#fff" },
             },
             error: {
-              style: {
-                background: "#ef4444",
-                color: "#fff",
-              },
+              style: { background: "#ef4444", color: "#fff" },
             },
           }}
         />
+      </body>
     </html>
   );
 }

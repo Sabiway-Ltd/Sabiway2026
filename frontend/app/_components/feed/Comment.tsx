@@ -1,19 +1,18 @@
-// app/_components/feed/Comment.tsx
-'use client'
+'use client';
 
 import { useState } from "react";
 
-type CommentProps = {
-  id: number;
+export interface IComment {
+  id: string | number;
   author: {
     name: string;
     avatar: string;
   };
   content: string;
-  replies?: CommentProps[];
-};
+  replies?: IComment[];
+}
 
-export default function Comment({ author, content, replies = [] }: CommentProps) {
+export default function Comment({ id, author, content, replies = [] }: IComment) {
   const [showReplies, setShowReplies] = useState(true);
 
   return (
@@ -23,7 +22,7 @@ export default function Comment({ author, content, replies = [] }: CommentProps)
         <img
           src={author.avatar}
           alt={author.name}
-          className="w-8 h-8 rounded-full"
+          className="w-8 h-8 rounded-full object-cover"
         />
         <div>
           <p className="font-semibold text-sm">{author.name}</p>
@@ -33,7 +32,7 @@ export default function Comment({ author, content, replies = [] }: CommentProps)
           {replies.length > 0 && (
             <button
               onClick={() => setShowReplies(!showReplies)}
-              className="text-xs text-blue-500 mt-1"
+              className="text-xs text-blue-500 mt-1 hover:underline"
             >
               {showReplies ? "Hide replies" : `View ${replies.length} replies`}
             </button>
