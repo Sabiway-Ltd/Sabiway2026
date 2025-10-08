@@ -24,7 +24,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if token expired and not already retried
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -40,9 +39,9 @@ api.interceptors.response.use(
       }
 
       try {
-        // Call your refresh endpoint
+        // ✅ Correct refresh endpoint
         const res = await axios.post(
-          "https://sabiway-9wq4.onrender.com/api/auth/refresh/",
+          "https://sabiway-9wq4.onrender.com/api/auth/token/refresh/",
           { refresh: refreshToken },
           { headers: { "Content-Type": "application/json" } }
         );
@@ -61,7 +60,6 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error("Token refresh failed:", refreshError);
-        // Clear storage and redirect
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         window.location.href = "/login";

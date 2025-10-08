@@ -75,20 +75,29 @@ export default function PostCard({
 
   // ❤️ Toggle like
   const handleToggleLike = async () => {
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+
+    // Optimistic update
+    setIsLiked(!previousLiked);
+    setLikesCount(previousLiked ? previousCount - 1 : previousCount + 1);
+
     try {
-      if (isLiked) {
-        setIsLiked(false);
-        setLikesCount((prev) => prev - 1);
+      if (previousLiked) {
+        // User already liked → unlike it
         await unlikePost(id);
       } else {
-        setIsLiked(true);
-        setLikesCount((prev) => prev + 1);
+        // User not liked → like it
         await likePost(id);
       }
     } catch (err) {
       console.error("Error toggling like:", err);
+      // Rollback UI on error
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
     }
   };
+
 
   // 💬 Load comments
   const handleToggleComments = async () => {
@@ -155,7 +164,7 @@ export default function PostCard({
         />
         <div>
           <p className="font-semibold">{author.full_name}</p>
-          <p className="text-gray-500 text-sm">@{author.username}</p>
+          <p className="text-gray-500 text-sm">{author.username}</p>
           <p className="text-[11px] text-gray-400">{formattedDate}</p>
         </div>
       </div>

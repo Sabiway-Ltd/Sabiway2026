@@ -67,7 +67,7 @@ export default function CommentThread({
         <div className="flex-1">
           <p className="font-semibold text-sm">
             {author.name}{" "}
-            <span className="text-gray-500">@{author.username}</span>
+            <span className="text-gray-500">{author.username}</span>
           </p>
           <p className="text-gray-800 text-sm">{content}</p>
 
