@@ -25,7 +25,6 @@ class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.select_related("author__user").prefetch_related("hashtags").all()
-    # allow public read but require auth for write actions
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_serializer_class(self):
@@ -37,27 +36,29 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         author_profile = instance.author
-        # decrement posts_count
         author_profile.posts_count = max(0, author_profile.posts_count - 1)
         author_profile.save(update_fields=["posts_count"])
-        # update hashtags use_count (decrement)
+
+        # decrement hashtag usage count
         for tag in instance.hashtags.all():
             if tag.use_count > 0:
-                tag.use_count = tag.use_count - 1
+                tag.use_count -= 1
                 tag.save(update_fields=["use_count"])
         instance.delete()
 
+    # ✅ Like a post
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
         post = self.get_object()
         profile = getattr(request.user, "profile", request.user)
         obj, created = Like.objects.get_or_create(user=profile, post=post)
         if created:
-            post.likes_count = post.likes_count + 1
+            post.likes_count += 1
             post.save(update_fields=["likes_count"])
             return Response({"detail": "Liked"}, status=status.HTTP_201_CREATED)
         return Response({"detail": "Already liked"}, status=status.HTTP_200_OK)
 
+    # ✅ Unlike a post
     @action(detail=True, methods=["post"], url_path="unlike")
     def unlike(self, request, pk=None):
         post = self.get_object()
@@ -69,23 +70,25 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Unliked"}, status=status.HTTP_200_OK)
         return Response({"detail": "Not liked"}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["get"], url_path="comments")
-    def list_comments(self, request, pk=None):
+    # ✅ Combined comments endpoint (GET + POST)
+    @action(detail=True, methods=["get", "post"], url_path="comments")
+    def comments(self, request, pk=None):
         post = self.get_object()
-        qs = post.comments.select_related("user__user").all()
-        serializer = CommentSerializer(qs, many=True)
-        return Response(serializer.data)
 
-    @action(detail=True, methods=["post"], url_path="comments")
-    def create_comment(self, request, pk=None):
-        post = self.get_object()
-        data = request.data.copy()
-        data["post"] = str(post.id)  # serializer expects PK; serializers accept UUID str
-        serializer = CommentSerializer(data=data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        comment = serializer.save()
-        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+        if request.method == "GET":
+            qs = post.comments.select_related("user__user").all()
+            serializer = CommentSerializer(qs, many=True)
+            return Response(serializer.data)
 
+        if request.method == "POST":
+            data = request.data.copy()
+            data["post"] = str(post.id)
+            serializer = CommentSerializer(data=data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            comment = serializer.save()
+            return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+    # ✅ Replies endpoint
     @action(detail=True, methods=["get"], url_path="replies")
     def list_replies(self, request, pk=None):
         post = self.get_object()
