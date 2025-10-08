@@ -34,7 +34,10 @@ export const post = {
   getHashtagById: (id: number) => api.get(`/posts/hashtags/${id}/`),
 
   // 💬 COMMENTS
-  getComments: (postId: string) => api.get(`/posts/${postId}/comments/`),
+  getComments: async (postId: string) => {
+    const response = await api.get(`/posts/${postId}/comments/`);
+    return response.data; // ✅ returns array directly
+  },
   addComment: (postId: string, data: { content: string }) =>
     api.post(`/posts/${postId}/comments/`, data),
 

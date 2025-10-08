@@ -1,3 +1,5 @@
+// app/_components/feed/PostBox.tsx
+
 "use client";
 
 import { useState } from "react";

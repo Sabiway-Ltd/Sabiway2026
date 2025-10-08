@@ -1,3 +1,5 @@
+// app/_components/feed/CommentThread.tsx
+
 "use client";
 
 import { useState } from "react";

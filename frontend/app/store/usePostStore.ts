@@ -236,18 +236,27 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  // 💬 Get comments
+  // 💬 Get comments (returns array)
   getComments: async (postId) => {
     try {
-      const res = await post.getComments(postId);
+      const data = await post.getComments(postId);
+      console.log("[usePostStore] getComments:", postId, data);
       set((state) => ({
         commentsByPost: {
           ...state.commentsByPost,
-          [postId]: res.data,
+          [postId]: Array.isArray(data) ? data : [],
         },
       }));
-    } catch (err) {
-      console.error("Get comments error:", err);
+      return data;
+    } catch (err: any) {
+      console.error("Get comments error:", err?.response?.data || err?.message);
+      set((state) => ({
+        commentsByPost: {
+          ...state.commentsByPost,
+          [postId]: [],
+        },
+      }));
+      return [];
     }
   },
 

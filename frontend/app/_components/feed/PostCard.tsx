@@ -13,7 +13,6 @@ import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import CommentThread from "./CommentThread";
 
-
 export default function PostCard({
   id,
   author,
@@ -95,10 +94,11 @@ export default function PostCard({
   const handleToggleComments = async () => {
     const nextState = !showComments;
     setShowComments(nextState);
-    if (nextState && comments.length === 0) {
+    if (nextState) {
       setLoadingComments(true);
       try {
-        await getComments(id);
+        const data = await getComments(id);
+        console.log("PostCard: fetched comments for", id, data);
       } catch (err) {
         console.error("Error loading comments:", err);
       } finally {
@@ -115,7 +115,8 @@ export default function PostCard({
       await addComment(id, comment);
       setComment("");
       setCommentCount((prev) => prev + 1);
-      await getComments(id); // refresh comment list
+      const data = await getComments(id);
+      console.log("PostCard: refreshed comments after submit:", id, data);
     } catch (err) {
       console.error("Error adding comment:", err);
     } finally {
@@ -228,7 +229,7 @@ export default function PostCard({
               placeholder="Leave a comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-[85%] text-sm"
+              className="w-[85%] text-sm outline-none"
             />
             <button
               onClick={handleCommentSubmit}
@@ -274,7 +275,7 @@ export default function PostCard({
                       "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
                   }}
                   content={c.content}
-                  likes={c.likes_count}
+                  likes={c.likes_count || 0}
                   comments={0}
                   impressions={0}
                   replies={[]}
