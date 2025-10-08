@@ -14,6 +14,7 @@ class HashtagSerializer(serializers.ModelSerializer):
 class PostListSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     hashtags = HashtagSerializer(many=True, read_only=True)
+    is_liked = serializers.SerializerMethodField()  # ✅ New field
 
     class Meta:
         model = Post
@@ -22,6 +23,7 @@ class PostListSerializer(serializers.ModelSerializer):
             "hashtags", "likes_count", "comments_count", 
             "impressions_count", "reposts_count", 
             "created_at", "updated_at",
+            "is_liked",  # include here
         ]
 
     def get_author(self, obj):
@@ -33,6 +35,38 @@ class PostListSerializer(serializers.ModelSerializer):
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
         }
 
+    def get_is_liked(self, obj):
+        request = self.context.get("request", None)
+        if not request or not request.user.is_authenticated:
+            return False
+        profile = getattr(request.user, "profile", request.user)
+        return obj.likes.filter(user=profile).exists()  # ✅ Check if user liked this post
+
+
+class PostDetailSerializer(PostListSerializer):
+    image = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta(PostListSerializer.Meta):
+        model = Post
+        fields = PostListSerializer.Meta.fields + ["content", "image"]
+
+    # Keep your update logic unchanged
+    def update(self, instance, validated_data):
+        instance.content = validated_data.get("content", instance.content)
+        instance.image = validated_data.get("image", instance.image)
+        instance.save()
+
+        old_tags = list(instance.hashtags.all())
+        instance.hashtags.clear()
+        instance.parse_and_attach_hashtags()
+
+        for tag in old_tags:
+            if tag not in instance.hashtags.all() and tag.use_count > 0:
+                tag.use_count = tag.use_count - 1
+                tag.save(update_fields=["use_count"])
+
+        instance.refresh_from_db()
+        return instance
 
 class PostCreateSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
@@ -62,36 +96,6 @@ class PostCreateSerializer(serializers.ModelSerializer):
         instance.parse_and_attach_hashtags()
 
         # reload hashtags so serializer returns them
-        instance.refresh_from_db()
-        return instance
-
-
-class PostDetailSerializer(PostListSerializer):
-    image = serializers.ImageField(required=False, allow_null=True)
-
-    class Meta(PostListSerializer.Meta):
-        model = Post
-        fields = PostListSerializer.Meta.fields + ["content", "image"]
-
-    def update(self, instance, validated_data):
-        instance.content = validated_data.get("content", instance.content)
-        instance.image = validated_data.get("image", instance.image)
-        instance.save()
-
-        # track old hashtags
-        old_tags = list(instance.hashtags.all())
-
-        # re-parse hashtags
-        instance.hashtags.clear()
-        instance.parse_and_attach_hashtags()
-
-        # decrement counts for tags that were removed
-        for tag in old_tags:
-            if tag not in instance.hashtags.all() and tag.use_count > 0:
-                tag.use_count = tag.use_count - 1
-                tag.save(update_fields=["use_count"])
-
-        # reload hashtags for serializer response
         instance.refresh_from_db()
         return instance
 
