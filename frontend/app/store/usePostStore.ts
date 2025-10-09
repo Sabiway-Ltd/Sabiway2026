@@ -41,6 +41,7 @@ type Comment = {
   likes_count: number;
   created_at: string;
   is_liked?: boolean;
+  reply_count?: number;
 };
 
 type Reply = {
@@ -78,6 +79,9 @@ type PostState = {
   repostPost: (id: string, message?: string) => Promise<void>;
   likeComment: (commentId: string) => Promise<void>;
   unlikeComment: (commentId: string) => Promise<void>;
+  likeReply: (replyId: string) => Promise<void>;
+  unlikeReply: (replyId: string) => Promise<void>;
+
 };
 
 // 🏗️ Zustand Store
@@ -347,4 +351,45 @@ export const usePostStore = create<PostState>((set, get) => ({
       console.error("Unlike comment error:", err);
     }
   },
+
+    // 💭 Like a reply
+  likeReply: async (replyId: string) => {
+    try {
+      await post.likeReply(replyId);
+      set((state) => {
+        const updated = { ...state.repliesByComment };
+        for (const commentId in updated) {
+          updated[commentId] = updated[commentId].map((r) =>
+            r.id === replyId
+              ? { ...r, likes_count: (r.likes_count || 0) + 1, is_liked: true }
+              : r
+          );
+        }
+        return { repliesByComment: updated };
+      });
+    } catch (err) {
+      console.error("Like reply error:", err);
+    }
+  },
+
+  // 💭 Unlike a reply
+  unlikeReply: async (replyId: string) => {
+    try {
+      await post.unlikeReply(replyId);
+      set((state) => {
+        const updated = { ...state.repliesByComment };
+        for (const commentId in updated) {
+          updated[commentId] = updated[commentId].map((r) =>
+            r.id === replyId && r.likes_count > 0
+              ? { ...r, likes_count: r.likes_count - 1, is_liked: false }
+              : r
+          );
+        }
+        return { repliesByComment: updated };
+      });
+    } catch (err) {
+      console.error("Unlike reply error:", err);
+    }
+  },
+
 }));

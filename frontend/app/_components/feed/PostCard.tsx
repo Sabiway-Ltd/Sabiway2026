@@ -246,11 +246,12 @@ export default function PostCard({
                   content={c.content}
                   likes={c.likes_count || 0}
                   is_liked={c.is_liked || false}
-                  replies={c.replies || []}
+                  reply_count={c.reply_count || 0}
                   onReplySubmit={addReply}
                   onLike={likeComment}
                   onUnlike={unlikeComment}
                 />
+
               ))
             )}
           </div>

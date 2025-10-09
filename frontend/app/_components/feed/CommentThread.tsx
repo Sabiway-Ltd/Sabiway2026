@@ -16,12 +16,15 @@ interface Comment {
     whatsapp_number: string;
   };
   content: string;
+  reply_count?: number;
   likes: number;
   is_liked?: boolean;
   replies?: Comment[];
   onReplySubmit?: (parentId: string | number, content: string) => Promise<void> | void;
   onLike?: (id: string | number) => Promise<void> | void;
   onUnlike?: (id: string | number) => Promise<void> | void;
+  /** 👇 NEW */
+  isReply?: boolean;
 }
 
 export default function CommentThread({
@@ -29,10 +32,12 @@ export default function CommentThread({
   author,
   content,
   likes,
+  reply_count = 0,
   is_liked = false,
   onReplySubmit,
   onLike,
   onUnlike,
+  isReply = false, // 👈 default false (means it's a top-level comment)
 }: Comment) {
   const { repliesByComment, getRepliesByComment } = usePostStore();
   const [showReplies, setShowReplies] = useState(false);
@@ -45,23 +50,18 @@ export default function CommentThread({
 
   const replies = repliesByComment[String(id)] || [];
 
-  // 💭 Handle fetching replies when toggled
   const handleToggleReplies = async () => {
     setShowReplies((prev) => !prev);
-
     if (!showReplies && replies.length === 0) {
       setLoadingReplies(true);
       try {
         await getRepliesByComment(String(id));
-      } catch (err) {
-        console.error("Error fetching replies:", err);
       } finally {
         setLoadingReplies(false);
       }
     }
   };
 
-  // 💬 Submit a reply
   const handleReplySubmit = async () => {
     if (!replyText.trim()) return;
     setSubmitting(true);
@@ -69,16 +69,12 @@ export default function CommentThread({
       if (onReplySubmit) await onReplySubmit(id, replyText);
       setReplyText("");
       setShowReplyBox(false);
-      // Refresh replies after submitting
       await getRepliesByComment(String(id));
-    } catch (err) {
-      console.error("Error submitting reply:", err);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ❤️ Like / Unlike
   const handleLikeToggle = async () => {
     try {
       if (liked) {
@@ -92,17 +88,12 @@ export default function CommentThread({
       }
     } catch (err) {
       console.error("Error toggling like:", err);
-      // rollback
-      setLocalLikes(liked ? localLikes + 1 : localLikes - 1);
-      setLiked(liked);
     }
   };
 
-  // 📞 WhatsApp
   const handleWhatsappClick = () => {
     if (author.whatsapp_number) {
-      const whatsappUrl = `https://wa.me/${author.whatsapp_number}`;
-      window.open(whatsappUrl, "_blank");
+      window.open(`https://wa.me/${author.whatsapp_number}`, "_blank");
     } else {
       toast.error("This user does not have a WhatsApp number.");
     }
@@ -134,14 +125,16 @@ export default function CommentThread({
               <span className="text-xs">{localLikes}</span>
             </button>
 
-            {/* 💬 Reply */}
-            <button
-              className="flex items-center gap-1 hover:text-blue-500"
-              onClick={() => setShowReplyBox(!showReplyBox)}
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span className="text-xs">Reply</span>
-            </button>
+            {/* 💬 Reply (only show if NOT a reply) */}
+            {!isReply && (
+              <button
+                className="flex items-center gap-1 hover:text-blue-500"
+                onClick={() => setShowReplyBox(!showReplyBox)}
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span className="text-xs">Reply</span>
+              </button>
+            )}
 
             {/* 📞 WhatsApp */}
             <button
@@ -150,12 +143,12 @@ export default function CommentThread({
                 !author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
               }`}
             >
-              <FaWhatsapp size={14} />
+              <FaWhatsapp size={16} />
             </button>
           </div>
 
           {/* ✍️ Reply Box */}
-          {showReplyBox && (
+          {!isReply && showReplyBox && (
             <div className="mt-2 border rounded-full px-4 py-1 bg-white flex w-full justify-between">
               <input
                 type="text"
@@ -164,11 +157,7 @@ export default function CommentThread({
                 onChange={(e) => setReplyText(e.target.value)}
                 className="w-[85%] text-xs outline-none"
               />
-
-              <button
-                onClick={handleReplySubmit}
-                disabled={submitting || !replyText.trim()}
-              >
+              <button onClick={handleReplySubmit} disabled={submitting || !replyText.trim()}>
                 <svg
                   width="16"
                   height="16"
@@ -188,47 +177,54 @@ export default function CommentThread({
           )}
 
           {/* 💭 View Replies */}
-          <button
-            onClick={handleToggleReplies}
-            className="text-xs text-blue-500 mt-1 hover:underline"
-          >
-            {showReplies ? "Hide replies" : `View ${replies.length} replies`}
-          </button>
+          {!isReply && (reply_count ?? replies.length) > 0 && (
+            <button
+              onClick={handleToggleReplies}
+              className="text-xs text-blue-500 mt-1 hover:underline"
+            >
+              {showReplies
+                ? "Hide replies"
+                : `View ${reply_count || replies.length} ${
+                    reply_count === 1 ? "reply" : "replies"
+                  }`}
+            </button>
+          )}
         </div>
       </div>
 
       {/* 🌀 Replies Section */}
-      {/* 🌀 Replies Section */}
-{showReplies && (
-  <div className="mt-2 space-y-2">
-    {loadingReplies ? (
-        <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
-      ) : replies.length > 0 ? (
-        replies.map((reply) => (
-          <CommentThread
-            key={reply.id}
-            id={reply.id}
-            author={{
-              name: reply.user?.full_name || "Unknown",
-              username: reply.user?.username || "",
-              avatar:
-                reply.user?.profile_picture ||
-                "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-              whatsapp_number: reply.user?.whatsapp_number || "",
-            }}
-            content={reply.content}
-            likes={reply.likes_count || 0}
-            is_liked={reply.is_liked || false}
-            onLike={onLike}
-            onUnlike={onUnlike}
-            onReplySubmit={onReplySubmit}
-          />
-        ))
-      ) : (
-        <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
-      )}
-    </div>
-  )}
+      {showReplies && (
+      <div className="mt-2 space-y-2">
+        {loadingReplies ? (
+          <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
+        ) : replies.length > 0 ? (
+          replies.map((reply) => (
+            <CommentThread
+              key={reply.id}
+              id={reply.id}
+              author={{
+                name: reply.user?.full_name || "Unknown",
+                username: reply.user?.username || "",
+                avatar:
+                  reply.user?.profile_picture ||
+                  "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                whatsapp_number: reply.user?.whatsapp_number || "",
+              }}
+              content={reply.content}
+              likes={reply.likes_count || 0}
+              is_liked={reply.is_liked || false}
+              /** ✅ Use the store actions directly */
+              onLike={() => usePostStore.getState().likeReply(String(reply.id))}
+              onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}
+              onReplySubmit={onReplySubmit}
+              isReply={true} // 👈 this marks replies so they hide the Reply button
+            />
+          ))
+        ) : (
+          <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
+        )}
+      </div>
+    )}
 
     </div>
   );
