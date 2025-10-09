@@ -115,12 +115,17 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    is_liked = serializers.SerializerMethodField()  # ✅ Add this
+    is_liked = serializers.SerializerMethodField()
+    reply_count = serializers.IntegerField(read_only=True)  # ✅ Added field
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "post", "content", "likes_count", "created_at", "is_liked"]
-        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked"]
+        fields = [
+            "id", "user", "post", "content",
+            "likes_count", "created_at",
+            "is_liked", "reply_count",  # ✅ include here
+        ]
+        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked", "reply_count"]
 
     def get_user(self, obj):
         p = obj.user
@@ -139,7 +144,6 @@ class CommentSerializer(serializers.ModelSerializer):
         profile = getattr(request.user, "profile", request.user)
         return obj.likes.filter(user=profile).exists()
 
-
     def create(self, validated_data):
         request = self.context["request"]
         profile = request.user.profile
@@ -147,10 +151,10 @@ class CommentSerializer(serializers.ModelSerializer):
         comment = Comment.objects.create(
             user=profile, post=post, content=validated_data["content"]
         )
-        # increment comment count on post
         post.comments_count = post.comments_count + 1
         post.save(update_fields=["comments_count"])
         return comment
+
 
 
 class ReplySerializer(serializers.ModelSerializer):

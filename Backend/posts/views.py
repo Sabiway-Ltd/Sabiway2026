@@ -6,12 +6,14 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost, CommentLike, ReplyLike
+from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost, CommentLike, ReplyLike 
 from .serializers import (
     PostListSerializer, PostCreateSerializer, PostDetailSerializer,
     LikeSerializer, CommentSerializer, ReplySerializer, HashtagSerializer, BookmarkSerializer,
     RepostSerializer
 )
+from django.db.models import Count
+
 
 class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Hashtag.objects.all().order_by("-use_count")
@@ -73,7 +75,12 @@ class PostViewSet(viewsets.ModelViewSet):
         post = self.get_object()
 
         if request.method == "GET":
-            qs = post.comments.select_related("user__user").all()
+            qs = (
+                post.comments
+                .select_related("user__user")
+                .annotate(reply_count=Count("replies"))  # ✅ Add reply count
+                .order_by("-created_at")
+            )
             serializer = CommentSerializer(qs, many=True, context={"request": request})
             return Response(serializer.data)
 
@@ -83,8 +90,11 @@ class PostViewSet(viewsets.ModelViewSet):
             serializer = CommentSerializer(data=data, context={"request": request})
             serializer.is_valid(raise_exception=True)
             comment = serializer.save()
-            return Response(CommentSerializer(comment, context={"request": request}).data, status=status.HTTP_201_CREATED)
-
+            return Response(
+                CommentSerializer(comment, context={"request": request}).data,
+                status=status.HTTP_201_CREATED,
+            )
+        
     # ✅ Replies endpoint
     @action(detail=True, methods=["get"], url_path="replies")
     def list_replies(self, request, pk=None):
@@ -235,7 +245,7 @@ class TrendingHashtagsView(generics.ListAPIView):
 
 
 
-from .models import CommentLike, ReplyLike
+
 
 
 class CommentLikeToggleView(APIView):
