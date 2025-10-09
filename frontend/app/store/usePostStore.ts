@@ -40,6 +40,7 @@ type Comment = {
   content: string;
   likes_count: number;
   created_at: string;
+  is_liked?: boolean;
 };
 
 type Reply = {
@@ -51,11 +52,13 @@ type Reply = {
   created_at: string;
 };
 
+// 🧱 Store shape
 type PostState = {
   posts: Post[];
   currentPost: Post | null;
-  commentsByPost: Record<string, Comment[]>; // ✅ New structure
+  commentsByPost: Record<string, Comment[]>;
   replies: Reply[];
+  repliesByComment: Record<string, Reply[]>;
   loading: boolean;
   error: string | null;
 
@@ -71,9 +74,8 @@ type PostState = {
   getComments: (postId: string) => Promise<void>;
   addReply: (commentId: string, content: string) => Promise<void>;
   getReplies: (postId: string) => Promise<void>;
+  getRepliesByComment: (commentId: string) => Promise<void>;
   repostPost: (id: string, message?: string) => Promise<void>;
-
-  // ✅ add these:
   likeComment: (commentId: string) => Promise<void>;
   unlikeComment: (commentId: string) => Promise<void>;
 };
@@ -82,8 +84,9 @@ type PostState = {
 export const usePostStore = create<PostState>((set, get) => ({
   posts: [],
   currentPost: null,
-  commentsByPost: {}, // ✅ store comments keyed by postId
+  commentsByPost: {},
   replies: [],
+  repliesByComment: {}, // ✅ added correctly
   loading: false,
   error: null,
 
@@ -101,7 +104,7 @@ export const usePostStore = create<PostState>((set, get) => ({
           ...p.author,
           profile_picture:
             p.author.profile_picture ||
-            `https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png`,
+            "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
         },
       }));
 
@@ -128,7 +131,7 @@ export const usePostStore = create<PostState>((set, get) => ({
           ...p.author,
           profile_picture:
             p.author.profile_picture ||
-            `https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png`,
+            "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
         },
       };
       set({ currentPost: normalized, loading: false });
@@ -141,7 +144,7 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  // ✍️ Create a new post
+  // ✍️ Create post
   createPost: async (data) => {
     set({ loading: true, error: null });
     try {
@@ -153,7 +156,7 @@ export const usePostStore = create<PostState>((set, get) => ({
           ...res.data.author,
           profile_picture:
             res.data.author.profile_picture ||
-            `https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png`,
+            "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
         },
       };
       set((state) => ({
@@ -241,27 +244,21 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  // 💬 Get comments (returns array)
+  // 💬 Get comments
   getComments: async (postId) => {
     try {
       const data = await post.getComments(postId);
-      console.log("[usePostStore] getComments:", postId, data);
       set((state) => ({
         commentsByPost: {
           ...state.commentsByPost,
           [postId]: Array.isArray(data) ? data : [],
         },
       }));
-      return data;
     } catch (err: any) {
       console.error("Get comments error:", err?.response?.data || err?.message);
       set((state) => ({
-        commentsByPost: {
-          ...state.commentsByPost,
-          [postId]: [],
-        },
+        commentsByPost: { ...state.commentsByPost, [postId]: [] },
       }));
-      return [];
     }
   },
 
@@ -269,19 +266,36 @@ export const usePostStore = create<PostState>((set, get) => ({
   addReply: async (commentId, content) => {
     try {
       const res = await post.addReply({ comment: commentId, content });
-      set((state) => ({ replies: [...state.replies, res.data] }));
+      set((state) => ({
+        replies: [...state.replies, res.data],
+      }));
     } catch (err) {
       console.error("Add reply error:", err);
     }
   },
 
-  // 💭 Get replies
+  // 💭 Get replies for a post
   getReplies: async (postId) => {
     try {
       const res = await post.getReplies(postId);
       set({ replies: res.data });
     } catch (err) {
       console.error("Get replies error:", err);
+    }
+  },
+
+  // 💭 Get replies for a specific comment
+  getRepliesByComment: async (commentId: string) => {
+    try {
+      const res = await post.getRepliesByComment(commentId);
+      set((state) => ({
+        repliesByComment: {
+          ...state.repliesByComment,
+          [commentId]: res.data,
+        },
+      }));
+    } catch (err) {
+      console.error("Get replies by comment error:", err);
     }
   },
 
@@ -294,19 +308,20 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-
-    // 💬 Like a comment
-  likeComment: async (commentId: string) => {
+  // 💬 Like a comment
+  likeComment: async (commentId) => {
     try {
       await post.likeComment(commentId);
       set((state) => {
-        const updatedComments = { ...state.commentsByPost };
-        for (const postId in updatedComments) {
-          updatedComments[postId] = updatedComments[postId].map((c) =>
-            c.id === commentId ? { ...c, likes_count: (c.likes_count || 0) + 1, is_liked: true } : c
+        const updated = { ...state.commentsByPost };
+        for (const postId in updated) {
+          updated[postId] = updated[postId].map((c) =>
+            c.id === commentId
+              ? { ...c, likes_count: (c.likes_count || 0) + 1, is_liked: true }
+              : c
           );
         }
-        return { commentsByPost: updatedComments };
+        return { commentsByPost: updated };
       });
     } catch (err) {
       console.error("Like comment error:", err);
@@ -314,23 +329,22 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
   // 💬 Unlike a comment
-  unlikeComment: async (commentId: string) => {
+  unlikeComment: async (commentId) => {
     try {
       await post.unlikeComment(commentId);
       set((state) => {
-        const updatedComments = { ...state.commentsByPost };
-        for (const postId in updatedComments) {
-          updatedComments[postId] = updatedComments[postId].map((c) =>
+        const updated = { ...state.commentsByPost };
+        for (const postId in updated) {
+          updated[postId] = updated[postId].map((c) =>
             c.id === commentId && c.likes_count > 0
               ? { ...c, likes_count: c.likes_count - 1, is_liked: false }
               : c
           );
         }
-        return { commentsByPost: updatedComments };
+        return { commentsByPost: updated };
       });
     } catch (err) {
       console.error("Unlike comment error:", err);
     }
   },
-
 }));

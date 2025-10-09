@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, MessageCircle } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "react-hot-toast";
+import { usePostStore } from "@/app/store/usePostStore";
 
 interface Comment {
   id: string | number;
@@ -29,18 +30,38 @@ export default function CommentThread({
   content,
   likes,
   is_liked = false,
-  replies = [],
   onReplySubmit,
   onLike,
   onUnlike,
 }: Comment) {
-  const [showReplies, setShowReplies] = useState(true);
+  const { repliesByComment, getRepliesByComment } = usePostStore();
+  const [showReplies, setShowReplies] = useState(false);
   const [localLikes, setLocalLikes] = useState(likes);
   const [liked, setLiked] = useState(is_liked);
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loadingReplies, setLoadingReplies] = useState(false);
 
+  const replies = repliesByComment[String(id)] || [];
+
+  // 💭 Handle fetching replies when toggled
+  const handleToggleReplies = async () => {
+    setShowReplies((prev) => !prev);
+
+    if (!showReplies && replies.length === 0) {
+      setLoadingReplies(true);
+      try {
+        await getRepliesByComment(String(id));
+      } catch (err) {
+        console.error("Error fetching replies:", err);
+      } finally {
+        setLoadingReplies(false);
+      }
+    }
+  };
+
+  // 💬 Submit a reply
   const handleReplySubmit = async () => {
     if (!replyText.trim()) return;
     setSubmitting(true);
@@ -48,6 +69,8 @@ export default function CommentThread({
       if (onReplySubmit) await onReplySubmit(id, replyText);
       setReplyText("");
       setShowReplyBox(false);
+      // Refresh replies after submitting
+      await getRepliesByComment(String(id));
     } catch (err) {
       console.error("Error submitting reply:", err);
     } finally {
@@ -55,6 +78,7 @@ export default function CommentThread({
     }
   };
 
+  // ❤️ Like / Unlike
   const handleLikeToggle = async () => {
     try {
       if (liked) {
@@ -68,12 +92,13 @@ export default function CommentThread({
       }
     } catch (err) {
       console.error("Error toggling like:", err);
-      // Rollback UI change if API fails
+      // rollback
       setLocalLikes(liked ? localLikes + 1 : localLikes - 1);
       setLiked(liked);
     }
   };
 
+  // 📞 WhatsApp
   const handleWhatsappClick = () => {
     if (author.whatsapp_number) {
       const whatsappUrl = `https://wa.me/${author.whatsapp_number}`;
@@ -100,7 +125,7 @@ export default function CommentThread({
           <p className="text-gray-800 text-sm">{content}</p>
 
           <div className="flex flex-wrap md:gap-x-3 gap-x-2 text-gray-800 mt-2">
-            {/* Like */}
+            {/* ❤️ Like */}
             <button
               className="flex items-center gap-1 hover:text-red-500"
               onClick={handleLikeToggle}
@@ -109,7 +134,7 @@ export default function CommentThread({
               <span className="text-xs">{localLikes}</span>
             </button>
 
-            {/* Reply */}
+            {/* 💬 Reply */}
             <button
               className="flex items-center gap-1 hover:text-blue-500"
               onClick={() => setShowReplyBox(!showReplyBox)}
@@ -118,7 +143,7 @@ export default function CommentThread({
               <span className="text-xs">Reply</span>
             </button>
 
-            {/* WhatsApp */}
+            {/* 📞 WhatsApp */}
             <button
               onClick={handleWhatsappClick}
               className={`flex items-center gap-1 transition-opacity duration-200 hover:text-green-500 ${
@@ -129,6 +154,7 @@ export default function CommentThread({
             </button>
           </div>
 
+          {/* ✍️ Reply Box */}
           {showReplyBox && (
             <div className="mt-2 border rounded-full px-4 py-1 bg-white flex w-full justify-between">
               <input
@@ -138,42 +164,72 @@ export default function CommentThread({
                 onChange={(e) => setReplyText(e.target.value)}
                 className="w-[85%] text-xs outline-none"
               />
-              
 
-              <button 
+              <button
                 onClick={handleReplySubmit}
-                disabled={submitting || !replyText.trim()}>
-                    <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z" fill="black"/>
-                    </svg>
-                </button>
+                disabled={submitting || !replyText.trim()}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 22 22"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
+                    fill="black"
+                  />
+                </svg>
+              </button>
             </div>
           )}
 
-          {replies.length > 0 && (
-            <button
-              onClick={() => setShowReplies(!showReplies)}
-              className="text-xs text-blue-500 mt-1 hover:underline"
-            >
-              {showReplies ? "Hide replies" : `View ${replies.length} replies`}
-            </button>
-          )}
+          {/* 💭 View Replies */}
+          <button
+            onClick={handleToggleReplies}
+            className="text-xs text-blue-500 mt-1 hover:underline"
+          >
+            {showReplies ? "Hide replies" : `View ${replies.length} replies`}
+          </button>
         </div>
       </div>
 
-      {showReplies && replies.length > 0 && (
-        <div className="mt-2 space-y-2">
-          {replies.map((reply) => (
-            <CommentThread
-              key={reply.id}
-              {...reply}
-              onLike={onLike}
-              onUnlike={onUnlike}
-              onReplySubmit={onReplySubmit}
-            />
-          ))}
-        </div>
+      {/* 🌀 Replies Section */}
+      {/* 🌀 Replies Section */}
+{showReplies && (
+  <div className="mt-2 space-y-2">
+    {loadingReplies ? (
+        <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
+      ) : replies.length > 0 ? (
+        replies.map((reply) => (
+          <CommentThread
+            key={reply.id}
+            id={reply.id}
+            author={{
+              name: reply.user?.full_name || "Unknown",
+              username: reply.user?.username || "",
+              avatar:
+                reply.user?.profile_picture ||
+                "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+              whatsapp_number: reply.user?.whatsapp_number || "",
+            }}
+            content={reply.content}
+            likes={reply.likes_count || 0}
+            is_liked={reply.is_liked || false}
+            onLike={onLike}
+            onUnlike={onUnlike}
+            onReplySubmit={onReplySubmit}
+          />
+        ))
+      ) : (
+        <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
       )}
+    </div>
+  )}
+
     </div>
   );
 }
