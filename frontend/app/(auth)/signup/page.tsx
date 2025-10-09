@@ -29,7 +29,7 @@ export default function Signup() {
 
     if (result?.success) {
       toast.success("Account created successfully!");
-      router.push("/auth/login");
+      router.push("/login");
     } else {
       toast.error(result?.error || "Signup failed. Please try again.");
     }
@@ -142,7 +142,7 @@ export default function Signup() {
         <p className="text-center text-gray-600 text-[11px] sm:text-xs mt-5 sm:mt-6">
           Already have an account?{" "}
           <a
-            href="/auth/login"
+            href="/login"
             className="text-[#008753] font-medium hover:underline"
           >
             Sign in

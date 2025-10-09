@@ -176,12 +176,18 @@ export default function PostCard({
       {image && (
         <div className="mt-3 rounded-xl overflow-hidden">
           <Image
-            src={image}
+            src={
+              image.startsWith("http")
+                ? image
+                : `https://res.cloudinary.com/devqbjptr/${image}`
+            }
             alt="Post image"
             width={600}
             height={400}
             className="object-cover w-full"
+            unoptimized
           />
+
         </div>
       )}
 
