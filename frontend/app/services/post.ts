@@ -46,8 +46,11 @@ export const post = {
   addReply: (data: { comment: string; content: string }) =>
     api.post(`/posts/replies/`, data),
 
-  // 💬 COMMENTS LIKES
+  // 💬 COMMENT LIKES
   likeComment: (commentId: string) => api.post(`/posts/comments/${commentId}/like/`),
   unlikeComment: (commentId: string) => api.post(`/posts/comments/${commentId}/unlike/`),
 
+  // 💭 REPLY LIKES
+  likeReply: (replyId: string) => api.post(`/posts/replies/${replyId}/like/`),
+  unlikeReply: (replyId: string) => api.post(`/posts/replies/${replyId}/unlike/`),
 };

@@ -138,12 +138,15 @@ export default function CommentThread({
                 onChange={(e) => setReplyText(e.target.value)}
                 className="w-[85%] text-xs outline-none"
               />
-              <button
+              
+
+              <button 
                 onClick={handleReplySubmit}
-                disabled={submitting || !replyText.trim()}
-              >
-                Reply
-              </button>
+                disabled={submitting || !replyText.trim()}>
+                    <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z" fill="black"/>
+                    </svg>
+                </button>
             </div>
           )}
 

@@ -72,6 +72,10 @@ type PostState = {
   addReply: (commentId: string, content: string) => Promise<void>;
   getReplies: (postId: string) => Promise<void>;
   repostPost: (id: string, message?: string) => Promise<void>;
+
+  // ✅ add these:
+  likeComment: (commentId: string) => Promise<void>;
+  unlikeComment: (commentId: string) => Promise<void>;
 };
 
 // 🏗️ Zustand Store
@@ -294,7 +298,7 @@ export const usePostStore = create<PostState>((set, get) => ({
     // 💬 Like a comment
   likeComment: async (commentId: string) => {
     try {
-      await post.likeComment(commentId); // new endpoint
+      await post.likeComment(commentId);
       set((state) => {
         const updatedComments = { ...state.commentsByPost };
         for (const postId in updatedComments) {
@@ -312,7 +316,7 @@ export const usePostStore = create<PostState>((set, get) => ({
   // 💬 Unlike a comment
   unlikeComment: async (commentId: string) => {
     try {
-      await post.unlikeComment(commentId); // new endpoint
+      await post.unlikeComment(commentId);
       set((state) => {
         const updatedComments = { ...state.commentsByPost };
         for (const postId in updatedComments) {
