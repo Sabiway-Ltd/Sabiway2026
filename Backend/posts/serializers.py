@@ -33,6 +33,7 @@ class PostListSerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
+            "whatsapp_number": p.whatsapp_number,
         }
 
     def get_is_liked(self, obj):
@@ -114,11 +115,12 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()  # ✅ Add this
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "post", "content", "likes_count", "created_at"]
-        read_only_fields = ["id", "likes_count", "created_at", "user"]
+        fields = ["id", "user", "post", "content", "likes_count", "created_at", "is_liked"]
+        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked"]
 
     def get_user(self, obj):
         p = obj.user
@@ -127,7 +129,16 @@ class CommentSerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
+            "whatsapp_number": p.whatsapp_number,
         }
+
+    def get_is_liked(self, obj):
+        request = self.context.get("request", None)
+        if not request or not request.user.is_authenticated:
+            return False
+        profile = getattr(request.user, "profile", request.user)
+        return obj.likes.filter(user=profile).exists()
+
 
     def create(self, validated_data):
         request = self.context["request"]
@@ -144,11 +155,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class ReplySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()  # ✅ Add this
 
     class Meta:
         model = Reply
-        fields = ["id", "user", "comment", "content", "likes_count", "created_at"]
-        read_only_fields = ["id", "likes_count", "created_at", "user"]
+        fields = ["id", "user", "comment", "content", "likes_count", "created_at", "is_liked"]
+        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked"]
 
     def get_user(self, obj):
         p = obj.user
@@ -157,7 +169,16 @@ class ReplySerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
+            "whatsapp_number": p.whatsapp_number,
         }
+
+    def get_is_liked(self, obj):
+        request = self.context.get("request", None)
+        if not request or not request.user.is_authenticated:
+            return False
+        profile = getattr(request.user, "profile", request.user)
+        return obj.likes.filter(user=profile).exists()
+
 
     def create(self, validated_data):
         request = self.context["request"]
@@ -192,4 +213,5 @@ class RepostSerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
+            "whatsapp_number": p.whatsapp_number,
         }

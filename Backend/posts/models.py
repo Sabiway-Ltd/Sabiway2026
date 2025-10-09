@@ -123,3 +123,21 @@ class Repost(models.Model):
 
     class Meta:
         unique_together = ("user", "post")  # prevent duplicate reposts
+
+
+class ReplyLike(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reply_likes")
+    reply = models.ForeignKey(Reply, on_delete=models.CASCADE, related_name="likes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "reply")
+
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="comment_likes")
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "comment")

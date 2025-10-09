@@ -29,7 +29,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ---------------------------------------------------------------------
 # Core settings
 # ---------------------------------------------------------------------
-DEBUG = env("DEBUG")
+DEBUG = env("DEBUG", default="True")
 SECRET_KEY = env("SECRET_KEY", default="insecure-secret")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
     "localhost",
@@ -39,16 +39,16 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
 
 
 # Google OAuth
-GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="your-google-client-id.apps.googleusercontent.com")
-GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="your-google-client-secret")
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="62853499803-r7kkbq52ptk4u2j5mralkbbkquen4chh.apps.googleusercontent.com")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="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")
 
 # For Resend API
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "your-resend-api-key")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ")
 DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 
 # For Forget Password reset link
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
 
 
 # ---------------------------------------------------------------------
@@ -124,7 +124,7 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 # ---------------------------------------------------------------------
 # Use DATABASE_URL from .env if available, otherwise SQLite
 DATABASES = {
-    "default": env.db("DATABASE_URL")
+    "default": env.db("DATABASE_URL", default="postgresql://sabiway:Y8iCotGBb63RjHe3RGhu5oRNM37ccGJD@dpg-d3es3opr0fns73cvbuq0-a.oregon-postgres.render.com/sabiway_37ve")
 }
 
 
@@ -177,9 +177,9 @@ REST_FRAMEWORK = {
 # Cloudinary
 # ---------------------------------------------------------------------
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
-    "API_KEY": env("CLOUDINARY_API_KEY"),
-    "API_SECRET": env("CLOUDINARY_API_SECRET"),
+    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default="devqbjptr"),
+    "API_KEY": env("CLOUDINARY_API_KEY", default="233511915335819"),
+    "API_SECRET": env("CLOUDINARY_API_SECRET", default="ZcbD-lTO22KamDmTWMhp-xPgLxU"),
 }
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
