@@ -2,16 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-  Heart,
-  MessageCircle,
-  BarChart2,
-  Share,
-  Bookmark,
-} from "lucide-react";
+import { Heart, MessageCircle, BarChart2, Share, Bookmark } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import CommentThread from "./CommentThread";
+import { toast } from "react-hot-toast";
 
 export default function PostCard({
   id,
@@ -29,6 +24,7 @@ export default function PostCard({
     full_name: string;
     username: string;
     profile_picture?: string | null;
+    whatsapp_number: string;
   };
   content: string;
   image?: string | null;
@@ -56,11 +52,14 @@ export default function PostCard({
     bookmarkPost,
     unbookmarkPost,
     commentsByPost,
+    likeComment,
+    unlikeComment,
+    addReply,
   } = usePostStore();
 
   const comments = commentsByPost[id] || [];
 
-  // 🕒 Format date
+  // Format date
   useEffect(() => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -73,41 +72,31 @@ export default function PostCard({
     setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
   }, [created_at]);
 
-  // ❤️ Toggle like
+  // Post like/unlike
   const handleToggleLike = async () => {
-    const previousLiked = isLiked;
-    const previousCount = likesCount;
-
-    // Optimistic update
-    setIsLiked(!previousLiked);
-    setLikesCount(previousLiked ? previousCount - 1 : previousCount + 1);
+    const prevLiked = isLiked;
+    const prevCount = likesCount;
+    setIsLiked(!prevLiked);
+    setLikesCount(prevLiked ? prevCount - 1 : prevCount + 1);
 
     try {
-      if (previousLiked) {
-        // User already liked → unlike it
-        await unlikePost(id);
-      } else {
-        // User not liked → like it
-        await likePost(id);
-      }
+      if (prevLiked) await unlikePost(id);
+      else await likePost(id);
     } catch (err) {
+      setIsLiked(prevLiked);
+      setLikesCount(prevCount);
       console.error("Error toggling like:", err);
-      // Rollback UI on error
-      setIsLiked(previousLiked);
-      setLikesCount(previousCount);
     }
   };
 
-
-  // 💬 Load comments
+  // Toggle comments
   const handleToggleComments = async () => {
     const nextState = !showComments;
     setShowComments(nextState);
-    if (nextState) {
+    if (nextState && comments.length === 0) {
       setLoadingComments(true);
       try {
-        const data = await getComments(id);
-        console.log("PostCard: fetched comments for", id, data);
+        await getComments(id);
       } catch (err) {
         console.error("Error loading comments:", err);
       } finally {
@@ -116,7 +105,7 @@ export default function PostCard({
     }
   };
 
-  // ✍️ Add comment
+  // Add comment
   const handleCommentSubmit = async () => {
     if (!comment.trim()) return;
     setSubmitting(true);
@@ -124,8 +113,7 @@ export default function PostCard({
       await addComment(id, comment);
       setComment("");
       setCommentCount((prev) => prev + 1);
-      const data = await getComments(id);
-      console.log("PostCard: refreshed comments after submit:", id, data);
+      await getComments(id); // refresh comments
     } catch (err) {
       console.error("Error adding comment:", err);
     } finally {
@@ -133,17 +121,23 @@ export default function PostCard({
     }
   };
 
-  // 🔖 Bookmark
+  // Bookmark toggle
   const handleBookmarkToggle = async () => {
     try {
-      if (isBookmarked) {
-        await unbookmarkPost(id);
-      } else {
-        await bookmarkPost(id);
-      }
+      if (isBookmarked) await unbookmarkPost(id);
+      else await bookmarkPost(id);
       setIsBookmarked(!isBookmarked);
     } catch (err) {
       console.error("Bookmark error:", err);
+    }
+  };
+
+  // WhatsApp
+  const handleWhatsappClick = () => {
+    if (author.whatsapp_number) {
+      window.open(`https://wa.me/${author.whatsapp_number}`, "_blank");
+    } else {
+      toast.error("This user does not have a WhatsApp number.");
     }
   };
 
@@ -152,10 +146,7 @@ export default function PostCard({
       {/* Header */}
       <div className="flex items-center gap-3">
         <Image
-          src={
-            author.profile_picture ||
-            "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
-          }
+          src={author.profile_picture || "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"}
           alt={author.full_name}
           width={40}
           height={40}
@@ -176,36 +167,24 @@ export default function PostCard({
       {image && (
         <div className="mt-3 rounded-xl overflow-hidden">
           <Image
-            src={
-              image.startsWith("http")
-                ? image
-                : `https://res.cloudinary.com/devqbjptr/${image}`
-            }
+            src={image.startsWith("http") ? image : `https://res.cloudinary.com/devqbjptr/${image}`}
             alt="Post image"
             width={600}
             height={400}
             className="object-cover w-full"
             unoptimized
           />
-
         </div>
       )}
 
       {/* Action Bar */}
       <div className="flex justify-between text-gray-800 mt-3 lg:w-[40%] md:w-[60%]">
         <button onClick={handleToggleLike} className="flex items-center gap-1">
-          <Heart
-            className={`h-5 w-5 ${
-              isLiked ? "fill-red-500 text-red-500" : ""
-            }`}
-          />
+          <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
           <span>{likesCount}</span>
         </button>
 
-        <button
-          onClick={handleToggleComments}
-          className="flex items-center gap-1"
-        >
+        <button onClick={handleToggleComments} className="flex items-center gap-1">
           <MessageCircle className="h-5 w-5" />
           <span>{commentCount}</span>
         </button>
@@ -215,19 +194,12 @@ export default function PostCard({
           <span>{impressions_count || 0}</span>
         </button>
 
-        <button className="flex items-center gap-1">
+        <button onClick={handleWhatsappClick} className={`flex items-center gap-1 transition-opacity duration-200 ${!author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"}`}>
           <FaWhatsapp size={20} />
         </button>
 
-        <button
-          onClick={handleBookmarkToggle}
-          className="flex items-center gap-1"
-        >
-          <Bookmark
-            className={`h-5 w-5 ${
-              isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
-            }`}
-          />
+        <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
+          <Bookmark className={`h-5 w-5 ${isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"}`} />
         </button>
 
         <button className="flex items-center gap-1">
@@ -246,54 +218,35 @@ export default function PostCard({
               onChange={(e) => setComment(e.target.value)}
               className="w-[85%] text-sm outline-none"
             />
-            <button
-              onClick={handleCommentSubmit}
-              disabled={submitting || !comment.trim()}
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 22 22"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
-                  fill="black"
-                />
-              </svg>
+            <button onClick={handleCommentSubmit} disabled={submitting || !comment.trim()}>
+              Reply
             </button>
           </div>
 
           {/* Comments */}
           <div className="mt-4 space-y-4">
             {loadingComments ? (
-              <p className="text-sm text-gray-500 text-center">
-                Loading comments...
-              </p>
+              <p className="text-sm text-gray-500 text-center">Loading comments...</p>
             ) : comments.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center">
-                No comments yet.
-              </p>
+              <p className="text-sm text-gray-500 text-center">No comments yet.</p>
             ) : (
               comments.map((c) => (
                 <CommentThread
                   key={c.id}
-                  id={Number(c.id)}
+                  id={String(c.id)}
                   author={{
                     name: c.user?.full_name || "Unknown",
                     username: c.user?.username || "unknown",
-                    avatar:
-                      c.user?.profile_picture ||
-                      "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                    avatar: c.user?.profile_picture || "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                    whatsapp_number: c.user?.whatsapp_number || "",
                   }}
                   content={c.content}
                   likes={c.likes_count || 0}
-                  comments={0}
-                  impressions={0}
-                  replies={[]}
+                  is_liked={c.is_liked || false}
+                  replies={c.replies || []}
+                  onReplySubmit={addReply}
+                  onLike={likeComment}
+                  onUnlike={unlikeComment}
                 />
               ))
             )}

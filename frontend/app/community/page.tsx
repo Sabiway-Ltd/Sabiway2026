@@ -18,13 +18,13 @@ export default function Community() {
   }, [getAllPosts]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 md:px-6 px-3 ">
       {/* Navbar */}
       <CommunityNavbar onCreatePost={() => setShowPostBox(true)} />
 
-      <section className="flex justify-center gap-14 px-4">
+      <section className="flex justify-center gap-6 lg:gap-14 max-w-screen-xl mx-auto">
         {/* Feed Section */}
-        <main className="flex-[3] mt-4 max-w-[50rem] w-full">
+        <main className="flex-[3] mt-4 max-w-2xl w-full">
           {/* Post Creation Box */}
           <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
@@ -59,6 +59,7 @@ export default function Community() {
                   profile_picture:
                     post.author.profile_picture ||
                     "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                  whatsapp_number: post.author.whatsapp_number || "",
                 }}
                 content={post.content}
                 image={post.image || null}
@@ -68,6 +69,7 @@ export default function Community() {
                 is_liked={post.is_liked ?? false}
                 created_at={post.created_at}
               />
+
             ))}
           </div>
         </main>

@@ -10,6 +10,7 @@ type Author = {
   username: string;
   full_name: string;
   profile_picture?: string | null;
+  whatsapp_number: string;
 };
 
 type Hashtag = {
@@ -288,4 +289,44 @@ export const usePostStore = create<PostState>((set, get) => ({
       console.error("Repost error:", err);
     }
   },
+
+
+    // 💬 Like a comment
+  likeComment: async (commentId: string) => {
+    try {
+      await post.likeComment(commentId); // new endpoint
+      set((state) => {
+        const updatedComments = { ...state.commentsByPost };
+        for (const postId in updatedComments) {
+          updatedComments[postId] = updatedComments[postId].map((c) =>
+            c.id === commentId ? { ...c, likes_count: (c.likes_count || 0) + 1, is_liked: true } : c
+          );
+        }
+        return { commentsByPost: updatedComments };
+      });
+    } catch (err) {
+      console.error("Like comment error:", err);
+    }
+  },
+
+  // 💬 Unlike a comment
+  unlikeComment: async (commentId: string) => {
+    try {
+      await post.unlikeComment(commentId); // new endpoint
+      set((state) => {
+        const updatedComments = { ...state.commentsByPost };
+        for (const postId in updatedComments) {
+          updatedComments[postId] = updatedComments[postId].map((c) =>
+            c.id === commentId && c.likes_count > 0
+              ? { ...c, likes_count: c.likes_count - 1, is_liked: false }
+              : c
+          );
+        }
+        return { commentsByPost: updatedComments };
+      });
+    } catch (err) {
+      console.error("Unlike comment error:", err);
+    }
+  },
+
 }));

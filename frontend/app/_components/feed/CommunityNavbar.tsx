@@ -96,7 +96,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <nav className="w-full flex justify-center py-4 px-3 relative">
+    <nav className="w-full flex justify-center py-4 relative">
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left: Logo */}
         <div className="flex items-center gap-x-4">

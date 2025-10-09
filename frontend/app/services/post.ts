@@ -45,4 +45,9 @@ export const post = {
   getReplies: (postId: string) => api.get(`/posts/${postId}/replies/`),
   addReply: (data: { comment: string; content: string }) =>
     api.post(`/posts/replies/`, data),
+
+  // 💬 COMMENTS LIKES
+  likeComment: (commentId: string) => api.post(`/posts/comments/${commentId}/like/`),
+  unlikeComment: (commentId: string) => api.post(`/posts/comments/${commentId}/unlike/`),
+
 };

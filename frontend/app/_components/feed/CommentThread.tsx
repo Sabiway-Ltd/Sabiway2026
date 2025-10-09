@@ -1,11 +1,10 @@
-// app/_components/feed/CommentThread.tsx
-
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
-import { Heart, MessageCircle, BarChart2, Share, Bookmark } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { toast } from "react-hot-toast";
 
 interface Comment {
   id: string | number;
@@ -13,13 +12,15 @@ interface Comment {
     name: string;
     username: string;
     avatar: string;
+    whatsapp_number: string;
   };
   content: string;
   likes: number;
-  comments: number;
-  impressions: number;
+  is_liked?: boolean;
   replies?: Comment[];
   onReplySubmit?: (parentId: string | number, content: string) => Promise<void> | void;
+  onLike?: (id: string | number) => Promise<void> | void;
+  onUnlike?: (id: string | number) => Promise<void> | void;
 }
 
 export default function CommentThread({
@@ -27,14 +28,15 @@ export default function CommentThread({
   author,
   content,
   likes,
-  comments,
-  impressions,
+  is_liked = false,
   replies = [],
   onReplySubmit,
+  onLike,
+  onUnlike,
 }: Comment) {
   const [showReplies, setShowReplies] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [localLikes, setLocalLikes] = useState(likes);
+  const [liked, setLiked] = useState(is_liked);
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -53,9 +55,36 @@ export default function CommentThread({
     }
   };
 
+  const handleLikeToggle = async () => {
+    try {
+      if (liked) {
+        setLocalLikes(localLikes - 1);
+        setLiked(false);
+        if (onUnlike) await onUnlike(id);
+      } else {
+        setLocalLikes(localLikes + 1);
+        setLiked(true);
+        if (onLike) await onLike(id);
+      }
+    } catch (err) {
+      console.error("Error toggling like:", err);
+      // Rollback UI change if API fails
+      setLocalLikes(liked ? localLikes + 1 : localLikes - 1);
+      setLiked(liked);
+    }
+  };
+
+  const handleWhatsappClick = () => {
+    if (author.whatsapp_number) {
+      const whatsappUrl = `https://wa.me/${author.whatsapp_number}`;
+      window.open(whatsappUrl, "_blank");
+    } else {
+      toast.error("This user does not have a WhatsApp number.");
+    }
+  };
+
   return (
     <div className="pl-4 border-l border-gray-200">
-      {/* Single comment */}
       <div className="flex items-start gap-3 mb-2">
         <Image
           src={author.avatar}
@@ -66,24 +95,18 @@ export default function CommentThread({
         />
         <div className="flex-1">
           <p className="font-semibold text-sm">
-            {author.name}{" "}
-            <span className="text-gray-500">{author.username}</span>
+            {author.name} <span className="text-gray-500">{author.username}</span>
           </p>
           <p className="text-gray-800 text-sm">{content}</p>
 
-          {/* Action bar */}
-          <div className="flex flex-wrap lg:gap-x-6 md:gap-x-4 gap-x-3 justify-between text-gray-800 mt-2">
+          <div className="flex flex-wrap md:gap-x-3 gap-x-2 text-gray-800 mt-2">
             {/* Like */}
             <button
               className="flex items-center gap-1 hover:text-red-500"
-              onClick={() => setIsLiked(!isLiked)}
+              onClick={handleLikeToggle}
             >
-              <Heart
-                className={`h-4 w-4 ${
-                  isLiked ? "fill-red-500 text-red-500" : ""
-                }`}
-              />
-              <span className="text-xs">{likes + (isLiked ? 1 : 0)}</span>
+              <Heart className={`h-4 w-4 ${liked ? "fill-red-500 text-red-500" : ""}`} />
+              <span className="text-xs">{localLikes}</span>
             </button>
 
             {/* Reply */}
@@ -95,36 +118,17 @@ export default function CommentThread({
               <span className="text-xs">Reply</span>
             </button>
 
-            {/* Impressions */}
-            <button className="flex items-center gap-1 hover:text-gray-700">
-              <BarChart2 className="h-4 w-4" />
-              <span className="text-xs">{impressions}</span>
-            </button>
-
             {/* WhatsApp */}
-            <button className="flex items-center gap-1 hover:text-green-500">
-              <FaWhatsapp size={14} />
-            </button>
-
-            {/* Bookmark */}
             <button
-              className="flex items-center gap-1 hover:text-blue-500"
-              onClick={() => setIsBookmarked(!isBookmarked)}
+              onClick={handleWhatsappClick}
+              className={`flex items-center gap-1 transition-opacity duration-200 hover:text-green-500 ${
+                !author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
+              }`}
             >
-              <Bookmark
-                className={`h-4 w-4 ${
-                  isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
-                }`}
-              />
-            </button>
-
-            {/* Share */}
-            <button className="flex items-center gap-1 hover:text-gray-700">
-              <Share className="h-4 w-4" />
+              <FaWhatsapp size={14} />
             </button>
           </div>
 
-          {/* Reply Input Box (only when clicked) */}
           {showReplyBox && (
             <div className="mt-2 border rounded-full px-4 py-1 bg-white flex w-full justify-between">
               <input
@@ -138,25 +142,11 @@ export default function CommentThread({
                 onClick={handleReplySubmit}
                 disabled={submitting || !replyText.trim()}
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 22 22"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
-                    fill="black"
-                  />
-                </svg>
+                Reply
               </button>
             </div>
           )}
 
-          {/* Toggle replies */}
           {replies.length > 0 && (
             <button
               onClick={() => setShowReplies(!showReplies)}
@@ -168,11 +158,16 @@ export default function CommentThread({
         </div>
       </div>
 
-      {/* Nested replies */}
       {showReplies && replies.length > 0 && (
         <div className="mt-2 space-y-2">
           {replies.map((reply) => (
-            <CommentThread key={reply.id} {...reply} />
+            <CommentThread
+              key={reply.id}
+              {...reply}
+              onLike={onLike}
+              onUnlike={onUnlike}
+              onReplySubmit={onReplySubmit}
+            />
           ))}
         </div>
       )}
