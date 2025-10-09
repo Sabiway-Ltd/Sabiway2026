@@ -13,7 +13,6 @@ from .serializers import (
     RepostSerializer
 )
 
-
 class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Hashtag.objects.all().order_by("-use_count")
     serializer_class = HashtagSerializer
@@ -105,6 +104,14 @@ class CommentViewSet(viewsets.ModelViewSet):
         post.comments_count = max(0, post.comments_count - 1)
         post.save(update_fields=["comments_count"])
         instance.delete()
+    
+    # ✅ New action to fetch all replies for a specific comment
+    @action(detail=True, methods=["get"], url_path="replies")
+    def get_replies(self, request, pk=None):
+        comment = self.get_object()
+        replies = comment.replies.select_related("user__user").all().order_by("created_at")
+        serializer = ReplySerializer(replies, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ReplyViewSet(viewsets.ModelViewSet):
