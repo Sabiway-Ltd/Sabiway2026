@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost
+from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost, CommentLike, ReplyLike
 from .serializers import (
     PostListSerializer, PostCreateSerializer, PostDetailSerializer,
     LikeSerializer, CommentSerializer, ReplySerializer, HashtagSerializer, BookmarkSerializer,
@@ -225,3 +225,63 @@ class TrendingHashtagsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Hashtag.objects.order_by("-use_count")[:10]
+
+
+
+from .models import CommentLike, ReplyLike
+
+
+class CommentLikeToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        profile = getattr(request.user, "profile", request.user)
+        comment = get_object_or_404(Comment, id=id)
+        like, created = CommentLike.objects.get_or_create(user=profile, comment=comment)
+        if created:
+            comment.likes_count += 1
+            comment.save(update_fields=["likes_count"])
+            return Response({"detail": "Comment liked"}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "Already liked"}, status=status.HTTP_200_OK)
+
+
+class CommentUnlikeToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        profile = getattr(request.user, "profile", request.user)
+        comment = get_object_or_404(Comment, id=id)
+        deleted, _ = CommentLike.objects.filter(user=profile, comment=comment).delete()
+        if deleted:
+            comment.likes_count = max(0, comment.likes_count - 1)
+            comment.save(update_fields=["likes_count"])
+            return Response({"detail": "Comment unliked"}, status=status.HTTP_200_OK)
+        return Response({"detail": "Not liked"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReplyLikeToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        profile = getattr(request.user, "profile", request.user)
+        reply = get_object_or_404(Reply, id=id)
+        like, created = ReplyLike.objects.get_or_create(user=profile, reply=reply)
+        if created:
+            reply.likes_count += 1
+            reply.save(update_fields=["likes_count"])
+            return Response({"detail": "Reply liked"}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "Already liked"}, status=status.HTTP_200_OK)
+
+
+class ReplyUnlikeToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        profile = getattr(request.user, "profile", request.user)
+        reply = get_object_or_404(Reply, id=id)
+        deleted, _ = ReplyLike.objects.filter(user=profile, reply=reply).delete()
+        if deleted:
+            reply.likes_count = max(0, reply.likes_count - 1)
+            reply.save(update_fields=["likes_count"])
+            return Response({"detail": "Reply unliked"}, status=status.HTTP_200_OK)
+        return Response({"detail": "Not liked"}, status=status.HTTP_400_BAD_REQUEST)
