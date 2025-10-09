@@ -39,11 +39,11 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
 
 
 # Google OAuth
-GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="62853499803-r7kkbq52ptk4u2j5mralkbbkquen4chh.apps.googleusercontent.com")
-GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="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")
+GOOGLE_CLIENT_ID = "62853499803-r7kkbq52ptk4u2j5mralkbbkquen4chh.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
 
 # For Resend API
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ")
+RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
 DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 
 # For Forget Password reset link
@@ -177,13 +177,20 @@ REST_FRAMEWORK = {
 # Cloudinary
 # ---------------------------------------------------------------------
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default="devqbjptr"),
-    "API_KEY": env("CLOUDINARY_API_KEY", default="233511915335819"),
-    "API_SECRET": env("CLOUDINARY_API_SECRET", default="ZcbD-lTO22KamDmTWMhp-xPgLxU"),
+    "CLOUD_NAME": "devqbjptr",
+    "API_KEY": "233511915335819",
+    "API_SECRET": "ZcbD-lTO22KamDmTWMhp-xPgLxU",
 }
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
+import cloudinary
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE["CLOUD_NAME"],
+    api_key=CLOUDINARY_STORAGE["API_KEY"],
+    api_secret=CLOUDINARY_STORAGE["API_SECRET"]
+)
 
 
 SIMPLE_JWT = {
