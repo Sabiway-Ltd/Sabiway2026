@@ -61,8 +61,15 @@ type PostState = {
   commentsByPost: Record<string, Comment[]>;
   replies: Reply[];
   repliesByComment: Record<string, Reply[]>;
-  loading: boolean;
+  loading: boolean; // global feed loading
+  loadingHashtag: boolean; // separate loading flag for hashtag filtering
   error: string | null;
+  trendingHashtags: Hashtag[];
+  getTrendingHashtags: () => Promise<void>;
+  filteredPosts: Post[];
+  activeHashtag: string | null; // which hashtag we are filtering by
+  filterPostsByHashtag: (tag: string) => Promise<void>;
+  resetFilteredPosts: () => void;
 
   // Actions
   getAllPosts: (page?: number) => Promise<void>;
@@ -82,18 +89,20 @@ type PostState = {
   unlikeComment: (commentId: string) => Promise<void>;
   likeReply: (replyId: string) => Promise<void>;
   unlikeReply: (replyId: string) => Promise<void>;
-
 };
 
-// 🏗️ Zustand Store
 export const usePostStore = create<PostState>((set, get) => ({
   posts: [],
   currentPost: null,
   commentsByPost: {},
   replies: [],
-  repliesByComment: {}, // ✅ added correctly
+  repliesByComment: {},
   loading: false,
+  loadingHashtag: false,
   error: null,
+  trendingHashtags: [],
+  filteredPosts: [],
+  activeHashtag: null,
 
   // 📜 Get all posts
   getAllPosts: async (page = 1) => {
@@ -150,7 +159,6 @@ export const usePostStore = create<PostState>((set, get) => ({
       return null; // ✅ return null on error
     }
   },
-
 
   // ✍️ Create post
   createPost: async (data) => {
@@ -356,7 +364,7 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-    // 💭 Like a reply
+  // 💭 Like a reply
   likeReply: async (replyId: string) => {
     try {
       await post.likeReply(replyId);
@@ -396,7 +404,36 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  
+  getTrendingHashtags: async () => {
+    try {
+      const res = await post.getTrendingHashtags();
+      set({ trendingHashtags: res.data });
+    } catch (err) {
+      console.error("Fetch trending hashtags error:", err);
+      set({ trendingHashtags: [] });
+    }
+  },
 
+  // Filter posts by hashtag (separate loadingHashtag flag used)
+  filterPostsByHashtag: async (tag: string) => {
+    // only affect hashtag-loading, not global feed loading
+    set({ loadingHashtag: true, error: null, activeHashtag: tag });
+    try {
+      // fetch (you could call a hashtag endpoint if available)
+      const res = await post.getAll(1);
+      const posts = res.data.results || res.data;
 
+      const filtered = posts.filter((p: Post) =>
+        p.hashtags.some((h) => h.tag.toLowerCase() === tag.toLowerCase())
+      );
+
+      set({ filteredPosts: filtered, loadingHashtag: false });
+    } catch (err: any) {
+      console.error("Filter posts by hashtag error:", err);
+      set({ error: "Failed to filter posts", loadingHashtag: false });
+    }
+  },
+
+  resetFilteredPosts: () =>
+    set({ filteredPosts: [], activeHashtag: null, loadingHashtag: false }),
 }));

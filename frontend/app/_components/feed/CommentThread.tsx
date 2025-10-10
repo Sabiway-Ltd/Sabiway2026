@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Heart, MessageCircle } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
@@ -25,6 +25,7 @@ interface Comment {
   onUnlike?: (id: string | number) => Promise<void> | void;
   /** 👇 NEW */
   isReply?: boolean;
+  created_at?: string; // ✅ NEW
 }
 
 export default function CommentThread({
@@ -38,6 +39,7 @@ export default function CommentThread({
   onLike,
   onUnlike,
   isReply = false, // 👈 default false (means it's a top-level comment)
+  created_at, // ✅ Added
 }: Comment) {
   const { repliesByComment, getRepliesByComment } = usePostStore();
   const [showReplies, setShowReplies] = useState(false);
@@ -47,6 +49,7 @@ export default function CommentThread({
   const [replyText, setReplyText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const [formattedDate, setFormattedDate] = useState("");
 
   const replies = repliesByComment[String(id)] || [];
 
@@ -87,6 +90,8 @@ export default function CommentThread({
     }
   };
 
+  
+
 
 
 
@@ -114,6 +119,20 @@ export default function CommentThread({
     }
   };
 
+  useEffect(() => {
+    if (created_at) {
+      const options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      };
+      setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
+    }
+  }, [created_at]);
+
   return (
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start gap-3 mb-2">
@@ -128,6 +147,7 @@ export default function CommentThread({
           <p className="font-semibold text-sm">
             {author.name} <span className="text-gray-500">{author.username}</span>
           </p>
+          <p className="text-[11px] text-gray-400">{formattedDate}</p> {/* ✅ NEW */}
           <p className="text-gray-800 text-sm">{content}</p>
 
           <div className="flex flex-wrap md:gap-x-3 gap-x-2 text-gray-800 mt-2">
@@ -228,6 +248,7 @@ export default function CommentThread({
               content={reply.content}
               likes={reply.likes_count || 0}
               is_liked={reply.is_liked || false}
+              created_at={reply.created_at} // ✅ Added
               /** ✅ Use the store actions directly */
               onLike={() => usePostStore.getState().likeReply(String(reply.id))}
               onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}

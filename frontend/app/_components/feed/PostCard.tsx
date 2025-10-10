@@ -270,6 +270,7 @@ export default function PostCard({
                   likes={c.likes_count || 0}
                   is_liked={c.is_liked || false}
                   reply_count={c.reply_count || 0}
+                  created_at={c.created_at} // ✅ Added
                   onReplySubmit={addReply}
                   onLike={likeComment}
                   onUnlike={unlikeComment}

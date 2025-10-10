@@ -57,4 +57,8 @@ export const post = {
   // 💭 Fetch replies for a specific comment
   getRepliesByComment: (commentId: string) =>
     api.get(`/posts/comments/${commentId}/replies/`),
+
+   // 🔍 SEARCH
+  search: (q: string, type: "posts" | "profiles" | "hashtags" = "posts") =>
+    api.get(`/search/?q=${encodeURIComponent(q)}&type=${type}`),
 };
