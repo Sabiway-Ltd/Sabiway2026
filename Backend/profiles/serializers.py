@@ -42,3 +42,5 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.whatsapp_number = validated_data.get('whatsapp_number', instance.whatsapp_number)
         instance.save()
         return instance
+    
+    
