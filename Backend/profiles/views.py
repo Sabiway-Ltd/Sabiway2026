@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from .models import Profile, Follow, generate_initials
 from .serializers import ProfileSerializer
 from .permissions import IsProfileOwnerOrReadOnly
-from django.db.models import F
+from django.db.models import F, Count
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -104,11 +104,22 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         return profile
 
 
+
 class TopContributorsView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def list(self, request):
-        contributors = Profile.objects.annotate(
-            score=F("posts_count") + F("comments_count") + F("likes_received")
-        ).order_by("-score")[:10]
+        contributors = (
+            Profile.objects
+            .annotate(
+                comments_count=Count("comments", distinct=True),   # assumes related_name="comments"
+                likes_received=Count("likes", distinct=True),      # assumes related_name="likes"
+            )
+            .annotate(
+                score=F("posts_count") + F("comments_count") + F("likes_received")
+            )
+            .order_by("-score")[:10]
+        )
 
         data = [{
             "user_id": p.pk,  # profile ID == user ID
