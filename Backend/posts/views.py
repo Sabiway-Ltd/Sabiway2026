@@ -13,6 +13,8 @@ from .serializers import (
     RepostSerializer
 )
 from django.db.models import Count
+from .models import PostImpression
+from django.db import models
 
 
 class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -102,6 +104,25 @@ class PostViewSet(viewsets.ModelViewSet):
         replies = Reply.objects.filter(comment__post=post).select_related("user__user")
         serializer = ReplySerializer(replies, many=True, context={"request": request})
         return Response(serializer.data)
+    
+
+    
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user_profile = getattr(request.user, "profile", None)
+
+        if user_profile:
+            # Create a unique impression for this user
+            obj, created = PostImpression.objects.get_or_create(post=instance, user=user_profile)
+            if created:
+                # Only increment if a new impression
+                instance.impressions_count = models.F('impressions_count') + 1
+                instance.save(update_fields=['impressions_count'])
+                instance.refresh_from_db()  # updated value
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
 
 
 class CommentViewSet(viewsets.ModelViewSet):

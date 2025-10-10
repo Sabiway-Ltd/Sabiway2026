@@ -141,3 +141,21 @@ class CommentLike(models.Model):
 
     class Meta:
         unique_together = ("user", "comment")
+
+
+
+# For Impression
+class PostImpression(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="impressions")
+    user = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'user')  # ensures one impression per user
+        indexes = [
+            models.Index(fields=['post']),
+            models.Index(fields=['user']),
+        ]
+
+    def __str__(self):
+        return f"Impression by {self.user} on {self.post.id}"
