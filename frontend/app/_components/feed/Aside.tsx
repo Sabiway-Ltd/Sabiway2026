@@ -1,9 +1,9 @@
-// app/_components/feed/Aside.tsx (or wherever your Aside is)
 "use client";
 
 import Image from "next/image";
 import { useEffect } from "react";
 import { usePostStore } from "@/app/store/usePostStore";
+import { useProfileStore } from "@/app/store/useProfileStore";
 
 export default function Aside() {
   const {
@@ -11,20 +11,16 @@ export default function Aside() {
     getTrendingHashtags,
     filterPostsByHashtag,
     resetFilteredPosts,
-    filteredPosts,
     activeHashtag,
     loadingHashtag,
   } = usePostStore();
 
-  const contributors = [
-    { id: 1, name: "Aisha K.", bio: "Lorem ipsumnmhs shdlednn.....", avatar: "https://i.pravatar.cc/150?img=11" },
-    { id: 2, name: "Chukwudi O.", bio: "Lorem ipsumnmhs shdlednn.....", avatar: "https://i.pravatar.cc/150?img=12" },
-    { id: 3, name: "Ngozi E.", bio: "Lorem ipsumnmhs shdlednn.....", avatar: "https://i.pravatar.cc/150?img=13" },
-  ];
+  const { topContributors, getTopContributors, loading } = useProfileStore();
 
   useEffect(() => {
     getTrendingHashtags();
-  }, [getTrendingHashtags]);
+    getTopContributors(); // ✅ fetch contributors on mount
+  }, [getTrendingHashtags, getTopContributors]);
 
   const handleHashtagClick = (tag: string) => {
     if (activeHashtag === tag) {
@@ -52,17 +48,7 @@ export default function Aside() {
                     ${isActive ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 hover:bg-gray-100"}
                     ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}
                 >
-                  {loadingHashtag && isActive ? (
-                    // small inline indicator when the active tag is loading
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 inline-block" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      </svg>
-                      #{tag.tag} ({tag.use_count})
-                    </span>
-                  ) : (
-                    `#${tag.tag} (${tag.use_count})`
-                  )}
+                  #{tag.tag} ({tag.use_count})
                 </button>
               );
             })
@@ -76,22 +62,31 @@ export default function Aside() {
       <div>
         <h2 className="text-lg font-semibold mb-3">Top Contributors</h2>
         <div className="space-y-3">
-          {contributors.map((c) => (
-            <div key={c.id} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
-              <div className="relative w-10 h-10">
-                <Image
-                  src={c.avatar}
-                  alt={c.name}
-                  fill
-                  className="rounded-full object-cover"
-                />
+          {loading ? (
+            <p className="text-gray-400 text-sm">Loading...</p>
+          ) : topContributors.length > 0 ? (
+            topContributors.map((c) => (
+              <div key={c.user_id} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
+                <div className="relative w-10 h-10">
+                  <Image
+                    src={
+                      (c as any).profile_picture ||
+                      "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
+                    }
+                    alt={c.full_name}
+                    fill
+                    className="rounded-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{c.full_name}</p>
+                  <p className="text-xs text-gray-500">@{c.username}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold">{c.name}</p>
-                <p className="text-xs text-gray-500">{c.bio}</p>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-gray-400 text-sm">No contributors yet</p>
+          )}
         </div>
       </div>
     </aside>
