@@ -30,6 +30,7 @@ type Post = {
   reposts_count: number;
   is_liked?: boolean;
   created_at: string;
+  is_bookmarked?: boolean;
   updated_at?: string;
 };
 

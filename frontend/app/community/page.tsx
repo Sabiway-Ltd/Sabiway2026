@@ -67,8 +67,10 @@ export default function Community() {
                 comments_count={post.comments_count}
                 impressions={post.impressions_count || 0}
                 is_liked={post.is_liked ?? false}
+                is_bookmarked={post.is_bookmarked ?? false}  // ✅ ADD THIS
                 created_at={post.created_at}
               />
+
 
             ))}
           </div>
