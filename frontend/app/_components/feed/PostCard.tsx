@@ -17,6 +17,7 @@ export default function PostCard({
   comments_count,
   impressions_count,
   is_liked = false,
+  is_bookmarked = false, 
   created_at,
 }: {
   id: string;
@@ -32,12 +33,13 @@ export default function PostCard({
   comments_count: number;
   impressions_count?: number;
   is_liked?: boolean;
+  is_bookmarked?: boolean;
   created_at: string;
 }) {
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likesCount, setLikesCount] = useState(likes_count);
   const [commentCount, setCommentCount] = useState(comments_count);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(is_bookmarked);
   const [comment, setComment] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [formattedDate, setFormattedDate] = useState("");
@@ -199,7 +201,7 @@ export default function PostCard({
         </button>
 
         <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
-          <Bookmark className={`h-5 w-5 ${isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"}`} />
+          <Bookmark className={`h-[1.35rem] w-[1.35rem] ${isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"}`} />
         </button>
 
         <button className="flex items-center gap-1">
