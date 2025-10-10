@@ -157,11 +157,14 @@ class BookmarkPostView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         post = get_object_or_404(Post, id=kwargs.get("id") or kwargs.get("pk"))
-        user_obj = getattr(request.user, "profile", request.user)
+        user_obj = request.user  # ✅ Use User, not Profile
         bookmark, created = Bookmark.objects.get_or_create(user=user_obj, post=post)
         if not created:
             return Response({"detail": "Already bookmarked"}, status=status.HTTP_200_OK)
-        return Response(BookmarkSerializer(bookmark, context={"request": request}).data, status=status.HTTP_201_CREATED)
+        return Response(
+            BookmarkSerializer(bookmark, context={"request": request}).data,
+            status=status.HTTP_201_CREATED
+        )
 
 
 class UnbookmarkPostView(generics.DestroyAPIView):
@@ -169,7 +172,7 @@ class UnbookmarkPostView(generics.DestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         post = get_object_or_404(Post, id=kwargs.get("id") or kwargs.get("pk"))
-        user_obj = getattr(request.user, "profile", request.user)
+        user_obj = request.user  # ✅ Use User, not Profile
         deleted, _ = Bookmark.objects.filter(user=user_obj, post=post).delete()
         if deleted:
             return Response({"detail": "Unbookmarked"}, status=status.HTTP_204_NO_CONTENT)
@@ -181,9 +184,12 @@ class MyBookmarksView(generics.ListAPIView):
     serializer_class = BookmarkSerializer
 
     def get_queryset(self):
-        user_obj = getattr(self.request.user, "profile", self.request.user)
-        return Bookmark.objects.filter(user=user_obj).select_related("post").order_by("-created_at")
-
+        user_obj = self.request.user  # ✅ Use User, not Profile
+        return (
+            Bookmark.objects.filter(user=user_obj)
+            .select_related("post")
+            .order_by("-created_at")
+        )
 
 class RepostView(APIView):
     permission_classes = [IsAuthenticated]
