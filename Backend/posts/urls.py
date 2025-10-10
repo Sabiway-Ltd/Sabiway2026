@@ -7,7 +7,7 @@ from .views import (
     BookmarkPostView, UnbookmarkPostView, MyBookmarksView, LikeViewSet,
     RepostView, UnrepostView, MyRepostsView, RepostViewSet, TrendingHashtagsView,
     CommentLikeToggleView, CommentUnlikeToggleView, ReplyLikeToggleView,
-    ReplyUnlikeToggleView,
+    ReplyUnlikeToggleView, MyPostsView,
 )
 
 router = DefaultRouter()
@@ -33,6 +33,9 @@ urlpatterns = [
     # Reply like/unlike
     path("replies/<uuid:id>/like/", ReplyLikeToggleView.as_view(), name="reply-like"),
     path("replies/<uuid:id>/unlike/", ReplyUnlikeToggleView.as_view(), name="reply-unlike"),
+
+    path("me/", MyPostsView.as_view(), name="my-posts"),
+
 
     path("", include(router.urls)),
 ]

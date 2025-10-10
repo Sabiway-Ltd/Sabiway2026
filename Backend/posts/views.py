@@ -329,3 +329,12 @@ class ReplyUnlikeToggleView(APIView):
             reply.save(update_fields=["likes_count"])
             return Response({"detail": "Reply unliked"}, status=status.HTTP_200_OK)
         return Response({"detail": "Not liked"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyPostsView(generics.ListAPIView):
+    serializer_class = PostListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+        return Post.objects.filter(author=profile).select_related("author__user").prefetch_related("hashtags").order_by("-created_at")
