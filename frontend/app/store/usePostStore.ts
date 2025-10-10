@@ -140,14 +140,17 @@ export const usePostStore = create<PostState>((set, get) => ({
         },
       };
       set({ currentPost: normalized, loading: false });
+      return normalized; // ✅ Must return for impressions
     } catch (err: any) {
       console.error("Get post error:", err.response?.data || err.message);
       set({
         error: err.response?.data?.detail || "Failed to load post",
         loading: false,
       });
+      return null; // ✅ return null on error
     }
   },
+
 
   // ✍️ Create post
   createPost: async (data) => {
@@ -392,5 +395,8 @@ export const usePostStore = create<PostState>((set, get) => ({
       console.error("Unlike reply error:", err);
     }
   },
+
+  
+
 
 }));

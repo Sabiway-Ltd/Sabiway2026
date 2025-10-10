@@ -67,13 +67,28 @@ export default function CommentThread({
     setSubmitting(true);
     try {
       if (onReplySubmit) await onReplySubmit(id, replyText);
+
+      // ✅ If replies are visible, refresh them to show the new one
+      if (showReplies) {
+        await getRepliesByComment(String(id));
+      } else {
+        // ✅ If replies are hidden, open them and load
+        setShowReplies(true);
+        await getRepliesByComment(String(id));
+      }
+
+      // ✅ Clear input after successful post
       setReplyText("");
+
+      // ✅ Hide the reply box after submission
       setShowReplyBox(false);
-      await getRepliesByComment(String(id));
     } finally {
       setSubmitting(false);
     }
   };
+
+
+
 
   const handleLikeToggle = async () => {
     try {

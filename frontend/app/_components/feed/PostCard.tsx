@@ -45,6 +45,9 @@ export default function PostCard({
   const [formattedDate, setFormattedDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [impressionsCount, setImpressionsCount] = useState(impressions_count || 0);
+  const { getPostById } = usePostStore();
+
 
   const {
     likePost,
@@ -143,6 +146,24 @@ export default function PostCard({
     }
   };
 
+  // For impression
+  useEffect(() => {
+    const fetchImpression = async () => {
+      try {
+        const res = await getPostById(id); // triggers impression
+        if (res) {
+          // update impressions in local state
+          setImpressionsCount(res.impressions_count || 0);
+        }
+      } catch (err) {
+        console.error("Error fetching impressions:", err);
+      }
+    };
+
+    fetchImpression();
+  }, [id]);
+
+
   return (
     <div className="p-4 border-b">
       {/* Header */}
@@ -193,7 +214,7 @@ export default function PostCard({
 
         <button className="flex items-center gap-1">
           <BarChart2 className="h-5 w-5" />
-          <span>{impressions_count || 0}</span>
+          <span>{impressionsCount}</span>
         </button>
 
         <button onClick={handleWhatsappClick} className={`flex items-center gap-1 transition-opacity duration-200 ${!author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"}`}>
