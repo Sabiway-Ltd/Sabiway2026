@@ -15,8 +15,12 @@ export const profile = {
   // Full update (PUT)
   update: (userId: number, data: any) => api.put(`/profiles/${userId}/`, data),
 
-  // Partial update (PATCH)
-  patch: (userId: number, data: any) => api.patch(`/profiles/${userId}/`, data),
+  
+  // Partial update (PATCH) with optional config
+  patch: (userId: number, data: any, config?: object) => {
+    return api.patch(`/profiles/${userId}/`, data, config);
+  },
+
 
   // Delete profile
   delete: (userId: number) => api.delete(`/profiles/${userId}/`),

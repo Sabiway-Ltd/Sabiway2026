@@ -58,6 +58,7 @@ export default function Aside() {
         </div>
       </div>
 
+     
       {/* Top Contributors */}
       <div>
         <h2 className="text-lg font-semibold mb-3">Top Contributors</h2>
@@ -66,16 +67,21 @@ export default function Aside() {
             <p className="text-gray-400 text-sm">Loading...</p>
           ) : topContributors.length > 0 ? (
             topContributors.map((c) => (
-              <div key={c.user_id} className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
-                <div className="relative w-10 h-10">
-                  <Image
+              <div
+                key={c.user_id}
+                className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+              >
+                <div className="w-10 h-10">
+                  <img
                     src={
-                      (c as any).profile_picture ||
-                      "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
+                      c.profile_picture && c.profile_picture.trim() !== ""
+                        ? c.profile_picture.startsWith("http")
+                          ? c.profile_picture
+                          : `https://res.cloudinary.com/devqbjptr/${c.profile_picture}`
+                        : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
                     }
-                    alt={c.full_name}
-                    fill
-                    className="rounded-full object-cover"
+                    alt={c.full_name || "User"}
+                    className="w-10 h-10 rounded-full object-cover"
                   />
                 </div>
                 <div>
@@ -89,6 +95,7 @@ export default function Aside() {
           )}
         </div>
       </div>
+
     </aside>
   );
 }

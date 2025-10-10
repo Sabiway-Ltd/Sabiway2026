@@ -1,61 +1,241 @@
-// app/profile/page.tsx
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Edit, Trash, Bookmark, Camera } from "lucide-react";
 import CommunityNavbar from "../_components/feed/CommunityNavbar";
 import Footer from "../_components/landing_page/Footer";
-import { Edit, Trash, Bookmark } from "lucide-react";
+import { useProfileStore } from "../store/useProfileStore";
+import { usePostStore } from "../store/usePostStore";
+import { post } from "../services/post";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "../helper";
+import DeleteConfirmModal from "../_components/common/DeleteConfirmModal";
+import toast from "react-hot-toast";
+import Button from "../_components/common/Button";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks">("about");
+  const [editing, setEditing] = useState(false);
+  const [editedData, setEditedData] = useState({ full_name: "", whatsapp_number: "" });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [bookmarks, setBookmarks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  // 🔹 Dummy profile
-  const profile = {
-    full_name: "Abdullah Adesina Dhikrullah",
-    initials: "AD",
-    email: "ab702810@gmail.com",
-    username: "@abdullah_dhikrullah",
-    profile_picture: null,
-    followers_count: 120,
-    following_count: 89,
-    posts_count: 7,
-    whatsapp_number: "+234 812 345 6789",
+  const { profile, getMyProfile, updateProfile, loading: profileLoading } = useProfileStore();
+  const { set } = usePostStore.getState(); // direct access for updating
+
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editedPostContent, setEditedPostContent] = useState("");
+
+  const [editedPostImage, setEditedPostImage] = useState<File | null>(null);
+  const [uploadingPostImage, setUploadingPostImage] = useState(false);
+
+
+
+  // 🧩 Fetch Profile, Posts, and Bookmarks on mount
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        await getMyProfile();
+
+        const postsRes = await post.getAll();
+        setMyPosts(postsRes.data.results || postsRes.data);
+
+        const bmRes = await post.getMyBookmarks();
+        setBookmarks(bmRes.data.results || bmRes.data);
+      } catch (err) {
+        console.error("Profile page load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [getMyProfile]);
+
+  // 📝 Handle Edit Profile
+  const handleEditProfile = () => {
+    if (!profile) return;
+    setEditedData({
+      full_name: profile.full_name,
+      whatsapp_number: profile.whatsapp_number || "",
+    });
+    setEditing(true);
   };
 
-  // 🔹 Dummy posts
-  const posts = [
-    { id: 1, text: "My first SabiWay post 🚀", image: "/dummy1.jpg" },
-    { id: 2, text: "Loving this community ❤️ #SabiWay", image: null },
-  ];
-
-  // 🔹 Dummy bookmarks
-  const bookmarks = [
-    { id: 1, post: { text: "A bookmarked post with cool content ✨" } },
-    { id: 2, post: { text: "Another saved gem from the community 🔥" } },
-  ];
-
-  // 🔹 Dummy logout
-  const handleLogout = () => {
-    alert("You have logged out!");
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    await updateProfile(profile.user_id, editedData);
+    setEditing(false);
   };
+
+  // 🗑️ Handle Delete Post
+  const handleDeletePost = async (id: string) => {
+    try {
+      await post.delete(id);
+      setMyPosts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Post deleted successfully");
+    } catch (err) {
+      console.error("Delete post error:", err);
+      toast.error("Failed to delete post");
+    }
+  };
+
+  // 🔖 Handle Unbookmark
+  const handleUnbookmark = async (postId: string) => {
+    try {
+      await post.unbookmark(postId);
+      setBookmarks((prev) => prev.filter((b) => b.post.id !== postId));
+      toast.success("Removed from bookmarks");
+    } catch (err) {
+      console.error("Unbookmark error:", err);
+      toast.error("Failed to unbookmark post");
+    }
+  };
+
+  // 📸 Handle Profile Picture Change
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    const formData = new FormData();
+    formData.append("profile_picture", file);
+
+    try {
+      setUploadingImage(true);
+      await updateProfile(profile.user_id, formData); // updateProfile must handle FormData
+      await getMyProfile(); // refresh profile data
+      toast.success("Profile picture updated!");
+    } catch (err) {
+      console.error("Profile picture upload error:", err);
+      toast.error("Failed to update profile picture");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  if (loading || profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600">Loading your profile...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600">No profile found.</p>
+      </div>
+    );
+  }
+
+
+  // Start editing a post
+  const handleEditPost = (postId: string, content: string) => {
+    setEditingPostId(postId);
+    setEditedPostContent(content);
+  };
+
+  
+// Cancel editing
+const handleCancelEditPost = () => {
+  setEditingPostId(null);
+  setEditedPostContent("");
+};
+
+const handlePostImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setEditedPostImage(file);
+};
+
+const handleSavePost = async (postId: string) => {
+  try {
+    let response;
+
+    if (editedPostImage) {
+      const fd = new FormData();
+      fd.append("content", editedPostContent);
+      fd.append("image", editedPostImage);
+
+      setUploadingPostImage(true);
+
+      response = await post.update(postId, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } else {
+      response = await post.update(postId, { content: editedPostContent });
+    }
+
+    setMyPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, ...response.data } : p))
+    );
+
+    setEditingPostId(null);
+    setEditedPostContent("");
+    setEditedPostImage(null);
+    setUploadingPostImage(false);
+
+    toast.success("Post updated!");
+  } catch (err) {
+    console.error("Update post error:", err);
+    toast.error("Failed to update post");
+    setUploadingPostImage(false);
+  }
+};
+
 
   return (
     <div className="flex flex-col min-h-screen">
       <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
 
-      {/* ✅ main grows to push footer down */}
       <main className="flex-1 max-w-5xl mx-auto px-4 py-8">
-        {/* Profile Header */}
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
-          <Image
-            src={profile.profile_picture || "/default-avatar.png"}
-            alt={profile.full_name}
-            width={100}
-            height={100}
-            className="rounded-full object-cover"
-          />
+        {/* 🧩 Profile Header */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 relative">
+          <div className="relative w-[100px] h-[100px]">
+            <div className="relative w-24 h-24 rounded-full overflow-hidden">
+              <img
+                src={
+                  profile.profile_picture && profile.profile_picture.startsWith("http")
+                    ? profile.profile_picture
+                    : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || "default_avatar.png"}`
+                }
+                alt={profile.full_name || "User"}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+
+            </div>
+
+
+
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              id="profilePicUpload"
+              onChange={handleProfilePictureChange}
+            />
+
+            {/* Camera Icon */}
+            <button
+              type="button"
+              onClick={() => document.getElementById("profilePicUpload")?.click()}
+              disabled={uploadingImage}
+              className="absolute bottom-0 right-0 bg-[#008753] text-white p-2 rounded-full shadow-md hover:bg-green-600 transition"
+            >
+              {uploadingImage ? (
+                <span className="text-xs animate-pulse">...</span>
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+
           <div className="text-center md:text-left">
             <h1 className="text-2xl font-bold text-[#008753]">{profile.full_name}</h1>
             <p className="text-gray-600">{profile.username}</p>
@@ -64,79 +244,174 @@ export default function ProfilePage() {
               <span>{profile.following_count} Following</span>
               <span>{profile.posts_count} Posts</span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm"
-            >
-              Logout
-            </button>
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* 🧩 Tabs */}
         <div className="flex gap-6 border-b mb-6">
-          <button
+          <Button
             className={`pb-2 ${activeTab === "about" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
             onClick={() => setActiveTab("about")}
           >
             About Me
-          </button>
-          <button
+          </Button>
+          <Button
             className={`pb-2 ${activeTab === "posts" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
             onClick={() => setActiveTab("posts")}
           >
             My Posts
-          </button>
-          <button
+          </Button>
+          <Button
             className={`pb-2 ${activeTab === "bookmarks" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
             onClick={() => setActiveTab("bookmarks")}
           >
             Bookmarks
-          </button>
+          </Button>
         </div>
 
-        {/* Tab Content */}
+        {/* 🧩 Tab Content */}
         {activeTab === "about" && (
           <div className="space-y-4">
-            <p><strong>Email:</strong> {profile.email}</p>
-            <p><strong>WhatsApp:</strong> {profile.whatsapp_number}</p>
-            <p><strong>Initials:</strong> {profile.initials}</p>
-            <button className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-full text-sm">
-              Edit Profile
-            </button>
+            {editing ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <input
+                    value={editedData.full_name}
+                    onChange={(e) => setEditedData({ ...editedData, full_name: e.target.value })}
+                    className="w-full border rounded-lg p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">WhatsApp Number</label>
+                  <input
+                    value={editedData.whatsapp_number}
+                    onChange={(e) => setEditedData({ ...editedData, whatsapp_number: e.target.value })}
+                    className="w-full border rounded-lg p-2"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleSaveProfile}
+                    className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditing(false)}
+                    className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p><strong>Email:</strong> {profile.email}</p>
+                <p><strong>WhatsApp:</strong> {profile.whatsapp_number || "—"}</p>
+                <button
+                  onClick={handleEditProfile}
+                  className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+                >
+                  Edit Profile
+                </button>
+              </>
+            )}
           </div>
         )}
 
         {activeTab === "posts" && (
-          <div className="space-y-4">
-            {posts.length === 0 ? (
-              <p className="text-gray-600">You haven’t posted anything yet.</p>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="p-4 border rounded-lg bg-white shadow-sm">
-                  <p className="mb-2">{post.text}</p>
-                  {post.image && (
-                    <Image
-                      src={post.image}
-                      alt="Post image"
-                      width={400}
-                      height={200}
-                      className="rounded-md"
-                    />
-                  )}
-                  <div className="flex gap-4 mt-3 text-sm text-gray-600">
-                    <button className="flex items-center gap-1 text-blue-600">
-                      <Edit className="h-4 w-4" /> Edit
-                    </button>
-                    <button className="flex items-center gap-1 text-red-600">
-                      <Trash className="h-4 w-4" /> Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+  <div className="space-y-4">
+    {myPosts.length === 0 ? (
+      <p className="text-gray-600">You haven’t posted anything yet.</p>
+    ) : (
+      myPosts.map((postItem) => (
+  <div key={postItem.id} className="p-4 border rounded-lg bg-white shadow-sm">
+    {editingPostId === postItem.id ? (
+      <>
+        <textarea
+          className="w-full border rounded-lg p-2 mb-2"
+          value={editedPostContent}
+          onChange={(e) => setEditedPostContent(e.target.value)}
+        />
+
+        {/* Image preview and upload */}
+        {editedPostImage ? (
+          <img
+            src={URL.createObjectURL(editedPostImage)}
+            alt="Preview"
+            className="w-full h-48 object-cover rounded-md mb-2"
+          />
+        ) : postItem.image ? (
+          <Image
+            src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+            alt="Post image"
+            width={400}
+            height={200}
+            className="rounded-md mb-2"
+          />
+        ) : null}
+
+        <input
+          type="file"
+          accept="image/*"
+          className="mb-2"
+          onChange={handlePostImageChange}
+        />
+
+        <div className="flex gap-4 mt-2">
+          <button
+            onClick={() => handleSavePost(postItem.id)}
+            className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+            disabled={uploadingPostImage}
+          >
+            {uploadingPostImage ? "Uploading..." : "Save"}
+          </button>
+          <button
+            onClick={handleCancelEditPost}
+            className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </>
+    ) : (
+      <>
+        <p className="mb-2">{postItem.content}</p>
+        {postItem.image && (
+          <Image
+            src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+            alt="Post image"
+            width={400}
+            height={200}
+            className="rounded-md"
+          />
         )}
+        <div className="flex gap-4 mt-3 text-sm text-gray-600">
+          <button
+            onClick={() => handleEditPost(postItem.id, postItem.content)}
+            className="flex items-center gap-1 text-blue-600"
+          >
+            <Edit className="h-4 w-4" /> Edit
+          </button>
+          <button
+            onClick={() => {
+              setPostToDelete(postItem.id);
+              setIsDeleteModalOpen(true);
+            }}
+            className="flex items-center gap-1 text-red-600"
+          >
+            <Trash className="h-4 w-4" /> Delete
+          </button>
+        </div>
+      </>
+    )}
+  </div>
+))
+    )}
+  </div>
+)}
+
 
         {activeTab === "bookmarks" && (
           <div className="space-y-4">
@@ -144,19 +419,35 @@ export default function ProfilePage() {
               <p className="text-gray-600">No bookmarks yet.</p>
             ) : (
               bookmarks.map((bm) => (
-                <div key={bm.id} className="p-4 border rounded-lg bg-white shadow-sm flex items-center justify-between">
-                  <p>{bm.post.text}</p>
-                  <Bookmark className="h-4 w-4 text-[#008753]" />
+                <div
+                  key={bm.id}
+                  className="p-4 border rounded-lg bg-white shadow-sm flex items-center justify-between"
+                >
+                  <p>{bm.post?.text || bm.post?.content || "Bookmarked post"}</p>
+                  <button onClick={() => handleUnbookmark(bm.post.id)}>
+                    <Bookmark className="h-4 w-4 fill-blue-500 text-blue-500" />
+                  </button>
                 </div>
               ))
             )}
           </div>
         )}
+
+        <DeleteConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={async () => {
+            if (postToDelete) {
+              await handleDeletePost(postToDelete);
+            }
+            setIsDeleteModalOpen(false);
+            setPostToDelete(null);
+          }}
+        />
+
       </main>
 
-      {/* ✅ Footer stays below content */}
       <Footer />
-      
     </div>
   );
 }

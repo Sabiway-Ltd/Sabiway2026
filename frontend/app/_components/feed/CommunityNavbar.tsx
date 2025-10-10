@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Image from "next/image";
 import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProfileStore } from "@/app/store/useProfileStore";
+import { CLOUDINARY_CLOUD_NAME } from "@/app/helper";
 
 interface CommunityNavbarProps {
   onCreatePost: () => void;
@@ -28,8 +29,13 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
-
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { profile, getMyProfile } = useProfileStore();
+
+  useEffect(() => {
+    getMyProfile();
+  }, [getMyProfile]);
 
   // 🔹 Fetch notifications
   useEffect(() => {
@@ -37,12 +43,9 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       setLoading(true);
       try {
         const token = localStorage.getItem("access");
-        const res = await fetch(
-          "https://sabiway-9wq4.onrender.com/api/notifications/",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch("https://sabiway-9wq4.onrender.com/api/notifications/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const data = await res.json();
           setNotifications(data);
@@ -57,13 +60,10 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
     fetchNotifications();
   }, []);
 
-  // Close dropdown on outside click
+  // 🔹 Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
     };
@@ -71,7 +71,6 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🔹 Mark as read
   const markAsRead = async (id: number) => {
     try {
       const token = localStorage.getItem("access");
@@ -95,17 +94,21 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  // ✅ Helper to build profile image URL safely
+  const getCloudinaryImage = (path: string | null) => {
+    if (!path) return "/default-avatar.png";
+    if (path.startsWith("http")) return path;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${path}`;
+  };
+
   return (
     <nav className="w-full flex justify-center py-4 relative">
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
-        {/* Left: Logo */}
+        {/* Left Section */}
         <div className="flex items-center gap-x-4">
-          <Image
+          <img
             src="/sabiwaylogo.svg"
             alt="SabiWay Logo"
-            width={120}
-            height={40}
-            priority
             className="w-28 sm:w-32 md:w-40 h-auto"
           />
 
@@ -120,21 +123,24 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
           </div>
         </div>
 
-        {/* Right */}
+        {/* Right Section */}
         <div className="flex items-center space-x-3 sm:space-x-4 relative">
-          {/* Create Post */}
+          {/* ✅ Create Post */}
           <button
             onClick={onCreatePost}
             className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
           >
-            <span className="bg-white text-black text-xs w-7 h-7 flex items-center justify-center rounded-full font-semibold">
-              CN
-            </span>
+            <img
+              src={getCloudinaryImage(profile?.profile_picture)}
+              alt={profile?.full_name || "User"}
+              onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+              className="w-7 h-7 rounded-full object-cover"
+            />
             Create Post
             <Plus className="h-4 w-4" />
           </button>
 
-          {/* Notification */}
+          {/* Notifications */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
@@ -175,14 +181,11 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                             : "bg-[#008753]/10 hover:bg-[#008753]/20"
                         }`}
                       >
-                        <Image
-                          src={
-                            n.actor.profile_picture || "https://i.pravatar.cc/150?img=1"
-                          }
-                          alt={n.actor.full_name}
-                          width={40}
-                          height={40}
-                          className="rounded-full"
+                        <img
+                          src={getCloudinaryImage(n.actor.profile_picture)}
+                          alt={n.actor.full_name || "User"}
+                          onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+                          className="w-10 h-10 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <p className="text-sm text-gray-800">
@@ -208,14 +211,12 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             </AnimatePresence>
           </div>
 
-
-          {/* Avatar */}
-          <Image
-            src="https://i.pravatar.cc/150?img=8"
-            alt="User Avatar"
-            width={36}
-            height={36}
-            className="rounded-full"
+          {/* ✅ User Avatar */}
+          <img
+            src={getCloudinaryImage(profile?.profile_picture)}
+            alt={profile?.full_name || "User"}
+            onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+            className="w-9 h-9 rounded-full object-cover"
           />
 
           {/* Mobile Menu */}
@@ -261,9 +262,12 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               }}
               className="flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-3 text-sm font-medium text-white"
             >
-              <span className="bg-white text-black text-xs w-7 h-7 flex items-center justify-center rounded-full font-semibold">
-                CN
-              </span>
+              <img
+                src={getCloudinaryImage(profile?.profile_picture)}
+                alt={profile?.full_name || "User"}
+                onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+                className="w-7 h-7 rounded-full object-cover"
+              />
               Create Post
               <Plus className="h-4 w-4" />
             </button>

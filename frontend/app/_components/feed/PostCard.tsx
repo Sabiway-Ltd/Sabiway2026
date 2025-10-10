@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Heart, MessageCircle, BarChart2, Share, Bookmark } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import CommentThread from "./CommentThread";
 import { toast } from "react-hot-toast";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 
 export default function PostCard({
   id,
@@ -17,7 +17,7 @@ export default function PostCard({
   comments_count,
   impressions_count,
   is_liked = false,
-  is_bookmarked = false, 
+  is_bookmarked = false,
   created_at,
 }: {
   id: string;
@@ -48,7 +48,6 @@ export default function PostCard({
   const [impressionsCount, setImpressionsCount] = useState(impressions_count || 0);
   const { getPostById } = usePostStore();
 
-
   const {
     likePost,
     unlikePost,
@@ -64,6 +63,13 @@ export default function PostCard({
 
   const comments = commentsByPost[id] || [];
 
+  // ✅ Utility: Build Cloudinary-safe URL
+  const getProfileSrc = (url?: string | null) => {
+    if (!url) return DEFAULT_PROFILE_PICTURE;
+    if (url.startsWith("http")) return url;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${url}`;
+  };
+
   // Format date
   useEffect(() => {
     const options: Intl.DateTimeFormatOptions = {
@@ -77,7 +83,7 @@ export default function PostCard({
     setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
   }, [created_at]);
 
-  // Post like/unlike
+  // Like / Unlike
   const handleToggleLike = async () => {
     const prevLiked = isLiked;
     const prevCount = likesCount;
@@ -118,7 +124,7 @@ export default function PostCard({
       await addComment(id, comment);
       setComment("");
       setCommentCount((prev) => prev + 1);
-      await getComments(id); // refresh comments
+      await getComments(id);
     } catch (err) {
       console.error("Error adding comment:", err);
     } finally {
@@ -150,31 +156,23 @@ export default function PostCard({
   useEffect(() => {
     const fetchImpression = async () => {
       try {
-        const res = await getPostById(id); // triggers impression
-        if (res) {
-          // update impressions in local state
-          setImpressionsCount(res.impressions_count || 0);
-        }
+        const res = await getPostById(id);
+        if (res) setImpressionsCount(res.impressions_count || 0);
       } catch (err) {
         console.error("Error fetching impressions:", err);
       }
     };
-
     fetchImpression();
   }, [id]);
-
 
   return (
     <div className="p-4 border-b">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Image
-          src={author.profile_picture || "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"}
+        <img
+          src={getProfileSrc(author.profile_picture)}
           alt={author.full_name}
-          width={40}
-          height={40}
-          className="rounded-full"
-          unoptimized
+          className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm"
         />
         <div>
           <p className="font-semibold">{author.full_name}</p>
@@ -189,13 +187,14 @@ export default function PostCard({
       {/* Image */}
       {image && (
         <div className="mt-3 rounded-xl overflow-hidden">
-          <Image
-            src={image.startsWith("http") ? image : `https://res.cloudinary.com/devqbjptr/${image}`}
+          <img
+            src={
+              image.startsWith("http")
+                ? image
+                : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
+            }
             alt="Post image"
-            width={600}
-            height={400}
-            className="object-cover w-full"
-            unoptimized
+            className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
           />
         </div>
       )}
@@ -217,12 +216,21 @@ export default function PostCard({
           <span>{impressionsCount}</span>
         </button>
 
-        <button onClick={handleWhatsappClick} className={`flex items-center gap-1 transition-opacity duration-200 ${!author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"}`}>
+        <button
+          onClick={handleWhatsappClick}
+          className={`flex items-center gap-1 transition-opacity duration-200 ${
+            !author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
+          }`}
+        >
           <FaWhatsapp size={20} />
         </button>
 
         <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
-          <Bookmark className={`h-[1.35rem] w-[1.35rem] ${isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"}`} />
+          <Bookmark
+            className={`h-[1.35rem] w-[1.35rem] ${
+              isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
+            }`}
+          />
         </button>
 
         <button className="flex items-center gap-1">
@@ -230,9 +238,10 @@ export default function PostCard({
         </button>
       </div>
 
-      {/* Comment Box */}
+      {/* Comments */}
       {showComments && (
         <>
+          {/* Comment Input */}
           <div className="mt-3 border rounded-full px-4 py-2 bg-white flex w-full justify-between">
             <input
               type="text"
@@ -241,15 +250,25 @@ export default function PostCard({
               onChange={(e) => setComment(e.target.value)}
               className="w-[85%] text-sm outline-none"
             />
-            
             <button onClick={handleCommentSubmit} disabled={submitting || !comment.trim()}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z" fill="black"/>
-                </svg>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 22 22"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
+                  fill="black"
+                />
+              </svg>
             </button>
           </div>
 
-          {/* Comments */}
+          {/* Comments List */}
           <div className="mt-4 space-y-4">
             {loadingComments ? (
               <p className="text-sm text-gray-500 text-center">Loading comments...</p>
@@ -263,19 +282,19 @@ export default function PostCard({
                   author={{
                     name: c.user?.full_name || "Unknown",
                     username: c.user?.username || "unknown",
-                    avatar: c.user?.profile_picture || "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                    avatar: getProfileSrc(c.user?.profile_picture),
                     whatsapp_number: c.user?.whatsapp_number || "",
                   }}
                   content={c.content}
                   likes={c.likes_count || 0}
                   is_liked={c.is_liked || false}
                   reply_count={c.reply_count || 0}
-                  created_at={c.created_at} // ✅ Added
+                  created_at={c.created_at}
                   onReplySubmit={addReply}
                   onLike={likeComment}
                   onUnlike={unlikeComment}
+                  avatarSize="small" // 👈 optional prop you can use in CommentThread to size avatars smaller
                 />
-
               ))
             )}
           </div>

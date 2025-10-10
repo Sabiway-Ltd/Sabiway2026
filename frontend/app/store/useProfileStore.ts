@@ -51,20 +51,34 @@ export const useProfileStore = create<ProfileState>((set) => ({
     }
   },
 
-  // ✅ Update user profile
+  // ✅ Update user profile (supports JSON & FormData)
   updateProfile: async (userId, data) => {
     set({ loading: true, error: null });
     try {
-      const res = await profile.patch(userId, data);
+      let res;
+
+      // If data is FormData (profile picture), use multipart/form-data
+      if (data instanceof FormData) {
+        res = await profile.patch(userId, data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // Normal JSON update
+        res = await profile.patch(userId, data);
+      }
+
       set({ profile: res.data, loading: false });
+      return res.data;
     } catch (err: any) {
       console.error("Profile update error:", err.response?.data || err.message);
       set({
         error: err.response?.data?.detail || "Failed to update profile",
         loading: false,
       });
+      throw err;
     }
   },
+
 
   // ✅ Get all profiles
   getAllProfiles: async () => {

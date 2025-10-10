@@ -136,13 +136,18 @@ export default function CommentThread({
   return (
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start gap-3 mb-2">
-        <Image
-          src={author.avatar}
-          alt={author.name}
-          width={32}
-          height={32}
-          className="rounded-full"
+        <img
+          src={
+            author.avatar && author.avatar.trim() !== ""
+              ? author.avatar.startsWith("http")
+                ? author.avatar
+                : `https://res.cloudinary.com/devqbjptr/${author.avatar}`
+              : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
+          }
+          alt={author.name || "User"}
+          className="w-8 h-8 rounded-full object-cover"
         />
+
         <div className="flex-1">
           <p className="font-semibold text-sm">
             {author.name} <span className="text-gray-500">{author.username}</span>

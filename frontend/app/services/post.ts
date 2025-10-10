@@ -18,10 +18,12 @@ export const post = {
   unlike: (id: string) => api.post(`/posts/${id}/unlike/`),
   createLike: (data: { post: string }) => api.post(`/posts/likes/`, data),
 
-  // 🔖 BOOKMARKS
+  
+ // 🔖 BOOKMARKS
   bookmark: (id: string) => api.post(`/posts/${id}/bookmark/`),
   unbookmark: (id: string) => api.delete(`/posts/${id}/unbookmark/`),
   getMyBookmarks: () => api.get(`/posts/me/bookmarks/`),
+
 
   // 🔁 REPOSTS
   repost: (id: string, data?: { message?: string }) => api.post(`/posts/${id}/repost/`, data),
