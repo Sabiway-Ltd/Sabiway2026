@@ -19,7 +19,7 @@ export default function Appsection () {
           <Image
             src="/pstoreapple.png"
             alt="Google Play and App Store"
-            width={240}
+            width={350}
             height={70}
             className="mt-4"
           />

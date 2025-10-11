@@ -7,10 +7,11 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md " >
-      <div 
-            className="flex items-center justify-between max-w-[1400px] mx-5  bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8 mt-2">
+    <nav className="fixed top-4 left-0 w-full z-50 bg-white/80 backdrop-blur-md">
+      {/* 👇 Added vertical spacing with top-4 for slight downward position */}
+      <div
+        className="flex items-center justify-between w-full max-w-[1400px] mx-auto bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8"
+      >
         {/* LOGO */}
         <div className="flex-shrink-0">
           <Image
@@ -32,7 +33,9 @@ export default function Navbar() {
 
         {/* RIGHT BUTTONS (Desktop) */}
         <div className="hidden md:flex items-center space-x-4">
-          <button className="text-gray-700 font-medium hover:text-[#008753] transition">Login</button>
+          <button className="text-gray-700 font-medium hover:text-[#008753] transition">
+            Login
+          </button>
           <button className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition">
             Sign Up
           </button>
@@ -50,7 +53,7 @@ export default function Navbar() {
 
       {/* MOBILE DROPDOWN MENU */}
       {menuOpen && (
-        <div className="md:hidden absolute top-[82px] left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
+        <div className="md:hidden absolute top-[86px] left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
           <ul className="flex flex-col text-gray-800 font-medium text-center py-5 space-y-4">
             <li><a href="#" className="hover:text-[#008753] transition">Community</a></li>
             <li><a href="#" className="hover:text-[#008753] transition">About Us</a></li>
@@ -58,7 +61,9 @@ export default function Navbar() {
             <li><a href="#" className="hover:text-[#008753] transition">FAQs</a></li>
           </ul>
           <div className="flex flex-col items-center space-y-3 pb-6">
-            <button className="text-gray-700 font-medium hover:text-[#008753] transition">Login</button>
+            <button className="text-gray-700 font-medium hover:text-[#008753] transition">
+              Login
+            </button>
             <button className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition">
               Sign Up
             </button>
