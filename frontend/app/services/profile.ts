@@ -15,12 +15,10 @@ export const profile = {
   // Full update (PUT)
   update: (userId: number, data: any) => api.put(`/profiles/${userId}/`, data),
 
-  
   // Partial update (PATCH) with optional config
   patch: (userId: number, data: any, config?: object) => {
     return api.patch(`/profiles/${userId}/`, data, config);
   },
-
 
   // Delete profile
   delete: (userId: number) => api.delete(`/profiles/${userId}/`),
@@ -32,6 +30,10 @@ export const profile = {
   // Followers / Following
   getFollowers: (userId: number) => api.get(`/profiles/${userId}/followers/`),
   getFollowing: (userId: number) => api.get(`/profiles/${userId}/following/`),
+  getMyFollowing: () => api.get("/profiles/me/following/"),
+  
+  // Current user's followers
+  getMyFollowers: () => api.get("/profiles/me/followers/"),
 
   // Top contributors
   getTopContributors: () => api.get("/profiles/contributors/top/"),

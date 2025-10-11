@@ -195,8 +195,15 @@ export default function CommentThread({
                 placeholder="Write a reply..."
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault(); // prevent newline
+                    handleReplySubmit();
+                  }
+                }}
                 className="w-[85%] text-xs outline-none"
               />
+
               <button onClick={handleReplySubmit} disabled={submitting || !replyText.trim()}>
                 <svg
                   width="16"

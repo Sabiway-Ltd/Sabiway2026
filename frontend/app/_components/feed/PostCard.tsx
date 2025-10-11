@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { Heart, MessageCircle, BarChart2, Share, Bookmark } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
+import { useProfileStore } from "@/app/store/useProfileStore";
 import CommentThread from "./CommentThread";
 import { toast } from "react-hot-toast";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
-
 
 export default function PostCard({
   id,
@@ -23,10 +23,12 @@ export default function PostCard({
 }: {
   id: string;
   author: {
+    user_id: number;
     full_name: string;
     username: string;
     profile_picture?: string | null;
     whatsapp_number: string;
+    is_following?: boolean; // optional fallback from API
   };
   content: string;
   image?: string | null;
@@ -47,32 +49,25 @@ export default function PostCard({
   const [submitting, setSubmitting] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [impressionsCount, setImpressionsCount] = useState(impressions_count || 0);
-  const { getPostById } = usePostStore();
-  const [isFollowing, setIsFollowing] = useState(false); // initial state depends on your API
+  const [followingLoading, setFollowingLoading] = useState(false);
 
-  const {
-    likePost,
-    unlikePost,
-    addComment,
-    getComments,
-    bookmarkPost,
-    unbookmarkPost,
-    commentsByPost,
-    likeComment,
-    unlikeComment,
-    addReply,
-  } = usePostStore();
+  const { getPostById, likePost, unlikePost, addComment, getComments, bookmarkPost, unbookmarkPost, commentsByPost, likeComment, unlikeComment, addReply } =
+    usePostStore();
+
+  const { followingStatus, toggleFollow } = useProfileStore();
 
   const comments = commentsByPost[id] || [];
 
-  // ✅ Utility: Build Cloudinary-safe URL
+  // ✅ derive current follow state from store, fallback to API
+  const isFollowing = followingStatus[author.user_id] ?? author.is_following ?? false;
+
   const getProfileSrc = (url?: string | null) => {
     if (!url) return DEFAULT_PROFILE_PICTURE;
     if (url.startsWith("http")) return url;
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${url}`;
   };
 
-  // Format date
+  // Format created_at date
   useEffect(() => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -85,13 +80,11 @@ export default function PostCard({
     setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
   }, [created_at]);
 
-  // Like / Unlike
   const handleToggleLike = async () => {
     const prevLiked = isLiked;
     const prevCount = likesCount;
     setIsLiked(!prevLiked);
     setLikesCount(prevLiked ? prevCount - 1 : prevCount + 1);
-
     try {
       if (prevLiked) await unlikePost(id);
       else await likePost(id);
@@ -102,7 +95,6 @@ export default function PostCard({
     }
   };
 
-  // Toggle comments
   const handleToggleComments = async () => {
     const nextState = !showComments;
     setShowComments(nextState);
@@ -118,7 +110,6 @@ export default function PostCard({
     }
   };
 
-  // Add comment
   const handleCommentSubmit = async () => {
     if (!comment.trim()) return;
     setSubmitting(true);
@@ -134,7 +125,6 @@ export default function PostCard({
     }
   };
 
-  // Bookmark toggle
   const handleBookmarkToggle = async () => {
     try {
       if (isBookmarked) await unbookmarkPost(id);
@@ -145,7 +135,6 @@ export default function PostCard({
     }
   };
 
-  // WhatsApp
   const handleWhatsappClick = () => {
     if (author.whatsapp_number) {
       window.open(`https://wa.me/${author.whatsapp_number}`, "_blank");
@@ -154,7 +143,20 @@ export default function PostCard({
     }
   };
 
-  // For impression
+  const handleFollowToggle = async () => {
+    if (followingLoading) return;
+    setFollowingLoading(true);
+    try {
+      await toggleFollow(author.user_id);
+      toast.success(`${isFollowing ? "Unfollowed" : "Following"} ${author.full_name}`);
+    } catch (err) {
+      toast.error("Failed to update follow status");
+    } finally {
+      setFollowingLoading(false);
+    }
+  };
+
+  // fetch impressions
   useEffect(() => {
     const fetchImpression = async () => {
       try {
@@ -165,34 +167,11 @@ export default function PostCard({
       }
     };
     fetchImpression();
-  }, [id]);
-
-
-  
-
-  // Follow and unfollow
-  const handleFollowToggle = async () => {
-    try {
-      if (isFollowing) {
-        // Call API to unfollow
-        await unfollowUser(author.username); // Replace with your API call
-        setIsFollowing(false);
-      } else {
-        // Call API to follow
-        await followUser(author.username); // Replace with your API call
-        setIsFollowing(true);
-      }
-    } catch (err) {
-      console.error("Follow toggle error:", err);
-    }
-  };
-
+  }, [id, getPostById]);
 
   return (
     <div className="p-4 border-b">
-      {/* Header */}
       <div className="flex justify-between items-center gap-3">
-        {/* Profile pic and names */}
         <div className="flex items-center gap-3">
           <img
             src={getProfileSrc(author.profile_picture)}
@@ -206,10 +185,9 @@ export default function PostCard({
           </div>
         </div>
 
-
-         {/* Follow / Unfollow Button */}
         <button
           onClick={handleFollowToggle}
+          disabled={followingLoading}
           className={`ml-auto px-3 py-1 rounded-full text-sm font-medium ${
             isFollowing
               ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -220,25 +198,18 @@ export default function PostCard({
         </button>
       </div>
 
-      {/* Content */}
       <div className="mt-3 text-gray-800 text-sm">{content}</div>
 
-      {/* Image */}
       {image && (
         <div className="mt-3 rounded-xl overflow-hidden">
           <img
-            src={
-              image.startsWith("http")
-                ? image
-                : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
-            }
+            src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
             alt="Post image"
             className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
           />
         </div>
       )}
 
-      {/* Action Bar */}
       <div className="flex justify-between text-gray-800 mt-3 lg:w-[40%] md:w-[60%]">
         <button onClick={handleToggleLike} className="flex items-center gap-1">
           <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
@@ -266,9 +237,7 @@ export default function PostCard({
 
         <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
           <Bookmark
-            className={`h-[1.35rem] w-[1.35rem] ${
-              isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
-            }`}
+            className={`h-[1.35rem] w-[1.35rem] ${isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"}`}
           />
         </button>
 
@@ -277,26 +246,22 @@ export default function PostCard({
         </button>
       </div>
 
-      {/* Comments */}
       {showComments && (
         <>
-          {/* Comment Input */}
           <div className="mt-3 border rounded-full px-4 py-2 bg-white flex w-full justify-between">
             <input
               type="text"
               placeholder="Leave a comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && comment.trim()) handleCommentSubmit();
+              }}
               className="w-[85%] text-sm outline-none"
             />
+
             <button onClick={handleCommentSubmit} disabled={submitting || !comment.trim()}>
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 22 22"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
@@ -307,7 +272,6 @@ export default function PostCard({
             </button>
           </div>
 
-          {/* Comments List */}
           <div className="mt-4 space-y-4">
             {loadingComments ? (
               <p className="text-sm text-gray-500 text-center">Loading comments...</p>
@@ -332,7 +296,7 @@ export default function PostCard({
                   onReplySubmit={addReply}
                   onLike={likeComment}
                   onUnlike={unlikeComment}
-                  avatarSize="small" // 👈 optional prop you can use in CommentThread to size avatars smaller
+                  avatarSize="small"
                 />
               ))
             )}

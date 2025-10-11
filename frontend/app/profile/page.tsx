@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Edit, Trash, Bookmark, Camera } from "lucide-react";
 import CommunityNavbar from "../_components/feed/CommunityNavbar";
 import Footer from "../_components/landing_page/Footer";
-import { useProfileStore } from "../store/useProfileStore";
+import { useProfileStore, type Profile  } from "../store/useProfileStore";
 import { usePostStore } from "../store/usePostStore";
 import { post } from "../services/post";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "../helper";
@@ -15,10 +15,13 @@ import DeleteConfirmModal from "../_components/common/DeleteConfirmModal";
 import toast from "react-hot-toast";
 import Button from "../_components/common/Button";
 import { useAuthStore } from "../store/useAuthStore";
+import { div } from "framer-motion/client";
+
+
 
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks" | "followers" | "following">("about");
   const [editing, setEditing] = useState(false);
   const [editedData, setEditedData] = useState({ full_name: "", whatsapp_number: "" });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -30,7 +33,14 @@ export default function ProfilePage() {
   const { logout } = useAuthStore();
 
 
-  const { profile, getMyProfile, updateProfile, loading: profileLoading } = useProfileStore();
+  const {
+  profile,
+  getMyProfile,
+  updateProfile,
+  loading: profileLoading,
+  toggleFollow, // ✅ add this
+} = useProfileStore();
+
   const { set } = usePostStore.getState(); // direct access for updating
 
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -43,6 +53,13 @@ export default function ProfilePage() {
 
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+  const [modalUsers, setModalUsers] = useState<Profile[]>([]);
+
+  const { fetchMyFollowers, fetchMyFollowing, myFollowers, myFollowing } = useProfileStore();
+
 
 
 
@@ -217,6 +234,19 @@ const handleSavePost = async (postId: string) => {
   }
 };
 
+
+const handleShowFollowers = async () => {
+  await fetchMyFollowers();
+  setModalUsers(myFollowers);
+  setIsFollowersModalOpen(true);
+};
+
+const handleShowFollowing = async () => {
+  await fetchMyFollowing();
+  setModalUsers(myFollowing);
+  setIsFollowingModalOpen(true);
+};
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 ">
       <div className="md:px-6 px-3">
@@ -237,7 +267,7 @@ const handleSavePost = async (postId: string) => {
                     profile?.profile_picture
                       ? profile.profile_picture.startsWith("http")
                         ? profile.profile_picture
-                        : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${profile.profile_picture}`
+                        : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture}`
                       : DEFAULT_PROFILE_PICTURE
                   }
                   alt={profile?.full_name || "User"}
@@ -283,10 +313,23 @@ const handleSavePost = async (postId: string) => {
             <h1 className="text-2xl font-bold text-[#008753]">{profile.full_name}</h1>
             <p className="text-gray-600">{profile.username}</p>
             <div className="flex gap-6 mt-3 text-sm text-gray-700">
-              <span>{profile.followers_count} Followers</span>
-              <span>{profile.following_count} Following</span>
+              <button
+                onClick={handleShowFollowers}
+                className="hover:underline"
+              >
+                {profile.followers_count} Followers
+              </button>
+
+              <button
+                onClick={handleShowFollowing}
+                className="hover:underline"
+              >
+                {profile.following_count} Following
+              </button>
+
               <span>{profile.posts_count} Posts</span>
             </div>
+
           </div>
         </div>
 
@@ -310,7 +353,26 @@ const handleSavePost = async (postId: string) => {
           >
             Bookmarks
           </Button>
+          <Button
+            className={`pb-2 ${activeTab === "followers" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
+            onClick={async () => {
+              await fetchMyFollowers();
+              setActiveTab("followers");
+            }}
+          >
+            Followers
+          </Button>
+          <Button
+            className={`pb-2 ${activeTab === "following" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
+            onClick={async () => {
+              await fetchMyFollowing();
+              setActiveTab("following");
+            }}
+          >
+            Following
+          </Button>
         </div>
+
 
         {/* 🧩 Tab Content */}
         {activeTab === "about" && (
@@ -380,96 +442,98 @@ const handleSavePost = async (postId: string) => {
         )}
 
         {activeTab === "posts" && (
-  <div className="space-y-4">
-    {myPosts.length === 0 ? (
-      <p className="text-gray-600">You haven’t posted anything yet.</p>
-    ) : (
-      myPosts.map((postItem) => (
-  <div key={postItem.id} className="p-4 border rounded-lg bg-white shadow-sm">
-    {editingPostId === postItem.id ? (
-      <>
-        <textarea
-          className="w-full border rounded-lg p-2 mb-2"
-          value={editedPostContent}
-          onChange={(e) => setEditedPostContent(e.target.value)}
-        />
+          <div className="flex ">
+           <div className="space-y-4">
+            {myPosts.length === 0 ? (
+              <p className="text-gray-600">You haven’t posted anything yet.</p>
+            ) : (
+              myPosts.map((postItem) => (
+          <div key={postItem.id} className="p-4 border rounded-lg bg-white shadow-sm">
+            {editingPostId === postItem.id ? (
+              <>
+                <textarea
+                  className="w-full border rounded-lg p-2 mb-2"
+                  value={editedPostContent}
+                  onChange={(e) => setEditedPostContent(e.target.value)}
+                />
 
-        {/* Image preview and upload */}
-        {editedPostImage ? (
-          <img
-            src={URL.createObjectURL(editedPostImage)}
-            alt="Preview"
-            className="w-full h-48 object-cover rounded-md mb-2"
-          />
-        ) : postItem.image ? (
-          <Image
-            src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
-            alt="Post image"
-            width={400}
-            height={200}
-            className="rounded-md mb-2"
-          />
-        ) : null}
+                {/* Image preview and upload */}
+                {editedPostImage ? (
+                  <img
+                    src={URL.createObjectURL(editedPostImage)}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-md mb-2"
+                  />
+                ) : postItem.image ? (
+                  <Image
+                    src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+                    alt="Post image"
+                    width={400}
+                    height={200}
+                    className="rounded-md mb-2"
+                  />
+                ) : null}
 
-        <input
-          type="file"
-          accept="image/*"
-          className="mb-2"
-          onChange={handlePostImageChange}
-        />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="mb-2"
+                  onChange={handlePostImageChange}
+                />
 
-        <div className="flex gap-4 mt-2">
-          <button
-            onClick={() => handleSavePost(postItem.id)}
-            className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
-            disabled={uploadingPostImage}
-          >
-            {uploadingPostImage ? "Uploading..." : "Save"}
-          </button>
-          <button
-            onClick={handleCancelEditPost}
-            className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
-          >
-            Cancel
-          </button>
-        </div>
-      </>
-    ) : (
-      <>
-        <p className="mb-2">{postItem.content}</p>
-        {postItem.image && (
-          <Image
-            src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
-            alt="Post image"
-            width={400}
-            height={200}
-            className="rounded-md"
-          />
+                <div className="flex gap-4 mt-2">
+                  <button
+                    onClick={() => handleSavePost(postItem.id)}
+                    className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+                    disabled={uploadingPostImage}
+                  >
+                    {uploadingPostImage ? "Uploading..." : "Save"}
+                  </button>
+                  <button
+                    onClick={handleCancelEditPost}
+                    className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-2">{postItem.content}</p>
+                {postItem.image && (
+                  <Image
+                    src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+                    alt="Post image"
+                    width={400}
+                    height={200}
+                    className="rounded-md"
+                  />
+                )}
+                <div className="flex gap-4 mt-3 text-sm text-gray-600">
+                  <button
+                    onClick={() => handleEditPost(postItem.id, postItem.content)}
+                    className="flex items-center gap-1 text-blue-600"
+                  >
+                    <Edit className="h-4 w-4" /> Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPostToDelete(postItem.id);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="flex items-center gap-1 text-red-600"
+                  >
+                    <Trash className="h-4 w-4" /> Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))
+            )}
+          </div>
+          </div>
         )}
-        <div className="flex gap-4 mt-3 text-sm text-gray-600">
-          <button
-            onClick={() => handleEditPost(postItem.id, postItem.content)}
-            className="flex items-center gap-1 text-blue-600"
-          >
-            <Edit className="h-4 w-4" /> Edit
-          </button>
-          <button
-            onClick={() => {
-              setPostToDelete(postItem.id);
-              setIsDeleteModalOpen(true);
-            }}
-            className="flex items-center gap-1 text-red-600"
-          >
-            <Trash className="h-4 w-4" /> Delete
-          </button>
-        </div>
-      </>
-    )}
-  </div>
-))
-    )}
-  </div>
-)}
 
 
         {activeTab === "bookmarks" && (
@@ -492,6 +556,128 @@ const handleSavePost = async (postId: string) => {
           </div>
         )}
 
+        {activeTab === "followers" && (
+          <div className="space-y-4">
+            {myFollowers.length === 0 ? (
+              <p className="text-gray-600">You have no followers yet.</p>
+            ) : (
+              myFollowers.map((user) => (
+                <div key={user.user_id} className="flex items-center gap-3 p-2 border rounded hover:bg-gray-50">
+                  <img
+                    src={
+                        user.profile_picture
+                          ? user.profile_picture.startsWith("http")
+                            ? user.profile_picture
+                            : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
+                          : DEFAULT_PROFILE_PICTURE
+                      }
+                    alt={user.full_name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-medium">{user.full_name}</p>
+                    <p className="text-sm text-gray-500">{user.username}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "following" && (
+  <div className="space-y-4">
+    {myFollowing.length === 0 ? (
+      <p className="text-gray-600">You are not following anyone yet.</p>
+    ) : (
+      myFollowing.map((user) => (
+        <div
+          key={user.user_id}
+          className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
+        >
+          <div className="flex items-center gap-3">
+            <img
+              src={
+                user.profile_picture
+                  ? user.profile_picture.startsWith("http")
+                    ? user.profile_picture
+                    : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
+                  : DEFAULT_PROFILE_PICTURE
+              }
+              alt={user.full_name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <p className="font-medium">{user.full_name}</p>
+              <p className="text-sm text-gray-500">{user.username}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={async () => {
+              try {
+                await toggleFollow(user.user_id); // toggles follow/unfollow
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+            className="bg-red-500 text-white px-3 py-1 rounded-full text-sm hover:bg-red-600"
+          >
+            Unfollow
+          </button>
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+
+
+        {(isFollowersModalOpen || isFollowingModalOpen) && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => {
+              setIsFollowersModalOpen(false);
+              setIsFollowingModalOpen(false);
+            }}
+          >
+            <div
+              className="bg-white rounded-lg shadow-lg p-4 max-w-md w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold mb-4">
+                {isFollowersModalOpen ? "Followers" : "Following"}
+              </h2>
+              {modalUsers.length === 0 ? (
+                <p className="text-gray-600">No users found.</p>
+              ) : (
+                modalUsers.map((user) => (
+                  <div
+                    key={user.user_id}
+                    className="flex items-center gap-3 mb-3 p-2 hover:bg-gray-100 rounded"
+                  >
+                    <img
+                      src={
+                        user.profile_picture
+                          ? user.profile_picture.startsWith("http")
+                            ? user.profile_picture
+                            : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
+                          : DEFAULT_PROFILE_PICTURE
+                      }
+                      alt={user.full_name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-medium">{user.full_name}</p>
+                      <p className="text-sm text-gray-500">{user.username}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+
         <DeleteConfirmModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
@@ -503,6 +689,8 @@ const handleSavePost = async (postId: string) => {
             setPostToDelete(null);
           }}
         />
+
+        
 
       </main>
 
@@ -525,10 +713,12 @@ const handleSavePost = async (postId: string) => {
             </button>
             <img
               src={
-                profile.profile_picture && profile.profile_picture.startsWith("http")
-                  ? profile.profile_picture
-                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || DEFAULT_PROFILE_PICTURE}`
-              }
+                  profile?.profile_picture
+                    ? profile.profile_picture.startsWith("http")
+                      ? profile.profile_picture
+                      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture}`
+                    : DEFAULT_PROFILE_PICTURE
+                }
               alt={profile.full_name || "User"}
               className="rounded-lg max-w-full max-h-[80vh] object-contain"
             />
