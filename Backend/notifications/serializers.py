@@ -31,11 +31,8 @@ class NotificationSerializer(serializers.ModelSerializer):
         }
 
     def get_target_type(self, obj):
-        if obj.target:
-            return obj.target._meta.model_name
-        return None
+        return obj.target._meta.model_name if obj.target else None
 
     def get_target_id(self, obj):
-        if obj.target:
-            return obj.target.pk
-        return None
+        return str(obj.target.pk) if obj.target else None
+

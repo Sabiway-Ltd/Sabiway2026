@@ -194,8 +194,8 @@ cloudinary.config(
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),   # 1 hour
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      # 7 days
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),   # 1 hour
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),      # 7 days
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 

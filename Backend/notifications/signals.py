@@ -9,18 +9,33 @@ from .models import Notification
 def create_notification(user, actor, notif_type, target=None):
     """
     Create a notification for the user if they are not the actor.
-    Compatible with SQLite (handles large integers/UUIDs).
+    Automatically generates a message if not provided.
     """
     if user != actor:
         target_ct = ContentType.objects.get_for_model(target) if target else None
         target_id = str(target.pk) if target else None
+
+        # Generate default message
+        if notif_type == "follow":
+            message = f"{actor.username} started following you."
+        elif notif_type == "like":
+            message = f"{actor.username} liked your post."
+        elif notif_type == "comment":
+            message = f"{actor.username} commented on your post."
+        elif notif_type == "reply":
+            message = f"{actor.username} replied to your comment."
+        elif notif_type == "post":
+            message = f"{actor.username} shared a new post."
+        else:
+            message = None
 
         Notification.objects.create(
             user=user,
             actor=actor,
             type=notif_type,
             target_content_type=target_ct,
-            target_object_id=target_id
+            target_object_id=target_id,
+            message=message
         )
 
 # -------------------
