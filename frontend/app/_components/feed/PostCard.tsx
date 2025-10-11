@@ -8,6 +8,7 @@ import CommentThread from "./CommentThread";
 import { toast } from "react-hot-toast";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 
+
 export default function PostCard({
   id,
   author,
@@ -47,6 +48,7 @@ export default function PostCard({
   const [loadingComments, setLoadingComments] = useState(false);
   const [impressionsCount, setImpressionsCount] = useState(impressions_count || 0);
   const { getPostById } = usePostStore();
+  const [isFollowing, setIsFollowing] = useState(false); // initial state depends on your API
 
   const {
     likePost,
@@ -165,20 +167,57 @@ export default function PostCard({
     fetchImpression();
   }, [id]);
 
+
+  
+
+  // Follow and unfollow
+  const handleFollowToggle = async () => {
+    try {
+      if (isFollowing) {
+        // Call API to unfollow
+        await unfollowUser(author.username); // Replace with your API call
+        setIsFollowing(false);
+      } else {
+        // Call API to follow
+        await followUser(author.username); // Replace with your API call
+        setIsFollowing(true);
+      }
+    } catch (err) {
+      console.error("Follow toggle error:", err);
+    }
+  };
+
+
   return (
     <div className="p-4 border-b">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <img
-          src={getProfileSrc(author.profile_picture)}
-          alt={author.full_name}
-          className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm"
-        />
-        <div>
-          <p className="font-semibold">{author.full_name}</p>
-          <p className="text-gray-500 text-sm">{author.username}</p>
-          <p className="text-[11px] text-gray-400">{formattedDate}</p>
+      <div className="flex justify-between items-center gap-3">
+        {/* Profile pic and names */}
+        <div className="flex items-center gap-3">
+          <img
+            src={getProfileSrc(author.profile_picture)}
+            alt={author.full_name}
+            className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm"
+          />
+          <div>
+            <p className="font-semibold">{author.full_name}</p>
+            <p className="text-gray-500 text-sm">{author.username}</p>
+            <p className="text-[11px] text-gray-400">{formattedDate}</p>
+          </div>
         </div>
+
+
+         {/* Follow / Unfollow Button */}
+        <button
+          onClick={handleFollowToggle}
+          className={`ml-auto px-3 py-1 rounded-full text-sm font-medium ${
+            isFollowing
+              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          }`}
+        >
+          {isFollowing ? "Unfollow" : "Follow"}
+        </button>
       </div>
 
       {/* Content */}

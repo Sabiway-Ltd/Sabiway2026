@@ -9,7 +9,13 @@ export const post = {
   create: (data: FormData | object) => api.post("/posts/", data, {
     headers: data instanceof FormData ? { "Content-Type": "multipart/form-data" } : undefined,
   }),
-  update: (id: string, data: FormData | object) => api.put(`/posts/${id}/`, data),
+  update: (id: string, data: FormData | object) =>
+    api.put(`/posts/${id}/`, data, {
+      headers: data instanceof FormData
+        ? { "Content-Type": "multipart/form-data" }
+        : undefined,
+    }),
+
   patch: (id: string, data: Partial<any>) => api.patch(`/posts/${id}/`, data),
   delete: (id: string) => api.delete(`/posts/${id}/`),
 

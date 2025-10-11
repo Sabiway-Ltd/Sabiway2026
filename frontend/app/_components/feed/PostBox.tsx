@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import dynamic from "next/dynamic"; // ✅ needed for client-only emoji picker
 import { ImageIcon, Smile, Hash, X } from "lucide-react";
 import { usePostStore } from "@/app/store/usePostStore";
@@ -22,11 +21,11 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // ✅ toggle state
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { createPost, getAllPosts } = usePostStore();
-  const { profile } = useProfileStore();
+  const { createPost, getAllPosts, getTrendingHashtags } = usePostStore();
+  const { profile, getTopContributors } = useProfileStore();
 
   if (!visible) return null;
 
@@ -52,8 +51,8 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   };
 
   const handleEmojiClick = (emojiData: any) => {
-    insertAtCursor(emojiData.emoji); // ✅ insert emoji
-    setShowEmojiPicker(false); // optional — auto-close after picking
+    insertAtCursor(emojiData.emoji);
+    setShowEmojiPicker(false);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,8 +72,11 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
     if (image) formData.append("image", image);
 
     try {
-      await createPost(formData);
-      await getAllPosts();
+      await createPost(formData);   // ✅ Create post
+      await getAllPosts();          // ✅ Refresh feed
+      getTrendingHashtags?.();      // ✅ Refresh trending hashtags
+      getTopContributors?.();       // ✅ Refresh top contributors
+
       setContent("");
       setImage(null);
       setPreview(null);
@@ -99,13 +101,11 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
         </button>
 
         <div className="flex gap-3">
-          <Image
+          <img
             src={getCloudinaryImage(profile?.profile_picture)}
             alt={profile?.full_name || "User Avatar"}
-            width={40}
-            height={40}
-            onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
             className="w-10 h-10 rounded-full object-cover"
+            onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
           />
 
           <textarea
@@ -137,7 +137,6 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex justify-end items-center mt-3 relative">
           <div className="flex space-x-4 text-black">
             <label className="cursor-pointer">
@@ -150,7 +149,6 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
               />
             </label>
 
-            {/* ✅ Emoji Picker Toggle */}
             <div className="relative">
               <button
                 type="button"
@@ -167,7 +165,6 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
               )}
             </div>
 
-            {/* ✅ Insert '#' */}
             <button
               type="button"
               onClick={() => insertAtCursor(" #")}

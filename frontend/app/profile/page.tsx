@@ -14,6 +14,8 @@ import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "../helper";
 import DeleteConfirmModal from "../_components/common/DeleteConfirmModal";
 import toast from "react-hot-toast";
 import Button from "../_components/common/Button";
+import { useAuthStore } from "../store/useAuthStore";
+
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks">("about");
@@ -25,6 +27,8 @@ export default function ProfilePage() {
   const [bookmarks, setBookmarks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const { logout } = useAuthStore();
+
 
   const { profile, getMyProfile, updateProfile, loading: profileLoading } = useProfileStore();
   const { set } = usePostStore.getState(); // direct access for updating
@@ -177,40 +181,41 @@ const handlePostImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 };
 
 const handleSavePost = async (postId: string) => {
+  const postIndex = myPosts.findIndex((p) => p.id === postId);
+  if (postIndex === -1) return;
+
   try {
-    let response;
+    setUploadingPostImage(true);
 
+    const fd = new FormData();
+    fd.append("content", editedPostContent || "");
+
+    // Only append new image if user changed it
     if (editedPostImage) {
-      const fd = new FormData();
-      fd.append("content", editedPostContent);
       fd.append("image", editedPostImage);
-
-      setUploadingPostImage(true);
-
-      response = await post.update(postId, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } else {
-      response = await post.update(postId, { content: editedPostContent });
     }
 
-    setMyPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, ...response.data } : p))
-    );
+    // Use post.update service
+    const response = await post.update(postId, fd);
 
-    setEditingPostId(null);
-    setEditedPostContent("");
-    setEditedPostImage(null);
-    setUploadingPostImage(false);
+    if (response?.data) {
+      // Update local posts array
+      setMyPosts((prev) =>
+        prev.map((p) => (p.id === postId ? response.data : p))
+      );
 
-    toast.success("Post updated!");
-  } catch (err) {
-    console.error("Update post error:", err);
-    toast.error("Failed to update post");
+      toast.success("Post updated successfully!");
+      setEditingPostId(null);
+      setEditedPostContent("");
+      setEditedPostImage(null);
+    }
+  } catch (error: any) {
+    console.error("Update post error:", error.response?.data || error.message);
+    toast.error(error.response?.data?.detail || "Failed to update post.");
+  } finally {
     setUploadingPostImage(false);
   }
 };
-
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 ">
@@ -229,13 +234,17 @@ const handleSavePost = async (postId: string) => {
               >
                 <img
                   src={
-                    profile.profile_picture && profile.profile_picture.startsWith("http")
-                      ? profile.profile_picture
-                      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || "default_avatar.png"}`
+                    profile?.profile_picture
+                      ? profile.profile_picture.startsWith("http")
+                        ? profile.profile_picture
+                        : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${profile.profile_picture}`
+                      : DEFAULT_PROFILE_PICTURE
                   }
-                  alt={profile.full_name || "User"}
+                  alt={profile?.full_name || "User"}
                   className="w-full h-full rounded-full object-cover hover:opacity-80 transition"
+                  onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)} // fallback safety
                 />
+
               </button>
             </div>
 
@@ -343,12 +352,28 @@ const handleSavePost = async (postId: string) => {
               <>
                 <p><strong>Email:</strong> {profile.email}</p>
                 <p><strong>WhatsApp:</strong> {profile.whatsapp_number || "—"}</p>
-                <button
-                  onClick={handleEditProfile}
-                  className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+
+                <div className="flex gap-x-4">
+                  {/* Edit */}
+                  <button
+                    onClick={handleEditProfile}
+                    className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+                  >
+                    Edit Profile
+                  </button>
+
+                  {/* Logout */}
+                  <button
+                  onClick={async () => {
+                    await logout();
+                    window.location.href = "/login"; // redirect to login after logout
+                  }}
+                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm"
                 >
-                  Edit Profile
+                  Logout
                 </button>
+                  
+                </div>
               </>
             )}
           </div>
@@ -502,7 +527,7 @@ const handleSavePost = async (postId: string) => {
               src={
                 profile.profile_picture && profile.profile_picture.startsWith("http")
                   ? profile.profile_picture
-                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || "default_avatar.png"}`
+                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || DEFAULT_PROFILE_PICTURE}`
               }
               alt={profile.full_name || "User"}
               className="rounded-lg max-w-full max-h-[80vh] object-contain"
