@@ -112,6 +112,9 @@ export default function ProfilePage() {
     const previewUrl = URL.createObjectURL(file);
     setSelectedImagePreview(previewUrl);
     setSelectedImageFile(file);
+
+    // reset file input value immediately
+    e.target.value = "";
   };
 
   const handleConfirmProfilePictureUpload = async () => {
@@ -210,8 +213,10 @@ const handleSavePost = async (postId: string) => {
 
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
+    <div className="flex flex-col min-h-screen bg-gray-50 ">
+      <div className="md:px-6 px-3">
+        <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
+      </div>
 
       <main className="flex-1 max-w-5xl mx-auto px-4 py-8">
         {/* 🧩 Profile Header */}

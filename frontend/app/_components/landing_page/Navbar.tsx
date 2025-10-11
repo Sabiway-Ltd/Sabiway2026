@@ -2,10 +2,11 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const router = useRouter()
   return (
 
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md " >
@@ -32,8 +33,12 @@ export default function Navbar() {
 
         {/* RIGHT BUTTONS (Desktop) */}
         <div className="hidden md:flex items-center space-x-4">
-          <button className="text-gray-700 font-medium hover:text-[#008753] transition">Login</button>
-          <button className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition">
+          <button 
+            onClick={()=>{router.push('/login');}}
+            className="text-gray-700 font-medium hover:text-[#008753] transition">Login</button>
+          <button 
+          onClick={()=>{router.push('/signup');}}
+          className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition">
             Sign Up
           </button>
         </div>
@@ -58,8 +63,12 @@ export default function Navbar() {
             <li><a href="#" className="hover:text-[#008753] transition">FAQs</a></li>
           </ul>
           <div className="flex flex-col items-center space-y-3 pb-6">
-            <button className="text-gray-700 font-medium hover:text-[#008753] transition">Login</button>
-            <button className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition">
+            <button 
+            onClick={()=>{router.push('/login');}}
+            className="text-gray-700 font-medium hover:text-[#008753] transition">Login</button>
+            <button 
+            onClick={()=>{router.push('/signup');}}
+              className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition">
               Sign Up
             </button>
           </div>

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 
 interface CommunityNavbarProps {
@@ -32,6 +33,8 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter()
+  const pathname = usePathname()
 
   const { profile, getMyProfile } = useProfileStore();
 
@@ -111,11 +114,15 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
         <div className="flex items-center gap-x-4">
-          <img
-            src="/sabiwaylogo.svg"
-            alt="SabiWay Logo"
-            className="w-28 sm:w-32 md:w-40 h-auto"
-          />
+          <button
+          onClick={()=>{router.replace('/community');}}
+          >
+            <img
+              src="/sabiwaylogo.svg"
+              alt="SabiWay Logo"
+              className="w-28 sm:w-32 md:w-40 h-auto"
+            />
+          </button>
 
           {/* Desktop Search */}
           <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-md py-3 bg-white items-center shadow-sm">
@@ -133,19 +140,21 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
         {/* Right Section */}
         <div className="flex items-center space-x-3 sm:space-x-4 relative">
           {/* ✅ Create Post */}
-          <button
-            onClick={onCreatePost}
-            className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
-          >
-            <img
-              src={getCloudinaryImage(profile?.profile_picture)}
-              alt={profile?.full_name || "User"}
-              onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
-              className="w-7 h-7 rounded-full object-cover"
-            />
-            Create Post
-            <Plus className="h-4 w-4" />
-          </button>
+          {pathname === "/community" && (
+            <button
+              onClick={onCreatePost}
+              className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
+            >
+              <img
+                src={getCloudinaryImage(profile?.profile_picture)}
+                alt={profile?.full_name || "User"}
+                onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
+                className="w-7 h-7 rounded-full object-cover"
+              />
+              Create Post
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
 
           {/* Notifications */}
           <div className="relative" ref={dropdownRef}>
@@ -230,12 +239,14 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             </Link>
 
           {/* Mobile Menu */}
+          {pathname === "/community" && (
           <button
             className="md:hidden bg-white p-2 rounded-full"
             onClick={() => setMenuOpen(true)}
           >
             <Menu className="h-5 w-5 text-[#008753]" />
           </button>
+          )}
         </div>
       </div>
 
@@ -265,6 +276,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               />
             </div>
 
+          
             <button
               onClick={() => {
                 onCreatePost();
