@@ -54,7 +54,7 @@ export default function PostCard({
   const { getPostById, likePost, unlikePost, addComment, getComments, bookmarkPost, unbookmarkPost, commentsByPost, likeComment, unlikeComment, addReply } =
     usePostStore();
 
-  const { followingStatus, toggleFollow } = useProfileStore();
+  const { followingStatus, toggleFollow, profile: currentUser } = useProfileStore();
 
   const comments = commentsByPost[id] || [];
 
@@ -185,17 +185,19 @@ export default function PostCard({
           </div>
         </div>
 
-        <button
-          onClick={handleFollowToggle}
-          disabled={followingLoading}
-          className={`ml-auto px-3 py-1 rounded-full text-sm font-medium ${
-            isFollowing
-              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }`}
-        >
-          {isFollowing ? "Unfollow" : "Follow"}
-        </button>
+        {author.user_id !== currentUser?.user_id && (
+          <button
+            onClick={handleFollowToggle}
+            disabled={followingLoading}
+            className={`ml-auto px-3 py-1 rounded-full text-sm font-medium ${
+              isFollowing
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            {isFollowing ? "Unfollow" : "Follow"}
+          </button>
+        )}
       </div>
 
       <div className="mt-3 text-gray-800 text-sm">{content}</div>

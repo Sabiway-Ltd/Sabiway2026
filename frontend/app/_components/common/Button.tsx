@@ -20,7 +20,7 @@ export default function Button({
     "rounded-full font-medium transition-all duration-150 focus:outline-none";
 
   const variantStyles = {
-    normal: "bg-inherit text-inherit px-3",
+    normal: "bg-inherit text-inherit px-1 md:px-3",
     primary: "bg-[#008753] text-white hover:bg-[#007046] px-3",
     secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300 px-3",
     danger: "bg-red-600 text-white hover:bg-red-700 px-3",
