@@ -1,3 +1,5 @@
+# profiles/serializers.py
+
 from rest_framework import serializers
 from .models import Profile
 from django.utils.text import slugify
@@ -12,13 +14,15 @@ class ProfileSerializer(serializers.ModelSerializer):
     posts_count = serializers.IntegerField(read_only=True)
     user_id = serializers.IntegerField(source='pk', read_only=True)  # profile.id == user.id
 
+    is_following = serializers.SerializerMethodField()
+
     class Meta:
         model = Profile
         fields = [
             'user_id', 'full_name', 'initials', 'email', 'username', 'profile_picture',
-            'followers_count', 'following_count', 'posts_count', 'whatsapp_number',
+            'followers_count', 'following_count', 'posts_count', 'whatsapp_number', 'is_following'
         ]
-        read_only_fields = ('email', 'initials', 'followers_count', 'following_count', 'posts_count')
+        read_only_fields = ('email', 'initials', 'followers_count', 'following_count', 'posts_count', 'is_following')
 
     def validate_username(self, value):
         v = value.strip()
@@ -42,5 +46,14 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.whatsapp_number = validated_data.get('whatsapp_number', instance.whatsapp_number)
         instance.save()
         return instance
+    
+    def get_is_following(self, obj):
+        """Check if logged-in user is following this profile"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            user_profile = getattr(request.user, 'profile', None)
+            if user_profile:
+                return obj.followers_rel.filter(follower=user_profile).exists()
+        return False
     
     

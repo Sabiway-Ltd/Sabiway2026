@@ -11,6 +11,8 @@ from .permissions import IsProfileOwnerOrReadOnly
 from django.db.models import F, Count
 
 
+
+
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.select_related("user").all()
     serializer_class = ProfileSerializer
@@ -130,3 +132,24 @@ class TopContributorsView(generics.ListAPIView):
         } for p in contributors]
 
         return Response(data)
+
+class MyFollowersView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        profile = Profile.objects.get(user=request.user)
+        # Get followers directly via queryset
+        followers_qs = Profile.objects.filter(following_rel__following=profile).select_related("user")
+        serializer = ProfileSerializer(followers_qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class MyFollowingView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        profile = Profile.objects.get(user=request.user)
+        # Get following directly via queryset
+        following_qs = Profile.objects.filter(followers_rel__follower=profile).select_related("user")
+        serializer = ProfileSerializer(following_qs, many=True, context={'request': request})
+        return Response(serializer.data)
