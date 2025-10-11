@@ -13,6 +13,7 @@ export type Profile = {
   following_count: number;
   posts_count: number;
   whatsapp_number?: string;
+  profile_picture?: string; 
 };
 
 type ProfileState = {
@@ -22,22 +23,21 @@ type ProfileState = {
   error: string | null;
   topContributors: Profile[];
 
-  // New: global follow map
-  followingStatus: Record<number, boolean>; // user_id -> is_following
+  followingStatus: Record<number, boolean>;
   setFollowingStatus: (userId: number, status: boolean) => void;
   toggleFollow: (userId: number) => Promise<void>;
 
-  // ✅ New: current user's followers & following
   myFollowers: Profile[];
   myFollowing: Profile[];
   fetchMyFollowers: () => Promise<void>;
   fetchMyFollowing: () => Promise<void>;
 
   getMyProfile: () => Promise<void>;
-  updateProfile: (userId: number, data: Partial<Profile>) => Promise<void>;
+  updateProfile: (userId: number, data: Partial<Profile> | FormData) => Promise<Profile>; // ✅ fixed
   getAllProfiles: () => Promise<void>;
-  getTopContributors: () => Promise<void>; 
+  getTopContributors: () => Promise<void>;
 };
+
 
 
 export const useProfileStore = create<ProfileState>((set, get) => ({

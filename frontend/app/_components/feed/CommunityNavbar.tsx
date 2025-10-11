@@ -146,7 +146,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
             >
               <img
-                src={getCloudinaryImage(profile?.profile_picture)}
+                src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
                 alt={profile?.full_name || "User"}
                 onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                 className="w-7 h-7 rounded-full object-cover"
@@ -230,7 +230,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
           {/* ✅ User Avatar */}
           <Link href="/profile" className="relative group">
             <img
-              src={getCloudinaryImage(profile?.profile_picture)}
+              src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
               alt={profile?.full_name || "User"}
               onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
               className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
@@ -285,7 +285,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               className="flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-3 text-sm font-medium text-white"
             >
               <img
-                src={getCloudinaryImage(profile?.profile_picture)}
+                src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
                 alt={profile?.full_name || "User"}
                 onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                 className="w-7 h-7 rounded-full object-cover"

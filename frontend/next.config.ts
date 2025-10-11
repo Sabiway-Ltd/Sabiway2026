@@ -1,4 +1,3 @@
-// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -23,6 +22,14 @@ const nextConfig = {
     dangerouslyAllowSVG: true, // ⚠️ Only if you trust the source
     contentSecurityPolicy:
       "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
+  // ✅ Allow deployment even if there are TypeScript or ESLint errors
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

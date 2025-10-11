@@ -295,11 +295,12 @@ export default function PostCard({
                   is_liked={c.is_liked || false}
                   reply_count={c.reply_count || 0}
                   created_at={c.created_at}
-                  onReplySubmit={addReply}
-                  onLike={likeComment}
-                  onUnlike={unlikeComment}
-                  avatarSize="small"
+                  // ✅ Fix: Wrap handlers to ensure type consistency
+                  onReplySubmit={(parentId, content) => addReply(String(parentId), content)}
+                  onLike={(id) => likeComment(String(id))}
+                  onUnlike={(id) => unlikeComment(String(id))}
                 />
+
               ))
             )}
           </div>

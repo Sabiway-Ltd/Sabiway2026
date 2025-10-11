@@ -7,6 +7,8 @@ import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import toast from "react-hot-toast";
+import { EmojiClickData } from "emoji-picker-react";
+
 
 // ✅ Dynamically import EmojiPicker (prevents SSR issues)
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -50,10 +52,11 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
     });
   };
 
-  const handleEmojiClick = (emojiData: any) => {
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
     insertAtCursor(emojiData.emoji);
     setShowEmojiPicker(false);
   };
+
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,7 +105,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
         <div className="flex gap-3">
           <img
-            src={getCloudinaryImage(profile?.profile_picture)}
+            src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
             alt={profile?.full_name || "User Avatar"}
             className="w-10 h-10 rounded-full object-cover"
             onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}

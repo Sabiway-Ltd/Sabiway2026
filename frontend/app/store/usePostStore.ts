@@ -11,6 +11,7 @@ type Author = {
   full_name: string;
   profile_picture?: string | null;
   whatsapp_number: string;
+  is_following?: boolean;
 };
 
 type Hashtag = {
@@ -52,6 +53,7 @@ type Reply = {
   content: string;
   likes_count: number;
   created_at: string;
+  is_liked?: boolean; 
 };
 
 // 🧱 Store shape
@@ -71,9 +73,11 @@ type PostState = {
   filterPostsByHashtag: (tag: string) => Promise<void>;
   resetFilteredPosts: () => void;
 
+  set: (partial: Partial<PostState>) => void;
+
   // Actions
   getAllPosts: (page?: number) => Promise<void>;
-  getPostById: (id: string) => Promise<void>;
+  getPostById: (id: string) => Promise<Post | null>;
   createPost: (data: FormData | object) => Promise<void>;
   likePost: (id: string) => Promise<void>;
   unlikePost: (id: string) => Promise<void>;
@@ -104,6 +108,8 @@ export const usePostStore = create<PostState>((set, get) => ({
   filteredPosts: [],
   activeHashtag: null,
 
+  set: (partial) => set((state) => ({ ...state, ...partial })),
+
   // 📜 Get all posts
   getAllPosts: async (page = 1) => {
     set({ loading: true, error: null });
@@ -133,12 +139,12 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
   // 📄 Get a single post
-  getPostById: async (id) => {
+  getPostById: async (id: string): Promise<Post | null> => {
     set({ loading: true, error: null });
     try {
       const res = await post.getById(id);
       const p = res.data;
-      const normalized = {
+      const normalized: Post = {
         ...p,
         is_liked: p.is_liked ?? false,
         author: {
@@ -149,16 +155,17 @@ export const usePostStore = create<PostState>((set, get) => ({
         },
       };
       set({ currentPost: normalized, loading: false });
-      return normalized; // ✅ Must return for impressions
+      return normalized;
     } catch (err: any) {
       console.error("Get post error:", err.response?.data || err.message);
       set({
         error: err.response?.data?.detail || "Failed to load post",
         loading: false,
       });
-      return null; // ✅ return null on error
+      return null;
     }
   },
+
 
   // ✍️ Create post
   createPost: async (data) => {
@@ -279,9 +286,9 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
   // 💭 Add reply
-  addReply: async (commentId, content) => {
+  addReply: async (commentId: string | number, content: string) => {
     try {
-      const res = await post.addReply({ comment: commentId, content });
+      const res = await post.addReply({ comment: String(commentId), content });
       set((state) => ({
         replies: [...state.replies, res.data],
       }));
@@ -289,6 +296,7 @@ export const usePostStore = create<PostState>((set, get) => ({
       console.error("Add reply error:", err);
     }
   },
+
 
   // 💭 Get replies for a post
   getReplies: async (postId) => {
