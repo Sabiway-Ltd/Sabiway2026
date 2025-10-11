@@ -9,7 +9,6 @@ import Faqs from "./_components/landing_page/Faqs";
 import Appsection from "./_components/landing_page/Appsection";
 import Footer from "./_components/landing_page/Footer";
 
-
 export default function Home() {
 
   return (

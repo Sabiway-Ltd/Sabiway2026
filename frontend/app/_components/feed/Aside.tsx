@@ -1,32 +1,34 @@
-// app/_components/feed/Aside.tsx
-
 "use client";
 
 import Image from "next/image";
+import { useEffect } from "react";
+import { usePostStore } from "@/app/store/usePostStore";
+import { useProfileStore } from "@/app/store/useProfileStore";
 
 export default function Aside() {
-  const topics = ["#TechInLagos", "#TechInLagos"];
+  const {
+    trendingHashtags,
+    getTrendingHashtags,
+    filterPostsByHashtag,
+    resetFilteredPosts,
+    activeHashtag,
+    loadingHashtag,
+  } = usePostStore();
 
-  const contributors = [
-    {
-      id: 1,
-      name: "Aisha K.",
-      bio: "Lorem ipsumnmhs shdlednn.....",
-      avatar: "https://i.pravatar.cc/150?img=11",
-    },
-    {
-      id: 2,
-      name: "Chukwudi O.",
-      bio: "Lorem ipsumnmhs shdlednn.....",
-      avatar: "https://i.pravatar.cc/150?img=12",
-    },
-    {
-      id: 3,
-      name: "Ngozi E.",
-      bio: "Lorem ipsumnmhs shdlednn.....",
-      avatar: "https://i.pravatar.cc/150?img=13",
-    },
-  ];
+  const { topContributors, getTopContributors, loading } = useProfileStore();
+
+  useEffect(() => {
+    getTrendingHashtags();
+    getTopContributors(); // ✅ fetch contributors on mount
+  }, [getTrendingHashtags, getTopContributors]);
+
+  const handleHashtagClick = (tag: string) => {
+    if (activeHashtag === tag) {
+      resetFilteredPosts();
+    } else {
+      filterPostsByHashtag(tag);
+    }
+  };
 
   return (
     <aside className="w-full md:w-80 bg-[#F9FAFB] p-4 rounded-lg">
@@ -34,42 +36,66 @@ export default function Aside() {
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-3">Trending Topics</h2>
         <div className="flex flex-wrap gap-2">
-          {topics.map((topic, idx) => (
-            <span
-              key={idx}
-              className="px-4 py-2 bg-white border rounded-md text-sm font-medium text-gray-700 shadow-sm"
-            >
-              {topic}
-            </span>
-          ))}
+          {trendingHashtags.length > 0 ? (
+            trendingHashtags.map((tag, idx) => {
+              const isActive = activeHashtag === tag.tag;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleHashtagClick(tag.tag)}
+                  disabled={loadingHashtag && !isActive}
+                  className={`px-4 py-2 border rounded-md text-sm font-medium shadow-sm transition
+                    ${isActive ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 hover:bg-gray-100"}
+                    ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}
+                >
+                  #{tag.tag} ({tag.use_count})
+                </button>
+              );
+            })
+          ) : (
+            <span className="text-gray-400 text-sm">No trending topics</span>
+          )}
         </div>
       </div>
 
+     
       {/* Top Contributors */}
       <div>
         <h2 className="text-lg font-semibold mb-3">Top Contributors</h2>
         <div className="space-y-3">
-          {contributors.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
-            >
-              <div className="relative w-10 h-10">
-                <Image
-                  src={c.avatar}
-                  alt={c.name}
-                  fill
-                  className="rounded-full object-cover"
-                />
+          {loading ? (
+            <p className="text-gray-400 text-sm">Loading...</p>
+          ) : topContributors.length > 0 ? (
+            topContributors.map((c) => (
+              <div
+                key={c.user_id}
+                className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+              >
+                <div className="w-10 h-10">
+                  <img
+                    src={
+                      c.profile_picture && c.profile_picture.trim() !== ""
+                        ? c.profile_picture.startsWith("http")
+                          ? c.profile_picture
+                          : `https://res.cloudinary.com/devqbjptr/${c.profile_picture}`
+                        : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
+                    }
+                    alt={c.full_name || "User"}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{c.full_name}</p>
+                  <p className="text-xs text-gray-500">{c.username}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold">{c.name}</p>
-                <p className="text-xs text-gray-500">{c.bio}</p>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-gray-400 text-sm">No contributors yet</p>
+          )}
         </div>
       </div>
+
     </aside>
   );
 }
