@@ -1,12 +1,16 @@
-// app/_components/feed/PostBox.tsx
-
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic"; // ✅ needed for client-only emoji picker
 import { ImageIcon, Smile, Hash, X } from "lucide-react";
 import { usePostStore } from "@/app/store/usePostStore";
+import { useProfileStore } from "@/app/store/useProfileStore";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import toast from "react-hot-toast";
+
+// ✅ Dynamically import EmojiPicker (prevents SSR issues)
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface PostBoxProps {
   visible: boolean;
@@ -18,10 +22,39 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // ✅ toggle state
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { createPost, getAllPosts } = usePostStore();
+  const { profile } = useProfileStore();
 
   if (!visible) return null;
+
+  const getCloudinaryImage = (path: string | null) => {
+    if (!path) return DEFAULT_PROFILE_PICTURE;
+    if (path.startsWith("http")) return path;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
+  };
+
+  const insertAtCursor = (text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newValue = content.slice(0, start) + text + content.slice(end);
+    setContent(newValue);
+
+    requestAnimationFrame(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      textarea.focus();
+    });
+  };
+
+  const handleEmojiClick = (emojiData: any) => {
+    insertAtCursor(emojiData.emoji); // ✅ insert emoji
+    setShowEmojiPicker(false); // optional — auto-close after picking
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,7 +74,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
     try {
       await createPost(formData);
-      await getAllPosts(); // refresh feed
+      await getAllPosts();
       setContent("");
       setImage(null);
       setPreview(null);
@@ -56,9 +89,8 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   };
 
   return (
-    <div className="w-full mt-4 px-3">
+    <div className="w-full mt-4 px-3 relative">
       <div className="bg-white rounded-xl shadow-md w-full p-4 relative">
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
@@ -66,17 +98,18 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* User Avatar + textarea */}
         <div className="flex gap-3">
           <Image
-            src="https://i.pravatar.cc/150?img=8"
-            alt="User Avatar"
+            src={getCloudinaryImage(profile?.profile_picture)}
+            alt={profile?.full_name || "User Avatar"}
             width={40}
             height={40}
+            onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
             className="w-10 h-10 rounded-full object-cover"
           />
 
           <textarea
+            ref={textareaRef}
             placeholder="What's on your mind?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -85,7 +118,6 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
           />
         </div>
 
-        {/* Image Preview */}
         {preview && (
           <div className="mt-3 relative">
             <img
@@ -106,7 +138,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
         )}
 
         {/* Actions */}
-        <div className="flex justify-end items-center mt-3">
+        <div className="flex justify-end items-center mt-3 relative">
           <div className="flex space-x-4 text-black">
             <label className="cursor-pointer">
               <ImageIcon className="h-5 w-5" />
@@ -117,17 +149,36 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
                 className="hidden"
               />
             </label>
-            <button>
-              <Smile className="h-5 w-5" />
-            </button>
-            <button>
+
+            {/* ✅ Emoji Picker Toggle */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                className="hover:text-[#008753] transition"
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+
+              {showEmojiPicker && (
+                <div className="absolute bottom-8 right-0 z-50">
+                  <EmojiPicker onEmojiClick={handleEmojiClick} />
+                </div>
+              )}
+            </div>
+
+            {/* ✅ Insert '#' */}
+            <button
+              type="button"
+              onClick={() => insertAtCursor(" #")}
+              className="hover:text-[#008753] transition"
+            >
               <Hash className="h-5 w-5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Post Button (separated for layout consistency with old version) */}
       <div className="flex justify-end">
         <button
           onClick={handleSubmit}

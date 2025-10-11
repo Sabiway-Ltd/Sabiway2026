@@ -4,7 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
-import { CLOUDINARY_CLOUD_NAME } from "@/app/helper";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
+import Link from "next/link";
+
 
 interface CommunityNavbarProps {
   onCreatePost: () => void;
@@ -34,8 +36,11 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
   const { profile, getMyProfile } = useProfileStore();
 
   useEffect(() => {
-    getMyProfile();
-  }, [getMyProfile]);
+    if (!profile) {
+      getMyProfile();
+    }
+  }, [profile, getMyProfile]);
+
 
   // 🔹 Fetch notifications
   useEffect(() => {
@@ -96,9 +101,9 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
 
   // ✅ Helper to build profile image URL safely
   const getCloudinaryImage = (path: string | null) => {
-    if (!path) return "/default-avatar.png";
+    if (!path) return DEFAULT_PROFILE_PICTURE;
     if (path.startsWith("http")) return path;
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${path}`;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
   };
 
   return (
@@ -113,14 +118,16 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
           />
 
           {/* Desktop Search */}
-          <div className="hidden md:flex w-60 px-3 gap-x-2 rounded py-2 bg-white items-center">
-            <Search className="h-4 w-4 text-gray-600" />
+          <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-md py-3 bg-white items-center shadow-sm">
+            <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
+
             <input
               type="text"
               placeholder="Search Community"
-              className="flex-1 outline-none focus:ring-0 text-sm"
+              className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
             />
           </div>
+
         </div>
 
         {/* Right Section */}
@@ -133,7 +140,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             <img
               src={getCloudinaryImage(profile?.profile_picture)}
               alt={profile?.full_name || "User"}
-              onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+              onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
               className="w-7 h-7 rounded-full object-cover"
             />
             Create Post
@@ -184,7 +191,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                         <img
                           src={getCloudinaryImage(n.actor.profile_picture)}
                           alt={n.actor.full_name || "User"}
-                          onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+                          onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                         <div className="flex-1">
@@ -212,12 +219,15 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
           </div>
 
           {/* ✅ User Avatar */}
-          <img
-            src={getCloudinaryImage(profile?.profile_picture)}
-            alt={profile?.full_name || "User"}
-            onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
-            className="w-9 h-9 rounded-full object-cover"
-          />
+          <Link href="/profile" className="relative group">
+            <img
+              src={getCloudinaryImage(profile?.profile_picture)}
+              alt={profile?.full_name || "User"}
+              onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
+              className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
+            />
+            <span className="absolute inset-0 rounded-full ring-2 ring-transparent group-hover:ring-[#008753]/40 transition"></span>
+            </Link>
 
           {/* Mobile Menu */}
           <button
@@ -265,7 +275,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               <img
                 src={getCloudinaryImage(profile?.profile_picture)}
                 alt={profile?.full_name || "User"}
-                onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+                onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                 className="w-7 h-7 rounded-full object-cover"
               />
               Create Post

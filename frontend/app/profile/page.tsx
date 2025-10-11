@@ -1,3 +1,5 @@
+// app/profile/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,6 +34,13 @@ export default function ProfilePage() {
 
   const [editedPostImage, setEditedPostImage] = useState<File | null>(null);
   const [uploadingPostImage, setUploadingPostImage] = useState(false);
+
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+  const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+
+
 
 
 
@@ -96,25 +105,37 @@ export default function ProfilePage() {
   };
 
   // 📸 Handle Profile Picture Change
-  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !profile) return;
+    if (!file) return;
 
-    const formData = new FormData();
-    formData.append("profile_picture", file);
-
-    try {
-      setUploadingImage(true);
-      await updateProfile(profile.user_id, formData); // updateProfile must handle FormData
-      await getMyProfile(); // refresh profile data
-      toast.success("Profile picture updated!");
-    } catch (err) {
-      console.error("Profile picture upload error:", err);
-      toast.error("Failed to update profile picture");
-    } finally {
-      setUploadingImage(false);
-    }
+    const previewUrl = URL.createObjectURL(file);
+    setSelectedImagePreview(previewUrl);
+    setSelectedImageFile(file);
   };
+
+  const handleConfirmProfilePictureUpload = async () => {
+  if (!selectedImageFile || !profile) return;
+
+  const formData = new FormData();
+  formData.append("profile_picture", selectedImageFile);
+
+  try {
+    setUploadingImage(true);
+    await updateProfile(profile.user_id, formData);
+    await getMyProfile();
+    toast.success("Profile picture updated!");
+    setSelectedImagePreview(null);
+    setSelectedImageFile(null);
+  } catch (err) {
+    console.error("Profile picture upload error:", err);
+    toast.error("Failed to update profile picture");
+  } finally {
+    setUploadingImage(false);
+  }
+};
+
+
 
   if (loading || profileLoading) {
     return (
@@ -196,18 +217,23 @@ const handleSavePost = async (postId: string) => {
         {/* 🧩 Profile Header */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 relative">
           <div className="relative w-[100px] h-[100px]">
-            <div className="relative w-24 h-24 rounded-full overflow-hidden">
-              <img
-                src={
-                  profile.profile_picture && profile.profile_picture.startsWith("http")
-                    ? profile.profile_picture
-                    : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || "default_avatar.png"}`
-                }
-                alt={profile.full_name || "User"}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-
+            <div className="relative w-24 h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
+              <button
+                onClick={() => setIsImageModalOpen(true)}
+                className="block w-full h-full focus:outline-none"
+              >
+                <img
+                  src={
+                    profile.profile_picture && profile.profile_picture.startsWith("http")
+                      ? profile.profile_picture
+                      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || "default_avatar.png"}`
+                  }
+                  alt={profile.full_name || "User"}
+                  className="w-full h-full rounded-full object-cover hover:opacity-80 transition"
+                />
+              </button>
             </div>
+
 
 
 
@@ -226,7 +252,9 @@ const handleSavePost = async (postId: string) => {
               type="button"
               onClick={() => document.getElementById("profilePicUpload")?.click()}
               disabled={uploadingImage}
-              className="absolute bottom-0 right-0 bg-[#008753] text-white p-2 rounded-full shadow-md hover:bg-green-600 transition"
+              className={`absolute bottom-0 right-0 bg-[#008753] text-white p-2 rounded-full shadow-md transition ${
+                uploadingImage ? "opacity-60 cursor-not-allowed" : "hover:bg-green-600"
+              }`}
             >
               {uploadingImage ? (
                 <span className="text-xs animate-pulse">...</span>
@@ -234,6 +262,7 @@ const handleSavePost = async (postId: string) => {
                 <Camera className="h-4 w-4" />
               )}
             </button>
+
           </div>
 
           <div className="text-center md:text-left">
@@ -446,6 +475,79 @@ const handleSavePost = async (postId: string) => {
         />
 
       </main>
+
+
+      {/* 🖼️ Profile Picture Modal */}
+      {isImageModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30"
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <div
+            className="relative bg-white rounded-lg shadow-lg p-2 max-w-[90%] max-h-[90%]"
+            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+          >
+            <button
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80"
+            >
+              ✕
+            </button>
+            <img
+              src={
+                profile.profile_picture && profile.profile_picture.startsWith("http")
+                  ? profile.profile_picture
+                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture || "default_avatar.png"}`
+              }
+              alt={profile.full_name || "User"}
+              className="rounded-lg max-w-full max-h-[80vh] object-contain"
+            />
+          </div>
+        </div>
+      )}
+
+
+      {/* 🖼️ Profile Picture Preview Modal */}
+      {selectedImagePreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-70"
+          onClick={() => setSelectedImagePreview(null)}
+        >
+          <div
+            className="relative bg-white rounded-lg shadow-lg p-4 max-w-[90%] max-h-[90%] flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+          >
+            <h2 className="text-lg font-semibold mb-3">Preview New Profile Picture</h2>
+            <img
+              src={selectedImagePreview}
+              alt="Preview"
+              className="rounded-full w-48 h-48 object-cover mb-4 border border-gray-200"
+            />
+
+            <div className="flex gap-4">
+              <button
+                onClick={handleConfirmProfilePictureUpload}
+                disabled={uploadingImage}
+                className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
+              >
+                {uploadingImage ? "Uploading..." : "Update"}
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedImagePreview(null);
+                  setSelectedImageFile(null);
+                }}
+                className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       <Footer />
     </div>
