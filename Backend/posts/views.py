@@ -34,6 +34,24 @@ class PostViewSet(viewsets.ModelViewSet):
             return PostDetailSerializer
         return PostListSerializer
 
+    # ✅ Override create to return full serialized post
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        post = serializer.save()
+        full_serializer = PostDetailSerializer(post, context={"request": request})
+        return Response(full_serializer.data, status=status.HTTP_201_CREATED)
+
+    # ✅ Override update to return full serialized post
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        post = serializer.save()
+        full_serializer = PostDetailSerializer(post, context={"request": request})
+        return Response(full_serializer.data, status=status.HTTP_200_OK)
+
     def perform_destroy(self, instance):
         # Decrement author's post count
         author_profile = instance.author
@@ -46,6 +64,7 @@ class PostViewSet(viewsets.ModelViewSet):
                 tag.use_count -= 1
                 tag.save(update_fields=["use_count"])
         instance.delete()
+
 
     # ✅ Like a post
     @action(detail=True, methods=["post"], url_path="like")
