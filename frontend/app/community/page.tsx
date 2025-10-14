@@ -16,10 +16,16 @@ export default function Community() {
     filteredPosts,
     activeHashtag,
     getAllPosts,
+    initializeSocket,
     loading,
     loadingHashtag,
     error,
   } = usePostStore();
+
+  useEffect(() => {
+    getAllPosts();
+    initializeSocket(); // ✅ Start real-time updates
+  }, []);
 
   const { followingStatus, fetchMyFollowing } = useProfileStore(); // ✅ corrected
 

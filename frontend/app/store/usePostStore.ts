@@ -3,6 +3,8 @@
 
 import { create } from "zustand";
 import { post } from "../services/post";
+import { connectSocket, getSocket } from "../services/socket"; // ✅ socket import
+import { useProfileStore } from "./useProfileStore"; // your store path
 
 // 🧑‍💻 Types
 type Author = {
@@ -110,6 +112,203 @@ export const usePostStore = create<PostState>((set, get) => ({
 
   set: (partial) => set((state) => ({ ...state, ...partial })),
 
+
+  // ---------------------------------
+  // 🧠 Add socket event listeners here
+  // ---------------------------------
+  // inside usePostStore.ts — replace your initializeSocket implementation with this:
+
+initializeSocket: () => {
+  const socket = getSocket() || connectSocket();
+  if (!socket) {
+    console.warn("Socket not available when initializing listeners");
+    return;
+  }
+
+  // Prevent duplicate listeners: remove previous handlers for these events
+  const safeOff = (ev: string) => {
+    try {
+      socket.off(ev);
+    } catch (e) {
+      /* ignore */
+    }
+  };
+
+  // List of server events (match server.js exactly)
+  safeOff("post:created");
+  safeOff("post:updated");
+  safeOff("post:deleted");
+
+  safeOff("post:liked");
+  safeOff("post:unliked");
+
+  safeOff("comment:created");
+  safeOff("comment:updated");
+  safeOff("comment:deleted");
+  safeOff("comment:liked");
+  safeOff("comment:unliked");
+
+  safeOff("reply:created");
+  safeOff("reply:updated");
+  safeOff("reply:deleted");
+  safeOff("reply:liked");
+  safeOff("reply:unliked");
+
+  // POSTS
+  socket.on("post:created", (newPost: Post) => {
+    // avoid duplicates if already present
+    set((state) => {
+      if (state.posts.some((p) => p.id === newPost.id)) return {};
+      return { posts: [newPost, ...state.posts] };
+    });
+  });
+
+  socket.on("post:updated", (updatedPost: Post) => {
+    set((state) => ({
+      posts: state.posts.map((p) => (p.id === updatedPost.id ? { ...p, ...updatedPost } : p)),
+      currentPost: state.currentPost?.id === updatedPost.id ? updatedPost : state.currentPost,
+    }));
+  });
+
+  socket.on("post:deleted", ({ id }: { id: string }) => {
+    set((state) => ({
+      posts: state.posts.filter((p) => p.id !== id),
+      currentPost: state.currentPost?.id === id ? null : state.currentPost,
+    }));
+  });
+
+  // LIKES (post)
+  socket.on("post:liked", ({ postId, userId }: { postId: string; userId: number }) => {
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, likes_count: (p.likes_count || 0) + 1 } : p
+      ),
+    }));
+  });
+
+  socket.on("post:unliked", ({ postId, userId }: { postId: string; userId: number }) => {
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId && p.likes_count > 0 ? { ...p, likes_count: p.likes_count - 1 } : p
+      ),
+    }));
+  });
+
+  // COMMENTS
+  socket.on("comment:created", (comment: any) => {
+    const postId = String(comment.post);
+    set((state) => ({
+      commentsByPost: {
+        ...state.commentsByPost,
+        [postId]: [...(state.commentsByPost[postId] || []), comment],
+      },
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p
+      ),
+    }));
+  });
+
+  socket.on("comment:updated", (comment: any) => {
+    const postId = String(comment.post);
+    set((state) => {
+      const updated = { ...state.commentsByPost };
+      updated[postId] = (updated[postId] || []).map((c) => (c.id === comment.id ? comment : c));
+      return { commentsByPost: updated };
+    });
+  });
+
+  socket.on("comment:deleted", ({ id, post }: { id: string; post: string }) => {
+    const postId = String(post);
+    set((state) => {
+      const updated = { ...state.commentsByPost };
+      updated[postId] = (updated[postId] || []).filter((c) => c.id !== id);
+      return { commentsByPost: updated };
+    });
+    set((state) => ({
+      posts: state.posts.map((p) => (p.id === postId && p.comments_count > 0 ? { ...p, comments_count: p.comments_count - 1 } : p)),
+    }));
+  });
+
+  socket.on("comment:liked", ({ commentId, postId }: { commentId: string; postId: string }) => {
+    set((state) => {
+      const updated = { ...state.commentsByPost };
+      updated[postId] = (updated[postId] || []).map((c) =>
+        c.id === commentId ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
+      );
+      return { commentsByPost: updated };
+    });
+  });
+
+  socket.on("comment:unliked", ({ commentId, postId }: { commentId: string; postId: string }) => {
+    set((state) => {
+      const updated = { ...state.commentsByPost };
+      updated[postId] = (updated[postId] || []).map((c) =>
+        c.id === commentId && c.likes_count > 0 ? { ...c, likes_count: c.likes_count - 1 } : c
+      );
+      return { commentsByPost: updated };
+    });
+  });
+
+  // REPLIES
+  socket.on("reply:created", (reply: any) => {
+    const commentId = String(reply.comment);
+    set((state) => ({
+      repliesByComment: {
+        ...state.repliesByComment,
+        [commentId]: [...(state.repliesByComment[commentId] || []), reply],
+      },
+    }));
+  });
+
+  socket.on("reply:updated", (reply: any) => {
+    const commentId = String(reply.comment);
+    set((state) => {
+      const updated = { ...state.repliesByComment };
+      updated[commentId] = (updated[commentId] || []).map((r) => (r.id === reply.id ? reply : r));
+      return { repliesByComment: updated };
+    });
+  });
+
+  socket.on("reply:deleted", ({ id, post }: { id: string; post: string }) => {
+    // we remove by scanning comments — better if server includes comment id. fallback: no-op
+    // If your server emits comment id with reply:deleted, adjust accordingly.
+    // This is a no-op unless you modify the server to include comment id.
+    console.log("reply deleted", id);
+  });
+
+  socket.on("reply:liked", ({ replyId, postId }: { replyId: string; postId: string }) => {
+    set((state) => {
+      const updated = { ...state.repliesByComment };
+      for (const commentId in updated) {
+        updated[commentId] = updated[commentId].map((r) =>
+          r.id === replyId ? { ...r, likes_count: (r.likes_count || 0) + 1 } : r
+        );
+      }
+      return { repliesByComment: updated };
+    });
+  });
+
+  socket.on("reply:unliked", ({ replyId, postId }: { replyId: string; postId: string }) => {
+    set((state) => {
+      const updated = { ...state.repliesByComment };
+      for (const commentId in updated) {
+        updated[commentId] = updated[commentId].map((r) =>
+          r.id === replyId && r.likes_count > 0 ? { ...r, likes_count: r.likes_count - 1 } : r
+        );
+      }
+      return { repliesByComment: updated };
+    });
+  });
+
+  // Optionally monitor connection errors
+  socket.off("connect_error");
+  socket.on("connect_error", (err: any) => {
+    console.error("Socket connect error:", err?.message || err);
+  });
+},
+
+
+
   // 📜 Get all posts
   getAllPosts: async (page = 1) => {
     set({ loading: true, error: null });
@@ -186,6 +385,12 @@ export const usePostStore = create<PostState>((set, get) => ({
         posts: [newPost, ...state.posts],
         loading: false,
       }));
+      // after set((state) => ({ posts: [newPost, ...state.posts], loading: false }))
+      const socket = getSocket();
+      if (socket && socket.connected) {
+        socket.emit("post:created", newPost);
+      }
+
     } catch (err: any) {
       console.error("Create post error:", err.response?.data || err.message);
       set({
@@ -196,36 +401,52 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
   // ❤️ Like a post
-  likePost: async (id) => {
-    try {
-      await post.like(id);
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === id
-            ? { ...p, likes_count: (p.likes_count || 0) + 1, is_liked: true }
-            : p
-        ),
-      }));
-    } catch (err) {
-      console.error("Like post error:", err);
-    }
-  },
+  // ❤️ Like a post
+likePost: async (id) => {
+  try {
+    await post.like(id);
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === id
+          ? { ...p, likes_count: (p.likes_count || 0) + 1, is_liked: true }
+          : p
+      ),
+    }));
 
-  // 💔 Unlike a post
-  unlikePost: async (id) => {
-    try {
-      await post.unlike(id);
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === id && p.likes_count > 0
-            ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
-            : p
-        ),
-      }));
-    } catch (err) {
-      console.error("Unlike post error:", err);
+    const socket = getSocket();
+    const currentUser = useProfileStore.getState().profile; // ✅ get current user id
+    if (socket && socket.connected && currentUser) {
+      socket.emit("post:liked", { postId: id, userId: currentUser.user_id });
     }
-  },
+
+  } catch (err) {
+    console.error("Like post error:", err);
+  }
+},
+
+// 💔 Unlike a post
+unlikePost: async (id) => {
+  try {
+    await post.unlike(id);
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === id && p.likes_count > 0
+          ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
+          : p
+      ),
+    }));
+
+    const socket = getSocket();
+    const currentUser = useProfileStore.getState().profile;
+    if (socket && socket.connected && currentUser) {
+      socket.emit("post:unliked", { postId: id, userId: currentUser.user_id });
+    }
+
+  } catch (err) {
+    console.error("Unlike post error:", err);
+  }
+},
+
 
   // 🔖 Bookmark
   bookmarkPost: async (id) => {
@@ -262,6 +483,12 @@ export const usePostStore = create<PostState>((set, get) => ({
             : p
         ),
       }));
+      // after updating commentsByPost and posts counts
+      const socket = getSocket();
+      if (socket && socket.connected) {
+        socket.emit("comment:created", newComment); // ensure comment has 'post' property
+      }
+
     } catch (err) {
       console.error("Add comment error:", err);
     }
