@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/lib/store/authStore";
+import { useAuthStore } from "@/app/store/useAuthStore";
 
 export default function OnlineUsers() {
   const { onlineUsers } = useAuthStore();

@@ -1,3 +1,5 @@
+// app/_components/feed/PostCard.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";

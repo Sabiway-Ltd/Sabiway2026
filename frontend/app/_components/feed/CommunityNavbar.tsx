@@ -1,3 +1,5 @@
+// app/_components/feed/CommunityNavbar.tsx
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";

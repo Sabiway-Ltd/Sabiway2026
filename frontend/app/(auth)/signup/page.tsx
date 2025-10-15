@@ -6,7 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/lib/store/authStore";
+import { useAuthStore } from "@/app/store/useAuthStore";
 import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 
 export default function Signup() {

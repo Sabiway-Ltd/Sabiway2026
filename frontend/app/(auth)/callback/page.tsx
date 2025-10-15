@@ -2,14 +2,14 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAuthStore } from "@/lib/store/authStore";
+import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
 import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 
 export default function GoogleCallback() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setUser, connectSocket } = useAuthStore();
+  const { google_logged_in } = useAuthStore(); // ✅ no need for connectSocket here
 
   useEffect(() => {
     const access = searchParams.get("access");
@@ -33,7 +33,6 @@ export default function GoogleCallback() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Profile fetch failed");
 
-        // ✅ Normalize user structure for your Zustand store
         const normalizedUser = {
           id: data.user_id,
           full_name: data.full_name,
@@ -42,9 +41,7 @@ export default function GoogleCallback() {
           profile_pic: data.profile_picture,
         };
 
-        setUser(normalizedUser);
-        connectSocket(normalizedUser);
-
+        google_logged_in(normalizedUser); // ✅ this now emits "user:google_login"
         router.push("/community");
       } catch (error) {
         console.error("Profile fetch error:", error);
@@ -54,7 +51,7 @@ export default function GoogleCallback() {
     };
 
     fetchUserProfile();
-  }, [searchParams]);
+  }, [searchParams, router, google_logged_in]);
 
   return (
     <div className="flex items-center justify-center h-screen text-gray-600">
