@@ -7,8 +7,10 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/lib/store/authStore";
+import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 
 export default function Login() {
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const { login, loading, connectSocket } = useAuthStore();
@@ -32,11 +34,11 @@ export default function Login() {
   };
 
   const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/auth/generate-google-url", {
-        method: "GET",
-      });
+      const res = await fetch(`${EXPRESS_LOCAL_URL}/api/auth/generate-google-url`);
       const data = await res.json();
+      console.log("Response from backend:", data);
 
       if (data?.auth_url) {
         window.location.href = data.auth_url;
@@ -44,7 +46,10 @@ export default function Login() {
         toast.error("Failed to load Google login.");
       }
     } catch (error) {
+      console.error("Google login error:", error);
       toast.error("Error initializing Google login");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -140,11 +145,23 @@ export default function Login() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 
-                     hover:bg-gray-50 transition-all text-sm"
+          disabled={googleLoading}
+          className={`w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 
+                      transition-all text-sm font-medium ${
+                        googleLoading ? "bg-gray-100 cursor-not-allowed opacity-80" : "hover:bg-gray-50"
+                      }`}
         >
-          <FcGoogle size={18} />
-          <span className="text-gray-700 font-medium">Continue with Google</span>
+          {googleLoading ? (
+            <>
+              <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-600">Redirecting...</span>
+            </>
+          ) : (
+            <>
+              <FcGoogle size={18} />
+              <span className="text-gray-700">Continue with Google</span>
+            </>
+          )}
         </button>
 
         <p className="text-center text-gray-600 text-xs mt-5">

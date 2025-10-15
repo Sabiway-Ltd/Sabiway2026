@@ -7,8 +7,10 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/lib/store/authStore";
+import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 
 export default function Signup() {
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { signup, loading, connectSocket } = useAuthStore();
   const [form, setForm] = useState({ full_name: "", email: "", password: "" });
@@ -24,9 +26,34 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signup(form);
-    router.push("/login");
+
+    const success = await signup(form);
+
+    if (success) {
+      router.push("/login");
+    }
   };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      const res = await fetch(`${EXPRESS_LOCAL_URL}/api/auth/generate-google-url`);
+      const data = await res.json();
+      console.log("Response from backend:", data);
+
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        toast.error("Failed to load Google login.");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error("Error initializing Google login");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -39,6 +66,19 @@ export default function Signup() {
         <h1 className="text-lg font-semibold text-center text-gray-900">
           Create a Sabiway Account or sign in to get started
         </h1>
+
+        {/* Policy */}
+        <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
+          By continuing, you agree to our{" "}
+          <a href="#" className="text-[#008753] font-medium hover:underline">
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a href="#" className="text-[#008753] font-medium hover:underline">
+            Terms of Use
+          </a>
+          , and consent to receive emails.
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <input
@@ -94,12 +134,38 @@ export default function Signup() {
         </div>
 
         <button
-          onClick={() => toast("Google login coming soon")}
-          className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50"
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          className={`w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 
+                      transition-all text-sm font-medium ${
+                        googleLoading ? "bg-gray-100 cursor-not-allowed opacity-80" : "hover:bg-gray-50"
+                      }`}
         >
-          <FcGoogle size={18} />
-          <span className="text-gray-700 font-medium">Continue with Google</span>
+          {googleLoading ? (
+            <>
+              <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-600">Redirecting...</span>
+            </>
+          ) : (
+            <>
+              <FcGoogle size={18} />
+              <span className="text-gray-700">Continue with Google</span>
+            </>
+          )}
         </button>
+
+
+        {/* Already have account */}
+        <p className="text-center text-gray-600 text-[11px] sm:text-xs mt-5 sm:mt-6">
+          Already have an account?{" "}
+          <a
+            href="/login"
+            className="text-[#008753] font-medium hover:underline"
+          >
+            Sign in
+          </a>
+        </p>
       </motion.div>
     </div>
   );

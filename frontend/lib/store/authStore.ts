@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
+import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 
-const API_URL = "http://localhost:5000/api";
-const SOCKET_URL = "http://localhost:5000";
+
+const API_URL = `${EXPRESS_LOCAL_URL}/api`;
+const SOCKET_URL = EXPRESS_LOCAL_URL
 
 let socket: any = null;
 
@@ -22,7 +24,7 @@ interface AuthState {
 
   signup: (form: { full_name: string; email: string; password: string }) => Promise<boolean>;
   login: (form: { email: string; password: string }) => Promise<boolean>;
-  googleLogin: (token: string) => Promise<boolean>; // ✅ new
+
   logout: () => Promise<void>;
   connectSocket: (user: User) => void;
 }
@@ -111,29 +113,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // ✅ Google Login integration
-  googleLogin: async (token) => {
-    try {
-      set({ loading: true });
-      const res = await fetch(`${API_URL}/auth/google-login/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Google login failed");
-
-      set({ user: data.user });
-      toast.success(`Welcome ${data.user.full_name || "User"}!`);
-      get().connectSocket(data.user); // 🔌 connect socket for Google users
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || "Google login error");
-      return false;
-    } finally {
-      set({ loading: false });
-    }
+  // ✅ Set user manually (for Google or token login)
+ setUser: (user: User) => {
+    set({ user });
+    toast.success(`Welcome ${user.full_name || "User"}!`);
   },
 
   // ✅ Logout
