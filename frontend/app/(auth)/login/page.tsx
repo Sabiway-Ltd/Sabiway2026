@@ -6,11 +6,12 @@ import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useAuthStore } from "@/lib/store/authStore";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
+  const { login, loading, connectSocket } = useAuthStore();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,20 +20,32 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    // simulate API call delay
-    setTimeout(() => {
-      setLoading(false);
+    const success = await login(form);
+    if (success) {
+      // ✅ connect to socket only after successful login
+      connectSocket();
 
-      // Dummy condition: accept login if email & password are filled
-      if (form.email && form.password) {
-        toast.success("Welcome back! (dummy)");
-        router.push("/community");
+      // ✅ redirect user
+      router.push("/community");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/generate-google-url", {
+        method: "GET",
+      });
+      const data = await res.json();
+
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
       } else {
-        toast.error("Login failed. Please check your credentials.");
+        toast.error("Failed to load Google login.");
       }
-    }, 1200);
+    } catch (error) {
+      toast.error("Error initializing Google login");
+    }
   };
 
   return (
@@ -43,12 +56,10 @@ export default function Login() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full max-w-md bg-white rounded-3xl p-8 shadow-md border border-gray-100"
       >
-        {/* Title */}
         <h1 className="text-lg sm:text-xl font-semibold text-center text-gray-900">
           Welcome back! Sign in to your Sabiway account
         </h1>
 
-        {/* Policy */}
         <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
           By continuing, you agree to our{" "}
           <a href="#" className="text-[#008753] font-medium hover:underline">
@@ -128,7 +139,7 @@ export default function Login() {
 
         <button
           type="button"
-          onClick={() => toast.success("Google login (dummy)")}
+          onClick={handleGoogleLogin}
           className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 
                      hover:bg-gray-50 transition-all text-sm"
         >

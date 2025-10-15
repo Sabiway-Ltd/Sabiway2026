@@ -1,0 +1,161 @@
+import { create } from "zustand";
+import { io } from "socket.io-client";
+import toast from "react-hot-toast";
+
+const API_URL = "http://localhost:5000/api";
+const SOCKET_URL = "http://localhost:5000";
+
+let socket: any = null;
+
+interface User {
+  id?: string;
+  full_name?: string;
+  email?: string;
+  username?: string;
+  profile_pic?: string;
+}
+
+interface AuthState {
+  user: User | null;
+  onlineUsers: User[];
+  loading: boolean;
+
+  signup: (form: { full_name: string; email: string; password: string }) => Promise<boolean>;
+  login: (form: { email: string; password: string }) => Promise<boolean>;
+  googleLogin: (token: string) => Promise<boolean>; // ✅ new
+  logout: () => Promise<void>;
+  connectSocket: (user: User) => void;
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  onlineUsers: [],
+  loading: false,
+
+  // ✅ Connect socket after successful login/signup
+  connectSocket: (user) => {
+    if (!socket) {
+      socket = io(SOCKET_URL, {
+        transports: ["websocket"],
+        withCredentials: true,
+      });
+
+      socket.on("connect", () => {
+        console.log("✅ Socket connected:", socket.id);
+        socket.emit("user:login", user); // send user info
+      });
+
+      socket.on("users:online", (users) => {
+        set({ onlineUsers: users });
+      });
+
+      socket.on("user:login", ({ user }) => {
+        toast.success(`${user.full_name || "Someone"} just logged in`);
+      });
+
+      socket.on("user:logout", ({ user }) => {
+        toast(`${user?.full_name || "Someone"} logged out`);
+      });
+    }
+  },
+
+  // ✅ Signup
+  signup: async (form) => {
+    try {
+      set({ loading: true });
+      const res = await fetch(`${API_URL}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Signup failed");
+
+      set({ user: data.user });
+      toast.success("Account created successfully!");
+      get().connectSocket(data.user); // 🔌 connect here
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // ✅ Login
+  login: async (form) => {
+    try {
+      set({ loading: true });
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      set({ user: data.user });
+      toast.success(`Welcome back ${data.user.full_name || "User"}`);
+      get().connectSocket(data.user); // 🔌 connect socket on login
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // ✅ Google Login integration
+  googleLogin: async (token) => {
+    try {
+      set({ loading: true });
+      const res = await fetch(`${API_URL}/auth/google-login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Google login failed");
+
+      set({ user: data.user });
+      toast.success(`Welcome ${data.user.full_name || "User"}!`);
+      get().connectSocket(data.user); // 🔌 connect socket for Google users
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "Google login error");
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // ✅ Logout
+  logout: async () => {
+    const user = get().user;
+    try {
+      const res = await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user }),
+      });
+
+      if (!res.ok) throw new Error("Logout failed");
+
+      toast("Logged out successfully");
+      socket?.emit("user:logout", user);
+      socket?.disconnect();
+      socket = null;
+      set({ user: null, onlineUsers: [] });
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+    }
+  },
+}));
