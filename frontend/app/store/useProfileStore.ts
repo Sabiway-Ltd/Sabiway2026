@@ -1,30 +1,10 @@
+// app/store/useProfileStore.ts
+"use client";
+
 import { create } from "zustand";
-import { io } from "socket.io-client";
-import toast from "react-hot-toast";
-import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+import { profile } from "../services/profile";
 
-const API_URL = `${EXPRESS_LOCAL_URL}/api/profiles`;
-const SOCKET_URL = EXPRESS_LOCAL_URL;
-
-let socket: any = null;
-
-// 🔹 Helper to attach token automatically
-const authFetch = async (url: string, options: RequestInit = {}) => {
-  const access = localStorage.getItem("access");
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-    ...(access ? { Authorization: `Bearer ${access}` } : {}),
-  };
-
-  return fetch(url, {
-    ...options,
-    headers,
-    credentials: "include", // keep cookies too, if backend needs refresh
-  });
-};
-
-export interface Profile {
+export type Profile = {
   user_id: number;
   username: string;
   full_name: string;
@@ -33,246 +13,165 @@ export interface Profile {
   following_count: number;
   posts_count: number;
   whatsapp_number?: string;
-  profile_picture?: string;
-}
+  profile_picture?: string; 
+};
 
-interface ProfileState {
+type ProfileState = {
+  profile: Profile | null;
   profiles: Profile[];
-  myProfile: Profile | null;
-  topContributors: Profile[];
   loading: boolean;
+  error: string | null;
+  topContributors: Profile[];
 
-  // API Actions
-  fetchProfiles: () => Promise<void>;
-  fetchMyProfile: () => Promise<void>;
-  fetchProfileById: (userId: number) => Promise<Profile | null>;
-  updateMyProfile: (form: Partial<Profile>) => Promise<boolean>;
-  deleteMyProfile: () => Promise<boolean>;
+  followingStatus: Record<number, boolean>;
+  setFollowingStatus: (userId: number, status: boolean) => void;
+  toggleFollow: (userId: number) => Promise<void>;
 
-  followUser: (userId: number) => Promise<void>;
-  unfollowUser: (userId: number) => Promise<void>;
-  fetchFollowers: (userId: number) => Promise<Profile[]>;
-  fetchFollowing: (userId: number) => Promise<Profile[]>;
-  fetchTopContributors: () => Promise<void>;
+  myFollowers: Profile[];
+  myFollowing: Profile[];
+  fetchMyFollowers: () => Promise<void>;
+  fetchMyFollowing: () => Promise<void>;
 
-  // Socket
-  connectProfileSocket: () => void;
-}
+  getMyProfile: () => Promise<void>;
+  updateProfile: (userId: number, data: Partial<Profile> | FormData) => Promise<Profile>; // ✅ fixed
+  getAllProfiles: () => Promise<void>;
+  getTopContributors: () => Promise<void>;
+};
+
+
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
+  profile: null,
   profiles: [],
-  myProfile: null,
-  topContributors: [],
   loading: false,
+  error: null,
+  topContributors: [],
+  followingStatus: {},
+  myFollowers: [],
+  myFollowing: [],
 
-  /* ------------------------------
-     🔹 Fetch all profiles
-  ------------------------------- */
-  fetchProfiles: async () => {
+  // Follow map management
+  setFollowingStatus: (userId, status) =>
+    set((state) => ({
+      followingStatus: { ...state.followingStatus, [userId]: status },
+    })),
+
+  toggleFollow: async (userId) => {
+    const isFollowing = get().followingStatus[userId] || false;
     try {
-      set({ loading: true });
-      const res = await authFetch(`${API_URL}/`);
-      const data = await res.json();
-      set({ profiles: data });
-    } catch {
-      toast.error("Failed to load profiles");
-    } finally {
-      set({ loading: false });
+      if (isFollowing) await profile.unfollow(userId);
+      else await profile.follow(userId);
+      get().setFollowingStatus(userId, !isFollowing);
+
+      // ✅ Update myFollowing list automatically
+      const updatedFollowing = isFollowing
+        ? get().myFollowing.filter((p) => p.user_id !== userId)
+        : [...get().myFollowing, get().profiles.find((p) => p.user_id === userId)!];
+      set({ myFollowing: updatedFollowing });
+    } catch (err) {
+      console.error("Follow toggle error:", err);
+      throw err;
     }
   },
 
-  /* ------------------------------
-     🔹 Fetch my profile
-  ------------------------------- */
-  fetchMyProfile: async () => {
+  // Fetch current user's profile
+  getMyProfile: async () => {
+    set({ loading: true, error: null });
     try {
-      set({ loading: true });
-      const res = await authFetch(`${API_URL}/me`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
-      set({ myProfile: data });
-    } catch (error: any) {
-      toast.error(error.message || "Error loading profile");
-    } finally {
-      set({ loading: false });
+      const res = await profile.getMe();
+      set({ profile: res.data, loading: false });
+    } catch (err: any) {
+      console.error("Profile fetch error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch profile",
+        loading: false,
+      });
     }
   },
 
-  /* ------------------------------
-     🔹 Fetch profile by ID
-  ------------------------------- */
-  fetchProfileById: async (userId) => {
+  // Fetch all profiles + initialize followingStatus
+  getAllProfiles: async () => {
+    set({ loading: true, error: null });
     try {
-      const res = await authFetch(`${API_URL}/${userId}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
-      return data;
-    } catch (error: any) {
-      toast.error(error.message || "Error fetching profile");
-      return null;
+      const res = await profile.getAll();
+      set({ profiles: res.data, loading: false });
+
+      const map: Record<number, boolean> = {};
+      res.data.forEach((p: any) => {
+        map[p.user_id] = p.is_following || false;
+      });
+      set({ followingStatus: map });
+    } catch (err: any) {
+      console.error("Get all profiles error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to load profiles",
+        loading: false,
+      });
     }
   },
 
-  /* ------------------------------
-     🔹 Update my profile
-  ------------------------------- */
-  updateMyProfile: async (form) => {
+  // Fetch top contributors
+  getTopContributors: async () => {
+    set({ loading: true, error: null });
     try {
-      set({ loading: true });
-      const res = await authFetch(`${API_URL}/me`, {
-        method: "PATCH",
-        body: JSON.stringify(form),
+      const res = await profile.getTopContributors();
+      set({ topContributors: res.data, loading: false });
+    } catch (err: any) {
+      console.error("Get top contributors error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to load top contributors",
+        loading: false,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Update failed");
-
-      set({ myProfile: data });
-      toast.success("Profile updated!");
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || "Error updating profile");
-      return false;
-    } finally {
-      set({ loading: false });
     }
   },
 
-  /* ------------------------------
-     🔹 Delete my profile
-  ------------------------------- */
-  deleteMyProfile: async () => {
+  // ✅ Fetch current user's following
+  fetchMyFollowing: async () => {
     try {
-      const res = await authFetch(`${API_URL}/me`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
+      const res = await profile.getMyFollowing();
+      set({ myFollowing: res.data });
 
-      toast.success("Profile deleted!");
-      set({ myProfile: null });
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || "Error deleting profile");
-      return false;
+      // Update followingStatus map
+      const status: Record<number, boolean> = {};
+      res.data.forEach((p: any) => {
+        status[p.user_id] = true;
+      });
+      set({ followingStatus: status });
+    } catch (err) {
+      console.error("Failed to fetch my following", err);
     }
   },
 
-  /* ------------------------------
-     🔹 Follow / Unfollow
-  ------------------------------- */
-  followUser: async (userId) => {
+  // ✅ Fetch current user's followers
+  fetchMyFollowers: async () => {
     try {
-      const res = await authFetch(`${API_URL}/${userId}/follow`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Follow failed");
-      toast.success("Followed successfully!");
-    } catch (error: any) {
-      toast.error(error.message || "Error following user");
+      const res = await profile.getMyFollowers();
+      set({ myFollowers: res.data });
+    } catch (err) {
+      console.error("Failed to fetch my followers", err);
     }
   },
 
-  unfollowUser: async (userId) => {
+  updateProfile: async (userId, data) => {
+    set({ loading: true, error: null });
     try {
-      const res = await authFetch(`${API_URL}/${userId}/unfollow`, {
-        method: "POST",
+      let res;
+      if (data instanceof FormData) {
+        res = await profile.patch(userId, data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        res = await profile.patch(userId, data);
+      }
+      set({ profile: res.data, loading: false });
+      return res.data;
+    } catch (err: any) {
+      console.error("Profile update error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to update profile",
+        loading: false,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unfollow failed");
-      toast("Unfollowed");
-    } catch (error: any) {
-      toast.error(error.message || "Error unfollowing user");
-    }
-  },
-
-  /* ------------------------------
-     🔹 Followers / Following
-  ------------------------------- */
-  fetchFollowers: async (userId) => {
-    try {
-      const res = await authFetch(`${API_URL}/${userId}/followers`);
-      const data = await res.json();
-      return data;
-    } catch {
-      toast.error("Failed to load followers");
-      return [];
-    }
-  },
-
-  fetchFollowing: async (userId) => {
-    try {
-      const res = await authFetch(`${API_URL}/${userId}/following`);
-      const data = await res.json();
-      return data;
-    } catch {
-      toast.error("Failed to load following");
-      return [];
-    }
-  },
-
-  /* ------------------------------
-     🔹 Top Contributors
-  ------------------------------- */
-  fetchTopContributors: async () => {
-    try {
-      const res = await authFetch(`${API_URL}/contributors/top`);
-      const data = await res.json();
-      set({ topContributors: data });
-    } catch {
-      toast.error("Failed to load top contributors");
-    }
-  },
-
-  /* ------------------------------
-     🔹 Socket Integration
-  ------------------------------- */
-  connectProfileSocket: () => {
-    if (!socket) {
-      socket = io(SOCKET_URL, {
-        transports: ["websocket"],
-        withCredentials: true,
-      });
-
-      socket.on("connect", () => {
-        console.log("✅ Profile socket connected:", socket.id);
-      });
-
-      socket.on("profile:updated", (profile: Profile) => {
-        // set({ myProfile: profile });
-        // toast.success("Your profile was updated");
-      });
-
-      socket.on("profile:updatedById", (data: { userId: number; profile: Profile }) => {
-        set((state) => ({
-          profiles: state.profiles.map((p) =>
-            p.user_id === data.userId ? data.profile : p
-          ),
-        }));
-        // toast("A profile was updated by admin");
-      });
-
-      socket.on("profile:deleted", () => {
-        set({ myProfile: null });
-        // toast.error("Your profile has been deleted");
-      });
-
-      socket.on("profile:deletedById", (data: { userId: number }) => {
-        set((state) => ({
-          profiles: state.profiles.filter((p) => p.user_id !== data.userId),
-        }));
-        // toast("A profile was deleted by admin");
-      });
-
-      socket.on("profile:follow", (data: any) => {
-        // toast.success(`${data.follower.full_name} followed ${data.followed.full_name}`);
-      });
-
-      socket.on("profile:unfollow", (data: any) => {
-        // toast(`${data.follower.full_name} unfollowed ${data.followed.full_name}`);
-      });
-
-      socket.on("profile:topContributors", (list: Profile[]) => {
-        set({ topContributors: list });
-        // toast("Top contributors updated");
-      });
+      throw err;
     }
   },
 }));

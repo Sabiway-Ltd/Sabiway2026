@@ -6,7 +6,9 @@ const { emitEvent } = require("./socket");
 --------------------------*/
 
 // When a user updates their own profile
-exports.profileUpdated = (profile) => emitEvent("profile:updated", profile);
+exports.profileUpdated = (profile) => {
+   emitEvent("profile:updated", profile)
+};
 
 // When an admin updates a profile by ID
 exports.profileUpdatedById = (data) =>

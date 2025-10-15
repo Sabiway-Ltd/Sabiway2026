@@ -1,31 +1,45 @@
 // socket/postEvents.js
-const { emitEvent } = require("./socket");
+let io = null;
+
+exports.initSocket = (ioInstance) => {
+  io = ioInstance;
+};
+
+const broadcastEvent = (event, data) => {
+  if (!io) {
+    console.warn("Socket.IO not initialized. Event not emitted:", event);
+    return;
+  }
+  io.emit(event, data);
+};
+
+
 
 /* -------------------------
    🟢 Post Events
 --------------------------*/
-exports.postCreated = (post) => emitEvent("post:created", post);
-exports.postUpdated = (post) => emitEvent("post:updated", post);
-exports.postDeleted = (data) => emitEvent("post:deleted", data);
+exports.postCreated = (post) => broadcastEvent("post:created", post);
+exports.postUpdated = (post) => broadcastEvent("post:updated", post);
+exports.postDeleted = (data) => broadcastEvent("post:deleted", data);
 
-exports.postLiked = (data) => emitEvent("post:liked", data);
-exports.postUnliked = (data) => emitEvent("post:unliked", data);
+exports.postLiked = (data) => broadcastEvent("post:liked", data);
+exports.postUnliked = (data) => broadcastEvent("post:unliked", data);
 
-exports.postBookmarked = (data) => emitEvent("post:bookmarked", data);
-exports.postUnbookmarked = (data) => emitEvent("post:unbookmarked", data);
+exports.postBookmarked = (data) => broadcastEvent("post:bookmarked", data);
+exports.postUnbookmarked = (data) => broadcastEvent("post:unbookmarked", data);
 
-exports.reposted = (data) => emitEvent("post:reposted", data);
-exports.unreposted = (data) => emitEvent("post:unreposted", data);
+exports.reposted = (data) => broadcastEvent("post:reposted", data);
+exports.unreposted = (data) => broadcastEvent("post:unreposted", data);
 
 /* -------------------------
    💬 Comment Events
 --------------------------*/
-exports.commentCreated = (data) => emitEvent("comment:created", data);
-exports.commentLiked = (data) => emitEvent("comment:liked", data);
-exports.commentUnliked = (data) => emitEvent("comment:unliked", data);
+exports.commentCreated = (data) => broadcastEvent("comment:created", data);
+exports.commentLiked = (data) => broadcastEvent("comment:liked", data);
+exports.commentUnliked = (data) => broadcastEvent("comment:unliked", data);
 
 /* -------------------------
    💬 Reply Events
 --------------------------*/
-exports.replyLiked = (data) => emitEvent("reply:liked", data);
-exports.replyUnliked = (data) => emitEvent("reply:unliked", data);
+exports.replyLiked = (data) => broadcastEvent("reply:liked", data);
+exports.replyUnliked = (data) => broadcastEvent("reply:unliked", data);

@@ -1,8 +1,8 @@
-// app/community/page.tsx
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePostStore } from "../store/usePostStore";
+import { useProfileStore } from "../store/useProfileStore";
 import CommunityNavbar from "../_components/feed/CommunityNavbar";
 import PostBox from "../_components/feed/PostBox";
 import PostCard from "../_components/feed/PostCard";
@@ -11,50 +11,32 @@ import Aside from "../_components/feed/Aside";
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
 
-  // ✅ Dummy static posts
-  const dummyPosts = [
-    {
-      id: "1",
-      author: {
-        user_id: "u1",
-        full_name: "Jane Doe",
-        username: "janedoe",
-        profile_picture:
-          "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-        whatsapp_number: "1234567890",
-        is_following: true,
-      },
-      content: "This is a dummy post on Sabiway 🎉",
-      image: null,
-      likes_count: 12,
-      comments_count: 4,
-      impressions_count: 50,
-      is_liked: false,
-      is_bookmarked: false,
-      created_at: "2025-10-15T10:00:00Z",
-    },
-    {
-      id: "2",
-      author: {
-        user_id: "u2",
-        full_name: "John Smith",
-        username: "johnsmith",
-        profile_picture:
-          "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-        whatsapp_number: "",
-        is_following: false,
-      },
-      content: "Another dummy post — static data is working fine 😎",
-      image:
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
-      likes_count: 34,
-      comments_count: 10,
-      impressions_count: 120,
-      is_liked: true,
-      is_bookmarked: true,
-      created_at: "2025-10-14T18:30:00Z",
-    },
-  ];
+  const {
+    posts,
+    filteredPosts,
+    activeHashtag,
+    getAllPosts,
+    loading,
+    loadingHashtag,
+    error,
+    initSocket, // ⚡ Init socket
+  } = usePostStore();
+
+  const { followingStatus, fetchMyFollowing } = useProfileStore();
+
+  // Load posts & initialize socket on mount
+  useEffect(() => {
+    getAllPosts();
+    initSocket(); // ⚡ Attach socket listeners for real-time updates
+  }, [getAllPosts, initSocket]);
+
+  // Load following status once on mount
+  useEffect(() => {
+    fetchMyFollowing();
+  }, [fetchMyFollowing]);
+
+  const isFiltering = activeHashtag !== null;
+  const displayedPosts = isFiltering ? filteredPosts : posts;
 
   return (
     <div className="min-h-screen bg-gray-50 md:px-6 px-3">
@@ -67,24 +49,64 @@ export default function Community() {
           {/* Post Creation Box */}
           <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
+          {/* Global Loading */}
+          {loading && !isFiltering && (
+            <div className="text-center text-gray-500 py-8">Loading posts...</div>
+          )}
+
+          {/* Hashtag-specific loading */}
+          {loadingHashtag && isFiltering && (
+            <div className="text-center py-12">
+              <svg className="animate-spin h-8 w-8 mx-auto mb-3" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              </svg>
+              <div className="text-gray-600">
+                Searching results for <span className="font-medium">#{activeHashtag}</span>...
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && <div className="text-center text-red-500 py-8">{error}</div>}
+
+          {/* Empty State */}
+          {!loading && !loadingHashtag && displayedPosts.length === 0 && (
+            <div className="text-center text-gray-400 py-8">
+              {isFiltering
+                ? `No posts found for #${activeHashtag}.`
+                : "No posts yet — be the first to share something!"}
+            </div>
+          )}
+
           {/* Posts Feed */}
-          <div className="mt-2 space-y-4">
-            {dummyPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                id={post.id}
-                author={post.author}
-                content={post.content}
-                image={post.image}
-                likes_count={post.likes_count}
-                comments_count={post.comments_count}
-                impressions_count={post.impressions_count}
-                is_liked={post.is_liked}
-                is_bookmarked={post.is_bookmarked}
-                created_at={post.created_at}
-              />
-            ))}
-          </div>
+          {!loadingHashtag && (
+            <div className="mt-2 space-y-4">
+              {displayedPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  id={post.id}
+                  author={{
+                    user_id: post.author.user_id,
+                    full_name: post.author.full_name,
+                    username: post.author.username,
+                    profile_picture:
+                      post.author.profile_picture ||
+                      "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                    whatsapp_number: post.author.whatsapp_number || "",
+                    is_following: post.author.is_following,
+                  }}
+                  content={post.content}
+                  image={post.image || null}
+                  likes_count={post.likes_count}
+                  comments_count={post.comments_count}
+                  impressions_count={post.impressions_count || 0}
+                  is_liked={post.is_liked ?? false}
+                  is_bookmarked={post.is_bookmarked ?? false}
+                  created_at={post.created_at}
+                />
+              ))}
+            </div>
+          )}
         </main>
 
         {/* Sidebar */}

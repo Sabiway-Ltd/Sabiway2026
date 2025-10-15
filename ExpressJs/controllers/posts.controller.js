@@ -22,12 +22,17 @@ exports.listPosts = async (req, res) => {
 exports.createPost = async (req, res) => {
   try {
     const token = req.headers._token;
-    const created = await djangoPost.createPost(token, req.body, req.files); // if you support multipart
+    const created = await djangoPost.createPost(token, { content: req.body.content }, req.file);
+
     // broadcast post created to all users
     postEvents.postCreated(created);
+
     res.status(201).json(created);
   } catch (err) {
-    res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
+    console.error(err);
+    res
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: err.message });
   }
 };
 

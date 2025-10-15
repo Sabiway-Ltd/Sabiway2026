@@ -15,6 +15,17 @@ module.exports = (io) => {
       emitOnlineUsers(); // broadcast updated list
     });
 
+
+    // Google Login
+    socket.on("user:google_login", (user) => {
+      // console.log("🟢 Google user logged in:", user);
+      // Mark them online as well
+      onlineUsers.set(socket.id, user);
+      // Broadcast both user-specific and general events
+      ioInstance.emit("user:google_logged_in", user);
+      emitOnlineUsers();
+    });
+
     // Listen for user logout to remove them
     socket.on("user:logout", () => {
       onlineUsers.delete(socket.id);

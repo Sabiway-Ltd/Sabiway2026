@@ -2,10 +2,12 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/posts.controller");
+const multer = require("multer");
+const upload = multer();
 
 // Posts CRUD + list
 router.get("/", controller.listPosts);               // optional listing / pagination
-router.post("/", controller.createPost);
+router.post("/", upload.single("image"), controller.createPost);
 router.get("/:id", controller.getPostById);
 router.put("/:id", controller.updatePost);
 router.delete("/:id", controller.deletePost);

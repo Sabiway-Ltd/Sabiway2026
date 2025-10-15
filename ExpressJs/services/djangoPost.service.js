@@ -1,5 +1,7 @@
 // services/djangoPost.service.js
 const axiosClient = require("../utils/axiosClient");
+const FormData = require("form-data");
+const fs = require("fs");
 
 const base = "/posts";
 
@@ -13,11 +15,32 @@ const djangoPostService = {
     return res.data;
   },
 
-  async createPost(token, data, files) {
-    // If you handle files, you may send form-data from frontend; here we assume JSON body
-    const res = await axiosClient.post(`${base}/`, data, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+  // async createPost(token, data, files) {
+  //   // If you handle files, you may send form-data from frontend; here we assume JSON body
+  //   const res = await axiosClient.post(`${base}/`, data, {
+  //     headers: token ? { Authorization: `Bearer ${token}` } : {},
+  //   });
+  //   return res.data;
+  // },
+
+   async createPost(token, data, file) {
+    const FormData = require("form-data");
+    
+    const form = new FormData();
+    form.append("content", data.content);
+
+    if (file) {
+      // multer memory storage
+      form.append("image", file.buffer, { filename: file.originalname });
+    }
+
+    const res = await axiosClient.post(`/posts/`, form, {
+      headers: {
+        ...form.getHeaders(),
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
     });
+
     return res.data;
   },
 

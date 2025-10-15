@@ -3,6 +3,8 @@ const http = require("http");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
+const { initSocket } = require("./socket/postEvents");
+const socketModule = require("./socket/socket");
 require("dotenv").config();
 
 const accountRoutes = require("./routes/accounts.routes");
@@ -40,6 +42,12 @@ const io = new Server(server, {
   },
 });
 require("./socket/socket")(io);
+
+// Initialize post events
+initSocket(io);
+
+// Initialize online users socket handling
+socketModule(io);
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
