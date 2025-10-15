@@ -1,14 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import dynamic from "next/dynamic"; // ✅ needed for client-only emoji picker
+import dynamic from "next/dynamic"; // ✅ for emoji picker
 import { ImageIcon, Smile, Hash, X } from "lucide-react";
-import { usePostStore } from "@/app/store/usePostStore";
-import { useProfileStore } from "@/app/store/useProfileStore";
-import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
-import toast from "react-hot-toast";
 import { EmojiClickData } from "emoji-picker-react";
-
 
 // ✅ Dynamically import EmojiPicker (prevents SSR issues)
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -26,16 +21,13 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { createPost, getAllPosts, getTrendingHashtags } = usePostStore();
-  const { profile, getTopContributors } = useProfileStore();
+  // 🔹 Dummy logged-in profile
+  const profile = {
+    full_name: "Static User",
+    profile_picture: "https://i.pravatar.cc/100?img=5",
+  };
 
   if (!visible) return null;
-
-  const getCloudinaryImage = (path: string | null) => {
-    if (!path) return DEFAULT_PROFILE_PICTURE;
-    if (path.startsWith("http")) return path;
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
-  };
 
   const insertAtCursor = (text: string) => {
     const textarea = textareaRef.current;
@@ -57,7 +49,6 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
     setShowEmojiPicker(false);
   };
 
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -70,27 +61,17 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
     if (!content.trim() && !image) return;
 
     setSubmitting(true);
-    const formData = new FormData();
-    formData.append("content", content);
-    if (image) formData.append("image", image);
 
-    try {
-      await createPost(formData);   // ✅ Create post
-      await getAllPosts();          // ✅ Refresh feed
-      getTrendingHashtags?.();      // ✅ Refresh trending hashtags
-      getTopContributors?.();       // ✅ Refresh top contributors
-
+    // Simulate API call delay
+    setTimeout(() => {
+      console.log("New Post Created (Static Mode):", { content, image });
       setContent("");
       setImage(null);
       setPreview(null);
       onClose();
-      toast.success("Post created successfully!");
-    } catch (err) {
-      console.error("Error creating post:", err);
-      toast.error("Failed to create post. Please try again.");
-    } finally {
       setSubmitting(false);
-    }
+      alert("✅ Post created (static mode)!");
+    }, 1000);
   };
 
   return (
@@ -105,10 +86,9 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
         <div className="flex gap-3">
           <img
-            src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-            alt={profile?.full_name || "User Avatar"}
+            src={profile.profile_picture}
+            alt={profile.full_name}
             className="w-10 h-10 rounded-full object-cover"
-            onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
           />
 
           <textarea

@@ -6,12 +6,11 @@ import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/app/store/useAuthStore";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
-  const { login, loading } = useAuthStore();
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,14 +19,20 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await login(form);
+    setLoading(true);
 
-    if (result?.success) {
-      toast.success("Welcome back!");
-      router.push("/community"); // ✅ redirect to your app's main page
-    } else {
-      toast.error(result?.error || "Login failed. Please check your credentials.");
-    }
+    // simulate API call delay
+    setTimeout(() => {
+      setLoading(false);
+
+      // Dummy condition: accept login if email & password are filled
+      if (form.email && form.password) {
+        toast.success("Welcome back! (dummy)");
+        router.push("/community");
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
+    }, 1200);
   };
 
   return (
@@ -58,7 +63,9 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -72,7 +79,9 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -119,6 +128,7 @@ export default function Login() {
 
         <button
           type="button"
+          onClick={() => toast.success("Google login (dummy)")}
           className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 
                      hover:bg-gray-50 transition-all text-sm"
         >

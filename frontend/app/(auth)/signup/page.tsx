@@ -4,19 +4,18 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
-import { useAuthStore } from "@/app/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
     password: "",
   });
 
-  const { signup, loading } = useAuthStore();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,14 +24,20 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await signup(form);
+    setLoading(true);
 
-    if (result?.success) {
-      toast.success("Account created successfully!");
-      router.push("/login");
-    } else {
-      toast.error(result?.error || "Signup failed. Please try again.");
-    }
+    // Simulate API delay
+    setTimeout(() => {
+      setLoading(false);
+
+      // Simple mock "success" condition
+      if (form.email && form.password && form.full_name) {
+        toast.success("Account created successfully! (dummy)");
+        router.push("/login");
+      } else {
+        toast.error("Signup failed. Please try again.");
+      }
+    }, 1200);
   };
 
   return (
@@ -133,6 +138,7 @@ export default function Signup() {
           type="button"
           className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 
                      hover:bg-gray-50 transition-all text-[13px] sm:text-sm"
+          onClick={() => toast.success("Google signup (dummy)")}
         >
           <FcGoogle size={18} />
           <span className="text-gray-700 font-medium">Continue with Google</span>
