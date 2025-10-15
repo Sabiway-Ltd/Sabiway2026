@@ -71,7 +71,7 @@ class GoogleLoginView(APIView):
     """
 
     def post(self, request):
-        """Frontend sends id_token"""
+        """Frontend sends id_token directly"""
         serializer = GoogleAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         idinfo = serializer.validated_data["token"]
@@ -79,7 +79,7 @@ class GoogleLoginView(APIView):
         email = idinfo.get("email")
         full_name = idinfo.get("name")
 
-        return self._handle_user(email, full_name)
+        return self._handle_user(email, full_name, from_redirect=False)
 
     def get(self, request):
         """Google redirects with ?code=..."""
@@ -89,12 +89,11 @@ class GoogleLoginView(APIView):
 
         # Exchange code for tokens
         token_url = "https://oauth2.googleapis.com/token"
-
         data = {
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",  # ✅ match Google Console
+            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",
             "grant_type": "authorization_code",
         }
         r = requests.post(token_url, data=data)
@@ -112,9 +111,10 @@ class GoogleLoginView(APIView):
         email = userinfo.get("email")
         full_name = userinfo.get("name")
 
-        return self._handle_user(email, full_name)
+        # ✅ Handle user creation/login and redirect to frontend
+        return self._handle_user(email, full_name, from_redirect=True)
 
-    def _handle_user(self, email, full_name):
+    def _handle_user(self, email, full_name, from_redirect=False):
         user = User.objects.filter(email=email).first()
         created = False
 
@@ -129,9 +129,22 @@ class GoogleLoginView(APIView):
             created = True
 
         refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        if from_redirect:
+            # ✅ Redirect user to frontend callback with tokens
+            redirect_url = (
+                f"{settings.FRONTEND_URL}/callback"
+                f"?access={access}&refresh={refresh_token}"
+            )
+            from django.shortcuts import redirect
+            return redirect(redirect_url)
+
+        # ✅ For API calls (POST) — return tokens as JSON
         return Response({
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
+            "refresh": refresh_token,
+            "access": access,
             "user": {
                 "id": user.id,
                 "full_name": user.full_name,
@@ -142,6 +155,7 @@ class GoogleLoginView(APIView):
             },
             "is_new_user": created
         }, status=status.HTTP_200_OK)
+
 
 
 
