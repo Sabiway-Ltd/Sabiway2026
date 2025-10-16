@@ -69,10 +69,14 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   const handleSubmit = async () => {
     if (!content.trim() && !image) return;
 
+    // Close immediately for snappy UI
+    // onClose();
+
     setSubmitting(true);
     const formData = new FormData();
     formData.append("content", content);
     if (image) formData.append("image", image);
+    onClose();
 
     try {
       await createPost(formData);   // ✅ Create post
@@ -83,8 +87,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
       setContent("");
       setImage(null);
       setPreview(null);
-      onClose();
-      toast.success("Post created successfully!");
+      // toast.success("Post created successfully!");
     } catch (err) {
       console.error("Error creating post:", err);
       toast.error("Failed to create post. Please try again.");
@@ -92,6 +95,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="w-full mt-4 px-3 relative">
@@ -162,7 +166,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
               </button>
 
               {showEmojiPicker && (
-                <div className="absolute bottom-8 right-0 z-50">
+                <div className="absolute -top-7 right-0 z-50 scale-75">
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}

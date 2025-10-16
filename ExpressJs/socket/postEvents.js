@@ -1,4 +1,3 @@
-// socket/postEvents.js
 let io = null;
 
 exports.initSocket = (ioInstance) => {
@@ -12,8 +11,6 @@ const broadcastEvent = (event, data) => {
   }
   io.emit(event, data);
 };
-
-
 
 /* -------------------------
    🟢 Post Events
@@ -39,7 +36,8 @@ exports.commentLiked = (data) => broadcastEvent("comment:liked", data);
 exports.commentUnliked = (data) => broadcastEvent("comment:unliked", data);
 
 /* -------------------------
-   💬 Reply Events
+   💭 Reply Events
 --------------------------*/
+exports.replyCreated = (data) => broadcastEvent("reply:created", data);
 exports.replyLiked = (data) => broadcastEvent("reply:liked", data);
 exports.replyUnliked = (data) => broadcastEvent("reply:unliked", data);

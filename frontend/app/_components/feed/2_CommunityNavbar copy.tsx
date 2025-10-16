@@ -5,8 +5,6 @@ import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { useNotificationStore } from "@/app/store/useNotificationStore";
-import { useAuthStore } from "@/app/store/useAuthStore";
-import toast from "react-hot-toast";
 import {
   CLOUDINARY_CLOUD_NAME,
   DEFAULT_PROFILE_PICTURE,
@@ -26,58 +24,29 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
   const pathname = usePathname();
 
   const { profile, getMyProfile } = useProfileStore();
-  const { socket } = useAuthStore();
-
   const {
     notifications,
     getNotifications,
     markAsRead,
-    addNotification,
+    unreadCount,
     loading,
   } = useNotificationStore();
 
-  // ✅ Computed unread count (reactive)
-  const unreadCount = useNotificationStore(
-    (state) => state.notifications.filter((n) => !n.is_read).length
-  );
-
   /* -------------------------
-     Load profile + initial notifications
+     Load profile + notifications
   --------------------------*/
   useEffect(() => {
     if (!profile) getMyProfile();
-    getNotifications(); // initial load
-  }, [profile, getMyProfile, getNotifications]);
+  }, [profile, getMyProfile]);
 
-  /* -------------------------
-     Local Polling every 5s (lightweight fallback)
-  --------------------------*/
+  // ✅ Local 5-second polling for notifications
   useEffect(() => {
-    const interval = setInterval(() => {
-      getNotifications();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [getNotifications]);
-
-  /* -------------------------
-     ✅ Real-time notification listener (via socket)
-  --------------------------*/
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewNotification = (notif: any) => {
-      console.log("🔔 New notification received:", notif);
-      addNotification(notif);
-      toast.success(notif.message || "New notification!");
-    };
-
-    socket.on("notification:new", handleNewNotification);
-
-    return () => {
-      socket.off("notification:new", handleNewNotification);
-    };
-  }, [socket, addNotification]);
+  getNotifications(); // first fetch shows loading
+  const interval = setInterval(() => {
+    getNotifications(true); // silent refresh every 5 seconds
+  }, 5000);
+  return () => clearInterval(interval);
+}, [getNotifications]);
 
   /* -------------------------
      Close dropdown on outside click
@@ -106,7 +75,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
         <div className="flex items-center gap-x-4">
-          <button onClick={() => router.push("/community")}>
+          <button onClick={() => router.replace("/community")}>
             <img
               src="/sabiwaylogo.svg"
               alt="SabiWay Logo"
@@ -151,66 +120,68 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               className="bg-white p-2 rounded-full relative"
             >
               <Bell className="h-5 w-5 text-[#008753]" />
-              {unreadCount > 0 && (
+              {unreadCount() > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
-                  {unreadCount}
+                  {unreadCount()}
                 </span>
               )}
             </button>
 
             {/* Dropdown */}
-            <AnimatePresence>
-              {dropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute md:right-0 -right-14 space-y-3 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
-                >
-                  {loading && notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
-                  ) : notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => markAsRead(n.id)}
-                        className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
-                          n.is_read
-                            ? "bg-gray-50 hover:bg-gray-100"
-                            : "bg-[#008753]/10 hover:bg-[#008753]/20"
-                        }`}
-                      >
-                        <img
-                          src={getCloudinaryImage(n.actor.profile_picture)}
-                          alt={n.actor.full_name || "User"}
-                          onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-800">
-                            <span className="font-semibold">{n.actor.full_name}</span>{" "}
-                            {n.type === "like"
-                              ? "liked your post"
-                              : n.type === "comment"
-                              ? "commented on your post"
-                              : n.type === "follow"
-                              ? "followed you"
-                              : n.message}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(n.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
-                      </div>
-                    ))
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+<AnimatePresence>
+  {dropdownOpen && (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="absolute md:right-0 -right-14 space-y-3 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
+    >
+      {/* Show "Loading..." only when there are no notifications yet */}
+      {loading && notifications.length === 0 ? (
+        <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
+      ) : notifications.length === 0 ? (
+        <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
+      ) : (
+        notifications.map((n) => (
+          <div
+            key={n.id}
+            onClick={() => markAsRead(n.id)}
+            className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
+              n.is_read
+                ? "bg-gray-50 hover:bg-gray-100"
+                : "bg-[#008753]/10 hover:bg-[#008753]/20"
+            }`}
+          >
+            <img
+              src={getCloudinaryImage(n.actor.profile_picture)}
+              alt={n.actor.full_name || "User"}
+              onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div className="flex-1">
+              <p className="text-sm text-gray-800">
+                <span className="font-semibold">{n.actor.full_name}</span>{" "}
+                {n.type === "like"
+                  ? "liked your post"
+                  : n.type === "comment"
+                  ? "commented on your post"
+                  : n.type === "follow"
+                  ? "followed you"
+                  : n.message}
+              </p>
+              <p className="text-xs text-gray-500">
+                {new Date(n.created_at).toLocaleString()}
+              </p>
+            </div>
+            {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
+          </div>
+        ))
+      )}
+    </motion.div>
+  )}
+</AnimatePresence>
+
           </div>
 
           {/* ✅ User Avatar */}

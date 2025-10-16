@@ -64,12 +64,21 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       get().setFollowingStatus(userId, !isFollowing);
 
       // ✅ Update myFollowing list automatically
+      const profiles = get().profiles || [];
+
+      const userToAdd = profiles.find((p) => p.user_id === userId);
+
       const updatedFollowing = isFollowing
         ? get().myFollowing.filter((p) => p.user_id !== userId)
-        : [...get().myFollowing, get().profiles.find((p) => p.user_id === userId)!];
+        : userToAdd
+        ? [...get().myFollowing, userToAdd]
+        : get().myFollowing; // no match, keep as is
+
       set({ myFollowing: updatedFollowing });
+      
     } catch (err) {
       console.error("Follow toggle error:", err);
+      console.error("Follow error:", err.response?.data || err.message);
       throw err;
     }
   },

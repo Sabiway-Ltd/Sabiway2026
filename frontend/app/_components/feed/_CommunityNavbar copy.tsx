@@ -1,87 +1,79 @@
+// app/_components/feed/CommunityNavbar.tsx
+
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
 import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
-import { useNotificationStore } from "@/app/store/useNotificationStore";
-import { useAuthStore } from "@/app/store/useAuthStore";
-import toast from "react-hot-toast";
-import {
-  CLOUDINARY_CLOUD_NAME,
-  DEFAULT_PROFILE_PICTURE,
-} from "@/app/helper";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+
 
 interface CommunityNavbarProps {
   onCreatePost: () => void;
 }
 
+interface Notification {
+  id: number;
+  type: string;
+  message: string;
+  actor: {
+    user_id: number;
+    username: string;
+    full_name: string;
+    profile_picture: string | null;
+  };
+  is_read: boolean;
+  created_at: string;
+}
+
 export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const pathname = usePathname();
+  const router = useRouter()
+  const pathname = usePathname()
 
   const { profile, getMyProfile } = useProfileStore();
-  const { socket } = useAuthStore();
 
-  const {
-    notifications,
-    getNotifications,
-    markAsRead,
-    addNotification,
-    loading,
-  } = useNotificationStore();
-
-  // ✅ Computed unread count (reactive)
-  const unreadCount = useNotificationStore(
-    (state) => state.notifications.filter((n) => !n.is_read).length
-  );
-
-  /* -------------------------
-     Load profile + initial notifications
-  --------------------------*/
   useEffect(() => {
-    if (!profile) getMyProfile();
-    getNotifications(); // initial load
-  }, [profile, getMyProfile, getNotifications]);
+    if (!profile) {
+      getMyProfile();
+    }
+  }, [profile, getMyProfile]);
 
-  /* -------------------------
-     Local Polling every 5s (lightweight fallback)
-  --------------------------*/
+  
+
+
+  // 🔹 Fetch notifications
   useEffect(() => {
-    const interval = setInterval(() => {
-      getNotifications();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [getNotifications]);
-
-  /* -------------------------
-     ✅ Real-time notification listener (via socket)
-  --------------------------*/
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewNotification = (notif: any) => {
-      console.log("🔔 New notification received:", notif);
-      addNotification(notif);
-      toast.success(notif.message || "New notification!");
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("access");
+        const res = await fetch("https://sabiway-9wq4.onrender.com/api/notifications/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data);
+        }
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    socket.on("notification:new", handleNewNotification);
+    fetchNotifications();
+  }, []);
 
-    return () => {
-      socket.off("notification:new", handleNewNotification);
-    };
-  }, [socket, addNotification]);
-
-  /* -------------------------
-     Close dropdown on outside click
-  --------------------------*/
+  // 🔹 Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -92,9 +84,30 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* -------------------------
-     Helper: Cloudinary image
-  --------------------------*/
+  const markAsRead = async (id: number) => {
+    try {
+      const token = localStorage.getItem("access");
+      const res = await fetch(
+        `https://sabiway-9wq4.onrender.com/api/notifications/${id}/read/`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.ok) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        );
+      }
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // ✅ Helper to build profile image URL safely
   const getCloudinaryImage = (path: string | null) => {
     if (!path) return DEFAULT_PROFILE_PICTURE;
     if (path.startsWith("http")) return path;
@@ -106,7 +119,9 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
         <div className="flex items-center gap-x-4">
-          <button onClick={() => router.push("/community")}>
+          <button
+          onClick={()=>{router.replace('/community');}}
+          >
             <img
               src="/sabiwaylogo.svg"
               alt="SabiWay Logo"
@@ -117,12 +132,14 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
           {/* Desktop Search */}
           <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-md py-3 bg-white items-center shadow-sm">
             <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
+
             <input
               type="text"
               placeholder="Search Community"
               className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
             />
           </div>
+
         </div>
 
         {/* Right Section */}
@@ -144,7 +161,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             </button>
           )}
 
-          {/* 🔔 Notifications */}
+          {/* Notifications */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
@@ -168,10 +185,12 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                   transition={{ duration: 0.2 }}
                   className="absolute md:right-0 -right-14 space-y-3 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
                 >
-                  {loading && notifications.length === 0 ? (
+                  {loading ? (
                     <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
                   ) : notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
+                    <p className="text-sm text-center text-gray-500 py-4">
+                      No notifications
+                    </p>
                   ) : (
                     notifications.map((n) => (
                       <div
@@ -222,16 +241,16 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
             />
             <span className="absolute inset-0 rounded-full ring-2 ring-transparent group-hover:ring-[#008753]/40 transition"></span>
-          </Link>
+            </Link>
 
           {/* Mobile Menu */}
           {pathname === "/community" && (
-            <button
-              className="md:hidden bg-white p-2 rounded-full"
-              onClick={() => setMenuOpen(true)}
-            >
-              <Menu className="h-5 w-5 text-[#008753]" />
-            </button>
+          <button
+            className="md:hidden bg-white p-2 rounded-full"
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu className="h-5 w-5 text-[#008753]" />
+          </button>
           )}
         </div>
       </div>
@@ -262,6 +281,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               />
             </div>
 
+          
             <button
               onClick={() => {
                 onCreatePost();

@@ -4,6 +4,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
 const { initSocket } = require("./socket/postEvents");
+const {initNotificationSocket} = require("./socket/notificationEvents")
 const socketModule = require("./socket/socket");
 require("dotenv").config();
 
@@ -45,6 +46,9 @@ require("./socket/socket")(io);
 
 // Initialize post events
 initSocket(io);
+
+// Init Notification events
+initNotificationSocket(io)
 
 // Initialize online users socket handling
 socketModule(io);

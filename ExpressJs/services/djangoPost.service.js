@@ -95,12 +95,35 @@ const djangoPostService = {
     return res.data;
   },
 
+  // Reply
+
   async listRepliesForPost(token, id) {
     const res = await axiosClient.get(`${base}/${id}/replies/`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return res.data;
   },
+
+  async getRepliesByComment(token, commentId) {
+    const res = await axiosClient.get(`${base}/comments/${commentId}/replies/`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return res.data;
+  },
+
+  // services/djangoPost.service.js
+  // services/djangoPost.service.js
+async createReplyForComment(token, payload) {
+  const res = await axiosClient.post(`${base}/replies/`, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+  return res.data;
+},
+
+
 
   // Comment like/unlike (comment id)
   async likeComment(token, commentId) {

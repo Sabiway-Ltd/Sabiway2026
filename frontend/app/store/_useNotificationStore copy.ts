@@ -1,24 +1,38 @@
 // app/store/useNotificationStore.ts
+
+"use client";
+
 import { create } from "zustand";
 import { notification } from "../services/notification";
 
-interface Notification {
+type NotificationActor = {
+  user_id: number;
+  username: string;
+  full_name: string;
+  profile_picture?: string | null;
+};
+
+type NotificationItem = {
   id: number;
-  message: string;
   type: string;
+  actor: NotificationActor;
+  target_type?: string | null;
+  target_id?: string | null;
+  message?: string;
   is_read: boolean;
   created_at: string;
-}
+};
 
-interface NotificationState {
-  notifications: Notification[];
+type NotificationState = {
+  notifications: NotificationItem[];
   loading: boolean;
   error: string | null;
+
   getNotifications: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
-  addNotification: (newNotif: Notification) => void; // 👈 add this
-  unreadCount: number;
-}
+
+  unreadCount: () => number;
+};
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
@@ -26,16 +40,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   error: null,
 
   getNotifications: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const res = await notification.getAll();
       set({ notifications: res.data, loading: false });
     } catch (err: any) {
-      set({ error: err.message, loading: false });
+      console.error("Notification fetch error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch notifications",
+        loading: false,
+      });
     }
   },
 
-  markAsRead: async (id) => {
+  markAsRead: async (id: number) => {
     try {
       await notification.markAsRead(id);
       set({
@@ -43,19 +61,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           n.id === id ? { ...n, is_read: true } : n
         ),
       });
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Mark as read error:", err.response?.data || err.message);
     }
   },
 
-  // 🆕 Real-time push
-  addNotification: (newNotif) => {
-    set({
-      notifications: [newNotif, ...get().notifications],
-    });
-  },
-
-  get unreadCount() {
-    return get().notifications.filter((n) => !n.is_read).length;
-  },
+  unreadCount: () => get().notifications.filter((n) => !n.is_read).length,
 }));

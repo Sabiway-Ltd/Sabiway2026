@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+import { useNotificationStore } from "./useNotificationStore"; // ✅ add at the top
 
 
 const API_URL = `${EXPRESS_LOCAL_URL}/api`;
@@ -70,6 +71,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       toast(`${user?.full_name || "Someone"} logged out`);
     });
   }
+  socket.on("notification:new", (notif) => {
+  const { notifications, unreadCount } = useNotificationStore.getState();
+
+  // Update notifications store
+  useNotificationStore.setState({
+    notifications: [notif, ...notifications],
+  });
+
+  // Optional: only show toast if user isn't looking at dropdown
+  toast.success(
+    `${notif.actor.full_name.split(" ")[0] || "Someone"} ${notif.message || "sent you a notification"}`
+  );
+});
 },
 
 

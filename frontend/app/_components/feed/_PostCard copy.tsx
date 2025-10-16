@@ -219,34 +219,6 @@ export default function PostCard({
     }
   };
 
-
-  // For Post Kebab menu
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleEdit = () => {
-    setMenuOpen(false);
-    // Your edit logic here
-    console.log("Edit clicked");
-  };
-
-  const handleDelete = () => {
-    setMenuOpen(false);
-    // Your delete logic here
-    console.log("Delete clicked");
-  };
-
   return (
     <div className="p-4 border-b">
       <div className="flex justify-between items-center gap-3">
@@ -263,82 +235,46 @@ export default function PostCard({
           </div>
         </div>
 
-        {author.user_id !== currentUser?.user_id ? (
-        <button
-          onClick={handleFollowToggle}
-          disabled={followingLoading}
-          className={`ml-auto px-3 py-1 rounded-full text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 ${
-            isFollowing
-              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          } ${followingLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-        >
-          {followingLoading ? (
-            <>
-              <svg
-                className="animate-spin h-4 w-4 text-current"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8z"
-                ></path>
-              </svg>
-              <span className="text-xs">
-                {isFollowing ? "Unfollowing..." : "Following..."}
-              </span>
-            </>
-          ) : (
-            <span>{isFollowing ? "Unfollow" : "Follow"}</span>
-          )}
-        </button>
-      ) : (
-        <div className="ml-auto relative" ref={menuRef}>
+        {author.user_id !== currentUser?.user_id && (
           <button
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="p-2 rounded-full hover:bg-gray-100 transition"
+            onClick={handleFollowToggle}
+            disabled={followingLoading}
+            className={`ml-auto px-3 py-1 rounded-full text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 ${
+              isFollowing
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            } ${followingLoading ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-600"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-            </svg>
-
+            {followingLoading ? (
+              <>
+                <svg
+                  className="animate-spin h-4 w-4 text-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  ></path>
+                </svg>
+                <span className="text-xs">{isFollowing ? "Unfollowing..." : "Following..."}</span>
+              </>
+            ) : (
+              <span>{isFollowing ? "Unfollow" : "Follow"}</span>
+            )}
           </button>
 
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <button
-                onClick={handleEdit}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-              >
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
+        )}
       </div>
 
       <div className="mt-3 text-gray-800 text-sm">{content}</div>

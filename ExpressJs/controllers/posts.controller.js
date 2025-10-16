@@ -71,27 +71,39 @@ exports.getPostById = async (req, res) => {
 /* -------------------------
    Likes (post)
    ------------------------- */
+// Like Post
 exports.likePost = async (req, res) => {
   try {
     const token = req.headers._token;
-    const result = await djangoPost.likePost(token, req.params.id);
-    postEvents.postLiked({ postId: req.params.id, actor: req.user || null, result });
-    res.json(result);
+    const updated = await djangoPost.likePost(token, req.params.id);
+
+    // Map server response to { likes } format
+    const payload = { postId: req.params.id, result: { likes: updated.likes_count } };
+
+    postEvents.postLiked(payload);
+
+    res.json(updated);
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
   }
 };
 
+// Unlike Post
 exports.unlikePost = async (req, res) => {
   try {
     const token = req.headers._token;
-    const result = await djangoPost.unlikePost(token, req.params.id);
-    postEvents.postUnliked({ postId: req.params.id, actor: req.user || null, result });
-    res.json(result);
+    const updated = await djangoPost.unlikePost(token, req.params.id);
+
+    const payload = { postId: req.params.id, result: { likes: updated.likes_count } };
+
+    postEvents.postUnliked(payload);
+
+    res.json(updated);
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
   }
 };
+
 
 /* -------------------------
    Comments & Replies
@@ -128,6 +140,59 @@ exports.listRepliesForPost = async (req, res) => {
     res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
   }
 };
+
+/* -------------------------
+   🔁 Replies (NEW)
+   ------------------------- */
+exports.getRepliesByComment = async (req, res) => {
+  try {
+    const token = req.headers._token;
+    const replies = await djangoPost.getRepliesByComment(token, req.params.id);
+    res.json(replies);
+  } catch (err) {
+    console.error("getRepliesByComment error:", err);
+    res
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: err.message });
+  }
+};
+
+// controllers/posts.controller.js
+// controllers/posts.controller.js
+exports.createReplyForComment = async (req, res) => {
+  try {
+    const token =
+      req.headers._token || req.headers.authorization?.split(" ")[1];
+    const { comment, content } = req.body;
+
+    if (!comment) {
+      return res.status(400).json({ error: "Comment ID is required" });
+    }
+    if (!content) {
+      return res.status(400).json({ error: "Content is required" });
+    }
+
+    const payload = { comment, content };
+
+    const created = await djangoPost.createReplyForComment(token, payload);
+
+    postEvents.replyCreated({
+      commentId: comment,
+      reply: created,
+    });
+
+    res.status(201).json(created);
+  } catch (err) {
+    console.error("createReplyForComment error:", err.response?.data || err.message);
+    res
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: err.message });
+  }
+};
+
+
+
+
 
 /* Comment like/unlike */
 exports.likeComment = async (req, res) => {

@@ -22,6 +22,11 @@ router.post("/:id/comments", controller.createCommentForPost);
 
 // Replies for a post (all replies belonging to comments under the post)
 router.get("/:id/replies", controller.listRepliesForPost);
+// Create reply on a comment
+router.post("/replies", controller.createReplyForComment);
+router.get("/comments/:id/replies", controller.getRepliesByComment);
+
+
 
 // Comment like/unlike (by comment id)
 router.post("/comments/:id/like", controller.likeComment);

@@ -133,7 +133,14 @@ export const usePostStore = create<PostState>((set, get) => ({
     const socket = getSocket(token);
     set({ socket });
 
-    // ---------- Post Events ----------
+    // Helper for listeners
+    const attachListener = (event: string, handler: (...args: any[]) => void) => {
+      socket.on(event, handler);
+    };
+
+    /* -------------------------
+      🟢 Post Events
+    --------------------------*/
     attachListener<Post>("post:created", (post) =>
       set((state) => ({
         posts: state.posts.some((p) => p.id === post.id)
@@ -149,23 +156,29 @@ export const usePostStore = create<PostState>((set, get) => ({
     );
 
     attachListener<{ id: string }>("post:deleted", ({ id }) =>
-      set((state) => ({ posts: state.posts.filter((p) => p.id !== id) }))
-    );
-
-    attachListener<{ postId: string; result: any }>("post:liked", ({ postId, result }) =>
       set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, likes_count: result?.likes || p.likes_count } : p
-        ),
+        posts: state.posts.filter((p) => p.id !== id),
       }))
     );
 
-    attachListener<{ postId: string; result: any }>("post:unliked", ({ postId, result }) =>
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, likes_count: result?.likes || p.likes_count } : p
-        ),
-      }))
+    attachListener<{ postId: string; result: { likes: number } }>(
+      "post:liked",
+      ({ postId, result }) =>
+        set((state) => ({
+          posts: state.posts.map((p) =>
+            p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
+          ),
+        }))
+    );
+
+    attachListener<{ postId: string; result: { likes: number } }>(
+      "post:unliked",
+      ({ postId, result }) =>
+        set((state) => ({
+          posts: state.posts.map((p) =>
+            p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
+          ),
+        }))
     );
 
     attachListener<{ postId: string }>("post:bookmarked", ({ postId }) =>
@@ -184,76 +197,10 @@ export const usePostStore = create<PostState>((set, get) => ({
       }))
     );
 
-    // ---------- Comment Events ----------
-    attachListener<{ postId: string; comment: Comment }>("comment:created", ({ postId, comment }) =>
-      set((state) => ({
-        commentsByPost: {
-          ...state.commentsByPost,
-          [postId]: [...(state.commentsByPost[postId] || []), comment],
-        },
-      }))
-    );
-
-    attachListener<{ commentId: string; data: any }>("comment:liked", ({ commentId, data }) =>
-      set((state) => ({
-        commentsByPost: Object.fromEntries(
-          Object.entries(state.commentsByPost).map(([postId, comments]) => [
-            postId,
-            comments.map((c) =>
-              c.id === commentId ? { ...c, likes_count: data?.likes || c.likes_count } : c
-            ),
-          ])
-        ),
-      }))
-    );
-
-    attachListener<{ commentId: string; data: any }>("comment:unliked", ({ commentId, data }) =>
-      set((state) => ({
-        commentsByPost: Object.fromEntries(
-          Object.entries(state.commentsByPost).map(([postId, comments]) => [
-            postId,
-            comments.map((c) =>
-              c.id === commentId ? { ...c, likes_count: data?.likes || c.likes_count } : c
-            ),
-          ])
-        ),
-      }))
-    );
-
-    // ---------- Reply Events ----------
-    attachListener<{ replyId: string; data: any }>("reply:liked", ({ replyId, data }) =>
-      set((state) => ({
-        repliesByComment: Object.fromEntries(
-          Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-            commentId,
-            replies.map((r) =>
-              r.id === replyId ? { ...r, likes_count: data?.likes || r.likes_count } : r
-            ),
-          ])
-        ),
-      }))
-    );
-
-    attachListener<{ replyId: string; data: any }>("reply:unliked", ({ replyId, data }) =>
-      set((state) => ({
-        repliesByComment: Object.fromEntries(
-          Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-            commentId,
-            replies.map((r) =>
-              r.id === replyId ? { ...r, likes_count: data?.likes || r.likes_count } : r
-            ),
-          ])
-        ),
-      }))
-    );
-
-    // ---------- Repost Events ----------
-    attachListener<{ postId: string; repost: any }>("post:reposted", ({ postId, repost }) =>
+    attachListener<{ postId: string; repost: any }>("post:reposted", ({ postId }) =>
       set((state) => ({
         posts: state.posts.map((p) =>
-          p.id === postId
-            ? { ...p, reposts_count: (p.reposts_count || 0) + 1 }
-            : p
+          p.id === postId ? { ...p, reposts_count: (p.reposts_count || 0) + 1 } : p
         ),
       }))
     );
@@ -268,9 +215,127 @@ export const usePostStore = create<PostState>((set, get) => ({
       }))
     );
 
-    // Fetch initial posts
+    /* -------------------------
+      💬 Comment Events
+    --------------------------*/
+    attachListener<{ postId: string; comment: Comment }>(
+      "comment:created",
+      ({ postId, comment }) =>
+        set((state) => ({
+          commentsByPost: {
+            ...state.commentsByPost,
+            [postId]: [...(state.commentsByPost[postId] || []), comment],
+          },
+        }))
+    );
+
+    attachListener<{ commentId: string; data: any }>(
+      "comment:liked",
+      ({ commentId, data }) =>
+        set((state) => ({
+          commentsByPost: Object.fromEntries(
+            Object.entries(state.commentsByPost).map(([postId, comments]) => [
+              postId,
+              comments.map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      likes_count: data?.likes || c.likes_count,
+                      is_liked: true,
+                    }
+                  : c
+              ),
+            ])
+          ),
+        }))
+    );
+
+    attachListener<{ commentId: string; data: any }>(
+      "comment:unliked",
+      ({ commentId, data }) =>
+        set((state) => ({
+          commentsByPost: Object.fromEntries(
+            Object.entries(state.commentsByPost).map(([postId, comments]) => [
+              postId,
+              comments.map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      likes_count: data?.likes || c.likes_count,
+                      is_liked: false,
+                    }
+                  : c
+              ),
+            ])
+          ),
+        }))
+    );
+
+    /* -------------------------
+      💬 Reply Events
+    --------------------------*/
+    // ✅ NEW: Reply created
+    attachListener<{ commentId: string; reply: any }>(
+      "reply:created",
+      ({ commentId, reply }) =>
+        set((state) => ({
+          repliesByComment: {
+            ...state.repliesByComment,
+            [commentId]: [...(state.repliesByComment[commentId] || []), reply],
+          },
+        }))
+    );
+
+    attachListener<{ replyId: string; data: any }>(
+      "reply:liked",
+      ({ replyId, data }) =>
+        set((state) => ({
+          repliesByComment: Object.fromEntries(
+            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
+              commentId,
+              replies.map((r) =>
+                r.id === replyId
+                  ? {
+                      ...r,
+                      likes_count: data?.likes || r.likes_count,
+                      is_liked: true,
+                    }
+                  : r
+              ),
+            ])
+          ),
+        }))
+    );
+
+    attachListener<{ replyId: string; data: any }>(
+      "reply:unliked",
+      ({ replyId, data }) =>
+        set((state) => ({
+          repliesByComment: Object.fromEntries(
+            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
+              commentId,
+              replies.map((r) =>
+                r.id === replyId
+                  ? {
+                      ...r,
+                      likes_count: data?.likes || r.likes_count,
+                      is_liked: false,
+                    }
+                  : r
+              ),
+            ])
+          ),
+        }))
+    );
+
+    /* -------------------------
+      🔄 Fetch initial posts
+    --------------------------*/
     await get().getAllPosts();
+
+    console.log("✅ Socket initialized and event listeners attached");
   },
+
 
   // ---------- Get all posts ----------
   getAllPosts: async () => {
@@ -303,10 +368,10 @@ export const usePostStore = create<PostState>((set, get) => ({
       const newPost = res.data;
 
       // Update local state immediately
-      set((state) => ({
-        posts: [newPost, ...state.posts],
-        loading: false,
-      }));
+      // set((state) => ({
+      //   posts: [newPost, ...state.posts],
+      //   loading: false,
+      // }));
 
       toast.success("Post created successfully!");
     } catch (err: any) {
@@ -317,22 +382,110 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
 
-
-
-  likePost: async (id) => {
+  // 📄 Get a single post
+  getPostById: async (id: string): Promise<Post | null> => {
+    set({ loading: true, error: null });
     try {
-      await post.like(id);
-    } catch (err) {
+      const res = await post.getById(id);
+      const p = res.data;
+      const normalized: Post = {
+        ...p,
+        is_liked: p.is_liked ?? false,
+        author: {
+          ...p.author,
+          profile_picture:
+            p.author.profile_picture ||
+            "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+        },
+      };
+      set({ currentPost: normalized, loading: false });
+      return normalized;
+    } catch (err: any) {
+      console.error("Get post error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to load post",
+        loading: false,
+      });
+      return null;
+    }
+  },
+
+
+
+
+  likePost: async (id: string) => {
+    try {
+      const token = localStorage.getItem("access");
+      if (!token) throw new Error("Not authenticated");
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Server will update likes and broadcast via socket
+      await axios.post(`${API_URL}/posts/${id}/like/`, {}, { headers });
+
+      // Optional: update your own UI immediately
+      set((state) => ({
+        posts: state.posts.map((p) =>
+          p.id === id ? { ...p, is_liked: true } : p
+        ),
+      }));
+    } catch (err: any) {
       console.error("Like post error:", err);
+      toast.error("Failed to like post.");
     }
   },
-  unlikePost: async (id) => {
-    try {
-      await post.unlike(id);
-    } catch (err) {
-      console.error("Unlike post error:", err);
-    }
-  },
+
+
+unlikePost: async (id: string) => {
+  try {
+    const token = localStorage.getItem("access");
+    if (!token) throw new Error("Not authenticated");
+
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+
+    // HTTP request to unlike post
+    const res = await axios.post<Post>(`${API_URL}/posts/${id}/unlike/`, {}, { headers });
+    const updatedPost = res.data;
+
+    // Update local state immediately
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === id
+          ? { ...p, likes_count: updatedPost.likes_count, is_liked: false }
+          : p
+      ),
+    }));
+
+    // Emit socket event for real-time updates
+    const socket = get().socket;
+    socket?.emit("post:unliked", { postId: id, result: updatedPost });
+
+    // toast.success("Post unliked!");
+  } catch (err: any) {
+    console.error("Unlike post error:", err);
+    toast.error("Failed to unlike post.");
+  }
+},
+
+
+  // likePost: async (id) => {
+  //   try {
+  //     await post.like(id);
+  //   } catch (err) {
+  //     console.error("Like post error:", err);
+  //   }
+  // },
+
+  // unlikePost: async (id) => {
+  //   try {
+  //     await post.unlike(id);
+  //   } catch (err) {
+  //     console.error("Unlike post error:", err);
+  //   }
+  // },
+
+ 
+
   bookmarkPost: async (id) => {
     try {
       await post.bookmark(id);
@@ -347,55 +500,224 @@ export const usePostStore = create<PostState>((set, get) => ({
       console.error("Unbookmark post error:", err);
     }
   },
-  addComment: async (postId, content) => {
+  // addComment: async (postId, content) => {
+  //   try {
+  //     const res = await post.addComment(postId, { content });
+  //     set((state) => ({
+  //       commentsByPost: {
+  //         ...state.commentsByPost,
+  //         [postId]: [...(state.commentsByPost[postId] || []), res.data],
+  //       },
+  //     }));
+  //   } catch (err) {
+  //     console.error("Add comment error:", err);
+  //   }
+  // },
+
+
+  addComment: async (postId: string, content: string) => {
+    const token = localStorage.getItem("access");
+    if (!token) return toast.error("Not logged in");
+
     try {
-      const res = await post.addComment(postId, { content });
+      const res = await axios.post<Comment>(
+        `${API_URL}/posts/${postId}/comments`,
+        { content },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // set((state) => ({
+      //   commentsByPost: {
+      //     ...state.commentsByPost,
+      //     [postId.toString()]: [...(state.commentsByPost[postId.toString()] || []), res.data],
+      //   },
+      // }));
+
+      toast.success("Comment added!");
+    } catch (err) {
+      console.error("Add comment error:", err);
+      toast.error("Failed to add comment.");
+    }
+  },
+
+
+
+
+
+  // getComments: async (postId) => {
+  //   try {
+  //     const data = await post.getComments(postId);
+  //     set((state) => ({
+  //       commentsByPost: { ...state.commentsByPost, [postId]: data },
+  //     }));
+  //   } catch (err) {
+  //     console.error("Get comments error:", err);
+  //   }
+  // },
+
+  getComments: async (postId: string) => {
+  const token = localStorage.getItem("access");
+  if (!token) return set({ error: "Not logged in" });
+
+  try {
+    const res = await axios.get<Comment[]>(
+      `${API_URL}/posts/${postId}/comments`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    // Normalize key as string
+    set((state) => ({
+      commentsByPost: {
+        ...state.commentsByPost,
+        [postId.toString()]: res.data,
+      },
+    }));
+  } catch (err: any) {
+    console.error("Get comments error:", err);
+    set({ error: "Failed to fetch comments" });
+  }
+},
+
+
+
+
+
+
+  // addReply: async (commentId, content) => {
+  //   try {
+  //     const res = await post.addReply({ comment: String(commentId), content });
+  //     set((state) => ({ replies: [...state.replies, res.data] }));
+  //   } catch (err) {
+  //     console.error("Add reply error:", err);
+  //   }
+  // },
+
+ addReply: async (commentId: string, content: string) => {
+  const token = localStorage.getItem("access");
+  if (!token) return toast.error("Not logged in");
+
+  try {
+    const res = await axios.post<Reply>(
+      `${API_URL}/posts/replies`,
+      {
+        comment: commentId, // ✅ send comment ID in body
+        content,            // ✅ send reply content
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    // ✅ Update repliesByComment in Zustand
+    set((state) => ({
+      repliesByComment: {
+        ...state.repliesByComment,
+        [commentId.toString()]: [
+          ...(state.repliesByComment[commentId.toString()] || []),
+          res.data,
+        ],
+      },
+    }));
+
+    toast.success("Reply added!");
+  } catch (err: any) {
+    console.error("Add reply error:", err);
+    toast.error("Failed to add reply.");
+  }
+},
+
+
+
+
+
+  // getReplies: async (postId) => {
+  //   try {
+  //     const res = await post.getReplies(postId);
+  //     set({ replies: res.data });
+  //   } catch (err) {
+  //     console.error("Get replies error:", err);
+  //   }
+  // },
+
+  getReplies: async (postId: string) => {
+    const token = localStorage.getItem("access");
+    if (!token) return toast.error("Not logged in");
+
+    try {
+      const res = await axios.get<Reply[]>(
+        `${API_URL}/posts/${postId}/replies`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Flatten repliesByComment using commentId as key
+      const repliesByComment = res.data.reduce((acc, reply) => {
+        const key = reply.comment.toString();
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(reply);
+        return acc;
+      }, {} as Record<string, Reply[]>);
+
       set((state) => ({
-        commentsByPost: {
-          ...state.commentsByPost,
-          [postId]: [...(state.commentsByPost[postId] || []), res.data],
+        repliesByComment: { ...state.repliesByComment, ...repliesByComment },
+      }));
+    } catch (err) {
+      console.error("Get replies error:", err);
+      toast.error("Failed to fetch replies.");
+    }
+  },
+
+  getRepliesByComment: async (commentId) => {
+    const token = localStorage.getItem("access");
+    if (!token) return toast.error("Not logged in");
+
+    try {
+      const res = await fetch(`${API_URL}/posts/comments/${commentId}/replies`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ include token
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch replies: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
+      set((state) => ({
+        repliesByComment: {
+          ...state.repliesByComment,
+          [commentId.toString()]: data, // normalize key to string
         },
       }));
     } catch (err) {
-      console.error("Add comment error:", err);
-    }
-  },
-  getComments: async (postId) => {
-    try {
-      const data = await post.getComments(postId);
-      set((state) => ({
-        commentsByPost: { ...state.commentsByPost, [postId]: data },
-      }));
-    } catch (err) {
-      console.error("Get comments error:", err);
-    }
-  },
-  addReply: async (commentId, content) => {
-    try {
-      const res = await post.addReply({ comment: String(commentId), content });
-      set((state) => ({ replies: [...state.replies, res.data] }));
-    } catch (err) {
-      console.error("Add reply error:", err);
-    }
-  },
-  getReplies: async (postId) => {
-    try {
-      const res = await post.getReplies(postId);
-      set({ replies: res.data });
-    } catch (err) {
-      console.error("Get replies error:", err);
-    }
-  },
-  getRepliesByComment: async (commentId) => {
-    try {
-      const res = await post.getRepliesByComment(commentId);
-      set((state) => ({
-        repliesByComment: { ...state.repliesByComment, [commentId]: res.data },
-      }));
-    } catch (err) {
       console.error("Get replies by comment error:", err);
+      toast.error("Failed to load replies");
     }
   },
+
+
+
+
+  // getRepliesByComment: async (commentId) => {
+  //   try {
+  //     const res = await post.getRepliesByComment(commentId);
+  //     set((state) => ({
+  //       repliesByComment: { ...state.repliesByComment, [commentId]: res.data },
+  //     }));
+  //   } catch (err) {
+  //     console.error("Get replies by comment error:", err);
+  //   }
+  // },
+
+
+
+
+
   repostPost: async (id, message) => {
     try {
       await post.repost(id, { message });

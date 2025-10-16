@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { Smile } from "lucide-react";
+import { EmojiClickData } from "emoji-picker-react";
 import { Heart, MessageCircle } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
+
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface Comment {
   id: string | number;
@@ -133,6 +137,46 @@ export default function CommentThread({
     }
   }, [created_at]);
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // ✨ Auto-resize height as user types
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [replyText]);
+
+  // 🧠 Insert emoji at cursor position
+  const insertAtCursor = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newValue = replyText.slice(0, start) + emoji + replyText.slice(end);
+    setReplyText(newValue);
+
+    requestAnimationFrame(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+      textarea.focus();
+    });
+  };
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    insertAtCursor(emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && replyText.trim() && !submitting) {
+      e.preventDefault();
+      handleReplySubmit();
+    }
+  };
+
   return (
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start gap-3 mb-2">
@@ -189,39 +233,83 @@ export default function CommentThread({
 
           {/* ✍️ Reply Box */}
           {!isReply && showReplyBox && (
-            <div className="mt-2 border rounded-full px-4 py-1 bg-white flex w-full justify-between">
-              <input
-                type="text"
-                placeholder="Write a reply..."
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault(); // prevent newline
-                    handleReplySubmit();
-                  }
-                }}
-                className="w-[85%] text-xs outline-none"
-              />
+            <div className="mt-2 border rounded-full px-4 pt-2 bg-white flex w-full justify-between items-start relative">
+                {/* 📝 Textarea (auto-resizing) */}
+                <textarea
+                  ref={textareaRef}
+                  placeholder="Write a reply..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={submitting}
+                  rows={1}
+                  className="flex-1 resize-none text-xs outline-none bg-transparent disabled:opacity-60 overflow-hidden"
+                />
 
-              <button onClick={handleReplySubmit} disabled={submitting || !replyText.trim()}>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 22 22"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+                {/* 😀 Emoji Button */}
+                <div className="relative mr-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    className="text-gray-500 hover:text-yellow-500 transition"
+                  >
+                    <Smile className="h-4 w-4" />
+                  </button>
+
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-0 right-0 z-50 scale-75">
+                      <EmojiPicker onEmojiClick={handleEmojiClick} />
+                    </div>
+                  )}
+                </div>
+
+                {/* 🚀 Send Button */}
+                <button
+                  onClick={handleReplySubmit}
+                  disabled={submitting || !replyText.trim()}
+                  className="flex items-center justify-center disabled:opacity-50"
                 >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
-                    fill="black"
-                  />
-                </svg>
-              </button>
-            </div>
+                  {submitting ? (
+                    <svg
+                      className="animate-spin h-4 w-4 text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 22 22"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
+                        fill="black"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
           )}
+
 
           {/* 💭 View Replies */}
           {!isReply && (reply_count ?? replies.length) > 0 && (

@@ -31,9 +31,8 @@ exports.markNotificationRead = async (req, res) => {
     const token = req.headers._token;
     const updated = await djangoNotification.markAsRead(token, req.params.id);
 
-    // Emit real-time event to the user (optional)
-    notificationEvents.notificationRead({
-      userId: req.user?.id,
+    // Emit real-time event ONLY to that user
+    notificationEvents.notificationRead(req.user?.id, {
       notificationId: req.params.id,
     });
 
