@@ -60,6 +60,9 @@ export default function ProfilePage() {
   const { fetchMyFollowers, fetchMyFollowing, myFollowers, myFollowing } = useProfileStore();
 
 
+const [loadingId, setLoadingId] = useState<number | null>(null);
+
+
 
 
 
@@ -115,16 +118,21 @@ export default function ProfilePage() {
   };
 
   // 🔖 Handle Unbookmark
-  const handleUnbookmark = async (postId: string) => {
+ const handleUnbookmark = async (postId: string) => {
     try {
+      setLoadingId(postId); // show spinner for this post
       await post.unbookmark(postId);
       setBookmarks((prev) => prev.filter((b) => b.post.id !== postId));
       toast.success("Removed from bookmarks");
     } catch (err) {
       console.error("Unbookmark error:", err);
       toast.error("Failed to unbookmark post");
+    } finally {
+      setLoadingId(null); // stop spinner
     }
   };
+
+  
 
   // 📸 Handle Profile Picture Change
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -601,12 +609,57 @@ const handleShowFollowing = async () => {
                   bookmarks.map((bm) => (
                     <div
                       key={bm.id}
-                      className="p-4 border rounded-lg bg-white shadow-sm flex items-center justify-between"
+                      className="p-4 border rounded-lg bg-white shadow-sm space-y-3 w-[400px]"
                     >
-                      <p>{bm.post?.text || bm.post?.content || "Bookmarked post"}</p>
-                      <button onClick={() => handleUnbookmark(bm.post.id)}>
-                        <Bookmark className="h-4 w-4 fill-blue-500 text-blue-500" />
-                      </button>
+                      <div className="flex justify-between gap-3 items-center">
+                        <p>{bm.post?.text || bm.post?.content || "Bookmarked post"}</p>
+
+                        {/* ✅ Unbookmark button with spinner */}
+                        <button
+                          onClick={() => handleUnbookmark(bm.post.id)}
+                          className="relative flex items-center justify-center"
+                          disabled={loadingId === bm.post.id} // disable button while loading
+                        >
+                          {loadingId === bm.post.id ? (
+                            <svg
+                              className="animate-spin h-4 w-4 text-blue-500"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                              ></path>
+                            </svg>
+                          ) : (
+                            <Bookmark className="h-4 w-4 fill-blue-500 text-blue-500" />
+                          )}
+                        </button>
+                      </div>
+
+                      {bm.post?.image && (
+                        <div>
+                          <img
+                            src={
+                              bm.post.image.startsWith("http")
+                                ? bm.post.image
+                                : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${bm.post.image}`
+                            }
+                            alt="Post image"
+                            className="rounded-md mb-2 w-full h-auto"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

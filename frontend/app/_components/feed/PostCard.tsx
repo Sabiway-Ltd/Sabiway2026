@@ -516,7 +516,7 @@ export default function PostCard({
                 <Smile className="h-5 w-5" />
               </button>
               {showEmojiPicker && (
-                <div className="absolute bottom-8 right-0 z-50">
+                <div className="absolute bottom-8 right-0 z-50 scale-75">
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}

@@ -131,7 +131,7 @@ export const usePostStore = create<PostState>((set, get) => ({
   initSocket: async () => {
   if (get().socket) return; // prevent duplicate connections
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access");
   if (!token) {
     console.warn("⚠️ No token found — cannot init socket.");
     return;
@@ -752,15 +752,37 @@ unlikePost: async (id: string) => {
 
   // For Search
    // ✅ Filter by search query
-  filterPostsBySearch: async (query) => {
-    try {
-      set({ loadingHashtag: true, activeHashtag: null, activeSearch: query });
-      const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/posts/search/?q=${query}`);
-      set({ filteredPosts: res.data, loadingHashtag: false });
-    } catch (err) {
-      set({ loadingHashtag: false, error: "Search failed" });
-    }
-  },
+
+
+  /* -------------------------
+       Filter Posts by Search Query
+    --------------------------*/
+    filterPostsBySearch: async (query) => {
+      try {
+        set({
+          loadingHashtag: true,
+          activeSearch: query,
+          activeHashtag: null, // clear hashtag when searching
+          error: null,
+        });
+        const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/search/?q=${query}`);
+        set({ filteredPosts: res.data, loadingHashtag: false });
+      } catch (error: any) {
+        set({ error: error.message, loadingHashtag: false });
+      }
+    },
+
+    /* -------------------------
+       Reset Filters
+    --------------------------*/
+    resetFilteredPosts: () => {
+      set({
+        filteredPosts: [],
+        activeHashtag: null,
+        activeSearch: null,
+      });
+    },
+
 
 
 

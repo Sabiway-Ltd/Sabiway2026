@@ -1,3 +1,5 @@
+// app/community/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,6 +17,7 @@ export default function Community() {
     posts,
     filteredPosts,
     activeHashtag,
+    activeSearch,
     getAllPosts,
     loading,
     loadingHashtag,
@@ -35,7 +38,11 @@ export default function Community() {
     fetchMyFollowing();
   }, [fetchMyFollowing]);
 
-  const isFiltering = activeHashtag !== null;
+  // ✅ Only activate filtering if search or hashtag is a non-empty string
+  const isFiltering =
+    (activeHashtag && activeHashtag.trim() !== "") ||
+    (activeSearch && activeSearch.trim() !== "");
+
   const displayedPosts = isFiltering ? filteredPosts : posts;
 
   return (
@@ -54,14 +61,32 @@ export default function Community() {
             <div className="text-center text-gray-500 py-8">Loading posts...</div>
           )}
 
-          {/* Hashtag-specific loading */}
+          {/* Hashtag or Search-specific loading */}
           {loadingHashtag && isFiltering && (
             <div className="text-center py-12">
-              <svg className="animate-spin h-8 w-8 mx-auto mb-3" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <svg
+                className="animate-spin h-8 w-8 mx-auto mb-3"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
               </svg>
               <div className="text-gray-600">
-                Searching results for <span className="font-medium">#{activeHashtag}</span>...
+                Searching results for{" "}
+                <span className="font-medium">
+                  {activeHashtag
+                    ? `#${activeHashtag}`
+                    : activeSearch
+                    ? `"${activeSearch}"`
+                    : ""}
+                </span>
+                ...
               </div>
             </div>
           )}
@@ -72,8 +97,10 @@ export default function Community() {
           {/* Empty State */}
           {!loading && !loadingHashtag && displayedPosts.length === 0 && (
             <div className="text-center text-gray-400 py-8">
-              {isFiltering
+              {activeHashtag
                 ? `No posts found for #${activeHashtag}.`
+                : activeSearch
+                ? `No posts found for "${activeSearch}".`
                 : "No posts yet — be the first to share something!"}
             </div>
           )}
