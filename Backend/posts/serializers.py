@@ -125,14 +125,14 @@ class LikeSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
-    reply_count = serializers.IntegerField(read_only=True)  # ✅ Added field
+    reply_count = serializers.IntegerField(read_only=True)
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Comment
         fields = [
-            "id", "user", "post", "content",
-            "likes_count", "created_at",
-            "is_liked", "reply_count",  # ✅ include here
+            "id", "user", "post", "content", "image",
+            "likes_count", "created_at", "is_liked", "reply_count",
         ]
         read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked", "reply_count"]
 
@@ -154,25 +154,35 @@ class CommentSerializer(serializers.ModelSerializer):
         return obj.likes.filter(user=profile).exists()
 
     def create(self, validated_data):
+        """
+        Include image when creating a comment.
+        """
         request = self.context["request"]
         profile = request.user.profile
         post = validated_data["post"]
+
         comment = Comment.objects.create(
-            user=profile, post=post, content=validated_data["content"]
+            user=profile,
+            post=post,
+            content=validated_data.get("content"),
+            image=validated_data.get("image", None),  # ✅ include image
         )
+
         post.comments_count = post.comments_count + 1
         post.save(update_fields=["comments_count"])
         return comment
 
 
 
+
 class ReplySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    is_liked = serializers.SerializerMethodField()  # ✅ Add this
+    is_liked = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Reply
-        fields = ["id", "user", "comment", "content", "likes_count", "created_at", "is_liked"]
+        fields = ["id", "user", "comment", "content", "image", "likes_count", "created_at", "is_liked"]
         read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked"]
 
     def get_user(self, obj):
@@ -192,15 +202,22 @@ class ReplySerializer(serializers.ModelSerializer):
         profile = getattr(request.user, "profile", request.user)
         return obj.likes.filter(user=profile).exists()
 
-
     def create(self, validated_data):
+        """
+        Include image when creating a reply.
+        """
         request = self.context["request"]
         profile = request.user.profile
         comment = validated_data["comment"]
+
         reply = Reply.objects.create(
-            user=profile, comment=comment, content=validated_data["content"]
+            user=profile,
+            comment=comment,
+            content=validated_data.get("content"),
+            image=validated_data.get("image", None),  # ✅ include image
         )
         return reply
+
 
 
 
