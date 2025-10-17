@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>; // make it async so we can await
 }
 
 export default function DeleteConfirmModal({
@@ -13,6 +14,17 @@ export default function DeleteConfirmModal({
   onClose,
   onConfirm,
 }: DeleteConfirmModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -38,16 +50,24 @@ export default function DeleteConfirmModal({
             <div className="flex justify-end gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition"
+                disabled={isDeleting}
+                className={`px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition ${
+                  isDeleting ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 Cancel
               </button>
               <button
-                onClick={onConfirm}
-                className="px-4 py-2 rounded-full text-sm font-medium  text-red-600 hover:bg-[#007246] transition-colors focus:outline-none focus:ring-2 focus:ring-[#008753]/40 focus:ring-offset-1"
-                >
-                Delete
-            </button>
+                onClick={handleConfirm}
+                disabled={isDeleting}
+                className={`px-4 py-2 rounded-full text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                  isDeleting
+                    ? "bg-red-300 cursor-not-allowed opacity-50"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
 
             </div>
           </motion.div>

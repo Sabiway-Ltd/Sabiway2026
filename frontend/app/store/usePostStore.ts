@@ -91,7 +91,7 @@ const listenersAttached = new Set<string>();
 
 const getSocket = (token: string) => {
   if (!socketInstance) {
-    socketInstance = io("http://localhost:5000", {
+    socketInstance = io(EXPRESS_LOCAL_URL, {
       auth: { token },
     });
 
@@ -382,6 +382,7 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
 
+
   // 📄 Get a single post
   getPostById: async (id: string): Promise<Post | null> => {
     set({ loading: true, error: null });
@@ -406,6 +407,10 @@ export const usePostStore = create<PostState>((set, get) => ({
         error: err.response?.data?.detail || "Failed to load post",
         loading: false,
       });
+        console.log("Axios error config:", err.config);
+  console.log("Axios error code:", err.code);
+  console.log("Axios error request:", err.request);
+  console.error("Get post error:", err.response?.data || err.message);
       return null;
     }
   },

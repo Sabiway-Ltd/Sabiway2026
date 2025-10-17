@@ -103,6 +103,7 @@ export default function Community() {
                   is_liked={post.is_liked ?? false}
                   is_bookmarked={post.is_bookmarked ?? false}
                   created_at={post.created_at}
+                  onReloadPosts={getAllPosts} // ⚡ reload posts after edit/delete
                 />
               ))}
             </div>

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Edit, Trash, Bookmark, Camera } from "lucide-react";
 import CommunityNavbar from "../_components/feed/CommunityNavbar";
@@ -15,7 +15,6 @@ import DeleteConfirmModal from "../_components/common/DeleteConfirmModal";
 import toast from "react-hot-toast";
 import Button from "../_components/common/Button";
 import { useAuthStore } from "../store/useAuthStore";
-import { useOutsideClick } from "../utils/useOutsideClick";
 import { div } from "framer-motion/client";
 
 
@@ -73,7 +72,7 @@ export default function ProfilePage() {
       try {
         await getMyProfile();
 
-        const postsRes = await post.getByMe();
+        const postsRes = await post.getAll();
         setMyPosts(postsRes.data.results || postsRes.data);
 
         const bmRes = await post.getMyBookmarks();
@@ -85,8 +84,6 @@ export default function ProfilePage() {
       }
     })();
   }, [getMyProfile]);
-
-  
 
   // 📝 Handle Edit Profile
   const handleEditProfile = () => {
@@ -249,10 +246,6 @@ const handleShowFollowing = async () => {
   setModalUsers(myFollowing);
   setIsFollowingModalOpen(true);
 };
-
-
-
-
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 ">
@@ -474,22 +467,19 @@ const handleShowFollowing = async () => {
                         className="w-full h-48 object-cover rounded-md mb-2"
                       />
                     ) : postItem.image ? (
-                      <img
-                        src={postItem.image.startsWith("http") 
-                              ? postItem.image 
-                              : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+                      <Image
+                        src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
                         alt="Post image"
-                        width="400"
-                        height="200"
+                        width={400}
+                        height={200}
                         className="rounded-md mb-2"
                       />
-
                     ) : null}
 
                     <input
                       type="file"
                       accept="image/*"
-                      className="mb-2 cursor-pointer"
+                      className="mb-2"
                       onChange={handlePostImageChange}
                     />
 
@@ -510,82 +500,35 @@ const handleShowFollowing = async () => {
                     </div>
                   </>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-start w-full justify-between gap-4">
-                      <p className="mb-2">{postItem.content}</p>
-                      
-                      {/* Options */}
-                      <div className="relative text-sm text-gray-600">
-                        <button
-                          onClick={() =>
-                            setMyPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === postItem.id
-                                  ? { ...p, showMenu: !p.showMenu }
-                                  : { ...p, showMenu: false }
-                              )
-                            )
-                          }
-                          className="p-2 rounded-full hover:bg-gray-100 transition ml-auto block"
-                        >
-                          {/* Vertical Kebab Icon */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-gray-600"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-
-                        {postItem.showMenu && (
-                          <div className="absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fadeIn">
-                            <button
-                              onClick={() => {
-                                handleEditPost(postItem.id, postItem.content);
-                                setMyPosts((prev) =>
-                                  prev.map((p) =>
-                                    p.id === postItem.id ? { ...p, showMenu: false } : p
-                                  )
-                                );
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                setPostToDelete(postItem.id);
-                                setIsDeleteModalOpen(true);
-                                setMyPosts((prev) =>
-                                  prev.map((p) =>
-                                    p.id === postItem.id ? { ...p, showMenu: false } : p
-                                  )
-                                );
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
+                  <>
+                    <p className="mb-2">{postItem.content}</p>
                     {postItem.image && (
-                        <img
-                          src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
-                          alt="Post image"
-                          className="w-[400px] h-auto rounded-md object-cover"
-                        />
-                      )}
-
-
-                    
-
-
-                  </div>
+                      <Image
+                        src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+                        alt="Post image"
+                        width={400}
+                        height={200}
+                        className="rounded-md"
+                      />
+                    )}
+                    <div className="flex gap-4 mt-3 text-sm text-gray-600">
+                      <button
+                        onClick={() => handleEditPost(postItem.id, postItem.content)}
+                        className="flex items-center gap-1 text-blue-600"
+                      >
+                        <Edit className="h-4 w-4" /> Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPostToDelete(postItem.id);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="flex items-center gap-1 text-red-600"
+                      >
+                        <Trash className="h-4 w-4" /> Delete
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             ))

@@ -63,9 +63,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
 
     // ✅ NEW: Google login toast
+   
     socket.on("user:google_logged_in", (user) => {
       toast.success(`${user.full_name.split(" ")[0] || "Someone"} just logged in`);
     });
+
 
     // ✅ Logout toast
     socket.on("user:logout", ({ user }) => {

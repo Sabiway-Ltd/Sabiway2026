@@ -73,7 +73,7 @@ export default function ProfilePage() {
       try {
         await getMyProfile();
 
-        const postsRes = await post.getByMe();
+        const postsRes = await post.getAll();
         setMyPosts(postsRes.data.results || postsRes.data);
 
         const bmRes = await post.getMyBookmarks();
@@ -86,7 +86,17 @@ export default function ProfilePage() {
     })();
   }, [getMyProfile]);
 
-  
+  // For Kebab menu
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // ✅ Close this post’s menu when clicked outside
+  useOutsideClick(menuRef, () => {
+    setMyPosts((prev) =>
+      prev.map((p) =>
+        p.id === postItem.id ? { ...p, showMenu: false } : p
+      )
+    );
+  });
 
   // 📝 Handle Edit Profile
   const handleEditProfile = () => {
@@ -474,22 +484,19 @@ const handleShowFollowing = async () => {
                         className="w-full h-48 object-cover rounded-md mb-2"
                       />
                     ) : postItem.image ? (
-                      <img
-                        src={postItem.image.startsWith("http") 
-                              ? postItem.image 
-                              : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+                      <Image
+                        src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
                         alt="Post image"
-                        width="400"
-                        height="200"
+                        width={400}
+                        height={200}
                         className="rounded-md mb-2"
                       />
-
                     ) : null}
 
                     <input
                       type="file"
                       accept="image/*"
-                      className="mb-2 cursor-pointer"
+                      className="mb-2"
                       onChange={handlePostImageChange}
                     />
 
@@ -510,82 +517,76 @@ const handleShowFollowing = async () => {
                     </div>
                   </>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-start w-full justify-between gap-4">
-                      <p className="mb-2">{postItem.content}</p>
-                      
-                      {/* Options */}
-                      <div className="relative text-sm text-gray-600">
-                        <button
-                          onClick={() =>
-                            setMyPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === postItem.id
-                                  ? { ...p, showMenu: !p.showMenu }
-                                  : { ...p, showMenu: false }
-                              )
+                  <>
+                    <p className="mb-2">{postItem.content}</p>
+                    {postItem.image && (
+                      <Image
+                        src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
+                        alt="Post image"
+                        width={400}
+                        height={200}
+                        className="rounded-md"
+                      />
+                    )}
+                    <div className="relative mt-3 text-sm text-gray-600">
+                      <button
+                        onClick={() =>
+                          setMyPosts((prev) =>
+                            prev.map((p) =>
+                              p.id === postItem.id
+                                ? { ...p, showMenu: !p.showMenu }
+                                : { ...p, showMenu: false }
                             )
-                          }
-                          className="p-2 rounded-full hover:bg-gray-100 transition ml-auto block"
+                          )
+                        }
+                        className="p-2 rounded-full hover:bg-gray-100 transition ml-auto block"
+                      >
+                        {/* Vertical Kebab Icon */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-600"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
                         >
-                          {/* Vertical Kebab Icon */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-gray-600"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
 
-                        {postItem.showMenu && (
-                          <div className="absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fadeIn">
-                            <button
-                              onClick={() => {
-                                handleEditPost(postItem.id, postItem.content);
-                                setMyPosts((prev) =>
-                                  prev.map((p) =>
-                                    p.id === postItem.id ? { ...p, showMenu: false } : p
-                                  )
-                                );
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                setPostToDelete(postItem.id);
-                                setIsDeleteModalOpen(true);
-                                setMyPosts((prev) =>
-                                  prev.map((p) =>
-                                    p.id === postItem.id ? { ...p, showMenu: false } : p
-                                  )
-                                );
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      {postItem.showMenu && (
+                        <div className="absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fadeIn">
+                          <button
+                            onClick={() => {
+                              handleEditPost(postItem.id, postItem.content);
+                              setMyPosts((prev) =>
+                                prev.map((p) =>
+                                  p.id === postItem.id ? { ...p, showMenu: false } : p
+                                )
+                              );
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              setPostToDelete(postItem.id);
+                              setIsDeleteModalOpen(true);
+                              setMyPosts((prev) =>
+                                prev.map((p) =>
+                                  p.id === postItem.id ? { ...p, showMenu: false } : p
+                                )
+                              );
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {postItem.image && (
-                        <img
-                          src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
-                          alt="Post image"
-                          className="w-[400px] h-auto rounded-md object-cover"
-                        />
-                      )}
 
-
-                    
-
-
-                  </div>
+                  </>
                 )}
               </div>
             ))
