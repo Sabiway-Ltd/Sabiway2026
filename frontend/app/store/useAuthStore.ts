@@ -1,4 +1,5 @@
 // app/store/useAuthStore.ts
+"use client";
 
 import { create } from "zustand";
 import { io } from "socket.io-client";
