@@ -4,8 +4,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
 const { initSocket } = require("./socket/postEvents");
-const {initNotificationSocket} = require("./socket/notificationEvents")
-const socketModule = require("./socket/socket");
+const { initNotificationSocket } = require("./socket/notificationEvents");
+const { initSocket: initUserSocket } = require("./socket/socket"); // ✅ consistent export
 require("dotenv").config();
 
 const accountRoutes = require("./routes/accounts.routes");
@@ -14,7 +14,7 @@ const forwardAuth = require("./middleware/authForward");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ FIXED CORS
+// ✅ CORS
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -23,11 +23,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-
-// ✅ JWT forwarding middleware
 app.use(forwardAuth);
 
-// Routes
+// ✅ Routes
 app.use("/api/auth", accountRoutes);
 app.use("/api/profiles", require("./routes/profiles.routes"));
 app.use("/api/posts", require("./routes/posts.routes"));
@@ -42,16 +40,11 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-require("./socket/socket")(io);
 
-// Initialize post events
-initSocket(io);
-
-// Init Notification events
-initNotificationSocket(io)
-
-// Initialize online users socket handling
-socketModule(io);
+// Initialize sockets
+initUserSocket(io);          // 🟢 your main socket
+initSocket(io);              // post events
+initNotificationSocket(io);  // notification events
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;

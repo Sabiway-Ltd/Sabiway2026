@@ -4,8 +4,10 @@ import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { EXPRESS_LOCAL_URL } from "../utils/MyConstants";
+import { EXPRESS_LOCAL_URL, DJANGO_DEPLOY_URL } from "../utils/MyConstants";
 import { post } from "../services/post";
+
+const SOCKET_URL = EXPRESS_LOCAL_URL
 
 // ---------- Types ----------
 type Author = {
@@ -127,215 +129,244 @@ export const usePostStore = create<PostState>((set, get) => ({
 
   // ---------- Initialize Socket ----------
   initSocket: async () => {
-    const token = localStorage.getItem("access");
-    if (!token) return;
+  if (get().socket) return; // prevent duplicate connections
 
-    const socket = getSocket(token);
-    set({ socket });
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.warn("⚠️ No token found — cannot init socket.");
+    return;
+  }
 
-    // Helper for listeners
-    const attachListener = (event: string, handler: (...args: any[]) => void) => {
-      socket.on(event, handler);
-    };
+  // ✅ Initialize socket with token (backend reads this)
+  const socket = io(SOCKET_URL, {
+    transports: ["websocket"],
+    withCredentials: true,
+    auth: { token },
+  });
 
-    /* -------------------------
+  // ✅ Helper for listeners
+  const attachListener = (event: string, handler: (...args: any[]) => void) => {
+    socket.on(event, handler);
+  };
+
+  // ✅ Save socket in Zustand
+  set({ socket });
+
+  // ------------------ Connection lifecycle ------------------
+  socket.on("connect", () => {
+    console.log("✅ Socket connected:", socket.id);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("🔴 Socket disconnected:", reason);
+  });
+
+  socket.io.on("reconnect", () => {
+    console.log("♻️ Socket reconnected:", socket.id);
+  });
+
+  // ✅ Listen for online users (you can store or log them)
+  socket.on("users:online", (users) => {
+    console.log("🟢 Online users:", users);
+    set({ onlineUsers: users }); // optional if you have this in store
+  });
+
+  /* -------------------------
       🟢 Post Events
-    --------------------------*/
-    attachListener<Post>("post:created", (post) =>
-      set((state) => ({
-        posts: state.posts.some((p) => p.id === post.id)
-          ? state.posts
-          : [post, ...state.posts],
-      }))
-    );
+  --------------------------*/
+  attachListener<Post>("post:created", (post) =>
+    set((state) => ({
+      posts: state.posts.some((p) => p.id === post.id)
+        ? state.posts
+        : [post, ...state.posts],
+    }))
+  );
 
-    attachListener<Post>("post:updated", (updated) =>
-      set((state) => ({
-        posts: state.posts.map((p) => (p.id === updated.id ? updated : p)),
-      }))
-    );
+  attachListener<Post>("post:updated", (updated) =>
+    set((state) => ({
+      posts: state.posts.map((p) => (p.id === updated.id ? updated : p)),
+    }))
+  );
 
-    attachListener<{ id: string }>("post:deleted", ({ id }) =>
-      set((state) => ({
-        posts: state.posts.filter((p) => p.id !== id),
-      }))
-    );
+  attachListener<{ id: string }>("post:deleted", ({ id }) =>
+    set((state) => ({
+      posts: state.posts.filter((p) => p.id !== id),
+    }))
+  );
 
-    attachListener<{ postId: string; result: { likes: number } }>(
-      "post:liked",
-      ({ postId, result }) =>
-        set((state) => ({
-          posts: state.posts.map((p) =>
-            p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
-          ),
-        }))
-    );
-
-    attachListener<{ postId: string; result: { likes: number } }>(
-      "post:unliked",
-      ({ postId, result }) =>
-        set((state) => ({
-          posts: state.posts.map((p) =>
-            p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
-          ),
-        }))
-    );
-
-    attachListener<{ postId: string }>("post:bookmarked", ({ postId }) =>
+  attachListener<{ postId: string; result: { likes: number } }>(
+    "post:liked",
+    ({ postId, result }) =>
       set((state) => ({
         posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, is_bookmarked: true } : p
+          p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
         ),
       }))
-    );
+  );
 
-    attachListener<{ postId: string }>("post:unbookmarked", ({ postId }) =>
+  attachListener<{ postId: string; result: { likes: number } }>(
+    "post:unliked",
+    ({ postId, result }) =>
       set((state) => ({
         posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, is_bookmarked: false } : p
+          p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
         ),
       }))
-    );
+  );
 
-    attachListener<{ postId: string; repost: any }>("post:reposted", ({ postId }) =>
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, reposts_count: (p.reposts_count || 0) + 1 } : p
-        ),
-      }))
-    );
+  attachListener<{ postId: string }>("post:bookmarked", ({ postId }) =>
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, is_bookmarked: true } : p
+      ),
+    }))
+  );
 
-    attachListener<{ postId: string; repostId: string }>("post:unreposted", ({ postId }) =>
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === postId
-            ? { ...p, reposts_count: Math.max((p.reposts_count || 1) - 1, 0) }
-            : p
-        ),
-      }))
-    );
+  attachListener<{ postId: string }>("post:unbookmarked", ({ postId }) =>
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, is_bookmarked: false } : p
+      ),
+    }))
+  );
 
-    /* -------------------------
+  attachListener<{ postId: string; repost: any }>("post:reposted", ({ postId }) =>
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, reposts_count: (p.reposts_count || 0) + 1 } : p
+      ),
+    }))
+  );
+
+  attachListener<{ postId: string; repostId: string }>("post:unreposted", ({ postId }) =>
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId
+          ? { ...p, reposts_count: Math.max((p.reposts_count || 1) - 1, 0) }
+          : p
+      ),
+    }))
+  );
+
+  /* -------------------------
       💬 Comment Events
-    --------------------------*/
-    attachListener<{ postId: string; comment: Comment }>(
-      "comment:created",
-      ({ postId, comment }) =>
-        set((state) => ({
-          commentsByPost: {
-            ...state.commentsByPost,
-            [postId]: [...(state.commentsByPost[postId] || []), comment],
-          },
-        }))
-    );
+  --------------------------*/
+  attachListener<{ postId: string; comment: Comment }>(
+    "comment:created",
+    ({ postId, comment }) =>
+      set((state) => ({
+        commentsByPost: {
+          ...state.commentsByPost,
+          [postId]: [...(state.commentsByPost[postId] || []), comment],
+        },
+      }))
+  );
 
-    attachListener<{ commentId: string; data: any }>(
-      "comment:liked",
-      ({ commentId, data }) =>
-        set((state) => ({
-          commentsByPost: Object.fromEntries(
-            Object.entries(state.commentsByPost).map(([postId, comments]) => [
-              postId,
-              comments.map((c) =>
-                c.id === commentId
-                  ? {
-                      ...c,
-                      likes_count: data?.likes || c.likes_count,
-                      is_liked: true,
-                    }
-                  : c
-              ),
-            ])
-          ),
-        }))
-    );
+  attachListener<{ commentId: string; data: any }>(
+    "comment:liked",
+    ({ commentId, data }) =>
+      set((state) => ({
+        commentsByPost: Object.fromEntries(
+          Object.entries(state.commentsByPost).map(([postId, comments]) => [
+            postId,
+            comments.map((c) =>
+              c.id === commentId
+                ? {
+                    ...c,
+                    likes_count: data?.likes || c.likes_count,
+                    is_liked: true,
+                  }
+                : c
+            ),
+          ])
+        ),
+      }))
+  );
 
-    attachListener<{ commentId: string; data: any }>(
-      "comment:unliked",
-      ({ commentId, data }) =>
-        set((state) => ({
-          commentsByPost: Object.fromEntries(
-            Object.entries(state.commentsByPost).map(([postId, comments]) => [
-              postId,
-              comments.map((c) =>
-                c.id === commentId
-                  ? {
-                      ...c,
-                      likes_count: data?.likes || c.likes_count,
-                      is_liked: false,
-                    }
-                  : c
-              ),
-            ])
-          ),
-        }))
-    );
+  attachListener<{ commentId: string; data: any }>(
+    "comment:unliked",
+    ({ commentId, data }) =>
+      set((state) => ({
+        commentsByPost: Object.fromEntries(
+          Object.entries(state.commentsByPost).map(([postId, comments]) => [
+            postId,
+            comments.map((c) =>
+              c.id === commentId
+                ? {
+                    ...c,
+                    likes_count: data?.likes || c.likes_count,
+                    is_liked: false,
+                  }
+                : c
+            ),
+          ])
+        ),
+      }))
+  );
 
-    /* -------------------------
+  /* -------------------------
       💬 Reply Events
-    --------------------------*/
-    // ✅ NEW: Reply created
-    attachListener<{ commentId: string; reply: any }>(
-      "reply:created",
-      ({ commentId, reply }) =>
-        set((state) => ({
-          repliesByComment: {
-            ...state.repliesByComment,
-            [commentId]: [...(state.repliesByComment[commentId] || []), reply],
-          },
-        }))
-    );
+  --------------------------*/
+  attachListener<{ commentId: string; reply: any }>(
+    "reply:created",
+    ({ commentId, reply }) =>
+      set((state) => ({
+        repliesByComment: {
+          ...state.repliesByComment,
+          [commentId]: [...(state.repliesByComment[commentId] || []), reply],
+        },
+      }))
+  );
 
-    attachListener<{ replyId: string; data: any }>(
-      "reply:liked",
-      ({ replyId, data }) =>
-        set((state) => ({
-          repliesByComment: Object.fromEntries(
-            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-              commentId,
-              replies.map((r) =>
-                r.id === replyId
-                  ? {
-                      ...r,
-                      likes_count: data?.likes || r.likes_count,
-                      is_liked: true,
-                    }
-                  : r
-              ),
-            ])
-          ),
-        }))
-    );
+  attachListener<{ replyId: string; data: any }>(
+    "reply:liked",
+    ({ replyId, data }) =>
+      set((state) => ({
+        repliesByComment: Object.fromEntries(
+          Object.entries(state.repliesByComment).map(([commentId, replies]) => [
+            commentId,
+            replies.map((r) =>
+              r.id === replyId
+                ? {
+                    ...r,
+                    likes_count: data?.likes || r.likes_count,
+                    is_liked: true,
+                  }
+                : r
+            ),
+          ])
+        ),
+      }))
+  );
 
-    attachListener<{ replyId: string; data: any }>(
-      "reply:unliked",
-      ({ replyId, data }) =>
-        set((state) => ({
-          repliesByComment: Object.fromEntries(
-            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-              commentId,
-              replies.map((r) =>
-                r.id === replyId
-                  ? {
-                      ...r,
-                      likes_count: data?.likes || r.likes_count,
-                      is_liked: false,
-                    }
-                  : r
-              ),
-            ])
-          ),
-        }))
-    );
+  attachListener<{ replyId: string; data: any }>(
+    "reply:unliked",
+    ({ replyId, data }) =>
+      set((state) => ({
+        repliesByComment: Object.fromEntries(
+          Object.entries(state.repliesByComment).map(([commentId, replies]) => [
+            commentId,
+            replies.map((r) =>
+              r.id === replyId
+                ? {
+                    ...r,
+                    likes_count: data?.likes || r.likes_count,
+                    is_liked: false,
+                  }
+                : r
+            ),
+          ])
+        ),
+      }))
+  );
 
-    /* -------------------------
+  /* -------------------------
       🔄 Fetch initial posts
-    --------------------------*/
-    await get().getAllPosts();
+  --------------------------*/
+  await get().getAllPosts();
 
-    console.log("✅ Socket initialized and event listeners attached");
-  },
-
+  console.log("✅ Socket initialized and event listeners attached");
+},
 
   // ---------- Get all posts ----------
   getAllPosts: async () => {
@@ -719,6 +750,17 @@ unlikePost: async (id: string) => {
   //   }
   // },
 
+  // For Search
+   // ✅ Filter by search query
+  filterPostsBySearch: async (query) => {
+    try {
+      set({ loadingHashtag: true, activeHashtag: null, activeSearch: query });
+      const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/posts/search/?q=${query}`);
+      set({ filteredPosts: res.data, loadingHashtag: false });
+    } catch (err) {
+      set({ loadingHashtag: false, error: "Search failed" });
+    }
+  },
 
 
 
@@ -781,5 +823,5 @@ unlikePost: async (id: string) => {
     }
   },
   resetFilteredPosts: () =>
-    set({ filteredPosts: [], activeHashtag: null, loadingHashtag: false }),
+    set({ filteredPosts: [], activeHashtag: null,  activeSearch: null, loadingHashtag: false }),
 }));

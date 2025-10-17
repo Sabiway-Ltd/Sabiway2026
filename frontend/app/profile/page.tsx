@@ -15,8 +15,6 @@ import DeleteConfirmModal from "../_components/common/DeleteConfirmModal";
 import toast from "react-hot-toast";
 import Button from "../_components/common/Button";
 import { useAuthStore } from "../store/useAuthStore";
-import { useOutsideClick } from "../utils/useOutsideClick";
-import { div } from "framer-motion/client";
 
 
 

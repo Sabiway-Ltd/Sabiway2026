@@ -1,3 +1,5 @@
+// app/_components/feed/CommunityNavbar.tsx
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -133,15 +135,13 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               onClick={onCreatePost}
               className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
             >
-              <img
-                src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-                alt={profile?.full_name || "User"}
-                onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
-                className="w-7 h-7 rounded-full object-cover"
-              />
-              Create Post
+              <div className="flex items-center justify-center  py-2 px-2 rounded-full bg-white/20 text-white font-semibold text-xs">
+                {profile?.initials}
+              </div>
+              <span>Create Post</span>
               <Plus className="h-4 w-4" />
             </button>
+
           )}
 
           {/* 🔔 Notifications */}

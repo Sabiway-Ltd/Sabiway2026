@@ -1,16 +1,118 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import { useProfileStore } from "@/app/store/useProfileStore";
+import { Button } from "@/src/components/ui/button";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react"; // ✅ spinner icon
 
 export default function OnlineUsers() {
-  const { onlineUsers } = useAuthStore();
+  const { user, onlineUsers } = useAuthStore();
+  const {
+    profiles,
+    getAllProfiles,
+    followingStatus,
+    toggleFollow,
+    loading,
+  } = useProfileStore();
+
+  const [loadingFollowId, setLoadingFollowId] = useState<number | null>(null); // ✅ track which user is being followed/unfollowed
+
+  // Load all profiles once
+  useEffect(() => {
+    getAllProfiles();
+  }, [getAllProfiles]);
+
+  // Merge online users with profile data
+  const onlineProfiles = profiles.filter((profile) =>
+    onlineUsers.some((u) => u.id === profile.user_id)
+  );
+
+  // Handle follow/unfollow action with spinner
+  const handleFollowToggle = async (id: number) => {
+    setLoadingFollowId(id);
+    try {
+      await toggleFollow(id);
+    } finally {
+      setLoadingFollowId(null);
+    }
+  };
 
   return (
-    <div>
-      <h3>🟢 Online Users</h3>
-      <ul>
-        {onlineUsers.map((user) => (
-          <li key={user.id}>{user.full_name}</li>
-        ))}
-      </ul>
+    <div className="bg-white rounded-2xl shadow-md p-4">
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+        🟢 Online Users
+      </h3>
+
+      {loading && (
+        <p className="text-sm text-gray-500 text-center">Loading profiles...</p>
+      )}
+
+      {!loading && onlineProfiles.length === 0 && (
+        <p className="text-sm text-gray-500 text-center">No users online.</p>
+      )}
+
+      <div className="space-y-3">
+        {onlineProfiles.map((profile) => {
+          const isFollowing = followingStatus[profile.user_id] || false;
+
+          return (
+            <motion.div
+              key={profile.user_id}
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 p-3 rounded-xl transition"
+            >
+              <div className="flex items-center gap-3">
+                {profile.profile_picture ? (
+                  <Image
+                    src={profile.profile_picture}
+                    alt={profile.full_name}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
+                    {profile.initials}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {profile.full_name}
+                  </p>
+                  <p className="text-xs text-gray-500">{profile.username}</p>
+                </div>
+              </div>
+
+              {/* ✅ Hide follow button for current user */}
+              {user?.id !== profile.user_id && (
+                <Button
+                  size="sm"
+                  disabled={loadingFollowId === profile.user_id} // disable button while loading
+                  variant={isFollowing ? "secondary" : "default"}
+                  className={`text-sm flex items-center justify-center gap-2 ${
+                    isFollowing
+                      ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                  onClick={() => handleFollowToggle(profile.user_id)}
+                >
+                  {/* Show spinner while loading */}
+                  {loadingFollowId === profile.user_id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isFollowing ? (
+                    "Following"
+                  ) : (
+                    "Follow"
+                  )}
+                </Button>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }

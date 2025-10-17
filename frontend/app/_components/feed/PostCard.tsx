@@ -259,7 +259,7 @@ export default function PostCard({
 
       toast.success("Post updated successfully!");
       setEditingPostId(null);
-      setEditedPostContent("");
+      // setEditedPostContent("");
       setEditedPostImage(null);
 
       onReloadPosts?.(); // reload all posts from parent
@@ -387,7 +387,7 @@ export default function PostCard({
         )}
       </div>
 
-      {/* Content / Edit */}
+      {/* Content / Edit Post */}
       {editingPostId === id ? (
         <div className="mt-3 space-y-2">
           <textarea
@@ -395,14 +395,26 @@ export default function PostCard({
             onChange={(e) => setEditedPostContent(e.target.value)}
             className="w-full border rounded-lg p-2"
           />
-          {editedPostImage && (
+          {editedPostImage ? (
             <img
               src={URL.createObjectURL(editedPostImage)}
               alt="Preview"
               className="w-full max-h-48 object-cover rounded-md"
             />
-          )}
-          <input type="file" onChange={handleImageChange} className="mt-1" />
+          ) : image ? (
+            <img
+              src={
+                image.startsWith("http")
+                  ? image
+                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
+              }
+              alt="Post image"
+              
+              className="rounded-md mb-2 w-full h-auto"
+            />
+          ) : null}
+
+          <input type="file" onChange={handleImageChange} className="mt-1 cursor-pointer" />
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => handleSavePost(id)}

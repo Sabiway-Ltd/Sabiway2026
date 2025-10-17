@@ -1,3 +1,5 @@
+// socket/notificationEvents.js
+
 let io = null;
 const userSockets = new Map(); // userId -> socket.id
 

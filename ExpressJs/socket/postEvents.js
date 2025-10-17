@@ -1,3 +1,4 @@
+// socket/postEvents.js
 let io = null;
 
 exports.initSocket = (ioInstance) => {

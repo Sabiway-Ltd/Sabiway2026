@@ -45,7 +45,7 @@ export default function Community() {
 
       <section className="flex justify-center gap-6 lg:gap-14 max-w-screen-xl mx-auto">
         {/* Feed Section */}
-        <main className="flex-[3] mt-4 max-w-2xl w-full">
+        <main className="flex-[3] mt-4 max-w-3xl w-full">
           {/* Post Creation Box */}
           <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
@@ -111,7 +111,7 @@ export default function Community() {
         </main>
 
         {/* Sidebar */}
-        <aside className="hidden lg:block w-64 mt-4 border-l border-gray-200 pl-6">
+        <aside className="hidden lg:block md:w-[28rem] mt-4 border-l border-gray-200 pl-6">
           <Aside />
         </aside>
       </section>

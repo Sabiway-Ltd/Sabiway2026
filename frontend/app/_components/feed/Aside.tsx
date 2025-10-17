@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
+import OnlineUsers from "../OnlineUsers";
 
 export default function Aside() {
   const {
@@ -31,7 +32,7 @@ export default function Aside() {
   };
 
   return (
-    <aside className="w-full md:w-80 bg-[#F9FAFB] p-4 rounded-lg">
+    <aside className="w-full  bg-[#F9FAFB] p-4 rounded-lg">
       {/* Trending Topics */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-3">Trending Topics</h2>
@@ -95,6 +96,11 @@ export default function Aside() {
           )}
         </div>
       </div>
+
+      {/* Online Users */}
+      <section className="mt-5">
+          <OnlineUsers/>
+      </section>
 
     </aside>
   );
