@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Smile } from "lucide-react";
-import { EmojiClickData } from "emoji-picker-react";
-import { Heart, MessageCircle } from "lucide-react";
+import { Smile, Image as ImageIcon, Heart, MessageCircle } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { EmojiClickData } from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
+// ✅ Updated Comment interface
 interface Comment {
   id: string | number;
   author: {
@@ -20,16 +20,20 @@ interface Comment {
     whatsapp_number: string;
   };
   content: string;
-  reply_count?: number;
   likes: number;
   is_liked?: boolean;
+  reply_count?: number;
   replies?: Comment[];
-  onReplySubmit?: (parentId: string | number, content: string) => Promise<void> | void;
+  onReplySubmit?: (
+    parentId: string | number,
+    content: string,
+    imageFile?: File | null
+  ) => Promise<void> | void;
   onLike?: (id: string | number) => Promise<void> | void;
   onUnlike?: (id: string | number) => Promise<void> | void;
-  /** 👇 NEW */
   isReply?: boolean;
-  created_at?: string; // ✅ NEW
+  created_at?: string;
+  image?: string | null; // ✅ Added for image display
 }
 
 export default function CommentThread({
@@ -37,13 +41,14 @@ export default function CommentThread({
   author,
   content,
   likes,
-  reply_count = 0,
   is_liked = false,
+  reply_count = 0,
   onReplySubmit,
   onLike,
   onUnlike,
-  isReply = false, // 👈 default false (means it's a top-level comment)
-  created_at, // ✅ Added
+  isReply = false,
+  created_at,
+  image, // ✅ destructure
 }: Comment) {
   const { repliesByComment, getRepliesByComment } = usePostStore();
   const [showReplies, setShowReplies] = useState(false);
@@ -51,11 +56,108 @@ export default function CommentThread({
   const [liked, setLiked] = useState(is_liked);
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [replyImage, setReplyImage] = useState<File | null>(null);
+  const [replyPreview, setReplyPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [formattedDate, setFormattedDate] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const replies = repliesByComment[String(id)] || [];
+
+  // 🧭 Handle reply image selection
+  const handleReplyImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setReplyImage(file);
+      setReplyPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeReplyImage = () => {
+    setReplyImage(null);
+    setReplyPreview(null);
+  };
+
+  // 🗓️ Format date
+  useEffect(() => {
+    if (created_at) {
+      const options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      };
+      setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
+    }
+  }, [created_at]);
+
+  // ✨ Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [replyText]);
+
+  // 🧠 Emoji insertion
+  const insertAtCursor = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newValue = replyText.slice(0, start) + emoji + replyText.slice(end);
+    setReplyText(newValue);
+    requestAnimationFrame(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+      textarea.focus();
+    });
+  };
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    insertAtCursor(emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleLikeToggle = async () => {
+    try {
+      if (liked) {
+        setLocalLikes((l) => l - 1);
+        setLiked(false);
+        if (onUnlike) await onUnlike(id);
+      } else {
+        setLocalLikes((l) => l + 1);
+        setLiked(true);
+        if (onLike) await onLike(id);
+      }
+    } catch (err) {
+      console.error("Like toggle error:", err);
+    }
+  };
+
+  const handleReplySubmit = async () => {
+    if (!replyText.trim() && !replyImage) return;
+    setSubmitting(true);
+    try {
+      if (onReplySubmit) await onReplySubmit(id, replyText, replyImage);
+      setReplyText("");
+      removeReplyImage();
+      if (showReplies) await getRepliesByComment(String(id));
+      else {
+        setShowReplies(true);
+        await getRepliesByComment(String(id));
+      }
+      setShowReplyBox(false);
+    } catch (err) {
+      console.error("Reply submit error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleToggleReplies = async () => {
     setShowReplies((prev) => !prev);
@@ -69,112 +171,18 @@ export default function CommentThread({
     }
   };
 
-  const handleReplySubmit = async () => {
-    if (!replyText.trim()) return;
-    setSubmitting(true);
-    try {
-      if (onReplySubmit) await onReplySubmit(id, replyText);
-
-      // ✅ If replies are visible, refresh them to show the new one
-      if (showReplies) {
-        await getRepliesByComment(String(id));
-      } else {
-        // ✅ If replies are hidden, open them and load
-        setShowReplies(true);
-        await getRepliesByComment(String(id));
-      }
-
-      // ✅ Clear input after successful post
-      setReplyText("");
-
-      // ✅ Hide the reply box after submission
-      setShowReplyBox(false);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  
-
-
-
-
-  const handleLikeToggle = async () => {
-    try {
-      if (liked) {
-        setLocalLikes(localLikes - 1);
-        setLiked(false);
-        if (onUnlike) await onUnlike(id);
-      } else {
-        setLocalLikes(localLikes + 1);
-        setLiked(true);
-        if (onLike) await onLike(id);
-      }
-    } catch (err) {
-      console.error("Error toggling like:", err);
-    }
-  };
-
   const handleWhatsappClick = () => {
-    if (author.whatsapp_number) {
+    if (author.whatsapp_number)
       window.open(`https://wa.me/${author.whatsapp_number}`, "_blank");
-    } else {
-      toast.error("This user does not have a WhatsApp number.");
-    }
+    else toast.error("This user does not have a WhatsApp number.");
   };
 
-  useEffect(() => {
-    if (created_at) {
-      const options: Intl.DateTimeFormatOptions = {
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      };
-      setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
-    }
-  }, [created_at]);
-
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // ✨ Auto-resize height as user types
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, [replyText]);
-
-  // 🧠 Insert emoji at cursor position
-  const insertAtCursor = (emoji: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newValue = replyText.slice(0, start) + emoji + replyText.slice(end);
-    setReplyText(newValue);
-
-    requestAnimationFrame(() => {
-      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
-      textarea.focus();
-    });
-  };
-
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    insertAtCursor(emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey && replyText.trim() && !submitting) {
-      e.preventDefault();
-      handleReplySubmit();
-    }
+  // 🧾 Build Cloudinary URL helper
+  const getImageUrl = (path?: string | null) => {
+    if (!path) return null;
+    return path.startsWith("http")
+      ? path
+      : `https://res.cloudinary.com/devqbjptr/${path}`;
   };
 
   return (
@@ -183,33 +191,48 @@ export default function CommentThread({
         <img
           src={
             author.avatar && author.avatar.trim() !== ""
-              ? author.avatar.startsWith("http")
-                ? author.avatar
-                : `https://res.cloudinary.com/devqbjptr/${author.avatar}`
+              ? author.avatar
               : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
           }
-          alt={author.name || "User"}
+          alt={author.name}
           className="w-8 h-8 rounded-full object-cover"
         />
 
         <div className="flex-1">
           <p className="font-semibold text-sm">
-            {author.name} <span className="text-gray-500">{author.username}</span>
+            {author.name}{" "}
+            <span className="text-gray-500">{author.username}</span>
           </p>
-          <p className="text-[11px] text-gray-400">{formattedDate}</p> {/* ✅ NEW */}
+          <p className="text-[11px] text-gray-400">{formattedDate}</p>
+
+          {/* 🖼️ Comment/Reply content */}
           <p className="text-gray-800 text-sm">{content}</p>
 
+          {/* ✅ Show image if present */}
+          {image && (
+            <div className="mt-2">
+              <img
+                src={getImageUrl(image)}
+                alt="comment image"
+                className="max-h-48 rounded-md object-cover"
+              />
+            </div>
+          )}
+
+          {/* ❤️ / 💬 / 📞 Actions */}
           <div className="flex flex-wrap md:gap-x-3 gap-x-2 text-gray-800 mt-2">
-            {/* ❤️ Like */}
             <button
               className="flex items-center gap-1 hover:text-red-500"
               onClick={handleLikeToggle}
             >
-              <Heart className={`h-4 w-4 ${liked ? "fill-red-500 text-red-500" : ""}`} />
+              <Heart
+                className={`h-4 w-4 ${
+                  liked ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
               <span className="text-xs">{localLikes}</span>
             </button>
 
-            {/* 💬 Reply (only show if NOT a reply) */}
             {!isReply && (
               <button
                 className="flex items-center gap-1 hover:text-blue-500"
@@ -220,11 +243,12 @@ export default function CommentThread({
               </button>
             )}
 
-            {/* 📞 WhatsApp */}
             <button
               onClick={handleWhatsappClick}
               className={`flex items-center gap-1 transition-opacity duration-200 hover:text-green-500 ${
-                !author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
+                !author.whatsapp_number
+                  ? "opacity-50 cursor-not-allowed"
+                  : "opacity-100"
               }`}
             >
               <FaWhatsapp size={16} />
@@ -233,45 +257,100 @@ export default function CommentThread({
 
           {/* ✍️ Reply Box */}
           {!isReply && showReplyBox && (
-            <div className="mt-2 border rounded-full px-4 pt-2 bg-white flex w-full justify-between items-start relative">
-                {/* 📝 Textarea (auto-resizing) */}
+            <div className="mt-2 border rounded-2xl px-4 pt-2 bg-white flex w-full justify-between items-start relative">
+              <div className="flex-1">
                 <textarea
                   ref={textareaRef}
                   placeholder="Write a reply..."
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey &&
+                      (replyText.trim() || replyImage)
+                    ) {
+                      e.preventDefault();
+                      handleReplySubmit();
+                    }
+                  }}
                   disabled={submitting}
                   rows={1}
-                  className="flex-1 resize-none text-xs outline-none bg-transparent disabled:opacity-60 overflow-hidden"
+                  className="w-full resize-none text-xs outline-none bg-transparent disabled:opacity-60 overflow-hidden"
                 />
 
-                {/* 😀 Emoji Button */}
-                <div className="relative mr-2">
+                {/* 🖼️ image preview */}
+                {replyPreview && (
+                  <div className="mt-2 relative inline-block">
+                    <img
+                      src={replyPreview}
+                      alt="preview"
+                      className="w-28 h-28 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeReplyImage}
+                      className="absolute top-1 right-1 bg-white text-gray-700 hover:text-red-500 rounded-full p-1 shadow-md border border-gray-200 transition"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3.5 w-3.5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* 🖼️ Image Upload */}
+                <input
+                  id={`reply-img-${id}`}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleReplyImageChange}
+                />
+                <label
+                  htmlFor={`reply-img-${id}`}
+                  className="text-gray-500 cursor-pointer hover:text-blue-500 transition flex items-center"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                </label>
+
+                {/* 😀 Emoji Picker */}
+                <div className="relative flex items-center">
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className="text-gray-500 hover:text-yellow-500 transition"
+                    className="text-gray-500 hover:text-yellow-500 transition flex items-center"
                   >
-                    <Smile className="h-4 w-4" />
+                    <Smile className="h-5 w-5" />
                   </button>
-
                   {showEmojiPicker && (
-                    <div className="absolute bottom-0 right-0 z-50 scale-75">
+                    <div className="absolute bottom-8 right-0 z-50 scale-75">
                       <EmojiPicker onEmojiClick={handleEmojiClick} />
                     </div>
                   )}
                 </div>
 
-                {/* 🚀 Send Button */}
+                {/* 🚀 Send */}
                 <button
                   onClick={handleReplySubmit}
-                  disabled={submitting || !replyText.trim()}
-                  className="flex items-center justify-center disabled:opacity-50"
+                  disabled={submitting || (!replyText.trim() && !replyImage)}
+                  className="flex items-center justify-center disabled:opacity-50 text-gray-700 hover:text-blue-600 transition"
                 >
                   {submitting ? (
                     <svg
-                      className="animate-spin h-4 w-4 text-gray-500"
+                      className="animate-spin h-5 w-5 text-gray-500"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -292,8 +371,7 @@ export default function CommentThread({
                     </svg>
                   ) : (
                     <svg
-                      width="16"
-                      height="16"
+                      className="h-5 w-5"
                       viewBox="0 0 22 22"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -302,16 +380,17 @@ export default function CommentThread({
                         fillRule="evenodd"
                         clipRule="evenodd"
                         d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
-                        fill="black"
+                        fill="currentColor"
                       />
                     </svg>
                   )}
                 </button>
               </div>
+
+            </div>
           )}
 
-
-          {/* 💭 View Replies */}
+          {/* 💬 Replies */}
           {!isReply && (reply_count ?? replies.length) > 0 && (
             <button
               onClick={handleToggleReplies}
@@ -327,41 +406,44 @@ export default function CommentThread({
         </div>
       </div>
 
-      {/* 🌀 Replies Section */}
+      {/* 🧩 Replies Section */}
       {showReplies && (
-      <div className="mt-2 space-y-2">
-        {loadingReplies ? (
-          <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
-        ) : replies.length > 0 ? (
-          replies.map((reply) => (
-            <CommentThread
-              key={reply.id}
-              id={reply.id}
-              author={{
-                name: reply.user?.full_name || "Unknown",
-                username: reply.user?.username || "",
-                avatar:
-                  reply.user?.profile_picture ||
-                  "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-                whatsapp_number: reply.user?.whatsapp_number || "",
-              }}
-              content={reply.content}
-              likes={reply.likes_count || 0}
-              is_liked={reply.is_liked || false}
-              created_at={reply.created_at} // ✅ Added
-              /** ✅ Use the store actions directly */
-              onLike={() => usePostStore.getState().likeReply(String(reply.id))}
-              onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}
-              onReplySubmit={onReplySubmit}
-              isReply={true} // 👈 this marks replies so they hide the Reply button
-            />
-          ))
-        ) : (
-          <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
-        )}
-      </div>
-    )}
-
+        <div className="mt-2 space-y-2">
+          {loadingReplies ? (
+            <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
+          ) : replies.length > 0 ? (
+            replies.map((reply) => (
+              <CommentThread
+                key={reply.id}
+                id={reply.id}
+                author={{
+                  name: reply.user?.full_name || "Unknown",
+                  username: reply.user?.username || "",
+                  avatar:
+                    reply.user?.profile_picture ||
+                    "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                  whatsapp_number: reply.user?.whatsapp_number || "",
+                }}
+                content={reply.content}
+                likes={reply.likes_count || 0}
+                is_liked={reply.is_liked || false}
+                created_at={reply.created_at}
+                image={reply.image}
+                onLike={() =>
+                  usePostStore.getState().likeReply(String(reply.id))
+                }
+                onUnlike={() =>
+                  usePostStore.getState().unlikeReply(String(reply.id))
+                }
+                onReplySubmit={onReplySubmit}
+                isReply
+              />
+            ))
+          ) : (
+            <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -551,25 +551,23 @@ unlikePost: async (id: string) => {
   // },
 
 
-  addComment: async (postId: string, content: string, imageFile?: File) => {
+  addComment: async (postId: string, content: string) => {
     const token = localStorage.getItem("access");
     if (!token) return toast.error("Not logged in");
 
     try {
-      const formData = new FormData();
-      formData.append("content", content);
-      if (imageFile) formData.append("image", imageFile); // ✅ optional image
-
       const res = await axios.post<Comment>(
         `${API_URL}/posts/${postId}/comments`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { content },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // set((state) => ({
+      //   commentsByPost: {
+      //     ...state.commentsByPost,
+      //     [postId.toString()]: [...(state.commentsByPost[postId.toString()] || []), res.data],
+      //   },
+      // }));
 
       toast.success("Comment added!");
     } catch (err) {
@@ -577,7 +575,6 @@ unlikePost: async (id: string) => {
       toast.error("Failed to add comment.");
     }
   },
-
 
 
 
@@ -595,29 +592,29 @@ unlikePost: async (id: string) => {
   // },
 
   getComments: async (postId: string) => {
-    const token = localStorage.getItem("access");
-    if (!token) return set({ error: "Not logged in" });
+  const token = localStorage.getItem("access");
+  if (!token) return set({ error: "Not logged in" });
 
-    try {
-      const res = await axios.get<Comment[]>(
-        `${API_URL}/posts/${postId}/comments`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    const res = await axios.get<Comment[]>(
+      `${API_URL}/posts/${postId}/comments`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-      // Normalize key as string
-      set((state) => ({
-        commentsByPost: {
-          ...state.commentsByPost,
-          [postId.toString()]: res.data,
-        },
-      }));
-    } catch (err: any) {
-      console.error("Get comments error:", err);
-      // set({ error: "Failed to fetch comments" });
-    }
-  },
+    // Normalize key as string
+    set((state) => ({
+      commentsByPost: {
+        ...state.commentsByPost,
+        [postId.toString()]: res.data,
+      },
+    }));
+  } catch (err: any) {
+    console.error("Get comments error:", err);
+    set({ error: "Failed to fetch comments" });
+  }
+},
 
 
 
@@ -633,34 +630,39 @@ unlikePost: async (id: string) => {
   //   }
   // },
 
- addReply: async (commentId: string, content: string, imageFile?: File) => {
+ addReply: async (commentId: string, content: string) => {
   const token = localStorage.getItem("access");
   if (!token) return toast.error("Not logged in");
 
   try {
-    const formData = new FormData();
-    formData.append("comment", commentId);
-    formData.append("content", content);
-    if (imageFile) formData.append("image", imageFile); // ✅ optional image
-
     const res = await axios.post<Reply>(
       `${API_URL}/posts/replies`,
-      formData,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+        comment: commentId, // ✅ send comment ID in body
+        content,            // ✅ send reply content
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
 
+    // ✅ Update repliesByComment in Zustand
+    set((state) => ({
+      repliesByComment: {
+        ...state.repliesByComment,
+        [commentId.toString()]: [
+          ...(state.repliesByComment[commentId.toString()] || []),
+          res.data,
+        ],
+      },
+    }));
+
     toast.success("Reply added!");
-  } catch (err) {
+  } catch (err: any) {
     console.error("Add reply error:", err);
     toast.error("Failed to add reply.");
   }
 },
-
 
 
 
@@ -755,84 +757,31 @@ unlikePost: async (id: string) => {
   /* -------------------------
        Filter Posts by Search Query
     --------------------------*/
-    // filterPostsBySearch: async (query) => {
-    //   try {
-    //     set({
-    //       loadingHashtag: true,
-    //       activeSearch: query,
-    //       activeHashtag: null, // clear hashtag when searching
-    //       error: null,
-    //     });
-    //     const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/search/?q=${query}`);
-    //     set({ filteredPosts: res.data, loadingHashtag: false });
-    //   } catch (error: any) {
-    //     set({ error: error.message, loadingHashtag: false });
-    //   }
-    // },
-
-    // /* -------------------------
-    //    Reset Filters
-    // --------------------------*/
-    // resetFilteredPosts: () => {
-    //   set({
-    //     filteredPosts: [],
-    //     activeHashtag: null,
-    //     activeSearch: null,
-    //   });
-    // },
-
-    // usePostStore.ts
-    filterBySearch: async (query, type = "posts") => {
+    filterPostsBySearch: async (query) => {
       try {
         set({
           loadingHashtag: true,
           activeSearch: query,
-          activeHashtag: null,
+          activeHashtag: null, // clear hashtag when searching
           error: null,
         });
-
-        const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/search/`, {
-          params: { q: query, type },
-        });
-
-        if (type === "posts") {
-          set({
-            filteredPosts: res.data,
-            filteredProfiles: [],
-            filteredHashtags: [],
-          });
-        } else if (type === "profiles") {
-          set({
-            filteredProfiles: res.data,
-            filteredPosts: [],
-            filteredHashtags: [],
-          });
-        } else if (type === "hashtags") {
-          set({
-            filteredHashtags: res.data,
-            filteredPosts: [],
-            filteredProfiles: [],
-          });
-        }
-
-        set({ loadingHashtag: false });
+        const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/search/?q=${query}`);
+        set({ filteredPosts: res.data, loadingHashtag: false });
       } catch (error: any) {
         set({ error: error.message, loadingHashtag: false });
       }
     },
 
-    resetFilteredResults: () => {
+    /* -------------------------
+       Reset Filters
+    --------------------------*/
+    resetFilteredPosts: () => {
       set({
-        filteredPosts: null,
-        filteredProfiles: null,
-        filteredHashtags: null,
+        filteredPosts: [],
         activeHashtag: null,
         activeSearch: null,
       });
     },
-
-
-
 
 
 

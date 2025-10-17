@@ -18,12 +18,12 @@ router.post("/:id/unlike", controller.unlikePost);
 
 // Comments (list + create on post)
 router.get("/:id/comments", controller.getCommentsForPost);
-router.post("/:id/comments", controller.createCommentForPost);
+router.post("/:id/comments", upload.single("image"), controller.createCommentForPost);
 
 // Replies for a post (all replies belonging to comments under the post)
 router.get("/:id/replies", controller.listRepliesForPost);
 // Create reply on a comment
-router.post("/replies", controller.createReplyForComment);
+router.post("/replies", upload.single("image"), controller.createReplyForComment);
 router.get("/comments/:id/replies", controller.getRepliesByComment);
 
 

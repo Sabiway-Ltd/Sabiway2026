@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Heart, MessageCircle, BarChart2, Share, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, BarChart2, Share, Bookmark, Smile } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
@@ -9,12 +9,11 @@ import CommentThread from "./CommentThread";
 import { toast } from "react-hot-toast";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import dynamic from "next/dynamic";
-import { Smile } from "lucide-react";
 import { EmojiClickData } from "emoji-picker-react";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 
 // ✅ Load emoji picker only on client side
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
-
 
 export default function PostCard({
   id,
@@ -27,6 +26,10 @@ export default function PostCard({
   is_liked = false,
   is_bookmarked = false,
   created_at,
+  myPosts,
+  setMyPosts,
+  post, // your post service for update/delete
+  onReloadPosts, // parent callback to reload all posts
 }: {
   id: string;
   author: {
@@ -35,7 +38,7 @@ export default function PostCard({
     username: string;
     profile_picture?: string | null;
     whatsapp_number: string;
-    is_following?: boolean; // optional fallback from API
+    is_following?: boolean;
   };
   content: string;
   image?: string | null;
@@ -45,6 +48,10 @@ export default function PostCard({
   is_liked?: boolean;
   is_bookmarked?: boolean;
   created_at: string;
+  myPosts: any[];
+  setMyPosts: (posts: any[]) => void;
+  post: any;
+  onReloadPosts?: () => void; // optional callback
 }) {
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likesCount, setLikesCount] = useState(likes_count);
@@ -57,15 +64,17 @@ export default function PostCard({
   const [loadingComments, setLoadingComments] = useState(false);
   const [impressionsCount, setImpressionsCount] = useState(impressions_count || 0);
   const [followingLoading, setFollowingLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const { getPostById, likePost, unlikePost, addComment, getComments, bookmarkPost, unbookmarkPost, commentsByPost, likeComment, unlikeComment, addReply } =
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editedPostContent, setEditedPostContent] = useState(content);
+  const [editedPostImage, setEditedPostImage] = useState<File | null>(null);
+  const [uploadingPostImage, setUploadingPostImage] = useState(false);
+
+  const { getAllPosts, getPostById, likePost, unlikePost, addComment, getComments, bookmarkPost, unbookmarkPost, commentsByPost, likeComment, unlikeComment, addReply } =
     usePostStore();
-
   const { followingStatus, toggleFollow, profile: currentUser } = useProfileStore();
-
   const comments = commentsByPost[id] || [];
-
-  // ✅ derive current follow state from store, fallback to API
   const isFollowing = followingStatus[author.user_id] ?? author.is_following ?? false;
 
   const getProfileSrc = (url?: string | null) => {
@@ -74,7 +83,7 @@ export default function PostCard({
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${url}`;
   };
 
-  // Format created_at date
+  // Format date
   useEffect(() => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -87,6 +96,7 @@ export default function PostCard({
     setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
   }, [created_at]);
 
+  // Like/unlike
   const handleToggleLike = async () => {
     const prevLiked = isLiked;
     const prevCount = likesCount;
@@ -102,6 +112,7 @@ export default function PostCard({
     }
   };
 
+  // Comments toggle
   const handleToggleComments = async () => {
     const nextState = !showComments;
     setShowComments(nextState);
@@ -133,12 +144,15 @@ export default function PostCard({
   };
 
   const handleBookmarkToggle = async () => {
+    setLoading(true);
     try {
       if (isBookmarked) await unbookmarkPost(id);
       else await bookmarkPost(id);
       setIsBookmarked(!isBookmarked);
     } catch (err) {
       console.error("Bookmark error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,8 +177,7 @@ export default function PostCard({
     }
   };
 
-
-  // fetch impressions
+  // Fetch impressions
   useEffect(() => {
     const fetchImpression = async () => {
       try {
@@ -177,30 +190,25 @@ export default function PostCard({
     fetchImpression();
   }, [id, getPostById]);
 
-
-  // For Emoji Input
+  // Emoji
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // ✨ Adjust height dynamically when text changes
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = "auto"; // reset first
-      textarea.style.height = `${textarea.scrollHeight}px`; // grow to fit
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, [comment]);
 
-  // 🧠 Insert emoji exactly where cursor is
   const insertAtCursor = (emoji: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const newValue = comment.slice(0, start) + emoji + comment.slice(end);
     setComment(newValue);
-
     requestAnimationFrame(() => {
       textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
       textarea.focus();
@@ -219,8 +227,76 @@ export default function PostCard({
     }
   };
 
+  // Post kebab menu
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event: any) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ✅ Edit/Delete integration
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setEditedPostImage(file);
+  };
+  
+  const handleSavePost = async (postId: string) => {
+    try {
+      setUploadingPostImage(true);
+
+      const { post } = await import("@/app/services/post");
+      const fd = new FormData();
+      fd.append("content", editedPostContent || "");
+      if (editedPostImage) fd.append("image", editedPostImage);
+
+      await post.update(postId, fd);
+
+      toast.success("Post updated successfully!");
+      setEditingPostId(null);
+      // setEditedPostContent("");
+      setEditedPostImage(null);
+
+      onReloadPosts?.(); // reload all posts from parent
+    } catch (error: any) {
+      console.error("Update post error:", error.response?.data || error.message);
+      toast.error(error.response?.data?.detail || "Failed to update post.");
+    } finally {
+      setUploadingPostImage(false);
+    }
+  };
+
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+
+  // Open modal
+  const confirmDeletePost = (postId: string) => {
+    setPostToDelete(postId);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Actual delete function
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const { post } = await import("@/app/services/post");
+      await post.delete(postId);
+      toast.success("Post deleted successfully!");
+      onReloadPosts?.();
+    } catch (error: any) {
+      console.error("Delete post error:", error.response?.data || error.message);
+      toast.error(error.response?.data?.detail || "Failed to delete post.");
+    } 
+  };
+
   return (
     <div className="p-4 border-b">
+      {/* Header */}
       <div className="flex justify-between items-center gap-3">
         <div className="flex items-center gap-3">
           <img
@@ -235,7 +311,7 @@ export default function PostCard({
           </div>
         </div>
 
-        {author.user_id !== currentUser?.user_id && (
+        {author.user_id !== currentUser?.user_id ? (
           <button
             onClick={handleFollowToggle}
             disabled={followingLoading}
@@ -267,28 +343,110 @@ export default function PostCard({
                     d="M4 12a8 8 0 018-8v8z"
                   ></path>
                 </svg>
-                <span className="text-xs">{isFollowing ? "Unfollowing..." : "Following..."}</span>
+                <span className="text-xs">
+                  {isFollowing ? "Unfollowing..." : "Following..."}
+                </span>
               </>
             ) : (
               <span>{isFollowing ? "Unfollow" : "Follow"}</span>
             )}
           </button>
+        ) : (
+          <div className="ml-auto relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen((prev) => !prev)}
+              className="p-2 rounded-full hover:bg-gray-100 transition"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-gray-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
 
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <button
+                  onClick={() => setEditingPostId(id)}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => confirmDeletePost(id)}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
-      <div className="mt-3 text-gray-800 text-sm">{content}</div>
-
-      {image && (
-        <div className="mt-3 rounded-xl overflow-hidden">
-          <img
-            src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
-            alt="Post image"
-            className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
+      {/* Content / Edit Post */}
+      {editingPostId === id ? (
+        <div className="mt-3 space-y-2">
+          <textarea
+            value={editedPostContent}
+            onChange={(e) => setEditedPostContent(e.target.value)}
+            className="w-full border rounded-lg p-2"
           />
+          {editedPostImage ? (
+            <img
+              src={URL.createObjectURL(editedPostImage)}
+              alt="Preview"
+              className="w-full max-h-48 object-cover rounded-md"
+            />
+          ) : image ? (
+            <img
+              src={
+                image.startsWith("http")
+                  ? image
+                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
+              }
+              alt="Post image"
+              
+              className="rounded-md mb-2 w-full h-auto"
+            />
+          ) : null}
+
+          <input type="file" onChange={handleImageChange} className="mt-1 cursor-pointer" />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => handleSavePost(id)}
+              className="bg-green-500 text-white px-3 py-1 rounded"
+              disabled={uploadingPostImage}
+            >
+              {uploadingPostImage ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={() => setEditingPostId(null)}
+              className="bg-gray-400 text-white px-3 py-1 rounded"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
+      ) : (
+        <>
+          <div className="mt-3 text-gray-800 text-sm">{content}</div>
+          {image && (
+            <div className="mt-3 rounded-xl overflow-hidden">
+              <img
+                src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
+                alt="Post image"
+                className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
+              />
+            </div>
+          )}
+        </>
       )}
 
+      {/* Actions */}
       <div className="flex justify-between text-gray-800 mt-3 lg:w-[40%] md:w-[60%]">
         <button onClick={handleToggleLike} className="flex items-center gap-1">
           <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
@@ -314,10 +472,20 @@ export default function PostCard({
           <FaWhatsapp size={20} />
         </button>
 
-        <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
-          <Bookmark
-            className={`h-[1.35rem] w-[1.35rem] ${isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"}`}
-          />
+        <button
+          onClick={handleBookmarkToggle}
+          className="flex items-center gap-1"
+          disabled={loading}
+        >
+          {loading ? (
+            <div className="h-[1.35rem] w-[1.35rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+          ) : (
+            <Bookmark
+              className={`h-[1.35rem] w-[1.35rem] ${
+                isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
+              }`}
+            />
+          )}
         </button>
 
         <button className="flex items-center gap-1">
@@ -325,10 +493,10 @@ export default function PostCard({
         </button>
       </div>
 
+      {/* Comments */}
       {showComments && (
         <>
           <div className="mt-3 border rounded-3xl bg-white flex w-full justify-between items-start relative px-4 pt-2 pb-1">
-            {/* 📝 Textarea (auto-resizing) */}
             <textarea
               ref={textareaRef}
               placeholder="Leave a comment..."
@@ -339,8 +507,6 @@ export default function PostCard({
               rows={1}
               className="flex-1 resize-none text-sm outline-none bg-transparent disabled:opacity-60 overflow-hidden"
             />
-
-            {/* 😀 Emoji Button */}
             <div className="relative mr-2">
               <button
                 type="button"
@@ -349,15 +515,12 @@ export default function PostCard({
               >
                 <Smile className="h-5 w-5" />
               </button>
-
               {showEmojiPicker && (
-                <div className="absolute bottom-8 right-0 z-50">
+                <div className="absolute bottom-8 right-0 z-50 scale-75">
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}
             </div>
-
-            {/* 🚀 Submit Button */}
             <button
               onClick={handleCommentSubmit}
               disabled={submitting || !comment.trim()}
@@ -370,28 +533,11 @@ export default function PostCard({
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  ></path>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                 </svg>
               ) : (
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 22 22"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
@@ -402,7 +548,6 @@ export default function PostCard({
               )}
             </button>
           </div>
-
 
           <div className="mt-4 space-y-4">
             {loadingComments ? (
@@ -425,17 +570,31 @@ export default function PostCard({
                   is_liked={c.is_liked || false}
                   reply_count={c.reply_count || 0}
                   created_at={c.created_at}
-                  // ✅ Fix: Wrap handlers to ensure type consistency
                   onReplySubmit={(parentId, content) => addReply(String(parentId), content)}
                   onLike={(id) => likeComment(String(id))}
                   onUnlike={(id) => unlikeComment(String(id))}
                 />
-
               ))
             )}
           </div>
         </>
       )}
+
+      {/* Delete confirmation modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPostToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (postToDelete) {
+            await handleDeletePost(postToDelete);
+          }
+          setIsDeleteModalOpen(false);
+          setPostToDelete(null);
+        }}
+      />
     </div>
   );
 }

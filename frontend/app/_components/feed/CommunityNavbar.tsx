@@ -1,25 +1,29 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { useNotificationStore } from "@/app/store/useNotificationStore";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import { usePostStore } from "@/app/store/usePostStore";
-import toast from "react-hot-toast";
-import {
-  CLOUDINARY_CLOUD_NAME,
-  DEFAULT_PROFILE_PICTURE,
-} from "@/app/helper";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import toast from "react-hot-toast";
+import { usePostStore } from "@/app/store/usePostStore";
 
+// ✅ Include onReset here
 interface CommunityNavbarProps {
   onCreatePost: () => void;
+  onSearch: (searchTerm: string) => void;
+  onReset?: () => void;
 }
 
-export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) {
+export default function CommunityNavbar({
+  onCreatePost,
+  onSearch,
+  onReset, // ✅ added
+}: CommunityNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,35 +33,20 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
 
   const { profile, getMyProfile } = useProfileStore();
   const { socket } = useAuthStore();
-  const {
-    notifications,
-    getNotifications,
-    markAsRead,
-    addNotification,
-    loading,
-  } = useNotificationStore();
-  const { filterPostsBySearch, resetFilteredPosts } = usePostStore();
+  const { notifications, getNotifications, markAsRead, addNotification, loading } =
+    useNotificationStore();
 
-  // ✅ Unread notifications
-  const unreadCount = useNotificationStore(
-    (state) => state.notifications.filter((n) => !n.is_read).length
-  );
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  /* -------------------------
-     Profile + notifications
-  --------------------------*/
+  // 🔁 Auto-refresh notifications
   useEffect(() => {
     if (!profile) getMyProfile();
     getNotifications();
-  }, [profile, getMyProfile, getNotifications]);
-
-  // Polling fallback
-  useEffect(() => {
     const interval = setInterval(() => getNotifications(), 5000);
     return () => clearInterval(interval);
-  }, [getNotifications]);
+  }, []);
 
-  // Real-time notifications
+  // 🔔 Socket listener
   useEffect(() => {
     if (!socket) return;
     const handleNewNotification = (notif: any) => {
@@ -68,7 +57,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
     return () => socket.off("notification:new", handleNewNotification);
   }, [socket, addNotification]);
 
-  // Close dropdown on outside click
+  // 🪟 Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
@@ -78,9 +67,6 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* -------------------------
-     Helpers
-  --------------------------*/
   const getCloudinaryImage = (path: string | null) => {
     if (!path) return DEFAULT_PROFILE_PICTURE;
     return path.startsWith("http")
@@ -88,13 +74,35 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
   };
 
+  // 🔍 Handle search
   const handleSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim() !== "") {
-      filterPostsBySearch(searchQuery.trim());
+      onSearch(searchQuery.trim());
     } else if (e.key === "Escape") {
-      resetFilteredPosts();
       setSearchQuery("");
     }
+  };
+
+  // 🟢 Handle SabiWay logo click
+  const handleLogoClick = () => {
+    router.push("/community");
+
+    // ✅ Delay to ensure page navigation completes
+    setTimeout(() => {
+      const { resetFilteredResults, getAllPosts } = usePostStore.getState();
+
+      // ✅ Reset state
+      resetFilteredResults();
+      setSearchQuery("");
+
+      // ✅ Inform parent (Community page)
+      if (typeof onReset === "function") {
+        onReset();
+      }
+
+      // ✅ Fetch all posts again
+      getAllPosts();
+    }, 250);
   };
 
   return (
@@ -102,20 +110,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
         <div className="flex items-center gap-x-4">
-          {/* Sabiway Logo */}
-          {/* ✅ Logo — goes home & reloads posts */}
-          <button
-            onClick={() => {
-              router.push("/community");
-              resetFilteredPosts(); // 🧹 Clear active hashtag/search
-              setSearchQuery(""); // Clear the input
-              setTimeout(() => {
-                // Give router a tick before reloading posts
-                const { getAllPosts } = usePostStore.getState();
-                getAllPosts(); // 🔁 Refresh posts feed
-              }, 200);
-            }}
-          >
+          <button onClick={handleLogoClick}>
             <img
               src="/sabiwaylogo.svg"
               alt="SabiWay Logo"
@@ -123,24 +118,27 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             />
           </button>
 
-
-          {/* ✅ Desktop Search */}
-          <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-md py-3 bg-white items-center shadow-sm">
-            <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Search Community"
-              className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKey}
-            />
+          {/* Desktop Search */}
+          {
+            pathname === "/community" &&(
+              <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-md py-3 bg-white items-center shadow-sm">
+                <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search Community"
+                  className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKey}
+                />
+              </div>
+            )
+          }
           </div>
-        </div>
+          
 
         {/* Right Section */}
         <div className="flex items-center space-x-3 sm:space-x-4 relative">
-          {/* ✅ Create Post */}
           {pathname === "/community" && (
             <button
               onClick={onCreatePost}
@@ -154,7 +152,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             </button>
           )}
 
-          {/* 🔔 Notifications */}
+          {/* Notifications */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
@@ -167,8 +165,6 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                 </span>
               )}
             </button>
-
-            {/* Dropdown */}
             <AnimatePresence>
               {dropdownOpen && (
                 <motion.div
@@ -181,9 +177,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                   {loading && notifications.length === 0 ? (
                     <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
                   ) : notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">
-                      No notifications
-                    </p>
+                    <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
                   ) : (
                     notifications.map((n) => (
                       <div
@@ -198,19 +192,12 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                         <img
                           src={getCloudinaryImage(n.actor.profile_picture)}
                           alt={n.actor.full_name || "User"}
-                          onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <p className="text-sm text-gray-800">
                             <span className="font-semibold">{n.actor.full_name}</span>{" "}
-                            {n.type === "like"
-                              ? "liked your post"
-                              : n.type === "comment"
-                              ? "commented on your post"
-                              : n.type === "follow"
-                              ? "followed you"
-                              : n.message}
+                            {n.message}
                           </p>
                           <p className="text-xs text-gray-500">
                             {new Date(n.created_at).toLocaleString("en-GB", {
@@ -222,7 +209,6 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                               hour12: true,
                             })}
                           </p>
-
                         </div>
                         {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
                       </div>
@@ -233,30 +219,25 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
             </AnimatePresence>
           </div>
 
-          {/* ✅ User Avatar */}
+          {/* User Avatar */}
           <Link href="/profile" className="relative group">
             <img
               src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
               alt={profile?.full_name || "User"}
-              onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
               className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
             />
-            <span className="absolute inset-0 rounded-full ring-2 ring-transparent group-hover:ring-[#008753]/40 transition"></span>
           </Link>
 
-          {/* ✅ Mobile Menu */}
+          {/* Mobile Menu */}
           {pathname === "/community" && (
-            <button
-              className="md:hidden bg-white p-2 rounded-full"
-              onClick={() => setMenuOpen(true)}
-            >
+            <button className="md:hidden bg-white p-2 rounded-full" onClick={() => setMenuOpen(true)}>
               <Menu className="h-5 w-5 text-[#008753]" />
             </button>
           )}
         </div>
       </div>
 
-      {/* ✅ Mobile Drawer */}
+      {/* Mobile Drawer */}
       {menuOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/20 flex justify-end"
@@ -273,7 +254,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               </button>
             </div>
 
-            {/* ✅ Mobile Search */}
+            {/* Mobile Search */}
             <div className="w-full px-3 text-xs gap-x-2 rounded py-2 bg-gray-100 flex items-center mb-4">
               <Search className="h-4 w-4 text-gray-600" />
               <input
@@ -282,15 +263,7 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                 className="flex-1 outline-none focus:ring-0 text-sm bg-transparent"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim() !== "") {
-                    filterPostsBySearch(searchQuery.trim());
-                    setMenuOpen(false);
-                  } else if (e.key === "Escape") {
-                    resetFilteredPosts();
-                    setSearchQuery("");
-                  }
-                }}
+                onKeyDown={handleSearchKey}
               />
             </div>
 
@@ -304,7 +277,6 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               <img
                 src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
                 alt={profile?.full_name || "User"}
-                onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                 className="w-7 h-7 rounded-full object-cover"
               />
               Create Post

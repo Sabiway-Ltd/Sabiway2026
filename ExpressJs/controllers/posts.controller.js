@@ -118,18 +118,60 @@ exports.getCommentsForPost = async (req, res) => {
   }
 };
 
+
+
 exports.createCommentForPost = async (req, res) => {
   try {
     const token = req.headers._token;
-    // Pass content and post id
-    const payload = Object.assign({}, req.body);
-    const created = await djangoPost.createCommentForPost(token, req.params.id, payload);
+
+    // Use multer for file upload: req.file will be the uploaded image
+    const created = await djangoPost.createCommentForPost(
+      token,
+      req.params.id,
+      { content: req.body.content },
+      req.file // new
+    );
+
     postEvents.commentCreated({ postId: req.params.id, comment: created });
     res.status(201).json(created);
   } catch (err) {
-    res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
+    console.error("createCommentForPost error:", err.response?.data || err.message);
+    res
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: err.message });
   }
 };
+
+exports.createReplyForComment = async (req, res) => {
+  try {
+    const token =
+      req.headers._token || req.headers.authorization?.split(" ")[1];
+    const { comment, content } = req.body;
+
+    if (!comment) {
+      return res.status(400).json({ error: "Comment ID is required" });
+    }
+
+    const created = await djangoPost.createReplyForComment(
+      token,
+      { comment, content },
+      req.file // new
+    );
+
+    postEvents.replyCreated({
+      commentId: comment,
+      reply: created,
+    });
+
+    res.status(201).json(created);
+  } catch (err) {
+    console.error("createReplyForComment error:", err.response?.data || err.message);
+    res
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: err.message });
+  }
+};
+
 
 exports.listRepliesForPost = async (req, res) => {
   try {
@@ -157,38 +199,6 @@ exports.getRepliesByComment = async (req, res) => {
   }
 };
 
-// controllers/posts.controller.js
-// controllers/posts.controller.js
-exports.createReplyForComment = async (req, res) => {
-  try {
-    const token =
-      req.headers._token || req.headers.authorization?.split(" ")[1];
-    const { comment, content } = req.body;
-
-    if (!comment) {
-      return res.status(400).json({ error: "Comment ID is required" });
-    }
-    if (!content) {
-      return res.status(400).json({ error: "Content is required" });
-    }
-
-    const payload = { comment, content };
-
-    const created = await djangoPost.createReplyForComment(token, payload);
-
-    postEvents.replyCreated({
-      commentId: comment,
-      reply: created,
-    });
-
-    res.status(201).json(created);
-  } catch (err) {
-    console.error("createReplyForComment error:", err.response?.data || err.message);
-    res
-      .status(err.response?.status || 500)
-      .json(err.response?.data || { error: err.message });
-  }
-};
 
 
 

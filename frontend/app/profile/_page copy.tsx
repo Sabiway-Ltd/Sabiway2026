@@ -15,8 +15,6 @@ import DeleteConfirmModal from "../_components/common/DeleteConfirmModal";
 import toast from "react-hot-toast";
 import Button from "../_components/common/Button";
 import { useAuthStore } from "../store/useAuthStore";
-import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
 
 
 
@@ -31,12 +29,7 @@ export default function ProfilePage() {
   const [bookmarks, setBookmarks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [unfollowingUserId, setUnfollowingUserId] = useState<string | null>(null);
   const { logout } = useAuthStore();
-  
-
-  const [loadingFollowId, setLoadingFollowId] = useState<number | null>(null);
-  const [localFollowing, setLocalFollowing] = useState<{ [key: number]: boolean }>({});
 
 
   const {
@@ -69,26 +62,6 @@ export default function ProfilePage() {
 
 const [loadingId, setLoadingId] = useState<number | null>(null);
 
-
-const handleFollowToggle = async (user: any) => {
-  const isFollowing = localFollowing[user.user_id] ?? user.is_following_you;
-
-  // Optimistic update
-  setLocalFollowing((prev) => ({ ...prev, [user.user_id]: !isFollowing }));
-  setLoadingFollowId(user.user_id);
-
-  try {
-    await toggleFollow(user.user_id);
-    toast.success(isFollowing ? `Unfollowed ${user.full_name}` : `Followed ${user.full_name}`);
-  } catch (err) {
-    console.error(err);
-    toast.error("Action failed");
-    // Rollback on error
-    setLocalFollowing((prev) => ({ ...prev, [user.user_id]: isFollowing }));
-  } finally {
-    setLoadingFollowId(null);
-  }
-};
 
 
 
@@ -699,55 +672,27 @@ const handleShowFollowing = async () => {
                   <p className="text-gray-600">You have no followers yet.</p>
                 ) : (
                   myFollowers.map((user) => (
-                    <div
-                      key={user.user_id}
-                      className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
-                    >
-                      {/* User Info */}
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={
+                    <div key={user.user_id} className="flex items-center gap-3 p-2 border rounded hover:bg-gray-50">
+                      <img
+                        src={
                             user.profile_picture
                               ? user.profile_picture.startsWith("http")
                                 ? user.profile_picture
                                 : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
                               : DEFAULT_PROFILE_PICTURE
                           }
-                          alt={user.full_name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="font-medium">{user.full_name}</p>
-                          <p className="md:text-sm text-gray-500">{user.username}</p>
-                        </div>
+                        alt={user.full_name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <p className="font-medium">{user.full_name}</p>
+                        <p className="md:text-sm text-gray-500">{user.username}</p>
                       </div>
-
-                      {/* Follow/Unfollow Button */}
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        whileHover={{ scale: 1.05 }}
-                        onClick={() => handleFollowToggle(user)}
-                        disabled={loadingFollowId === user.user_id}
-                        className={`px-3 py-1 rounded-full text-sm flex items-center justify-center gap-2 transition-all ${
-                          (localFollowing[user.user_id] ?? user.is_following)
-                            ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            : "bg-[#008753] text-white hover:bg-green-700"
-                        }`}
-                      >
-                        {loadingFollowId === user.user_id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (localFollowing[user.user_id] ?? user.is_following) ? (
-                          "Following"
-                        ) : (
-                          "Follow"
-                        )}
-                      </motion.button>
                     </div>
                   ))
                 )}
               </div>
             )}
-
 
             {activeTab === "following" && (
               <div className="space-y-4">
@@ -780,51 +725,15 @@ const handleShowFollowing = async () => {
                       <button
                         onClick={async () => {
                           try {
-                            setUnfollowingUserId(user.user_id); // start loading
-                            await toggleFollow(user.user_id);
+                            await toggleFollow(user.user_id); // toggles follow/unfollow
                           } catch (err) {
                             console.error(err);
-                          } finally {
-                            setUnfollowingUserId(null); // stop loading
                           }
                         }}
-                        disabled={unfollowingUserId === user.user_id}
-                        className={`flex items-center justify-center gap-2 px-3 py-1 rounded-full md:text-sm transition 
-                          ${
-                            unfollowingUserId === user.user_id
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-red-500 hover:bg-red-600 text-white"
-                          }`}
+                        className="bg-red-500 text-white px-3 py-1 rounded-full md:text-sm hover:bg-red-600"
                       >
-                        {unfollowingUserId === user.user_id ? (
-                          <>
-                            <svg
-                              className="animate-spin h-4 w-4 text-white"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                              ></path>
-                            </svg>
-                            <span>Unfollowing...</span>
-                          </>
-                        ) : (
-                          "Unfollow"
-                        )}
+                        Unfollow
                       </button>
-
                     </div>
                   ))
                 )}

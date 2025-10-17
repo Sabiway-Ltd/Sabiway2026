@@ -7,6 +7,8 @@ import { Button } from "@/src/components/ui/button";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react"; // ✅ spinner icon
+import { getProfileImage } from "../utils/getProfileImage";
+import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "../helper";
 
 export default function OnlineUsers() {
   const { user, onlineUsers } = useAuthStore();
@@ -71,12 +73,17 @@ export default function OnlineUsers() {
           >
             <div className="flex items-center gap-3">
               {profile.profile_picture ? (
-                <Image
-                  src={profile.profile_picture}
+                <img
+                  
+                  src={
+                    profile.profile_picture
+                      ? profile.profile_picture.startsWith("http")
+                        ? profile.profile_picture
+                        : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture}`
+                      : DEFAULT_PROFILE_PICTURE
+                  }
                   alt={profile.full_name}
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover"
+                  className="rounded-full object-cover w-[40px] h-[40px]"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">

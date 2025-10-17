@@ -86,48 +86,14 @@ const djangoPostService = {
     return res.data;
   },
 
-  /** ----------------------------
-   *  CREATE COMMENT (with image)
-   *  ---------------------------- */
-  async createCommentForPost(token, postId, data, file) {
-  const FormData = require("form-data");
-  const form = new FormData();
-  form.append("content", data.content);
-
-  if (file) {
-    form.append("image", file.buffer, { filename: file.originalname });
-  }
-
-  const res = await axiosClient.post(`${base}/${postId}/comments/`, form, {
-    headers: {
-      ...form.getHeaders(),
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  });
-
-  return res.data;
-},
-
-async createReplyForComment(token, data, file) {
-  const FormData = require("form-data");
-  const form = new FormData();
-  form.append("comment", data.comment);
-  form.append("content", data.content);
-
-  if (file) {
-    form.append("image", file.buffer, { filename: file.originalname });
-  }
-
-  const res = await axiosClient.post(`${base}/replies/`, form, {
-    headers: {
-      ...form.getHeaders(),
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  });
-
-  return res.data;
-},
-
+  async createCommentForPost(token, id, data) {
+    // Django expects "post" id in payload; your controller already passes by param mapping
+    // We'll send { content: "...", post: id } if needed — but Django's view accepts post param.
+    const res = await axiosClient.post(`${base}/${id}/comments/`, data, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return res.data;
+  },
 
   // Reply
 
@@ -144,6 +110,18 @@ async createReplyForComment(token, data, file) {
     });
     return res.data;
   },
+
+  // services/djangoPost.service.js
+  // services/djangoPost.service.js
+async createReplyForComment(token, payload) {
+  const res = await axiosClient.post(`${base}/replies/`, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+  return res.data;
+},
 
 
 

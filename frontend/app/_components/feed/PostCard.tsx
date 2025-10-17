@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Heart, MessageCircle, BarChart2, Share, Bookmark, Smile } from "lucide-react";
+import { Heart, MessageCircle, BarChart2, Share, Bookmark, Smile, Image as ImageIcon, X } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
@@ -28,36 +28,16 @@ export default function PostCard({
   created_at,
   myPosts,
   setMyPosts,
-  post, // your post service for update/delete
-  onReloadPosts, // parent callback to reload all posts
-}: {
-  id: string;
-  author: {
-    user_id: number;
-    full_name: string;
-    username: string;
-    profile_picture?: string | null;
-    whatsapp_number: string;
-    is_following?: boolean;
-  };
-  content: string;
-  image?: string | null;
-  likes_count: number;
-  comments_count: number;
-  impressions_count?: number;
-  is_liked?: boolean;
-  is_bookmarked?: boolean;
-  created_at: string;
-  myPosts: any[];
-  setMyPosts: (posts: any[]) => void;
-  post: any;
-  onReloadPosts?: () => void; // optional callback
-}) {
+  post,
+  onReloadPosts,
+}: any) {
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likesCount, setLikesCount] = useState(likes_count);
   const [commentCount, setCommentCount] = useState(comments_count);
   const [isBookmarked, setIsBookmarked] = useState(is_bookmarked);
   const [comment, setComment] = useState("");
+  const [commentImage, setCommentImage] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [formattedDate, setFormattedDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -71,8 +51,21 @@ export default function PostCard({
   const [editedPostImage, setEditedPostImage] = useState<File | null>(null);
   const [uploadingPostImage, setUploadingPostImage] = useState(false);
 
-  const { getAllPosts, getPostById, likePost, unlikePost, addComment, getComments, bookmarkPost, unbookmarkPost, commentsByPost, likeComment, unlikeComment, addReply } =
-    usePostStore();
+  const {
+    getAllPosts,
+    getPostById,
+    likePost,
+    unlikePost,
+    addComment,
+    getComments,
+    bookmarkPost,
+    unbookmarkPost,
+    commentsByPost,
+    likeComment,
+    unlikeComment,
+    addReply,
+  } = usePostStore();
+
   const { followingStatus, toggleFollow, profile: currentUser } = useProfileStore();
   const comments = commentsByPost[id] || [];
   const isFollowing = followingStatus[author.user_id] ?? author.is_following ?? false;
@@ -83,7 +76,6 @@ export default function PostCard({
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${url}`;
   };
 
-  // Format date
   useEffect(() => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -96,7 +88,6 @@ export default function PostCard({
     setFormattedDate(new Date(created_at).toLocaleString(undefined, options));
   }, [created_at]);
 
-  // Like/unlike
   const handleToggleLike = async () => {
     const prevLiked = isLiked;
     const prevCount = likesCount;
@@ -112,14 +103,14 @@ export default function PostCard({
     }
   };
 
-  // Comments toggle
   const handleToggleComments = async () => {
     const nextState = !showComments;
     setShowComments(nextState);
-    if (nextState && comments.length === 0) {
+
+    if (nextState) {
       setLoadingComments(true);
       try {
-        await getComments(id);
+        await getComments(id); // ✅ always load comments when opened
       } catch (err) {
         console.error("Error loading comments:", err);
       } finally {
@@ -128,12 +119,15 @@ export default function PostCard({
     }
   };
 
+
   const handleCommentSubmit = async () => {
-    if (!comment.trim()) return;
+    if (!comment.trim() && !commentImage) return;
     setSubmitting(true);
     try {
-      await addComment(id, comment);
+      await addComment(id, comment, commentImage || undefined);
       setComment("");
+      setCommentImage(null);
+      setCommentImagePreview(null);
       setCommentCount((prev) => prev + 1);
       await getComments(id);
     } catch (err) {
@@ -141,6 +135,18 @@ export default function PostCard({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCommentImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCommentImage(file);
+    setCommentImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveCommentImage = () => {
+    setCommentImage(null);
+    setCommentImagePreview(null);
   };
 
   const handleBookmarkToggle = async () => {
@@ -170,14 +176,13 @@ export default function PostCard({
     try {
       await toggleFollow(author.user_id);
       toast.success(`${isFollowing ? "Unfollowed" : "Following"} ${author.full_name}`);
-    } catch (err) {
+    } catch {
       toast.error("Failed to update follow status");
     } finally {
       setFollowingLoading(false);
     }
   };
 
-  // Fetch impressions
   useEffect(() => {
     const fetchImpression = async () => {
       try {
@@ -190,7 +195,6 @@ export default function PostCard({
     fetchImpression();
   }, [id, getPostById]);
 
-  // Emoji
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -221,13 +225,13 @@ export default function PostCard({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey && comment.trim() && !submitting) {
+    if (e.key === "Enter" && !e.shiftKey && (comment.trim() || commentImage) && !submitting) {
       e.preventDefault();
       handleCommentSubmit();
     }
   };
 
-  // Post kebab menu
+  // ——— Post editing and delete handlers are unchanged ———
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
@@ -240,48 +244,37 @@ export default function PostCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Edit/Delete integration
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setEditedPostImage(file);
   };
-  
+
   const handleSavePost = async (postId: string) => {
     try {
       setUploadingPostImage(true);
-
       const { post } = await import("@/app/services/post");
       const fd = new FormData();
       fd.append("content", editedPostContent || "");
       if (editedPostImage) fd.append("image", editedPostImage);
-
       await post.update(postId, fd);
-
       toast.success("Post updated successfully!");
       setEditingPostId(null);
-      // setEditedPostContent("");
       setEditedPostImage(null);
-
-      onReloadPosts?.(); // reload all posts from parent
+      onReloadPosts?.();
     } catch (error: any) {
-      console.error("Update post error:", error.response?.data || error.message);
       toast.error(error.response?.data?.detail || "Failed to update post.");
     } finally {
       setUploadingPostImage(false);
     }
   };
 
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
-
-  // Open modal
   const confirmDeletePost = (postId: string) => {
     setPostToDelete(postId);
     setIsDeleteModalOpen(true);
   };
 
-  // Actual delete function
   const handleDeletePost = async (postId: string) => {
     try {
       const { post } = await import("@/app/services/post");
@@ -289,9 +282,8 @@ export default function PostCard({
       toast.success("Post deleted successfully!");
       onReloadPosts?.();
     } catch (error: any) {
-      console.error("Delete post error:", error.response?.data || error.message);
       toast.error(error.response?.data?.detail || "Failed to delete post.");
-    } 
+    }
   };
 
   return (
@@ -493,62 +485,117 @@ export default function PostCard({
         </button>
       </div>
 
-      {/* Comments */}
+
+      {/* Comments Section */}
       {showComments && (
         <>
-          <div className="mt-3 border rounded-3xl bg-white flex w-full justify-between items-start relative px-4 pt-2 pb-1">
-            <textarea
-              ref={textareaRef}
-              placeholder="Leave a comment..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={submitting}
-              rows={1}
-              className="flex-1 resize-none text-sm outline-none bg-transparent disabled:opacity-60 overflow-hidden"
-            />
-            <div className="relative mr-2">
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker((prev) => !prev)}
-                className="text-gray-500 hover:text-yellow-500 transition"
-              >
-                <Smile className="h-5 w-5" />
-              </button>
-              {showEmojiPicker && (
-                <div className="absolute bottom-8 right-0 z-50 scale-75">
-                  <EmojiPicker onEmojiClick={handleEmojiClick} />
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleCommentSubmit}
-              disabled={submitting || !comment.trim()}
-              className="flex items-center justify-center disabled:opacity-50"
-            >
-              {submitting ? (
-                <svg
-                  className="animate-spin h-5 w-5 text-gray-500"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
+          {/* 💬 Comment Input with Image */}
+          <div className="mt-3 border rounded-3xl bg-white flex flex-col w-full px-4 pt-2 pb-2">
+            {commentImagePreview && (
+              <div className="relative mb-2 w-32">
+                <img
+                  src={commentImagePreview}
+                  alt="Preview"
+                  className="rounded-lg border object-cover w-32 h-32"
+                />
+                <button
+                  onClick={handleRemoveCommentImage}
+                  className="absolute -top-2 -right-2 bg-black text-white rounded-full p-1 hover:bg-red-500"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                </svg>
-              ) : (
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
-                    fill="black"
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            <div className="flex w-full justify-between items-start relative">
+              <textarea
+                ref={textareaRef}
+                placeholder="Leave a comment..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={submitting}
+                rows={1}
+                className="flex-1 resize-none text-sm outline-none bg-transparent disabled:opacity-60 overflow-hidden"
+              />
+
+              <div className="flex items-center gap-3 mr-2">
+                {/* Image Upload */}
+                <label className="cursor-pointer text-gray-500 hover:text-blue-500 transition flex items-center">
+                  <ImageIcon className="w-5 h-5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleCommentImageChange}
                   />
-                </svg>
-              )}
-            </button>
+                </label>
+
+                {/* Emoji */}
+                <div className="relative flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    className="text-gray-500 hover:text-yellow-500 transition flex items-center"
+                  >
+                    <Smile className="h-5 w-5" />
+                  </button>
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-8 right-0 z-50 scale-75">
+                      <EmojiPicker onEmojiClick={handleEmojiClick} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Send */}
+                <button
+                  onClick={handleCommentSubmit}
+                  disabled={submitting || (!comment.trim() && !commentImage)}
+                  className="flex items-center justify-center disabled:opacity-50 text-gray-700 hover:text-blue-600 transition"
+                >
+                  {submitting ? (
+                    <svg
+                      className="animate-spin h-5 w-5 text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 22 22"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M0.110839 4.56323C-0.203328 1.74298 2.7003 -0.328105 5.26559 0.887478L19.6979 7.72423C22.4626 9.03285 22.4626 12.9672 19.6979 14.2758L5.26559 21.1138C2.7003 22.3294 -0.202119 20.2583 0.110839 17.438L0.690839 12.2084H10.5001C10.8206 12.2084 11.1279 12.081 11.3545 11.8544C11.5811 11.6278 11.7084 11.3205 11.7084 11C11.7084 10.6795 11.5811 10.3722 11.3545 10.1456C11.1279 9.91899 10.8206 9.79169 10.5001 9.79169H0.692047L0.110839 4.56323Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+            </div>
           </div>
 
+          {/* Comments List */}
           <div className="mt-4 space-y-4">
             {loadingComments ? (
               <p className="text-sm text-gray-500 text-center">Loading comments...</p>
@@ -569,8 +616,9 @@ export default function PostCard({
                   likes={c.likes_count || 0}
                   is_liked={c.is_liked || false}
                   reply_count={c.reply_count || 0}
+                  image={c.image}
                   created_at={c.created_at}
-                  onReplySubmit={(parentId, content) => addReply(String(parentId), content)}
+                  onReplySubmit={(parentId, content, image) => addReply(String(parentId), content, image)}
                   onLike={(id) => likeComment(String(id))}
                   onUnlike={(id) => unlikeComment(String(id))}
                 />

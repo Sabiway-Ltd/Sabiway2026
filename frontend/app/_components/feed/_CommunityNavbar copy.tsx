@@ -4,109 +4,97 @@ import { useEffect, useState, useRef } from "react";
 import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
-import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
+import { useNotificationStore } from "@/app/store/useNotificationStore";
+import { useAuthStore } from "@/app/store/useAuthStore";
+import { usePostStore } from "@/app/store/usePostStore";
+import toast from "react-hot-toast";
+import {
+  CLOUDINARY_CLOUD_NAME,
+  DEFAULT_PROFILE_PICTURE,
+} from "@/app/helper";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-
 
 interface CommunityNavbarProps {
   onCreatePost: () => void;
 }
 
-interface Notification {
-  id: number;
-  type: string;
-  message: string;
-  actor: {
-    user_id: number;
-    username: string;
-    full_name: string;
-    profile_picture: string | null;
-  };
-  is_read: boolean;
-  created_at: string;
-}
-
 export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter()
-  const pathname = usePathname()
+  const router = useRouter();
+  const pathname = usePathname();
 
   const { profile, getMyProfile } = useProfileStore();
+  const { socket } = useAuthStore();
+  const {
+    notifications,
+    getNotifications,
+    markAsRead,
+    addNotification,
+    loading,
+  } = useNotificationStore();
+  const { filterPostsBySearch, resetFilteredPosts } = usePostStore();
 
+  // ✅ Unread notifications
+  const unreadCount = useNotificationStore(
+    (state) => state.notifications.filter((n) => !n.is_read).length
+  );
+
+  /* -------------------------
+     Profile + notifications
+  --------------------------*/
   useEffect(() => {
-    if (!profile) {
-      getMyProfile();
-    }
-  }, [profile, getMyProfile]);
+    if (!profile) getMyProfile();
+    getNotifications();
+  }, [profile, getMyProfile, getNotifications]);
 
-
-  // 🔹 Fetch notifications
+  // Polling fallback
   useEffect(() => {
-    const fetchNotifications = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("access");
-        const res = await fetch("https://sabiway-9wq4.onrender.com/api/notifications/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setNotifications(data);
-        }
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-      } finally {
-        setLoading(false);
-      }
+    const interval = setInterval(() => getNotifications(), 5000);
+    return () => clearInterval(interval);
+  }, [getNotifications]);
+
+  // Real-time notifications
+  useEffect(() => {
+    if (!socket) return;
+    const handleNewNotification = (notif: any) => {
+      addNotification(notif);
+      toast.success(notif.message || "New notification!");
     };
+    socket.on("notification:new", handleNewNotification);
+    return () => socket.off("notification:new", handleNewNotification);
+  }, [socket, addNotification]);
 
-    fetchNotifications();
-  }, []);
-
-  // 🔹 Close dropdown on outside click
+  // Close dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
         setDropdownOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const markAsRead = async (id: number) => {
-    try {
-      const token = localStorage.getItem("access");
-      const res = await fetch(
-        `https://sabiway-9wq4.onrender.com/api/notifications/${id}/read/`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-        );
-      }
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
-    }
-  };
-
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
-
-  // ✅ Helper to build profile image URL safely
+  /* -------------------------
+     Helpers
+  --------------------------*/
   const getCloudinaryImage = (path: string | null) => {
     if (!path) return DEFAULT_PROFILE_PICTURE;
-    if (path.startsWith("http")) return path;
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
+    return path.startsWith("http")
+      ? path
+      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
+  };
+
+  const handleSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchQuery.trim() !== "") {
+      filterPostsBySearch(searchQuery.trim());
+    } else if (e.key === "Escape") {
+      resetFilteredPosts();
+      setSearchQuery("");
+    }
   };
 
   return (
@@ -114,27 +102,40 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
         <div className="flex items-center gap-x-4">
+          {/* Sabiway Logo */}
+          {/* ✅ Logo — goes home & reloads posts */}
           <button
-          onClick={()=>{router.replace('/community');}}
+            onClick={() => {
+              router.push("/community");
+              resetFilteredPosts(); // 🧹 Clear active hashtag/search
+              setSearchQuery(""); // Clear the input
+              setTimeout(() => {
+                // Give router a tick before reloading posts
+                const { getAllPosts } = usePostStore.getState();
+                getAllPosts(); // 🔁 Refresh posts feed
+              }, 200);
+            }}
           >
             <img
               src="/sabiwaylogo.svg"
               alt="SabiWay Logo"
-              className="w-28 sm:w-32 md:w-40 h-auto"
+              className="w-28 sm:w-32 md:w-40 h-auto cursor-pointer hover:opacity-90 transition"
             />
           </button>
 
-          {/* Desktop Search */}
+
+          {/* ✅ Desktop Search */}
           <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-md py-3 bg-white items-center shadow-sm">
             <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
-
             <input
               type="text"
               placeholder="Search Community"
               className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKey}
             />
           </div>
-
         </div>
 
         {/* Right Section */}
@@ -145,18 +146,15 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               onClick={onCreatePost}
               className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
             >
-              <img
-                src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-                alt={profile?.full_name || "User"}
-                onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
-                className="w-7 h-7 rounded-full object-cover"
-              />
-              Create Post
+              <div className="flex items-center justify-center py-2 px-2 rounded-full bg-white/20 text-white font-semibold text-xs">
+                {profile?.initials}
+              </div>
+              <span>Create Post</span>
               <Plus className="h-4 w-4" />
             </button>
           )}
 
-          {/* Notifications */}
+          {/* 🔔 Notifications */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
@@ -178,9 +176,9 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute md:right-0 -right-14 space-y-3 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
+                  className="absolute md:right-0 -right-14 space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
                 >
-                  {loading ? (
+                  {loading && notifications.length === 0 ? (
                     <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
                   ) : notifications.length === 0 ? (
                     <p className="text-sm text-center text-gray-500 py-4">
@@ -215,8 +213,16 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
                               : n.message}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {new Date(n.created_at).toLocaleString()}
+                            {new Date(n.created_at).toLocaleString("en-GB", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
                           </p>
+
                         </div>
                         {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
                       </div>
@@ -236,21 +242,21 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
             />
             <span className="absolute inset-0 rounded-full ring-2 ring-transparent group-hover:ring-[#008753]/40 transition"></span>
-            </Link>
+          </Link>
 
-          {/* Mobile Menu */}
+          {/* ✅ Mobile Menu */}
           {pathname === "/community" && (
-          <button
-            className="md:hidden bg-white p-2 rounded-full"
-            onClick={() => setMenuOpen(true)}
-          >
-            <Menu className="h-5 w-5 text-[#008753]" />
-          </button>
+            <button
+              className="md:hidden bg-white p-2 rounded-full"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu className="h-5 w-5 text-[#008753]" />
+            </button>
           )}
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* ✅ Mobile Drawer */}
       {menuOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/20 flex justify-end"
@@ -267,16 +273,27 @@ export default function CommunityNavbar({ onCreatePost }: CommunityNavbarProps) 
               </button>
             </div>
 
+            {/* ✅ Mobile Search */}
             <div className="w-full px-3 text-xs gap-x-2 rounded py-2 bg-gray-100 flex items-center mb-4">
               <Search className="h-4 w-4 text-gray-600" />
               <input
                 type="text"
                 placeholder="Search Community"
                 className="flex-1 outline-none focus:ring-0 text-sm bg-transparent"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim() !== "") {
+                    filterPostsBySearch(searchQuery.trim());
+                    setMenuOpen(false);
+                  } else if (e.key === "Escape") {
+                    resetFilteredPosts();
+                    setSearchQuery("");
+                  }
+                }}
               />
             </div>
 
-          
             <button
               onClick={() => {
                 onCreatePost();
