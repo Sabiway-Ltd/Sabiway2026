@@ -1,11 +1,14 @@
 // app/(auth)/callback/page.tsx
-"use client"; // ✅ mark entire page as client component
+"use client";
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
 import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+
+// ⛔ Prevent Next.js from trying to pre-render this page at build
+export const dynamic = "force-dynamic";
 
 export default function GoogleCallback() {
   const searchParams = useSearchParams();
@@ -24,6 +27,7 @@ export default function GoogleCallback() {
 
     const fetchUserProfile = async () => {
       try {
+        // store tokens locally
         localStorage.setItem("access", access);
         localStorage.setItem("refresh", refresh);
 
