@@ -15,11 +15,23 @@ const app = express();
 const server = http.createServer(app);
 
 // ✅ CORS
-// ✅ Allow all origins
+const allowedOrigins = [
+  'http://localhost:3000', // local dev
+  'https://sabiway2025.vercel.app', // production
+];
+
 app.use(
   cors({
-    origin: "*", // Allow all origins
-    credentials: false, // Must be false when origin is '*'
+    origin: function (origin, callback) {
+      // allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true, // needed if you send cookies or auth headers
   })
 );
 app.use(express.json());
