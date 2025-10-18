@@ -26,6 +26,11 @@ app.use(cookieParser());
 app.use(forwardAuth);
 
 // ✅ Routes
+// Base route
+app.get("/", (req, res) => {
+  res.send("Welcome to SabiWay");
+});
+
 app.use("/api/auth", accountRoutes);
 app.use("/api/profiles", require("./routes/profiles.routes"));
 app.use("/api/posts", require("./routes/posts.routes"));

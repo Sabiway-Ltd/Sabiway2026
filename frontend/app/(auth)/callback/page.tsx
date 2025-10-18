@@ -1,7 +1,8 @@
-"use client";
+// app/(auth)/callback/page.tsx
+"use client"; // ✅ mark entire page as client component
 
-import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
 import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
@@ -9,7 +10,7 @@ import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 export default function GoogleCallback() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { google_logged_in } = useAuthStore(); // ✅ no need for connectSocket here
+  const { google_logged_in } = useAuthStore();
 
   useEffect(() => {
     const access = searchParams.get("access");
@@ -41,7 +42,7 @@ export default function GoogleCallback() {
           profile_pic: data.profile_picture,
         };
 
-        google_logged_in(normalizedUser); // ✅ this now emits "user:google_login"
+        google_logged_in(normalizedUser);
         router.push("/community");
       } catch (error) {
         console.error("Profile fetch error:", error);
