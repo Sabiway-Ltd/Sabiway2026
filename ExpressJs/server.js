@@ -17,7 +17,7 @@ const server = http.createServer(app);
 // ✅ CORS
 const allowedOrigins = [
   'http://localhost:3000', // local dev
-  'https://sabiway2025-dag4onzhy-chiade-techs-projects.vercel.app', // production
+  'https://sabiway2025.vercel.app', // production
 ];
 
 app.use(
