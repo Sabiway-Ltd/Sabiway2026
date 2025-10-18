@@ -9,6 +9,7 @@ import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
 
 // ⛔ Prevent Next.js from trying to pre-render this page at build
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function GoogleCallback() {
   const searchParams = useSearchParams();
