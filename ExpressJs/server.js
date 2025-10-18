@@ -15,10 +15,23 @@ const app = express();
 const server = http.createServer(app);
 
 // ✅ CORS
+const allowedOrigins = [
+  'http://localhost:3000', // local dev
+  'https://sabiway2025-dag4onzhy-chiade-techs-projects.vercel.app', // production
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    credentials: true,
+    origin: function (origin, callback) {
+      // allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true, // needed if you send cookies or auth headers
   })
 );
 app.use(express.json());
