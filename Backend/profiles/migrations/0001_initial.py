@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('followers_count', models.PositiveIntegerField(default=0)),
                 ('following_count', models.PositiveIntegerField(default=0)),
                 ('posts_count', models.PositiveIntegerField(default=0)),
-                ('whatsapp_number', models.CharField(blank=True, max_length=32)),
+                ('phone_number', models.CharField(blank=True, max_length=32)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],

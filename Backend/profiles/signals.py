@@ -30,7 +30,7 @@ def create_profile_for_new_user(sender, instance, created, **kwargs):
             followers_count=0,
             following_count=0,
             posts_count=0,
-            whatsapp_number="",
+            phone_number="",
         )
 
 

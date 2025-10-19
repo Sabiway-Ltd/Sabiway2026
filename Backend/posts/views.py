@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from profiles.models import Profile
 
 from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost, CommentLike, ReplyLike 
 from .serializers import (
@@ -140,6 +141,25 @@ class PostViewSet(viewsets.ModelViewSet):
                 instance.refresh_from_db()  # updated value
 
         serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=["get"], url_path=r"(?P<username>[\w.@+-]+)")
+    def user_posts(self, request, username=None):
+        """
+        GET /api/posts/<username>/ — Fetch all posts by a given username.
+        """
+        # Remove leading '@' if present
+        if username.startswith("@"):
+            username = username[1:]
+
+        profile = get_object_or_404(Profile, username=f"@{username}")
+        posts = (
+            Post.objects.filter(author=profile)
+            .select_related("author__user")
+            .prefetch_related("hashtags")
+            .order_by("-created_at")
+        )
+        serializer = PostListSerializer(posts, many=True, context={"request": request})
         return Response(serializer.data)
 
 

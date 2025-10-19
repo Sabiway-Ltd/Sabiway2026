@@ -1,5 +1,3 @@
-# profiles/models.py
-
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
@@ -27,7 +25,6 @@ def base_username_from_fullname(full_name: str) -> str:
 
 
 class Profile(models.Model):
-    # Use the User FK as the primary key so profile.id == user.id
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -36,7 +33,7 @@ class Profile(models.Model):
     )
     full_name = models.CharField(max_length=255)
     initials = models.CharField(max_length=5, blank=True)
-    username = models.CharField(max_length=64, unique=True)  # stored like @first_last or @first_last_1
+    username = models.CharField(max_length=64, unique=True)
 
     # Cloudinary field for profile pictures
     profile_picture = CloudinaryField("image", blank=True, null=True)
@@ -44,7 +41,22 @@ class Profile(models.Model):
     followers_count = models.PositiveIntegerField(default=0)
     following_count = models.PositiveIntegerField(default=0)
     posts_count = models.PositiveIntegerField(default=0)
-    whatsapp_number = models.CharField(max_length=32, blank=True)
+
+    # 🔹 Updated contact and personal info fields
+    phone_number = models.CharField(max_length=32, blank=True)
+    gender = models.CharField(
+        max_length=20,
+        blank=True,
+        choices=[
+            ("male", "Male"),
+            ("female", "Female"),
+            ("other", "Other"),
+        ]
+    )
+    date_of_birth = models.DateField(blank=True, null=True)
+    address = models.TextField(blank=True)
+    bio = models.TextField(blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

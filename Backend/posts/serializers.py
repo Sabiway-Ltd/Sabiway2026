@@ -34,7 +34,7 @@ class PostListSerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "whatsapp_number": p.whatsapp_number,
+            "phone_number": p.phone_number,
         }
 
     def get_is_liked(self, obj):
@@ -143,7 +143,7 @@ class CommentSerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "whatsapp_number": p.whatsapp_number,
+            "phone_number": p.phone_number,
         }
 
     def get_is_liked(self, obj):
@@ -192,7 +192,7 @@ class ReplySerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "whatsapp_number": p.whatsapp_number,
+            "phone_number": p.phone_number,
         }
 
     def get_is_liked(self, obj):
@@ -243,5 +243,5 @@ class RepostSerializer(serializers.ModelSerializer):
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "whatsapp_number": p.whatsapp_number,
+            "phone_number": p.phone_number,
         }

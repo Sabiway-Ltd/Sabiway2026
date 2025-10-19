@@ -12,17 +12,21 @@ class ProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
-    user_id = serializers.IntegerField(source='pk', read_only=True)  # profile.id == user.id
-
+    user_id = serializers.IntegerField(source='pk', read_only=True)
     is_following = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Profile
         fields = [
             'user_id', 'full_name', 'initials', 'email', 'username', 'profile_picture',
-            'followers_count', 'following_count', 'posts_count', 'whatsapp_number', 'is_following'
+            'followers_count', 'following_count', 'posts_count', 'phone_number',
+            'gender', 'date_of_birth', 'address', 'bio', 'is_following'
         ]
-        read_only_fields = ('email', 'initials', 'followers_count', 'following_count', 'posts_count', 'is_following')
+        read_only_fields = (
+            'email', 'initials', 'followers_count', 'following_count',
+            'posts_count', 'is_following'
+        )
 
     def validate_username(self, value):
         v = value.strip()
@@ -43,7 +47,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             instance.username = username
         instance.full_name = validated_data.get('full_name', instance.full_name)
         instance.profile_picture = validated_data.get('profile_picture', instance.profile_picture)
-        instance.whatsapp_number = validated_data.get('whatsapp_number', instance.whatsapp_number)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.save()
         return instance
     
