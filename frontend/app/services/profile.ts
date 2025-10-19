@@ -11,6 +11,8 @@ export const profile = {
 
   // Get a profile by user_id
   getById: (userId: number) => api.get(`/profiles/${userId}/`),
+  getByUsername: (username: string) => api.get(`/profiles/${username}/`),
+  getNotFollowed: () => api.get("/profiles/not_followed/"),
 
   // Full update (PUT)
   update: (userId: number, data: any) => api.put(`/profiles/${userId}/`, data),

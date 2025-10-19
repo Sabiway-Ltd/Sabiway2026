@@ -17,7 +17,7 @@ interface Comment {
     name: string;
     username: string;
     avatar: string;
-    whatsapp_number: string;
+    phone_number: string;
   };
   content: string;
   likes: number;
@@ -172,8 +172,8 @@ export default function CommentThread({
   };
 
   const handleWhatsappClick = () => {
-    if (author.whatsapp_number)
-      window.open(`https://wa.me/${author.whatsapp_number}`, "_blank");
+    if (author.phone_number)
+      window.open(`https://wa.me/${author.phone_number}`, "_blank");
     else toast.error("This user does not have a WhatsApp number.");
   };
 
@@ -246,7 +246,7 @@ export default function CommentThread({
             <button
               onClick={handleWhatsappClick}
               className={`flex items-center gap-1 transition-opacity duration-200 hover:text-green-500 ${
-                !author.whatsapp_number
+                !author.phone_number
                   ? "opacity-50 cursor-not-allowed"
                   : "opacity-100"
               }`}
@@ -422,7 +422,7 @@ export default function CommentThread({
                   avatar:
                     reply.user?.profile_picture ||
                     "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-                  whatsapp_number: reply.user?.whatsapp_number || "",
+                  phone_number: reply.user?.phone_number || "",
                 }}
                 content={reply.content}
                 likes={reply.likes_count || 0}

@@ -184,8 +184,8 @@ export default function PostCard({
   };
 
   const handleWhatsappClick = () => {
-    if (author.whatsapp_number) {
-      window.open(`https://wa.me/${author.whatsapp_number}`, "_blank");
+    if (author.phone_number) {
+      window.open(`https://wa.me/${author.phone_number}`, "_blank");
     } else {
       toast.error("This user does not have a WhatsApp number.");
     }
@@ -300,18 +300,20 @@ export default function PostCard({
     <div className="p-4 border-b">
       {/* Header */}
       <div className="flex md:flex-row flex-col-reverse md:justify-between md:items-center gap-3">
-        <div className="flex items-center gap-3">
-          <img
-            src={getProfileSrc(author.profile_picture)}
-            alt={author.full_name}
-            className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm"
-          />
-          <div>
-            <p className="font-semibold">{author.full_name}</p>
-            <p className="text-gray-500 text-sm">{author.username}</p>
-            <p className="text-[11px] text-gray-400">{formattedDate}</p>
+        <Link href={`/profile/${author.username}`}>
+          <div className="flex items-center gap-3">
+            <img
+              src={getProfileSrc(author.profile_picture)}
+              alt={author.full_name}
+              className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm"
+            />
+            <div>
+              <p className="font-semibold">{author.full_name}</p>
+              <p className="text-gray-500 text-sm">{author.username}</p>
+              <p className="text-[11px] text-gray-400">{formattedDate}</p>
+            </div>
           </div>
-        </div>
+        </Link>
 
         {author.user_id !== currentUser?.user_id ? (
           <div className="flex gap-1 justify-end">
@@ -361,11 +363,17 @@ export default function PostCard({
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-600"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5 text-gray-600"
                   >
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                    />
                   </svg>
                 </button>
 
@@ -439,11 +447,17 @@ export default function PostCard({
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-600"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5 text-gray-600"
               >
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                />
               </svg>
             </button>
 
@@ -467,7 +481,7 @@ export default function PostCard({
                         navigator.clipboard
                           .writeText(postLink)
                           .then(() => {
-                            toast.success("Post link copied to clipboard!");
+                            toast.success("Post link copied!");
                           })
                           .catch(() => {
                             toast.error("Failed to copy link.");
@@ -563,7 +577,7 @@ export default function PostCard({
         {/* <button
           onClick={handleWhatsappClick}
           className={`flex items-center gap-1 transition-opacity duration-200 ${
-            !author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
+            !author.phone_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
           }`}
         >
           <FaWhatsapp size={20} />
@@ -715,7 +729,7 @@ export default function PostCard({
                     name: c.user?.full_name || "Unknown",
                     username: c.user?.username || "unknown",
                     avatar: getProfileSrc(c.user?.profile_picture),
-                    whatsapp_number: c.user?.whatsapp_number || "",
+                    phone_number: c.user?.phone_number || "",
                   }}
                   content={c.content}
                   likes={c.likes_count || 0}

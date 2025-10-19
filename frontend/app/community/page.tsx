@@ -12,6 +12,7 @@ import Aside from "../_components/feed/Aside";
 import { DEFAULT_PROFILE_PICTURE } from "../helper";
 import { Loader2 } from "lucide-react";
 import { getProfileImage } from "../utils/getProfileImage";
+import Link from "next/link";
 
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
@@ -151,17 +152,19 @@ export default function Community() {
                     key={profile.user_id}
                     className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition"
                   >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={getProfileImage(profile.profile_picture) || DEFAULT_PROFILE_PICTURE}
-                        alt={profile.full_name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="font-medium text-gray-800">{profile.full_name}</p>
-                        <p className="text-sm text-gray-500">{profile.username}</p>
+                    <Link href={`/profile/${profile.username}`}>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={getProfileImage(profile.profile_picture) || DEFAULT_PROFILE_PICTURE}
+                          alt={profile.full_name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-800">{profile.full_name}</p>
+                          <p className="text-sm text-gray-500">{profile.username}</p>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
 
                     {user?.id !== profile.user_id && (
                       <button
@@ -170,7 +173,7 @@ export default function Community() {
                         className={`px-4 py-1.5 rounded-full text-sm flex items-center justify-center gap-2 ${
                           isFollowing
                             ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
+                            : "bg-[#008753] text-white hover:bg-green-900"
                         }`}
                       >
                         {loadingFollowId === profile.user_id ? (
@@ -215,7 +218,7 @@ export default function Community() {
                     full_name: post.author.full_name,
                     username: post.author.username,
                     profile_picture: post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                    whatsapp_number: post.author.whatsapp_number || "",
+                    phone_number: post.author.phone_number || "",
                     is_following: post.author.is_following,
                   }}
                   content={post.content}

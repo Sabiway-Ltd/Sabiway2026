@@ -55,7 +55,7 @@ export default function SinglePostPage() {
                 username: post.author.username,
                 profile_picture:
                 post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                whatsapp_number: post.author.whatsapp_number || "",
+                phone_number: post.author.phone_number || "",
                 is_following: post.author.is_following,
             }}
             content={post.content}

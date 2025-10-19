@@ -1,6 +1,6 @@
-export const EXPRESS_LOCAL_URL = "http://localhost:5000"
+// export const EXPRESS_LOCAL_URL = "http://localhost:5000"
 
-// export const EXPRESS_LOCAL_URL = "https://sabiwayexpress.onrender.com/"
+export const EXPRESS_LOCAL_URL = "https://sabiwayexpress.onrender.com/"
 
 
 // export const EXPRESS_LOCAL_URL = "https://sabiway2025express.onrender.com"

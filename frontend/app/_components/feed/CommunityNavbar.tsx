@@ -224,7 +224,7 @@ export default function CommunityNavbar({
             <img
               src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
               alt={profile?.full_name || "User"}
-              className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
+              className="w-14 h-14 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
             />
           </Link>
 

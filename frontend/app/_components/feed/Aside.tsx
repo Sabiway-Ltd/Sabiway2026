@@ -4,7 +4,8 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
-import OnlineUsers from "../OnlineUsers";
+import PeopleYouMayKnow from "../profile/PeopleYouMayKnow";
+import Link from "next/link";
 
 export default function Aside() {
   const {
@@ -68,28 +69,30 @@ export default function Aside() {
             <p className="text-gray-400 text-sm">Loading...</p>
           ) : topContributors.length > 0 ? (
             topContributors.map((c) => (
-              <div
-                key={c.user_id}
-                className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
-              >
-                <div className="w-10 h-10">
-                  <img
-                    src={
-                      c.profile_picture && c.profile_picture.trim() !== ""
-                        ? c.profile_picture.startsWith("http")
-                          ? c.profile_picture
-                          : `https://res.cloudinary.com/devqbjptr/${c.profile_picture}`
-                        : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
-                    }
-                    alt={c.full_name || "User"}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+              <Link href={`/profile/${c.username}`} key={c.user_id}>
+                <div
+                  
+                  className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                >
+                  <div className="w-10 h-10">
+                    <img
+                      src={
+                        c.profile_picture && c.profile_picture.trim() !== ""
+                          ? c.profile_picture.startsWith("http")
+                            ? c.profile_picture
+                            : `https://res.cloudinary.com/devqbjptr/${c.profile_picture}`
+                          : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
+                      }
+                      alt={c.full_name || "User"}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{c.full_name}</p>
+                    <p className="text-xs text-gray-500">{c.username}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold">{c.full_name}</p>
-                  <p className="text-xs text-gray-500">{c.username}</p>
-                </div>
-              </div>
+              </Link>
             ))
           ) : (
             <p className="text-gray-400 text-sm">No contributors yet</p>
@@ -99,7 +102,7 @@ export default function Aside() {
 
       {/* Online Users */}
       <section className="mt-5">
-          <OnlineUsers/>
+          <PeopleYouMayKnow/>
       </section>
 
     </aside>

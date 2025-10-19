@@ -17,7 +17,7 @@ type Author = {
   username: string;
   full_name: string;
   profile_picture?: string | null;
-  whatsapp_number: string;
+  phone_number: string;
   is_following?: boolean;
 };
 
@@ -384,6 +384,21 @@ export const usePostStore = create<PostState>((set, get) => ({
     } catch (err: any) {
       console.error("Get all posts error:", err);
       set({ error: "Failed to fetch posts", loading: false });
+    }
+  },
+
+  // ✅ Fetch posts by username
+  getPostsByUsername: async (username: string) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await post.getByUsername(username);
+      set({ userPosts: res.data, loading: false });
+    } catch (err: any) {
+      console.error("Posts by username fetch error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch posts for this user",
+        loading: false,
+      });
     }
   },
 

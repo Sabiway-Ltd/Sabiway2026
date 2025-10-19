@@ -12,7 +12,7 @@ export type Profile = {
   followers_count: number;
   following_count: number;
   posts_count: number;
-  whatsapp_number?: string;
+  phone_number?: string;
   profile_picture?: string; 
 };
 
@@ -118,6 +118,58 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       });
     }
   },
+
+  // ✅ Get profile by user ID
+  getProfileById: async (userId: number) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await profile.getById(userId);
+      set({ otherProfile: res.data, loading: false });
+    } catch (err: any) {
+      console.error("Profile by ID fetch error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch profile by ID",
+        loading: false,
+      });
+    }
+  },
+
+  // ✅ Get profile by username (e.g., "adesina_olagunju")
+  getProfileByUsername: async (username: string) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await profile.getByUsername(username);
+      set({ otherProfile: res.data, loading: false });
+    } catch (err: any) {
+      console.error("Profile by username fetch error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch profile by username",
+        loading: false,
+      });
+    }
+  },
+
+  // ✅ Get all profiles the user hasn’t followed
+  getNotFollowedProfiles: async () => {
+    set({ loading: true, error: null });
+    try {
+      const res = await profile.getNotFollowed();
+      const allProfiles = res.data || [];
+
+      // Shuffle and pick 2 random profiles
+      const shuffled = allProfiles.sort(() => 0.5 - Math.random());
+      const randomTwo = shuffled.slice(0, 10);
+
+      set({ notFollowedProfiles: randomTwo, loading: false });
+    } catch (err: any) {
+      console.error("Not followed profiles fetch error:", err.response?.data || err.message);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch not-followed profiles",
+        loading: false,
+      });
+    }
+  },
+
 
   // Fetch top contributors
   getTopContributors: async () => {

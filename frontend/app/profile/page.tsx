@@ -18,6 +18,8 @@ import { useAuthStore } from "../store/useAuthStore";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import ProfilePostCard from "../_components/profile/ProfilePostCard";
+import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
 
 
 
@@ -25,7 +27,7 @@ import Link from "next/link";
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks" | "followers" | "following">("about");
   const [editing, setEditing] = useState(false);
-  const [editedData, setEditedData] = useState({ full_name: "", whatsapp_number: "" });
+  const [editedData, setEditedData] = useState({ full_name: "", bio: "" });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [myPosts, setMyPosts] = useState<any[]>([]);
@@ -92,6 +94,13 @@ const handleFollowToggle = async (user: any) => {
 };
 
 
+  const handleCopyProfileLink = async (userUsername) => {
+    const profileUrl = `${window.location.origin}/profile/${userUsername}`;
+    await navigator.clipboard.writeText(profileUrl);
+    toast.success("Profile link copied");
+  };
+
+
 
 
 
@@ -115,6 +124,12 @@ const handleFollowToggle = async (user: any) => {
     })();
   }, [getMyProfile]);
 
+  const handleCopyPostLink = async () => {
+    const postUrl = `${window.location.origin}/posts/${post.id}`;
+    await navigator.clipboard.writeText(postUrl);
+    toast.success("Post link copied");
+  };
+
   
 
   // 📝 Handle Edit Profile
@@ -122,7 +137,7 @@ const handleFollowToggle = async (user: any) => {
     if (!profile) return;
     setEditedData({
       full_name: profile.full_name,
-      whatsapp_number: profile.whatsapp_number || "",
+      bio: profile.bio || "",
     });
     setEditing(true);
   };
@@ -353,7 +368,15 @@ const handleShowFollowing = async () => {
 
             <div className="text-center md:text-left">
               <h1 className="text-2xl font-bold text-[#008753]">{profile.full_name}</h1>
-              <p className="text-gray-600">{profile.username}</p>
+              <div className="flex gap-2 items-center">
+                <p className="text-gray-600">{profile.username}</p>
+                <button
+                    onClick={() => {handleCopyProfileLink(profile.username)}}
+                    className="flex items-center gap-1 text-xs px-2 py-2 h-auto bg-gray-200 rounded-md"
+                  >
+                    <BiLinkAlt size={16} />
+                  </button>
+                </div>
               <div className="flex gap-6 mt-3 text-sm text-gray-700">
                 <button
                   onClick={handleShowFollowers}
@@ -431,10 +454,10 @@ const handleShowFollowing = async () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">WhatsApp Number</label>
+                      <label className="block text-sm font-medium text-gray-700">Bio</label>
                       <input
-                        value={editedData.whatsapp_number}
-                        onChange={(e) => setEditedData({ ...editedData, whatsapp_number: e.target.value })}
+                        value={editedData.bio}
+                        onChange={(e) => setEditedData({ ...editedData, bio: e.target.value })}
                         className="w-full border rounded-lg p-2"
                       />
                     </div>
@@ -456,7 +479,7 @@ const handleShowFollowing = async () => {
                 ) : (
                   <>
                     <p><strong>Email:</strong> {profile.email}</p>
-                    <p><strong>WhatsApp:</strong> {profile.whatsapp_number || "—"}</p>
+                    <p><strong>Bio:</strong> {profile.bio || "—"}</p>
 
                     <div className="flex gap-x-4">
                       {/* Edit */}
@@ -567,11 +590,17 @@ const handleShowFollowing = async () => {
                           {/* Vertical Kebab Icon */}
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-gray-600"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5 text-gray-600"
                           >
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                            />
                           </svg>
                         </button>
 
@@ -604,6 +633,12 @@ const handleShowFollowing = async () => {
                             >
                               Delete
                             </button>
+                            <button
+                              onClick={handleCopyPostLink}
+                              className="block w-full rounded-lg text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            >
+                              Copy Link
+                            </button>
                           </div>
                         )}
                       </div>
@@ -634,69 +669,12 @@ const handleShowFollowing = async () => {
 
 
             {activeTab === "bookmarks" && (
-              <div className="space-y-4 md:w-[400px] w-full">
+              <div className="space-y-4  w-full">
                 {bookmarks.length === 0 ? (
                   <p className="text-gray-600">No bookmarks yet.</p>
                 ) : (
                   bookmarks.map((bm) => (
-                    <div
-                      key={bm.id}
-                      className="p-4 border rounded-lg bg-white shadow-sm space-y-3 "
-                    >
-                      <div className="flex justify-between gap-3 items-center">
-                        <Link href={`/posts/${bm.post.id}`} key={bm.post.id}>
-                          <p>{bm.post?.text || bm.post?.content || "Bookmarked post"}</p>
-                        </Link>
-
-                        {/* ✅ Unbookmark button with spinner */}
-                        <button
-                          onClick={() => handleUnbookmark(bm.post.id)}
-                          className="relative flex items-center justify-center"
-                          disabled={loadingId === bm.post.id} // disable button while loading
-                        >
-                          {loadingId === bm.post.id ? (
-                            <svg
-                              className="animate-spin h-4 w-4 text-blue-500"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                              ></path>
-                            </svg>
-                          ) : (
-                            <Bookmark className="h-4 w-4 fill-blue-500 text-blue-500" />
-                          )}
-                        </button>
-                      </div>
-
-                      {bm.post?.image && (
-                        <div>
-                          <Link href={`/posts/${bm.post.id}`} key={bm.post.id}>
-                            <img
-                              src={
-                                bm.post.image.startsWith("http")
-                                  ? bm.post.image
-                                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${bm.post.image}`
-                              }
-                              alt="Post image"
-                              className="rounded-md mb-2 w-full h-auto"
-                            />
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                    <ProfilePostCard key={bm.id} post={bm.post} />
                   ))
                 )}
               </div>
