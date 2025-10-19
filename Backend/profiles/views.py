@@ -34,6 +34,25 @@ class ProfileViewSet(viewsets.ModelViewSet):
             }
         )
         return profile
+    
+    def get_object(self):
+        """
+        Allow lookup by user_id (default) OR username (without '@')
+        Example:
+            /api/profiles/5/  -> by user_id
+            /api/profiles/adesina_olagunju/ -> by username
+        """
+        lookup_value = self.kwargs.get(self.lookup_field)
+
+        # Try resolving by user_id first (numeric)
+        if str(lookup_value).isdigit():
+            return get_object_or_404(Profile, user__id=lookup_value)
+
+        # Otherwise, treat as username (strip leading '@' if needed)
+        username = lookup_value
+        if not username.startswith('@'):
+            username = f'@{username}'
+        return get_object_or_404(Profile, username__iexact=username) 
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def follow(self, request, user_id=None):
@@ -85,6 +104,17 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profiles = [f.following for f in qs]
         serializer = ProfileSerializer(profiles, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def not_followed(self, request):
+        """Return all profiles the user has NOT followed yet"""
+        user_profile = self.get_or_create_profile(request.user)
+        followed_ids = user_profile.following_rel.values_list("following_id", flat=True)
+        qs = Profile.objects.exclude(pk__in=followed_ids).exclude(pk=user_profile.pk)
+        serializer = ProfileSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    
 
 
 
