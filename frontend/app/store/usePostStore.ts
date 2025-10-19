@@ -1,3 +1,5 @@
+// app/store/usePostStore.ts
+
 "use client";
 
 import { create } from "zustand";
@@ -384,6 +386,24 @@ export const usePostStore = create<PostState>((set, get) => ({
       set({ error: "Failed to fetch posts", loading: false });
     }
   },
+
+  // Single Post
+  // getPostById: async (id: string) => {
+  //   try {
+  //     set({ loading: true, error: null });
+  //     const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/posts/${id}/`);
+  //     console.log("Fetched post:", res.data); // 👈 Add this
+  //     set({ currentPost: res.data, loading: false });
+  //   } catch (err: any) {
+  //     console.error("Single post fetch error:", err.response || err.message);
+  //     set({
+  //       loading: false,
+  //       error: err.response?.data?.detail || "Failed to load post",
+  //     });
+  //   }
+  // },
+
+
 
   // ---------- Create post ----------
   createPost: async (data: FormData | object) => {

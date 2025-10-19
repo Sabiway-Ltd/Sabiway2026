@@ -17,6 +17,7 @@ import Button from "../_components/common/Button";
 import { useAuthStore } from "../store/useAuthStore";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 
 
@@ -485,12 +486,12 @@ const handleShowFollowing = async () => {
 
             {activeTab === "posts" && (
               <div className="flex ">
-              <div className="space-y-4">
+              <div className="space-y-4 md:w-[400px] w-full">
                 {myPosts.length === 0 ? (
                   <p className="text-gray-600">You haven’t posted anything yet.</p>
                 ) : (
                   myPosts.map((postItem) => (
-              <div key={postItem.id} className="p-4 border rounded-lg bg-white shadow-sm">
+              <div key={postItem.id} className="p-4 border rounded-lg  bg-white shadow-sm">
                 {editingPostId === postItem.id ? (
                   <>
                     <textarea
@@ -545,7 +546,9 @@ const handleShowFollowing = async () => {
                 ) : (
                   <div className="space-y-3">
                     <div className="flex items-start w-full justify-between gap-4">
-                      <p className="mb-2">{postItem.content}</p>
+                      <Link href={`/posts/${postItem.id}`} key={postItem.id}>
+                        <p className="mb-2">{postItem.content}</p>
+                      </Link>
                       
                       {/* Options */}
                       <div className="relative text-sm text-gray-600">
@@ -607,11 +610,13 @@ const handleShowFollowing = async () => {
                     </div>
 
                     {postItem.image && (
+                      <Link href={`/posts/${postItem.id}`} key={postItem.id}>
                         <img
                           src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
                           alt="Post image"
                           className="w-[400px] h-auto rounded-md object-cover"
                         />
+                      </Link>
                       )}
 
 
@@ -629,17 +634,19 @@ const handleShowFollowing = async () => {
 
 
             {activeTab === "bookmarks" && (
-              <div className="space-y-4">
+              <div className="space-y-4 md:w-[400px] w-full">
                 {bookmarks.length === 0 ? (
                   <p className="text-gray-600">No bookmarks yet.</p>
                 ) : (
                   bookmarks.map((bm) => (
                     <div
                       key={bm.id}
-                      className="p-4 border rounded-lg bg-white shadow-sm space-y-3 w-[400px]"
+                      className="p-4 border rounded-lg bg-white shadow-sm space-y-3 "
                     >
                       <div className="flex justify-between gap-3 items-center">
-                        <p>{bm.post?.text || bm.post?.content || "Bookmarked post"}</p>
+                        <Link href={`/posts/${bm.post.id}`} key={bm.post.id}>
+                          <p>{bm.post?.text || bm.post?.content || "Bookmarked post"}</p>
+                        </Link>
 
                         {/* ✅ Unbookmark button with spinner */}
                         <button
@@ -676,15 +683,17 @@ const handleShowFollowing = async () => {
 
                       {bm.post?.image && (
                         <div>
-                          <img
-                            src={
-                              bm.post.image.startsWith("http")
-                                ? bm.post.image
-                                : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${bm.post.image}`
-                            }
-                            alt="Post image"
-                            className="rounded-md mb-2 w-full h-auto"
-                          />
+                          <Link href={`/posts/${bm.post.id}`} key={bm.post.id}>
+                            <img
+                              src={
+                                bm.post.image.startsWith("http")
+                                  ? bm.post.image
+                                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${bm.post.image}`
+                              }
+                              alt="Post image"
+                              className="rounded-md mb-2 w-full h-auto"
+                            />
+                          </Link>
                         </div>
                       )}
                     </div>

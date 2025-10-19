@@ -1,3 +1,5 @@
+// app/_components/feed/PostCard.tsx
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -11,6 +13,8 @@ import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import dynamic from "next/dynamic";
 import { EmojiClickData } from "emoji-picker-react";
 import DeleteConfirmModal from "../common/DeleteConfirmModal";
+import Link from "next/link";
+import ReportButton from "../common/ReportButton";
 
 // ✅ Load emoji picker only on client side
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -30,6 +34,7 @@ export default function PostCard({
   setMyPosts,
   post,
   onReloadPosts,
+  alwaysShowComments = false,
 }: any) {
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likesCount, setLikesCount] = useState(likes_count);
@@ -38,7 +43,7 @@ export default function PostCard({
   const [comment, setComment] = useState("");
   const [commentImage, setCommentImage] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(alwaysShowComments);
   const [formattedDate, setFormattedDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -119,6 +124,22 @@ export default function PostCard({
     }
   };
 
+  useEffect(() => {
+    if (alwaysShowComments) {
+      (async () => {
+        setLoadingComments(true);
+        try {
+          await getComments(id);
+        } catch (err) {
+          console.error("Error loading comments:", err);
+        } finally {
+          setLoadingComments(false);
+        }
+      })();
+    }
+  }, [alwaysShowComments, id, getComments]);
+
+
 
   const handleCommentSubmit = async () => {
     if (!comment.trim() && !commentImage) return;
@@ -183,17 +204,6 @@ export default function PostCard({
     }
   };
 
-  useEffect(() => {
-    const fetchImpression = async () => {
-      try {
-        const res = await getPostById(id);
-        if (res) setImpressionsCount(res.impressions_count || 0);
-      } catch (err) {
-        console.error("Error fetching impressions:", err);
-      }
-    };
-    fetchImpression();
-  }, [id, getPostById]);
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -289,7 +299,7 @@ export default function PostCard({
   return (
     <div className="p-4 border-b">
       {/* Header */}
-      <div className="flex justify-between items-center gap-3">
+      <div className="flex md:flex-row flex-col-reverse md:justify-between md:items-center gap-3">
         <div className="flex items-center gap-3">
           <img
             src={getProfileSrc(author.profile_picture)}
@@ -304,45 +314,123 @@ export default function PostCard({
         </div>
 
         {author.user_id !== currentUser?.user_id ? (
-          <button
-            onClick={handleFollowToggle}
-            disabled={followingLoading}
-            className={`ml-auto px-3 py-1 rounded-full text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 ${
-              isFollowing
-                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            } ${followingLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-          >
-            {followingLoading ? (
-              <>
-                <svg
-                  className="animate-spin h-4 w-4 text-current"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  ></path>
-                </svg>
-                <span className="text-xs">
-                  {isFollowing ? "Unfollowing..." : "Following..."}
-                </span>
-              </>
-            ) : (
-              <span>{isFollowing ? "Unfollow" : "Follow"}</span>
+          <div className="flex gap-1 justify-end">
+          {  !isFollowing && (
+              <button
+                onClick={handleFollowToggle}
+                disabled={followingLoading}
+                className={`ml-auto px-3 py-1 rounded-sm text-sm font-medium flex 
+                   text-[#008753] hover:bg-[#008753]/30 
+                  items-center justify-center gap-2 transition-all duration-200 
+                  ${followingLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {followingLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-4 w-4 text-current"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      ></path>
+                    </svg>
+                    {/* <span className="text-xs">Following...</span> */}
+                  </>
+                ) : (
+                  <span>+ Follow</span>
+                )}
+              </button>
             )}
-          </button>
+
+              <div className=" relative" ref={menuRef}>
+                <button
+                  onClick={() => setMenuOpen((prev) => !prev)}
+                  className="p-2 rounded-full hover:bg-gray-100 transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+
+                {menuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        const postLink = `${window.location.origin}/posts/${id}`;
+                        navigator.clipboard
+                          .writeText(postLink)
+                          .then(() => {
+                            toast.success("Post link copied to clipboard!");
+                          })
+                          .catch(() => {
+                            toast.error("Failed to copy link.");
+                          });
+                          setMenuOpen(false)
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    >
+                      Copy Link to Post
+                    </button>
+                    {/* For Report Post */}
+                    <ReportButton postId={id} />
+                    {
+                      isFollowing && (
+                        <button
+                          onClick={handleFollowToggle}
+                          className="block w-full text-left px-4 rounded-lg py-2 text-sm hover:bg-gray-100"
+                        >
+                          {followingLoading ? (
+                            <>
+                              <svg
+                                className="animate-spin h-4 w-4 text-current"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v8z"
+                                ></path>
+                              </svg>
+                              {/* <span className="text-xs">Following...</span> */}
+                            </>
+                          ) : (
+                            <span>Unfollow</span>
+                          )}
+                        </button>
+                      )
+                    }
+                  </div>
+                )}
+            </div>
+          </div>
+          
         ) : (
           <div className="ml-auto relative" ref={menuRef}>
             <button
@@ -360,7 +448,7 @@ export default function PostCard({
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                 <button
                   onClick={() => setEditingPostId(id)}
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -373,6 +461,21 @@ export default function PostCard({
                 >
                   Delete
                 </button>
+                <button
+                      onClick={() => {
+                        const postLink = `${window.location.origin}/posts/${id}`;
+                        navigator.clipboard
+                          .writeText(postLink)
+                          .then(() => {
+                            toast.success("Post link copied to clipboard!");
+                          })
+                          .catch(() => {
+                            toast.error("Failed to copy link.");
+                          });
+                          setMenuOpen(false)
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    >Copy Link to Post</button>
               </div>
             )}
           </div>
@@ -425,16 +528,18 @@ export default function PostCard({
         </div>
       ) : (
         <>
-          <div className="mt-3 text-gray-800 text-sm">{content}</div>
-          {image && (
-            <div className="mt-3 rounded-xl overflow-hidden">
-              <img
-                src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
-                alt="Post image"
-                className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
-              />
-            </div>
-          )}
+          <Link href={`/posts/${id}`} key={id}>
+            <div className="mt-3 text-gray-800 text-sm">{content}</div>
+            {image && (
+              <div className="mt-3 rounded-xl overflow-hidden">
+                <img
+                  src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
+                  alt="Post image"
+                  className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
+                />
+              </div>
+            )}
+          </Link>
         </>
       )}
 
@@ -455,14 +560,14 @@ export default function PostCard({
           <span>{impressionsCount}</span>
         </button>
 
-        <button
+        {/* <button
           onClick={handleWhatsappClick}
           className={`flex items-center gap-1 transition-opacity duration-200 ${
             !author.whatsapp_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
           }`}
         >
           <FaWhatsapp size={20} />
-        </button>
+        </button> */}
 
         <button
           onClick={handleBookmarkToggle}
@@ -480,9 +585,9 @@ export default function PostCard({
           )}
         </button>
 
-        <button className="flex items-center gap-1">
+        {/* <button className="flex items-center gap-1">
           <Share className="h-5 w-5" />
-        </button>
+        </button> */}
       </div>
 
 

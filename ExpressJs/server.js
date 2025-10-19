@@ -7,6 +7,7 @@ const { initSocket } = require("./socket/postEvents");
 const { initNotificationSocket } = require("./socket/notificationEvents");
 const { initSocket: initUserSocket } = require("./socket/socket"); // ✅ consistent export
 require("dotenv").config();
+const reportRoutes = require("./routes/report");
 
 const accountRoutes = require("./routes/accounts.routes");
 const forwardAuth = require("./middleware/authForward");
@@ -49,6 +50,7 @@ app.use("/api/profiles", require("./routes/profiles.routes"));
 app.use("/api/posts", require("./routes/posts.routes"));
 app.use("/api/notifications", require("./routes/notifications.routes"));
 app.use("/api/search", require("./routes/search.routes"));
+app.use("/api/report", reportRoutes);
 
 // ✅ Socket.IO setup
 const io = new Server(server, {
