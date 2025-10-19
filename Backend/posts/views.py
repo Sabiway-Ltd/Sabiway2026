@@ -143,12 +143,11 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     
-    @action(detail=False, methods=["get"], url_path=r"(?P<username>[\w.@+-]+)")
+    @action(detail=False, methods=["get"], url_path=r"user/(?P<username>[\w.@+-]+)")
     def user_posts(self, request, username=None):
         """
-        GET /api/posts/<username>/ — Fetch all posts by a given username.
+        GET /api/posts/user/<username>/ — Fetch all posts by a given username.
         """
-        # Remove leading '@' if present
         if username.startswith("@"):
             username = username[1:]
 
@@ -161,7 +160,6 @@ class PostViewSet(viewsets.ModelViewSet):
         )
         serializer = PostListSerializer(posts, many=True, context={"request": request})
         return Response(serializer.data)
-
 
 
 class CommentViewSet(viewsets.ModelViewSet):
