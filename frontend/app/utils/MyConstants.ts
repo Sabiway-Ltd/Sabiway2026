@@ -2,7 +2,7 @@
 
 // export const EXPRESS_LOCAL_URL = "https://sabiwayexpress.onrender.com"
 
-export const EXPRESS_LOCAL_URL = "sabiway2025-49a4.vercel.com"
+export const EXPRESS_LOCAL_URL = "sabiway2025-49a4.vercel.app"
 
 // export const EXPRESS_LOCAL_URL = "https://sabiway2025express.onrender.com"
 
