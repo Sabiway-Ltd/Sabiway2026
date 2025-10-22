@@ -379,7 +379,6 @@ class ReplyUnlikeToggleView(APIView):
 class MyPostsView(generics.ListAPIView):
     serializer_class = PostListSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = PostPagination
 
     def get_queryset(self):
         profile = self.request.user.profile

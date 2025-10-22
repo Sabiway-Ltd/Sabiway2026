@@ -66,6 +66,8 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
     }
   };
 
+  const { triggerRefresh } = usePostStore.getState();
+
   const handleSubmit = async () => {
     if (!content.trim() && !image) return;
 
@@ -80,7 +82,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
     try {
       await createPost(formData);   // ✅ Create post
-      await getAllPosts();          // ✅ Refresh feed
+      triggerRefresh();          // ✅ Refresh feed
       getTrendingHashtags?.();      // ✅ Refresh trending hashtags
       getTopContributors?.();       // ✅ Refresh top contributors
 
@@ -144,9 +146,11 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
           </div>
         )}
 
-        <div className="flex justify-end items-center mt-3 relative">
-          <div className="flex space-x-4 text-black">
-            <label className="cursor-pointer">
+        <div className="flex justify-end mt-3 relative">
+          <div className="flex items-center space-x-4 text-black">
+
+            {/* Image Upload */}
+            <label className="cursor-pointer flex items-center justify-center hover:text-[#008753] transition">
               <ImageIcon className="h-5 w-5" />
               <input
                 type="file"
@@ -156,31 +160,35 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
               />
             </label>
 
-            <div className="relative">
+            {/* Emoji Picker */}
+            <div className="relative flex items-center justify-center">
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker((prev) => !prev)}
-                className="hover:text-[#008753] transition"
+                className="hover:text-[#008753] transition flex items-center justify-center"
               >
                 <Smile className="h-5 w-5" />
               </button>
 
               {showEmojiPicker && (
-                <div className="absolute -top-7 right-0 z-50 scale-75">
+                <div className="absolute top-8 right-0 z-50 scale-75">
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}
             </div>
 
+            {/* Hashtag */}
             <button
               type="button"
               onClick={() => insertAtCursor(" #")}
-              className="hover:text-[#008753] transition"
+              className="hover:text-[#008753] transition flex items-center justify-center"
             >
               <Hash className="h-5 w-5" />
             </button>
+
           </div>
         </div>
+
       </div>
 
       <div className="flex justify-end">

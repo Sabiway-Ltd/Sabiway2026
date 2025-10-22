@@ -37,6 +37,7 @@ export default function CommunityNavbar({
     useNotificationStore();
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+  
 
   // 🔁 Auto-refresh notifications
   useEffect(() => {
@@ -84,25 +85,31 @@ export default function CommunityNavbar({
   };
 
   // 🟢 Handle SabiWay logo click
+  // const handleLogoClick = () => {
+  //   router.push("/community");
+
+  //   // ✅ Delay to ensure page navigation completes
+  //   setTimeout(() => {
+  //     const { resetFilteredResults, getAllPosts } = usePostStore.getState();
+
+  //     // ✅ Reset state
+  //     resetFilteredResults();
+  //     setSearchQuery("");
+
+  //     // ✅ Inform parent (Community page)
+  //     if (typeof onReset === "function") {
+  //       onReset();
+  //     }
+
+  //     // ✅ Fetch all posts again
+  //     getAllPosts(1);
+  //   }, 250);
+  // };
+
+  const { triggerRefresh } = usePostStore.getState();
   const handleLogoClick = () => {
     router.push("/community");
-
-    // ✅ Delay to ensure page navigation completes
-    setTimeout(() => {
-      const { resetFilteredResults, getAllPosts } = usePostStore.getState();
-
-      // ✅ Reset state
-      resetFilteredResults();
-      setSearchQuery("");
-
-      // ✅ Inform parent (Community page)
-      if (typeof onReset === "function") {
-        onReset();
-      }
-
-      // ✅ Fetch all posts again
-      getAllPosts();
-    }, 250);
+    triggerRefresh();
   };
 
   return (

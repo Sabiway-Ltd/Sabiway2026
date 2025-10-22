@@ -4,19 +4,20 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { usePostStore } from "@/app/store/usePostStore";
-import { useAuthStore } from "@/app/store/useAuthStore"; // ✅ for current user
+import { useAuthStore } from "@/app/store/useAuthStore";
 import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { Button } from "@/src/components/ui/button";
-import { Loader2 } from "lucide-react"; // ✅ for spinner
+import { Loader2 } from "lucide-react";
 import ProfilePostCard from "@/app/_components/profile/ProfilePostCard";
 import CommunityNavbar from "@/app/_components/feed/CommunityNavbar";
 import { CLOUDINARY_CLOUD_NAME } from "@/app/helper";
 import { DEFAULT_AVATAR } from "@/app/utils/getProfileImage";
+import { useInfiniteScroll } from "@/app/hooks/useInfiniteScroll";
 
 export default function ProfilePage() {
   const { username } = useParams();
-  const { user } = useAuthStore(); // ✅ current logged-in user
+  const { user } = useAuthStore();
 
   const {
     otherProfile,
@@ -32,25 +33,41 @@ export default function ProfilePage() {
     loading: postsLoading,
     error: postsError,
     getPostsByUsername,
+    resetUserPosts,
+    userNextPage,
+    userHasMore,
   } = usePostStore();
 
   const [loadingFollow, setLoadingFollow] = useState(false);
 
-  // ✅ Fetch profile and posts on mount
+  // ✅ Fetch profile + first page of posts
   useEffect(() => {
-    if (username) {
-      getProfileByUsername(username as string);
-      getPostsByUsername(username as string);
+  if (username) {
+    resetUserPosts();
+    getProfileByUsername(username as string);
+    getPostsByUsername(username as string, 1);
     }
-  }, [username, getProfileByUsername, getPostsByUsername]);
+    // ✅ only re-run if username changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
-  if (profileLoading || postsLoading) {
+
+  // ✅ Infinite Scroll Hook
+  useInfiniteScroll({
+    loading: postsLoading,
+    hasMore: userHasMore,
+    onLoadMore: () => getPostsByUsername(username as string, userNextPage),
+  });
+
+  // ✅ Handle loading + error states
+  if (profileLoading || (postsLoading && userPosts.length === 0)) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <p className="text-gray-500">Loading profile...</p>
       </div>
     );
   }
+
 
   if (profileError || postsError) {
     return (
@@ -108,14 +125,13 @@ export default function ProfilePage() {
         <div className="flex justify-center">
           <div className="flex gap-3 items-center">
             <img
-               src={
-                  profile_picture && profile_picture.startsWith("http")
+              src={
+                profile_picture && profile_picture.startsWith("http")
                   ? profile_picture
                   : profile_picture
                   ? `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile_picture}`
                   : DEFAULT_AVATAR
-
-                }
+              }
               alt={full_name}
               className="w-32 h-32 rounded-full object-cover border border-gray-300"
             />
@@ -132,7 +148,6 @@ export default function ProfilePage() {
                   <BiLinkAlt size={12} />
                 </Button>
 
-                {/* ✅ Follow / Unfollow button */}
                 {user?.id !== user_id && (
                   <Button
                     onClick={handleFollowToggle}
@@ -198,6 +213,13 @@ export default function ProfilePage() {
               {userPosts.map((post) => (
                 <ProfilePostCard key={post.id} post={post} />
               ))}
+
+              {postsLoading && (
+                <div className="flex justify-center items-center gap-2 py-4">
+                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                <p className="text-gray-400 text-sm">Loading more posts...</p>
+              </div>
+              )}
             </div>
           ) : (
             <p className="text-gray-500">No posts yet.</p>

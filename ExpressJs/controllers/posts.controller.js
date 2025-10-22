@@ -342,9 +342,8 @@ exports.listHashtags = async (req, res) => {
 exports.myPosts = async (req, res) => {
   try {
     const token = req.headers._token;
-    const { page = 1, page_size = 20 } = req.query;
-    const data = await djangoPost.myPosts(token, { page, page_size });
-    res.json(data);
+    const posts = await djangoPost.myPosts(token);
+    res.json(posts);
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
   }

@@ -6,7 +6,9 @@ export const post = {
   // 🧩 POSTS CRUD
   getAll: (page: number = 1) => api.get(`/posts/?page=${page}`),
   getById: (id: string) => api.get(`/posts/${id}/`),
-  getByUsername: (username: string) => api.get(`/posts/user/${username}/`),
+  getByUsername: (username: string, page = 1) =>
+  api.get(`/posts/user/${username}/?page=${page}`),
+
   getByMe: () => api.get(`/posts/me/`),
   create: (data: FormData | object) => api.post("/posts/", data, {
     headers: data instanceof FormData ? { "Content-Type": "multipart/form-data" } : undefined,

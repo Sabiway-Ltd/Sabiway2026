@@ -81,7 +81,7 @@ type PostState = {
 
   // Actions
   initSocket: () => void;
-  getAllPosts: () => Promise<void>;
+  getAllPosts: (page?: number) => Promise<void>;
   createPost: (data: FormData | object) => Promise<void>;
   // ... Add other actions like likePost, addComment, repost, etc.
 };
@@ -126,6 +126,19 @@ export const usePostStore = create<PostState>((set, get) => ({
   filteredPosts: [],
   activeHashtag: null,
   socket: null,
+  nextPage: 1,
+  hasMore: true,
+  userPosts: [],
+  userNextPage: 1,
+  userHasMore: true,
+  myPosts: [],
+  myNextPage: 1,
+  myHasMore: true,
+  
+
+  refreshFeed: false,
+  triggerRefresh: () => set({ refreshFeed: true }),
+  consumeRefresh: () => set({ refreshFeed: false }),
 
   set: (partial) => set((state) => ({ ...state, ...partial })),
 
@@ -365,34 +378,89 @@ export const usePostStore = create<PostState>((set, get) => ({
   /* -------------------------
       🔄 Fetch initial posts
   --------------------------*/
-  await get().getAllPosts();
+  await get().getAllPosts(1);
 
   console.log("✅ Socket initialized and event listeners attached");
 },
 
   // ---------- Get all posts ----------
-  getAllPosts: async () => {
-    set({ loading: true });
+  // getAllPosts: async () => {
+  //   set({ loading: true });
+  //   const token = localStorage.getItem("access");
+  //   if (!token) return set({ error: "Not logged in", loading: false });
+
+  //   try {
+  //     const res = await axios.get<Post[]>(`${API_URL}/posts`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     set({ posts: res.data, loading: false });
+  //   } catch (err: any) {
+  //     console.error("Get all posts error:", err);
+  //     set({ error: "Failed to fetch posts", loading: false });
+  //   }
+  // },
+
+  getAllPosts: async (page = 1) => {
+    const { loading, nextPage } = get(); // ✅ Access current state first
+    if (loading || (page !== nextPage && page !== 1)) return; // ✅ Prevent duplicate fetch
+
+    set({ loading: true, error: null });
+
     const token = localStorage.getItem("access");
     if (!token) return set({ error: "Not logged in", loading: false });
 
     try {
-      const res = await axios.get<Post[]>(`${API_URL}/posts`, {
+      const res = await axios.get(`${API_URL}/posts/?page=${page}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      set({ posts: res.data, loading: false });
-    } catch (err: any) {
+
+      // DRF pagination returns { count, next, previous, results }
+      const newPosts = res.data.results || res.data;
+
+      set((state) => ({
+        posts: page === 1 ? newPosts : [...state.posts, ...newPosts],
+        nextPage: res.data.next ? page + 1 : null,
+        hasMore: !!res.data.next,
+        loading: false,
+      }));
+    } catch (err) {
       console.error("Get all posts error:", err);
       set({ error: "Failed to fetch posts", loading: false });
     }
   },
 
+
   // ✅ Fetch posts by username
-  getPostsByUsername: async (username: string) => {
+  // getPostsByUsername: async (username: string) => {
+  //   set({ loading: true, error: null });
+  //   try {
+  //     const res = await post.getByUsername(username);
+  //     set({ userPosts: res.data, loading: false });
+  //   } catch (err: any) {
+  //     console.error("Posts by username fetch error:", err.response?.data || err.message);
+  //     set({
+  //       error: err.response?.data?.detail || "Failed to fetch posts for this user",
+  //       loading: false,
+  //     });
+  //   }
+  // },
+
+  getPostsByUsername: async (username: string, page = 1) => {
+    const { loading, userNextPage } = get();
+    if (loading || (page !== 1 && page !== userNextPage)) return;
+
     set({ loading: true, error: null });
+
     try {
-      const res = await post.getByUsername(username);
-      set({ userPosts: res.data, loading: false });
+      const res = await post.getByUsername(username, page);
+      const newPosts = res.data.results || res.data;
+
+      set((state) => ({
+        userPosts: page === 1 ? newPosts : [...state.userPosts, ...newPosts],
+        userNextPage: res.data.next ? page + 1 : null,
+        userHasMore: !!res.data.next,
+        loading: false,
+      }));
     } catch (err: any) {
       console.error("Posts by username fetch error:", err.response?.data || err.message);
       set({
@@ -401,6 +469,39 @@ export const usePostStore = create<PostState>((set, get) => ({
       });
     }
   },
+
+  resetUserPosts: () => set({ userPosts: [], userNextPage: 1, userHasMore: true }),
+
+
+
+  getMyPosts: async (page = 1) => {
+    const { loading } = get();
+    if (loading) return;
+
+    set({ loading: true, error: null });
+
+    try {
+      const res = await post.getByMe(page);
+      const newPosts = res.data.results || res.data;
+
+      set((state) => ({
+        myPosts: page === 1 ? newPosts : [...state.myPosts, ...newPosts],
+        myNextPage: res.data.next ? page + 1 : null,
+        myHasMore: !!res.data.next,
+        loading: false,
+      }));
+    } catch (err: any) {
+      console.error("❌ Error fetching my posts:", err);
+      set({
+        error: err.response?.data?.detail || "Failed to fetch your posts",
+        loading: false,
+      });
+    }
+  },
+
+  // ✅ --- Optional: Reset my posts (for profile refresh) ---
+  resetMyPosts: () => set({ myPosts: [], myNextPage: 1, myHasMore: true }),
+
 
   // Single Post
   // getPostById: async (id: string) => {
@@ -421,6 +522,32 @@ export const usePostStore = create<PostState>((set, get) => ({
 
 
   // ---------- Create post ----------
+  // createPost: async (data: FormData | object) => {
+  //   set({ loading: true, error: null });
+  //   try {
+  //     const token = localStorage.getItem("access");
+  //     if (!token) throw new Error("Not authenticated");
+
+  //     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  //     if (data instanceof FormData) headers["Content-Type"] = "multipart/form-data";
+
+  //     const res = await axios.post<Post>(`${API_URL}/posts/`, data, { headers });
+  //     const newPost = res.data;
+
+  //     // Update local state immediately
+  //     // set((state) => ({
+  //     //   posts: [newPost, ...state.posts],
+  //     //   loading: false,
+  //     // }));
+
+  //     toast.success("Post created successfully!");
+  //   } catch (err: any) {
+  //     console.error("Create post error:", err);
+  //     set({ error: "Failed to create post", loading: false });
+  //     toast.error("Failed to create post.");
+  //   }
+  // },
+
   createPost: async (data: FormData | object) => {
     set({ loading: true, error: null });
     try {
@@ -433,19 +560,19 @@ export const usePostStore = create<PostState>((set, get) => ({
       const res = await axios.post<Post>(`${API_URL}/posts/`, data, { headers });
       const newPost = res.data;
 
-      // Update local state immediately
-      // set((state) => ({
-      //   posts: [newPost, ...state.posts],
-      //   loading: false,
-      // }));
+      // Optionally update local posts immediately
+      // set((state) => ({ posts: [newPost, ...state.posts] }));
 
       toast.success("Post created successfully!");
     } catch (err: any) {
       console.error("Create post error:", err);
-      set({ error: "Failed to create post", loading: false });
+      set({ error: "Failed to create post" });
       toast.error("Failed to create post.");
+    } finally {
+      set({ loading: false }); // ✅ always reset loading
     }
   },
+
 
 
 

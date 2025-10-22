@@ -34,19 +34,54 @@ export default function Community() {
     loadingHashtag,
     error,
     initSocket,
+    nextPage, 
+    hasMore,
+    refreshFeed, 
+    consumeRefresh,
     resetFilteredResults,
   } = usePostStore();
 
   const { user, fetchMyFollowing, toggleFollow, followingStatus } = useProfileStore();
 
-  useEffect(() => {
-    resetFilteredResults();
-    setPendingSearch(null);
-    setSearchType("posts");
-    getAllPosts();
-    initSocket();
-    fetchMyFollowing();
-  }, []);
+ useEffect(() => {
+  resetFilteredResults();
+  setPendingSearch(null);
+  setSearchType("posts");
+  getAllPosts(1); // start from page 1
+  initSocket();
+  fetchMyFollowing();
+}, []);
+
+useEffect(() => {
+  if (refreshFeed) {
+    getAllPosts(1);
+    consumeRefresh();
+  }
+}, [refreshFeed]);
+
+useEffect(() => {
+  let timeout: NodeJS.Timeout;
+
+  const handleScroll = () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      const nearBottom =
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 400;
+      if (nearBottom && hasMore && !loading) {
+        getAllPosts(nextPage);
+      }
+    }, 200); // wait 200ms before triggering
+  };
+
+  window.addEventListener("scroll", handleScroll);
+  return () => {
+    clearTimeout(timeout);
+    window.removeEventListener("scroll", handleScroll);
+  };
+}, [nextPage, hasMore, loading]);
+
+
+
 
   const hasProfiles = filteredProfiles && filteredProfiles.length > 0;
   const hasHashtags = filteredHashtags && filteredHashtags.length > 0;
@@ -232,6 +267,12 @@ export default function Community() {
                   onReloadPosts={getAllPosts}
                 />
               ))}
+              {loading && (
+                <div className="flex justify-center items-center gap-2 py-4">
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                  <p className="text-gray-400 text-sm">Loading more posts...</p>
+                </div>
+              )}
             </div>
           )}
 
