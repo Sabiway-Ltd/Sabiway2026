@@ -8,11 +8,12 @@ const postEvents = require("../socket/postEvents");
  * - req.user is optional (only if you decode token in middleware)
  */
 
+
 exports.listPosts = async (req, res) => {
   try {
     const token = req.headers._token;
-    const params = req.query || {};
-    const data = await djangoPost.listPosts(token, params);
+    const { page = 1, page_size = 20 } = req.query;
+    const data = await djangoPost.listPosts(token, { page, page_size });
     res.json(data);
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
@@ -341,9 +342,24 @@ exports.listHashtags = async (req, res) => {
 exports.myPosts = async (req, res) => {
   try {
     const token = req.headers._token;
-    const posts = await djangoPost.myPosts(token);
-    res.json(posts);
+    const { page = 1, page_size = 20 } = req.query;
+    const data = await djangoPost.myPosts(token, { page, page_size });
+    res.json(data);
   } catch (err) {
     res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
   }
 };
+
+
+exports.userPosts = async (req, res) => {
+  try {
+    const token = req.headers._token;
+    const username = req.params.username;
+    const { page = 1, page_size = 20 } = req.query;
+    const data = await djangoPost.userPosts(token, username, { page, page_size });
+    res.json(data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
+  }
+};
+
