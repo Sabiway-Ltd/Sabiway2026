@@ -958,7 +958,7 @@ const handleShowFollowing = async () => {
 
 
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
