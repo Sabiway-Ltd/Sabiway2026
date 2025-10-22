@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from profiles.models import Profile
+from .pagination import PostPagination
+from rest_framework.pagination import PageNumberPagination
 
 from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost, CommentLike, ReplyLike 
 from .serializers import (
@@ -27,6 +29,7 @@ class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.select_related("author__user").prefetch_related("hashtags").all()
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = PostPagination
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -146,20 +149,25 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path=r"user/(?P<username>[\w.@+-]+)")
     def user_posts(self, request, username=None):
         """
-        GET /api/posts/user/<username>/ — Fetch all posts by a given username.
+        GET /api/posts/user/<username>/ — Paginated posts by a given username.
         """
         if username.startswith("@"):
             username = username[1:]
 
         profile = get_object_or_404(Profile, username=f"@{username}")
+
         posts = (
             Post.objects.filter(author=profile)
             .select_related("author__user")
             .prefetch_related("hashtags")
             .order_by("-created_at")
         )
-        serializer = PostListSerializer(posts, many=True, context={"request": request})
-        return Response(serializer.data)
+
+        # ✅ Apply pagination
+        paginator = PostPagination()
+        paginated_posts = paginator.paginate_queryset(posts, request)
+        serializer = PostListSerializer(paginated_posts, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -371,6 +379,7 @@ class ReplyUnlikeToggleView(APIView):
 class MyPostsView(generics.ListAPIView):
     serializer_class = PostListSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PostPagination
 
     def get_queryset(self):
         profile = self.request.user.profile
