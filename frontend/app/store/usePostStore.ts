@@ -6,10 +6,10 @@ import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { EXPRESS_LOCAL_URL, DJANGO_DEPLOY_URL } from "../utils/MyConstants";
+import { EXPRESS_URL, DJANGO_DEPLOY_URL } from "../utils/MyConstants";
 import { post } from "../services/post";
 
-const SOCKET_URL = EXPRESS_LOCAL_URL
+const SOCKET_URL = EXPRESS_URL
 
 // ---------- Types ----------
 type Author = {
@@ -87,7 +87,7 @@ type PostState = {
 };
 
 // ---------- API ----------
-const API_URL = `${EXPRESS_LOCAL_URL}/api`;
+const API_URL = `${EXPRESS_URL}/api`;
 
 // ---------- Singleton Socket ----------
 let socketInstance: Socket | null = null;
@@ -95,7 +95,7 @@ const listenersAttached = new Set<string>();
 
 const getSocket = (token: string) => {
   if (!socketInstance) {
-    socketInstance = io(EXPRESS_LOCAL_URL, {
+    socketInstance = io(EXPRESS_URL, {
       auth: { token },
     });
 

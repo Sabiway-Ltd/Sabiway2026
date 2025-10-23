@@ -3,13 +3,13 @@
 import { create } from "zustand";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
-import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+import { EXPRESS_URL } from "@/app/utils/MyConstants";
 import { useNotificationStore } from "./useNotificationStore"; // ✅ add at the top
 import { auth } from "../services/auth";
 
 
-const API_URL = `${EXPRESS_LOCAL_URL}/api`;
-const SOCKET_URL = EXPRESS_LOCAL_URL
+const API_URL = `${EXPRESS_URL}/api`;
+const SOCKET_URL = EXPRESS_URL
 
 let socket: any = null;
 
@@ -103,7 +103,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
       set({ user: data.user });
-      toast.success("Account created successfully!");
+      toast("Please check your inbox and spam folder for the confirmation email.", {
+        icon: "⚠️",
+        style: {
+          background: "#fff3cd",
+          color: "#856404",
+          border: "1px solid #ffeeba",
+        },
+        duration: 9000, // 9 seconds
+      });
+
       get().connectSocket(data.user); // 🔌 connect here
       return true;
     } catch (error: any) {

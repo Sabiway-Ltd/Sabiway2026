@@ -52,6 +52,11 @@ app.use("/api/notifications", require("./routes/notifications.routes"));
 app.use("/api/search", require("./routes/search.routes"));
 app.use("/api/report", reportRoutes);
 
+
+const testEmailRoute = require("./routes/testEmail");
+app.use("/api/test-email", testEmailRoute);
+
+
 // ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {

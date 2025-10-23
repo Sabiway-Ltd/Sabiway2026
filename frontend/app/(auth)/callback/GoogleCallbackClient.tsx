@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
-import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+import { EXPRESS_URL } from "@/app/utils/MyConstants";
 
 export default function GoogleCallbackClient() {
   const searchParams = useSearchParams();
@@ -27,7 +27,7 @@ export default function GoogleCallbackClient() {
         localStorage.setItem("access", access);
         localStorage.setItem("refresh", refresh);
 
-        const response = await fetch(`${EXPRESS_LOCAL_URL}/api/profiles/me/`, {
+        const response = await fetch(`${EXPRESS_URL}/api/profiles/me/`, {
           headers: { Authorization: `Bearer ${access}` },
         });
 

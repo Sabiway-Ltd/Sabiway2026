@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+import { EXPRESS_URL } from "@/app/utils/MyConstants";
 
 export default function ReportButton({ postId }) {
   const [showDialog, setShowDialog] = useState(false);
@@ -22,7 +22,7 @@ export default function ReportButton({ postId }) {
     setLoading(true);
     try {
       // ✅ Option A: send to your backend API (recommended)
-      await fetch(`${EXPRESS_LOCAL_URL}/api/report/`, {
+      await fetch(`${EXPRESS_URL}/api/report/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

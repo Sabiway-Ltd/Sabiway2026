@@ -1,3 +1,5 @@
+// app/(auth)/signup/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +9,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import { EXPRESS_LOCAL_URL } from "@/app/utils/MyConstants";
+import { EXPRESS_URL } from "@/app/utils/MyConstants";
 
 export default function Signup() {
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -37,7 +39,7 @@ export default function Signup() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const res = await fetch(`${EXPRESS_LOCAL_URL}/api/auth/generate-google-url`);
+      const res = await fetch(`${EXPRESS_URL}/api/auth/generate-google-url`);
       const data = await res.json();
       console.log("Response from backend:", data);
 
