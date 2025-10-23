@@ -169,16 +169,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 
   // ✅ LOGOUT
-  logout: async () => {
-    const refresh = localStorage.getItem("refresh");
-    if (!refresh) return;
+  // logout: async () => {
+  //   const refresh = localStorage.getItem("refresh");
+  //   if (!refresh) return;
 
-    try {
-      await auth.logout({ refresh });
-    } finally {
-      localStorage.clear();
-      set({ user: null, access: null, refresh: null });
-    }
+  //   try {
+  //     await auth.logout({ refresh });
+  //   } finally {
+  //     localStorage.clear();
+  //     set({ user: null, access: null, refresh: null });
+  //   }
+  // },
+
+    logout: async () => {
+
+localStorage.clear();
   },
 
   // ✅ LOAD USER

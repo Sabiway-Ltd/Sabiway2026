@@ -394,7 +394,7 @@ export default function PostCard({
                       }}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                     >
-                      Copy Link to Post
+                      Copy Link
                     </button>
                     {/* For Report Post */}
                     <ReportButton postId={id} />

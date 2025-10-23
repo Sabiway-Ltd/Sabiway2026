@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import ProfilePostCard from "../_components/profile/ProfilePostCard";
 import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
-
+import PostCard from "../_components/feed/PostCard";
 
 
 
@@ -49,6 +49,8 @@ export default function ProfilePage() {
   loading: profileLoading,
   toggleFollow, // ✅ add this
 } = useProfileStore();
+
+const { currentPost, getPostById, error } = usePostStore();
 
   const { set } = usePostStore.getState(); // direct access for updating
 
@@ -509,158 +511,32 @@ const handleShowFollowing = async () => {
 
             {activeTab === "posts" && (
               <div className="flex ">
-              <div className="space-y-4 md:w-[400px] w-full">
+              <div className="space-y-4  w-full">
                 {myPosts.length === 0 ? (
                   <p className="text-gray-600">You haven’t posted anything yet.</p>
                 ) : (
                   myPosts.map((postItem) => (
-              <div key={postItem.id} className="p-4 border rounded-lg  bg-white shadow-sm">
-                {editingPostId === postItem.id ? (
-                  <>
-                    <textarea
-                      className="w-full border rounded-lg p-2 mb-2"
-                      value={editedPostContent}
-                      onChange={(e) => setEditedPostContent(e.target.value)}
-                    />
-
-                    {/* Image preview and upload */}
-                    {editedPostImage ? (
-                      <img
-                        src={URL.createObjectURL(editedPostImage)}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-md mb-2"
-                      />
-                    ) : postItem.image ? (
-                      <img
-                        src={postItem.image.startsWith("http") 
-                              ? postItem.image 
-                              : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
-                        alt="Post image"
-                        width="400"
-                        height="200"
-                        className="rounded-md mb-2"
-                      />
-
-                    ) : null}
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="mb-2 cursor-pointer"
-                      onChange={handlePostImageChange}
-                    />
-
-                    <div className="flex gap-4 mt-2">
-                      <button
-                        onClick={() => handleSavePost(postItem.id)}
-                        className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
-                        disabled={uploadingPostImage}
-                      >
-                        {uploadingPostImage ? "Uploading..." : "Save"}
-                      </button>
-                      <button
-                        onClick={handleCancelEditPost}
-                        className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-start w-full justify-between gap-4">
-                      <Link href={`/posts/${postItem.id}`} key={postItem.id}>
-                        <p className="mb-2">{postItem.content}</p>
-                      </Link>
-                      
-                      {/* Options */}
-                      <div className="relative text-sm text-gray-600">
-                        <button
-                          onClick={() =>
-                            setMyPosts((prev) =>
-                              prev.map((p) =>
-                                p.id === postItem.id
-                                  ? { ...p, showMenu: !p.showMenu }
-                                  : { ...p, showMenu: false }
-                              )
-                            )
-                          }
-                          className="p-2 rounded-full hover:bg-gray-100 transition ml-auto block"
-                        >
-                          {/* Vertical Kebab Icon */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-5 h-5 text-gray-600"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5z"
-                            />
-                          </svg>
-                        </button>
-
-                        {postItem.showMenu && (
-                          <div className="absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fadeIn">
-                            <button
-                              onClick={() => {
-                                handleEditPost(postItem.id, postItem.content);
-                                setMyPosts((prev) =>
-                                  prev.map((p) =>
-                                    p.id === postItem.id ? { ...p, showMenu: false } : p
-                                  )
-                                );
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                setPostToDelete(postItem.id);
-                                setIsDeleteModalOpen(true);
-                                setMyPosts((prev) =>
-                                  prev.map((p) =>
-                                    p.id === postItem.id ? { ...p, showMenu: false } : p
-                                  )
-                                );
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                            <button
-                              onClick={handleCopyPostLink}
-                              className="block w-full rounded-lg text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            >
-                              Copy Link
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {postItem.image && (
-                      <Link href={`/posts/${postItem.id}`} key={postItem.id}>
-                        <img
-                          src={postItem.image.startsWith("http") ? postItem.image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${postItem.image}`}
-                          alt="Post image"
-                          className="w-[400px] h-auto rounded-md object-cover"
-                        />
-                      </Link>
-                      )}
-
-
-                    
-
-
-                  </div>
-                )}
-              </div>
+                    <PostCard
+                         key={postItem.id}
+                          id={postItem.id}
+                                        author={{
+                                          user_id: postItem.author.user_id,
+                                          full_name: postItem.author.full_name,
+                                          username: postItem.author.username,
+                                          profile_picture: postItem.author.profile_picture || DEFAULT_PROFILE_PICTURE,
+                                          phone_number: postItem.author.phone_number || "",
+                                          is_following: postItem.author.is_following,
+                                        }}
+                                        content={postItem.content}
+                                        image={postItem.image || null}
+                                        likes_count={postItem.likes_count}
+                                        comments_count={postItem.comments_count}
+                                        impressions_count={postItem.impressions_count || 0}
+                                        is_liked={postItem.is_liked ?? false}
+                                        is_bookmarked={postItem.is_bookmarked ?? false}
+                                        created_at={postItem.created_at}
+                                         onReloadPosts={() => getPostById(postItem.id)}
+                                      />
             ))
                 )}
               </div>

@@ -243,7 +243,7 @@ export default function CommentThread({
               </button>
             )}
 
-            <button
+            {/* <button
               onClick={handleWhatsappClick}
               className={`flex items-center gap-1 transition-opacity duration-200 hover:text-green-500 ${
                 !author.phone_number
@@ -252,7 +252,7 @@ export default function CommentThread({
               }`}
             >
               <FaWhatsapp size={16} />
-            </button>
+            </button> */}
           </div>
 
           {/* ✍️ Reply Box */}

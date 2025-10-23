@@ -18,6 +18,9 @@ import { useInfiniteScroll } from "@/app/hooks/useInfiniteScroll";
 export default function ProfilePage() {
   const { username } = useParams();
   const { user } = useAuthStore();
+   const { profile: currentUser } = useProfileStore();
+
+  // console.log(currentUser)
 
   const {
     otherProfile,
@@ -148,7 +151,8 @@ export default function ProfilePage() {
                   <BiLinkAlt size={12} />
                 </Button>
 
-                {user?.id !== user_id && (
+
+                {currentUser?.user_id !== user_id && (
                   <Button
                     onClick={handleFollowToggle}
                     disabled={loadingFollow}
