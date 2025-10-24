@@ -38,6 +38,7 @@ exports.signup = async (req, res) => {
     // 4️⃣ Confirmation link
     const confirmUrl = `${FRONTEND_URL}/confirm-signup?token=${encodeURIComponent(token)}`;
 
+    
     // 5️⃣ Send confirmation email via Resend
     const emailResponse = await resend.emails.send({
       from: DEFAULT_FROM_EMAIL,
