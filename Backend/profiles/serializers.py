@@ -42,14 +42,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         return candidate
 
     def update(self, instance, validated_data):
-        username = validated_data.get('username')
-        if username:
-            instance.username = username
-        instance.full_name = validated_data.get('full_name', instance.full_name)
-        instance.profile_picture = validated_data.get('profile_picture', instance.profile_picture)
-        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         instance.save()
         return instance
+
     
     def get_is_following(self, obj):
         """Check if logged-in user is following this profile"""
