@@ -98,32 +98,43 @@ export default function CommunityNavbar({
   };
 
   // 🟢 Handle SabiWay logo click
-  // const handleLogoClick = () => {
-  //   router.push("/community");
-
-  //   // ✅ Delay to ensure page navigation completes
-  //   setTimeout(() => {
-  //     const { resetFilteredResults, getAllPosts } = usePostStore.getState();
-
-  //     // ✅ Reset state
-  //     resetFilteredResults();
-  //     setSearchQuery("");
-
-  //     // ✅ Inform parent (Community page)
-  //     if (typeof onReset === "function") {
-  //       onReset();
-  //     }
-
-  //     // ✅ Fetch all posts again
-  //     getAllPosts(1);
-  //   }, 250);
-  // };
-
   const { triggerRefresh } = usePostStore.getState();
   const handleLogoClick = () => {
     // router.push("/community");
     window.location.href = "/community"
     triggerRefresh();
+  };
+
+
+  // For Notification
+  const handleNotificationClick = async (n) => {
+    try {
+      // 1️⃣ Mark as read in backend
+      await markAsRead(n.id);
+
+      // 2️⃣ Navigate to relevant page
+      if (n.target) {
+        switch (n.target.type) {
+          case "profile":
+            router.push(`/profile/${n.author.username.replace("@", "")}`);
+            break;
+          case "post":
+            router.push(`/posts/${n.target.slug || n.target.id}`);
+            break;
+          case "comment":
+          case "reply":
+            // Optional: scroll to post + highlight comment/reply
+            router.push(`/posts/${n.target.post_slug || n.target.post_id}`);
+            break;
+          default:
+            console.warn("Unknown notification target:", n.target);
+        }
+      }else if(n.type == "follow"){
+        router.push(`/profile/${n.actor.username.replace("@", "")}`);
+      }
+    } catch (err) {
+      console.error("Error handling notification click:", err);
+    }
   };
 
   return (
@@ -203,7 +214,7 @@ export default function CommunityNavbar({
                     notifications.map((n) => (
                       <div
                         key={n.id}
-                        onClick={() => markAsRead(n.id)}
+                        onClick={() => handleNotificationClick(n)}
                         className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
                           n.is_read
                             ? "bg-gray-50 hover:bg-gray-100"

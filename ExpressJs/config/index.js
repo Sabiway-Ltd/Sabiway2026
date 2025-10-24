@@ -8,5 +8,6 @@ module.exports = {
 
   CONFIRMATION_SECRET: "supersecret", // Keep secret in env
   CONFIRMATION_EXPIRY: "1h", // token valid for 1 hour
-  FRONTEND_URL: "http://localhost:3000"
+  // FRONTEND_URL: "http://localhost:3000"
+  FRONTEND_URL: "https://sabiway2025.vercel.app"
 };

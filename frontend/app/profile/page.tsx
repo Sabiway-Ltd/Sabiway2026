@@ -97,7 +97,7 @@ const handleFollowToggle = async (user: any) => {
 
 
   const handleCopyProfileLink = async (userUsername) => {
-    const profileUrl = `${window.location.origin}/profile/${userUsername}`;
+    const profileUrl = `${window.location.origin}/profile/${userUsername.replace("@", "")}`;
     await navigator.clipboard.writeText(profileUrl);
     toast.success("Profile link copied");
   };

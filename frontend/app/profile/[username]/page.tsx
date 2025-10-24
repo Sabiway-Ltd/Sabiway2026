@@ -103,7 +103,7 @@ export default function ProfilePage() {
   const isFollowing = followingStatus[user_id] || false;
 
   const handleCopyProfileLink = async () => {
-    const profileUrl = `${window.location.origin}/profile/${userUsername}`;
+    const profileUrl = `${window.location.origin}/profile/${userUsername.replace("@", "")}`;
     await navigator.clipboard.writeText(profileUrl);
     toast.success("Profile link copied");
   };

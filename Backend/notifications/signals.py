@@ -47,8 +47,10 @@ def new_follower(sender, instance, created, **kwargs):
         create_notification(
             user=instance.following,
             actor=instance.follower,
-            notif_type="follow"
+            notif_type="follow",
+            target=instance.follower 
         )
+
 
 # -------------------
 # LIKE
