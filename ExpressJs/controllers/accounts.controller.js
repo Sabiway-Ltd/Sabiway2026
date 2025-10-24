@@ -49,9 +49,13 @@ exports.signup = async (req, res) => {
           
           <!-- Header with Logo -->
           <div style="background-color: #008753; padding: 25px 0;">
-            <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1759082923/Group_3_2_ks6g5d.png" 
-                alt="SabiWay Logo" 
-                style="width: 140px; height: auto;">
+            <img
+              src="https://res.cloudinary.com/devqbjptr/image/upload/v1759082923/Group_3_2_ks6g5d.png"
+              alt="SabiWay Logo"
+              width="140"
+              height="auto"
+              style="display:block; margin:auto; border:0; outline:none; text-decoration:none;"
+            >
           </div>
 
           <!-- Main Content -->
