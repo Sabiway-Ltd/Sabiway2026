@@ -12,10 +12,13 @@ from flask_sqlalchemy import SQLAlchemy
 # Configuration
 # -----------------------------
 # ⚠️ In production, set DATABASE_URL and RESEND_API_KEY in your hosting environment (Render, Vercel, etc.)
-DEFAULT_DB_URL = (
-    "postgresql+psycopg2://sabiway_user:DhtvXbF3dYD5oatHiszqmQt0gHFyFhz4"
-    "@dpg-d39varbuibrs73f74oe0-a.oregon-postgres.render.com/sabiway"
-)
+# DEFAULT_DB_URL = (
+#     "postgresql+psycopg2://sabiway_user:DhtvXbF3dYD5oatHiszqmQt0gHFyFhz4"
+#     "@dpg-d39varbuibrs73f74oe0-a.oregon-postgres.render.com/sabiway"
+# )
+
+DEFAULT_DB_URL = "sqlite:///waitlist.db"
+
 
 app = Flask(__name__)
 CORS(app)
@@ -158,7 +161,7 @@ def join_waitlist():
         db.session.commit()
 
         created_at = new_entry.created_at.isoformat()
-        send_emails_async(name, email, created_at)
+        # send_emails_async(name, email, created_at)
 
         return jsonify({
             "status": "success",
