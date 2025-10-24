@@ -161,7 +161,7 @@ def join_waitlist():
         db.session.commit()
 
         created_at = new_entry.created_at.isoformat()
-        # send_emails_async(name, email, created_at)
+        send_emails_async(name, email, created_at)
 
         return jsonify({
             "status": "success",
