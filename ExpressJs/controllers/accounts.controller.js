@@ -42,29 +42,75 @@ exports.signup = async (req, res) => {
     const emailResponse = await resend.emails.send({
       from: DEFAULT_FROM_EMAIL,
       to: email,
-      subject: "Confirm Your SabiWay Account",
+      subject: "Welcome to SabiWay — Confirm Your Account",
       html: `
-        <p>Hello ${full_name},</p>
-        <p>Thanks for signing up for SabiWay!</p>
-        <p>Confirm your email in one of two ways:</p>
-        <ol>
-          <li><b>Web:</b> <a href="${confirmUrl}">Confirm Email</a></li>
-          <li><b>Mobile:</b> Enter this 4-digit code: <b>${code}</b></li>
-        </ol>
-        <p>This link and code will expire in 1 hour.</p>
-        <p>— The SabiWay Team</p>
+      <div style="font-family: Arial, sans-serif; background-color: #f4f4f7; padding: 40px 0; text-align: center;">
+        <div style="background-color: #ffffff; width: 90%; max-width: 520px; margin: auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+          
+          <!-- Header with Logo -->
+          <div style="background-color: #008753; padding: 25px 0;">
+            <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1759082923/Group_3_2_ks6g5d.png" 
+                alt="SabiWay Logo" 
+                style="width: 140px; height: auto;">
+          </div>
+
+          <!-- Main Content -->
+          <div style="padding: 30px;">
+            <h2 style="color: #333333; margin-top: 10px;">Welcome, ${full_name} 👋</h2>
+            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
+              Thanks for joining <strong>SabiWay</strong> — where connection and community thrive.
+              Please confirm your email address to activate your account.
+            </p>
+
+            <!-- Confirm Button -->
+            <a href="${confirmUrl}" 
+              style="display: inline-block; margin-top: 20px; background-color: #008753; color: #ffffff; 
+                      text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: bold; 
+                      font-size: 16px; letter-spacing: 0.5px;">
+              Confirm My Email
+            </a>
+
+            <!-- Code Section -->
+            <p style="margin-top: 25px; color: #777777; font-size: 14px;">Or use this code:</p>
+            <div style="font-size: 26px; font-weight: bold; color: #008753; letter-spacing: 4px; margin-top: 8px;">
+              ${code}
+            </div>
+
+            <p style="font-size: 13px; color: #999999; margin-top: 20px;">
+              This confirmation link and code will expire in <strong>1 hour</strong>.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+            <!-- Footer -->
+            <p style="font-size: 14px; color: #888888; line-height: 1.5;">
+              Cheers,<br>
+              <strong style="color: #008753;">The SabiWay Team</strong>
+            </p>
+
+            <p style="font-size: 12px; color: #bbbbbb; margin-top: 10px;">
+              If you didn’t sign up for SabiWay, you can safely ignore this email.
+            </p>
+          </div>
+        </div>
+      </div>
       `,
+
       text: `
-      Hello ${full_name},
+    Welcome, ${full_name} 👋
 
-      Thanks for signing up for SabiWay!
+    Thanks for joining SabiWay — where connection and community thrive.
+    Please confirm your email address to activate your account.
 
-      Confirm your email in one of two ways:
-      1. Web: Open ${confirmUrl}
-      2. Mobile: Enter this 4-digit code: ${code}
+    Confirm your email:
+    ${confirmUrl}
 
-      This link and code will expire in 1 hour.
-      — The SabiWay Team
+    Or enter this 4-digit code: ${code}
+
+    This confirmation link and code will expire in 1 hour.
+
+    Cheers,
+    The SabiWay Team
       `,
     });
 
