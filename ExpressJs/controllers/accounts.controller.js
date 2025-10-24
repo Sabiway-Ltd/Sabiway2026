@@ -38,7 +38,7 @@ exports.signup = async (req, res) => {
     // 4️⃣ Confirmation link
     const confirmUrl = `${FRONTEND_URL}/confirm-signup?token=${encodeURIComponent(token)}`;
 
-    
+
     // 5️⃣ Send confirmation email via Resend
     const emailResponse = await resend.emails.send({
       from: DEFAULT_FROM_EMAIL,
@@ -51,7 +51,7 @@ exports.signup = async (req, res) => {
           <!-- Header with Logo -->
           <div style="background-color: #008753; padding: 25px 0;">
             <img
-              src="https://res.cloudinary.com/devqbjptr/image/upload/v1759082923/Group_3_2_ks6g5d.png"
+              src="../images/sabiway_logo.png"
               alt="SabiWay Logo"
               width="140"
               height="auto"
