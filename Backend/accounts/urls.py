@@ -20,7 +20,7 @@ urlpatterns = [
     path("reset-password/<uuid:token>/", ResetPasswordView.as_view(), name="reset-password"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("generate-google-url/", GenerateGoogleAuthURLView.as_view(), name="generate-google-url"),
-    path("auth/verify-reset-token/<uuid:token>/", VerifyResetTokenView.as_view(), name="verify-reset-token"),
+    path("verify-reset-token/<uuid:token>/", VerifyResetTokenView.as_view(), name="verify-reset-token"),
 
 
     # ✅ JWT Token refresh route
