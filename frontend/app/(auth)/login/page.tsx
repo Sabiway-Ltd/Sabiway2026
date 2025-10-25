@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { EXPRESS_URL } from "@/app/utils/MyConstants";
+import Link from "next/link";
 
 export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -117,13 +118,13 @@ export default function Login() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <div className="flex justify-end mt-1">
-              <a
+            <div  className="flex justify-end mt-1">
+              <Link
                 href="/forgot-password"
                 className="text-[#008753] text-xs hover:underline font-medium"
               >
                 Forgot Password?
-              </a>
+              </Link>
             </div>
           </div>
 

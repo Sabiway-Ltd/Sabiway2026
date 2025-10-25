@@ -36,11 +36,13 @@ export default function Home() {
       {/* ================= FAQ SECTION ================= */}
       <Faqs  />
       
-      {/* ================= DOWNLOAD APP SECTION ================= */}
-      <Appsection  />
-
-        {/* ================= FOOTER SECTION ================= */}
-       <Footer  />
+      {/* ================= APP + FOOTER SECTION ================= */}
+      <div className="relative">
+        <Appsection />
+        <div className="relative -mt-20 z-10">
+          <Footer />
+        </div>
+      </div>
     
       
     </main>

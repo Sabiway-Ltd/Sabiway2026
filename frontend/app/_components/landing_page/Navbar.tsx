@@ -18,12 +18,11 @@ export default function Navbar() {
         
         {/* LOGO */}
         <div className="flex-shrink-0 cursor-pointer" onClick={() => router.push("/")}>
-          <Image
+          <img
             src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
             alt="SabiWay Logo"
             width={130}
             height={45}
-            priority
           />
         </div>
 

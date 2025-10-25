@@ -221,3 +221,19 @@ class LogoutView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Logout successful"}, status=status.HTTP_200_OK)
+    
+
+
+class VerifyResetTokenView(APIView):
+    def get(self, request, token):
+        try:
+            reset_obj = PasswordReset.objects.get(reset_token=token, is_used=False)
+        except PasswordReset.DoesNotExist:
+            return Response({"error": "Invalid token."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check expiration (assuming you already have is_valid() in your model)
+        if not reset_obj.is_valid():
+            return Response({"error": "Token expired or invalid."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"message": "Valid token."}, status=status.HTTP_200_OK)
+

@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Appsection () {
     return(
-        <section className="w-full bg-white py-28 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+        <section className="w-full bg-white pt-28 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
         <div className="md:w-1/2 md:text-left text-center">
           <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-4">
             Book service providers <br /> from your phone

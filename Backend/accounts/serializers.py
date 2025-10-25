@@ -39,7 +39,7 @@ class SignupSerializer(serializers.ModelSerializer):
             
             <!-- Header -->
             <div style="background:#008753; padding:20px; text-align:center;">
-                <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1759082923/Group_3_2_ks6g5d.png" alt="Sabiway Logo" style="height:50px;" />
+                <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1761379748/Group_3_2_wcvmst.svg" alt="Sabiway Logo" style="height:50px;" />
                 <h2 style="color:#ffffff; margin:10px 0 0;">Welcome to Sabiway 🎉</h2>
             </div>
 
@@ -110,7 +110,8 @@ class ForgotPasswordSerializer(serializers.Serializer):
         reset_obj = PasswordReset.objects.create(user=user)
         reset_obj.generate_code()
 
-        reset_link = f"{settings.BACKEND_URL}/api/auth/reset-password/{reset_obj.reset_token}/"
+        # reset_link = f"{settings.BACKEND_URL}/api/auth/reset-password/{reset_obj.reset_token}/"
+        reset_link = f"{settings.FRONTEND_URL}/change-password/{reset_obj.reset_token}/"
 
         email_body = f"""
         <html>
@@ -118,7 +119,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
             <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
             <!-- Header -->
             <div style="background:#008753; padding:20px; text-align:center;">
-                <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1759082923/Group_3_2_ks6g5d.png" alt="Sabiway Logo" style="height:50px;" />
+                <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1761379748/Group_3_2_wcvmst.svg" alt="Sabiway Logo" style="height:50px;" />
                 <h2 style="color:#ffffff; margin:10px 0 0;">Password Reset Request</h2>
             </div>
 
