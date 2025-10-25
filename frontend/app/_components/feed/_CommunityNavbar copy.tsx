@@ -112,7 +112,7 @@ export default function CommunityNavbar({
         <div className="flex items-center gap-x-4">
           <button onClick={handleLogoClick}>
             <img
-              src="/sabiwaylogo.svg"
+              src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
               alt="SabiWay Logo"
               className="w-28 sm:w-32 md:w-40 h-auto cursor-pointer hover:opacity-90 transition"
             />

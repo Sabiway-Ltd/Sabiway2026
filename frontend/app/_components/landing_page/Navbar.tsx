@@ -9,12 +9,17 @@ export default function Navbar() {
   const router = useRouter();
 
   return (
-    <nav className="fixed top-4 left-0 w-full z-50 bg-white/80 backdrop-blur-md">
-      <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white py-6">
+      {/* WHITE BACKGROUND RECTANGLE */}
+      <div className="absolute top-0 left-0 w-full h-full bg-white"></div>
+      
+      {/* ROUNDED LIGHT GREEN NAVBAR */}
+      <div className="relative w-[92%] sm:w-[90%] md:w-[88%] max-w-[1400px] mx-auto flex items-center justify-between bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8">
+        
         {/* LOGO */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 cursor-pointer" onClick={() => router.push("/")}>
           <Image
-            src="/sabiwaylogo.svg"
+            src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
             alt="SabiWay Logo"
             width={130}
             height={45}
@@ -58,7 +63,7 @@ export default function Navbar() {
 
       {/* MOBILE DROPDOWN MENU */}
       {menuOpen && (
-        <div className="md:hidden absolute top-[86px] left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
           <ul className="flex flex-col text-gray-800 font-medium text-center py-5 space-y-4">
             <li><a href="#" className="hover:text-[#008753] transition">Community</a></li>
             <li><a href="#" className="hover:text-[#008753] transition">About Us</a></li>
