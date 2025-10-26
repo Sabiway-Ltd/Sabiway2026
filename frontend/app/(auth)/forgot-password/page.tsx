@@ -34,16 +34,16 @@ export default function ForgetPassword() {
 
       if (res.ok) {
         // toast.success(data.message || "Password reset instructions sent to email.");
-        toast("Please check your inbox and spam folder for the Password reset instructions.", {
-          icon: "⚠️",
-          style: {
-            background: "#fff3cd",
-            color: "#856404",
-            border: "1px solid #ffeeba",
-          },
-          duration: 9000, // 9 seconds
-        });
-        router.push("/login"); // Redirect after success
+        // toast("Please check your inbox and spam folder for the Password reset instructions.", {
+        //   icon: "⚠️",
+        //   style: {
+        //     background: "#fff3cd",
+        //     color: "#856404",
+        //     border: "1px solid #ffeeba",
+        //   },
+        //   duration: 9000, // 9 seconds
+        // });
+        router.push("/check-email"); // Redirect after success
       } else {
         toast.error(data.error || "Failed to send reset email.");
       }

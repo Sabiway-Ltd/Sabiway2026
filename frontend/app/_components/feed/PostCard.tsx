@@ -15,6 +15,7 @@ import { EmojiClickData } from "emoji-picker-react";
 import DeleteConfirmModal from "../common/DeleteConfirmModal";
 import Link from "next/link";
 import ReportButton from "../common/ReportButton";
+import ReadMoreText from "../common/ReadMore";
 
 // ✅ Load emoji picker only on client side
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -543,7 +544,8 @@ export default function PostCard({
       ) : (
         <>
           <Link href={`/posts/${id}`} key={id}>
-            <div className="mt-3 text-gray-800 text-sm">{content}</div>
+            {/* <div className="mt-3 text-gray-800 text-sm">{content}</div> */}
+            <ReadMoreText content={content} maxLength={150} />
             {image && (
               <div className="mt-3 rounded-xl overflow-hidden">
                 <img

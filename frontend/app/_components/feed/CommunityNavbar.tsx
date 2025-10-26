@@ -190,7 +190,7 @@ export default function CommunityNavbar({
               onClick={() => setNotifDropdownOpen((prev) => !prev)}
               className="bg-white p-2 rounded-full relative"
             >
-              <Bell className="h-5 w-5 text-[#008753]" />
+              <Bell className="h-4 w-4 md:h-6 w-6  text-[#008753]" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
                   {unreadCount}
@@ -282,7 +282,7 @@ export default function CommunityNavbar({
                   >
                     <img
                       src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="md:w-7 md:h-7 w-4 h-4 rounded-full object-cover"
                       alt="Profile"
                     />
                     Profile

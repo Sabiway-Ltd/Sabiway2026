@@ -480,8 +480,8 @@ const handleShowFollowing = async () => {
                   </>
                 ) : (
                   <>
-                    <p><strong>Email:</strong> {profile.email}</p>
-                    <p><strong>Bio:</strong> {profile.bio || "—"}</p>
+                    <p className="text-sm"><strong>Email:</strong> {profile.email}</p>
+                    <p className="text-sm"><strong>Bio:</strong> {profile.bio || "—"}</p>
 
                     <div className="flex gap-x-4">
                       {/* Edit */}
@@ -500,7 +500,7 @@ const handleShowFollowing = async () => {
                       }}
                       className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-xs md:text-sm"
                     >
-                      Logout
+                      Sign Out
                     </button>
                       
                     </div>
@@ -550,7 +550,28 @@ const handleShowFollowing = async () => {
                   <p className="text-gray-600">No bookmarks yet.</p>
                 ) : (
                   bookmarks.map((bm) => (
-                    <ProfilePostCard key={bm.id} post={bm.post} />
+                    // <ProfilePostCard key={bm.id} post={bm.post} />
+                    <PostCard
+                        key={bm.post.id}
+                        id={bm.post.id}
+                                      author={{
+                                        user_id: bm.post.author.user_id,
+                                        full_name: bm.post.author.full_name,
+                                        username: bm.post.author.username,
+                                        profile_picture: bm.post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
+                                        phone_number: bm.post.author.phone_number || "",
+                                        is_following: bm.post.author.is_following,
+                                      }}
+                                      content={bm.post.content}
+                                      image={bm.post.image || null}
+                                      likes_count={bm.post.likes_count}
+                                      comments_count={bm.post.comments_count}
+                                      impressions_count={bm.post.impressions_count || 0}
+                                      is_liked={bm.post.is_liked ?? false}
+                                      is_bookmarked={bm.post.is_bookmarked ?? false}
+                                      created_at={bm.post.created_at}
+                                        onReloadPosts={() => getPostById(bm.post.id)}
+                                    />
                   ))
                 )}
               </div>
