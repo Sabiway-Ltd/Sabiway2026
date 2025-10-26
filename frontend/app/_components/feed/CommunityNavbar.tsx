@@ -116,7 +116,7 @@ export default function CommunityNavbar({
       if (n.target) {
         switch (n.target.type) {
           case "profile":
-            router.push(`/profile/${n.author.username.replace("@", "")}`);
+            router.push(`/profile/${n.target.username.replace("@", "")}`);
             break;
           case "post":
             router.push(`/posts/${n.target.slug || n.target.id}`);
