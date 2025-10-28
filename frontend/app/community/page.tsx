@@ -13,6 +13,7 @@ import { DEFAULT_PROFILE_PICTURE } from "../helper";
 import { Loader2 } from "lucide-react";
 import { getProfileImage } from "../utils/getProfileImage";
 import Link from "next/link";
+import PeopleYouMayKnow from "../_components/profile/PeopleYouMayKnow";
 
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
@@ -131,8 +132,13 @@ useEffect(() => {
         }}
       />
 
-      <section className="flex justify-center gap-6 lg:gap-14 max-w-screen-xl mx-auto">
-        <main className="flex-[3] mt-4 max-w-3xl w-full">
+      <section className="flex justify-center gap-3 lg:gap-4 max-w-screen-xl mx-auto">
+        
+        <div className="md:w-[22rem] hidden lg:block">
+          <PeopleYouMayKnow/>
+        </div>
+
+        <main className="flex-[3] mt-4  w-full border-gray-200  border-x">
           <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
           {/* Search type buttons */}
@@ -295,7 +301,7 @@ useEffect(() => {
             )}
         </main>
 
-        <aside className="hidden lg:block md:w-[28rem] mt-4 border-l border-gray-200 pl-6">
+        <aside className="hidden md:block md:w-[22rem] mt-4 ">
           <Aside />
         </aside>
       </section>

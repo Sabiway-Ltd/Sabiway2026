@@ -33,7 +33,7 @@ export default function Aside() {
   };
 
   return (
-    <aside className="w-full  bg-[#F9FAFB] p-4 rounded-lg">
+    <aside className="w-full  bg-[#F9FAFB]  rounded-lg">
       {/* Trending Topics */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-3">Trending Topics</h2>
@@ -47,10 +47,10 @@ export default function Aside() {
                   onClick={() => handleHashtagClick(tag.tag)}
                   disabled={loadingHashtag && !isActive}
                   className={`px-4 py-2 border rounded-md text-sm font-medium shadow-sm transition
-                    ${isActive ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 hover:bg-gray-100"}
+                    ${isActive ? "bg-[#008753] text-white border-[#008753]" : "bg-white text-gray-700 hover:bg-gray-100"}
                     ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}
                 >
-                  #{tag.tag} ({tag.use_count})
+                  {tag.tag}
                 </button>
               );
             })
@@ -64,7 +64,7 @@ export default function Aside() {
       {/* Top Contributors */}
       <div>
         <h2 className="text-lg font-semibold mb-3">Top Contributors</h2>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-y-3">
           {loading ? (
             <p className="text-gray-400 text-sm">Loading...</p>
           ) : topContributors.length > 0 ? (
@@ -100,10 +100,6 @@ export default function Aside() {
         </div>
       </div>
 
-      {/* Online Users */}
-      <section className="mt-5">
-          <PeopleYouMayKnow/>
-      </section>
 
     </aside>
   );

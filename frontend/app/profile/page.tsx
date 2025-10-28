@@ -496,7 +496,6 @@ const handleShowFollowing = async () => {
                       <button
                       onClick={async () => {
                         await logout();
-                        window.location.href = "/login"; // redirect to login after logout
                       }}
                       className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-xs md:text-sm"
                     >

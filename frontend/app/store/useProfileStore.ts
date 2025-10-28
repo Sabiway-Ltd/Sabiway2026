@@ -158,7 +158,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       // Shuffle and pick 2 random profiles
       const shuffled = allProfiles.sort(() => 0.5 - Math.random());
-      const randomTwo = shuffled.slice(0, 10);
+      const randomTwo = shuffled.slice(0, 20);
 
       set({ notFollowedProfiles: randomTwo, loading: false });
     } catch (err: any) {

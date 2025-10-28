@@ -6,7 +6,7 @@ import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { EXPRESS_URL, DJANGO_DEPLOY_URL } from "../utils/MyConstants";
+import { EXPRESS_URL, DJANGO_URL } from "../utils/MyConstants";
 import { post } from "../services/post";
 
 const SOCKET_URL = EXPRESS_URL
@@ -507,7 +507,7 @@ export const usePostStore = create<PostState>((set, get) => ({
   // getPostById: async (id: string) => {
   //   try {
   //     set({ loading: true, error: null });
-  //     const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/posts/${id}/`);
+  //     const res = await axios.get(`${DJANGO_URL}/api/posts/${id}/`);
   //     console.log("Fetched post:", res.data); // 👈 Add this
   //     set({ currentPost: res.data, loading: false });
   //   } catch (err: any) {
@@ -925,7 +925,7 @@ unlikePost: async (id: string) => {
     //       activeHashtag: null, // clear hashtag when searching
     //       error: null,
     //     });
-    //     const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/search/?q=${query}`);
+    //     const res = await axios.get(`${DJANGO_URL}/api/search/?q=${query}`);
     //     set({ filteredPosts: res.data, loadingHashtag: false });
     //   } catch (error: any) {
     //     set({ error: error.message, loadingHashtag: false });
@@ -953,7 +953,7 @@ unlikePost: async (id: string) => {
           error: null,
         });
 
-        const res = await axios.get(`${DJANGO_DEPLOY_URL}/api/search/`, {
+        const res = await axios.get(`${DJANGO_URL}/api/search/`, {
           params: { q: query, type },
         });
 

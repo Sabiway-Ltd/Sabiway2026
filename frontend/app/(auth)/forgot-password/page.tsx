@@ -6,9 +6,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { DJANGO_DEPLOY_URL } from "@/app/utils/MyConstants";
+import { DJANGO_URL } from "@/app/utils/MyConstants";
 
-const API_URL = `${DJANGO_DEPLOY_URL}/api`
+const API_URL = `${DJANGO_URL}/api`
 
 export default function ForgetPassword() {
   const [form, setForm] = useState({ email: "" });
@@ -45,7 +45,7 @@ export default function ForgetPassword() {
         // });
         router.push("/check-email"); // Redirect after success
       } else {
-        toast.error(data.error || "Failed to send reset email.");
+        toast.error(data.error || "No account matches this email.");
       }
     } catch (err) {
       toast.error("Something went wrong. Please try again.");

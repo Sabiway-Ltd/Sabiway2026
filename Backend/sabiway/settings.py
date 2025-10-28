@@ -47,12 +47,15 @@ RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
 DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 
 # For Forget Password reset link
-BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
+# BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
 
 
 # BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
 # FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # import os
 

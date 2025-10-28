@@ -26,6 +26,7 @@ export default function GoogleCallbackClient() {
       try {
         localStorage.setItem("access", access);
         localStorage.setItem("refresh", refresh);
+        document.cookie = `access=${access}; path=/; max-age=86400; SameSite=Strict; Secure`;
 
         const response = await fetch(`${EXPRESS_URL}/api/profiles/me/`, {
           headers: { Authorization: `Bearer ${access}` },

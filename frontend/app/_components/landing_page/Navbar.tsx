@@ -3,18 +3,23 @@ import Image from "next/image";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import ProfileDropdown from "../profile/ProfileDropdown";
+import { useAuthStore } from "@/app/store/useAuthStore";
+import Cookies from "js-cookie";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const token = Cookies.get("access");
+  
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white py-6">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-gray-50  ">
       {/* WHITE BACKGROUND RECTANGLE */}
-      <div className="absolute top-0 left-0 w-full h-full bg-white"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-gray-50 "></div>
       
       {/* ROUNDED LIGHT GREEN NAVBAR */}
-      <div className="relative w-[92%] sm:w-[90%] md:w-[88%] max-w-[1400px] mx-auto flex items-center justify-between bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8">
+      <div className="relative mx-4 md:mx-8 mt-6 flex items-center justify-between bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8">
         
         {/* LOGO */}
         <div className="flex-shrink-0 cursor-pointer" onClick={() => router.push("/")}>
@@ -28,7 +33,7 @@ export default function Navbar() {
 
         {/* CENTER NAV LINKS (Desktop Only) */}
         <ul className="hidden md:flex space-x-12 text-gray-800 font-medium">
-          <li><a href="#" className="hover:text-[#008753] transition">Community</a></li>
+          <li><a href="/community" className="hover:text-[#008753] transition">Community</a></li>
           <li><a href="#" className="hover:text-[#008753] transition">About Us</a></li>
           <li><a href="#" className="hover:text-[#008753] transition">Reviews</a></li>
           <li><a href="#" className="hover:text-[#008753] transition">FAQs</a></li>
@@ -36,28 +41,48 @@ export default function Navbar() {
 
         {/* RIGHT BUTTONS (Desktop) */}
         <div className="hidden md:flex items-center space-x-4">
-          <button
-            onClick={() => router.push("/login")}
-            className="text-gray-700 font-medium hover:text-[#008753] transition"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => router.push("/signup")}
-            className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
-          >
-            Sign Up
-          </button>
+          {
+            !token && (
+              <div className="flex gap-6">
+                <button
+                  onClick={() => router.push("/login")}
+                  className="text-gray-700 font-medium hover:text-[#008753] transition"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => router.push("/signup")}
+                  className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )
+          }
+          
         </div>
 
         {/* MOBILE MENU TOGGLE */}
-        <button
-          className="md:hidden text-gray-800"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? <X size={26} /> : <Menu size={26} />}
-        </button>
+        {
+          !token && (
+            <button
+              className="md:hidden text-gray-800"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+          )
+        }
+
+        {
+            token && (
+              <div>
+                <ProfileDropdown/>
+              </div>
+            )
+          }
+        
       </div>
 
       {/* MOBILE DROPDOWN MENU */}

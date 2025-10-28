@@ -1,9 +1,10 @@
 // app/services/api.ts
 
 import axios from "axios";
+import { DJANGO_URL } from "../utils/MyConstants";
 
 export const api = axios.create({
-  baseURL: "https://sabiway-9wq4.onrender.com/api",
+  baseURL: `${DJANGO_URL}/api`,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -41,7 +42,7 @@ api.interceptors.response.use(
       try {
         // ✅ Correct refresh endpoint
         const res = await axios.post(
-          "https://sabiway-9wq4.onrender.com/api/auth/token/refresh/",
+          `${DJANGO_URL}/api/auth/token/refresh/`,
           { refresh: refreshToken },
           { headers: { "Content-Type": "application/json" } }
         );

@@ -59,17 +59,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // ✅ Regular login toast
     socket.on("user:login", ({ user }) => {
-      toast.success(`${user.full_name.split(" ")[0] || "Someone"} just logged in`);
+      
     });
 
     // ✅ NEW: Google login toast
     socket.on("user:google_logged_in", (user) => {
-      toast.success(`${user.full_name.split(" ")[0] || "Someone"} just logged in`);
+      
     });
 
     // ✅ Logout toast
     socket.on("user:logout", ({ user }) => {
-      toast(`${user?.full_name || "Someone"} logged out`);
+      
     });
 
 
@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         addNotification(notification);
 
         // Optional: show toast if dropdown isn’t open
-        toast.success(notification.message || "New notification!");
+        // toast.success(notification.message || "New notification!");
       });
   }
   
@@ -125,36 +125,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // ✅ Login
   login: async (form) => {
-  try {
-    set({ loading: true });
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // keep this in case backend also sets cookies
-      body: JSON.stringify(form),
-    });
+    try {
+      set({ loading: true });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Login failed");
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // allows backend cookies if any
+        body: JSON.stringify(form),
+      });
 
-    // ✅ Save token if backend returns it
-    if (data.access) {
-      localStorage.setItem("access", data.access);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      // ✅ Save token in cookie for middleware
+      if (data.access) {
+        // Use a safer cookie setup
+        document.cookie = `access=${data.access}; path=/; max-age=86400; SameSite=Strict; Secure`;
+        // Optionally, you can skip localStorage if you want full SSR/Edge compatibility
+        localStorage.setItem("access", data.access);
+      }
+
+      // ✅ Update Zustand state
+      set({ user: data.user });
+
+      toast.success(`Welcome back ${data.user.full_name.split(" ")[0] || "User"}`);
+      get().connectSocket(data.user);
+      return true;
+
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+      return false;
+    } finally {
+      set({ loading: false });
     }
+  },
 
-    // ✅ Store user in Zustand
-    set({ user: data.user });
-
-    toast.success(`Welcome back ${data.user.full_name.split(" ")[0] || "User"}`);
-    get().connectSocket(data.user); // 🔌 connect socket on login
-    return true;
-  } catch (error: any) {
-    toast.error(error.message || "Something went wrong");
-    return false;
-  } finally {
-    set({ loading: false });
-  }
-},
 
   // ✅ Set user manually (for Google or token login)
   // ✅ Set user manually (for Google or token login)
@@ -191,9 +197,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // },
 
     logout: async () => {
-
-localStorage.clear();
-  },
+      document.cookie = "access=; path=/; max-age=0; SameSite=Strict; Secure";
+      localStorage.clear();
+      window.location.href = "/";
+    },
 
   // ✅ LOAD USER
   loadUserFromStorage: () => {

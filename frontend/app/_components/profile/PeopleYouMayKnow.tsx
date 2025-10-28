@@ -67,28 +67,30 @@ export default function PeopleYouMayKnow() {
             <motion.div
               key={profile.user_id}
               whileHover={{ scale: 1.02 }}
-              className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 p-3 rounded-xl transition"
+              className="flex items-start gap-x-2 justify-between bg-gray-50 hover:bg-gray-100 p-3 rounded-xl transition"
             >
               <Link href={`/profile/${profile.username}`}>
                 <div className="flex items-center gap-3">
                   {profile.profile_picture ? (
-                    <img
-                      src={
-                        profile.profile_picture.startsWith("http")
-                          ? profile.profile_picture
-                          : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture}`
-                      }
-                      alt={profile.full_name}
-                      className="rounded-full object-cover w-[40px] h-[40px]"
-                    />
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                      <img
+                        src={
+                          profile.profile_picture.startsWith("http")
+                            ? profile.profile_picture
+                            : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture}`
+                        }
+                        alt={profile.full_name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-full bg-[#1F2937] flex items-center justify-center text-white font-bold uppercase shrink-0">
                       {profile.initials}
                     </div>
                   )}
 
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-[13px] font-semibold text-gray-800">
                       {profile.full_name}
                     </p>
                     <p className="text-xs text-gray-500">{profile.username}</p>

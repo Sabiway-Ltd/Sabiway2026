@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
+import ProfileDropdown from "../profile/ProfileDropdown";
 
 // ✅ Include onReset here
 interface CommunityNavbarProps {
@@ -142,7 +143,7 @@ export default function CommunityNavbar({
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
         <div className="flex items-center gap-x-4">
-          <button onClick={handleLogoClick}>
+          <button onClick={()=>{router.push('/')}}>
             <img
               src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
               alt="SabiWay Logo"
@@ -252,92 +253,7 @@ export default function CommunityNavbar({
           </div>
 
           {/* Profile Picture Dropdown */}
-          <div className="relative" ref={profileRef}>
-            <button
-              onClick={() => setProfileDropdownOpen((prev) => !prev)}
-              className="relative group focus:outline-none"
-            >
-              <img
-                src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-                alt={profile?.full_name || "User"}
-                className="w-14 h-14 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
-              />
-            </button>
-
-            <AnimatePresence>
-              {profileDropdownOpen  && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2"
-                >
-                  <button
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      router.push("/profile");
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                  >
-                    <img
-                      src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-                      className="md:w-7 md:h-7 w-4 h-4 rounded-full object-cover"
-                      alt="Profile"
-                    />
-                    Profile
-                  </button>
-
-                  <button
-                    onClick={() => {handleLogoClick()}}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#008753]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5V4H2v16h5m10 0a2 2 0 002-2v-3H7v3a2 2 0 002 2h8z"
-                      />
-                    </svg>
-                    Community
-                  </button>
-
-                  <hr className="my-1 border-gray-200" />
-
-                  <button
-                     onClick={async () => {
-                        await logout();
-                        window.location.href = "/login"; // redirect to login after logout
-                      }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-red-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
-                      />
-                    </svg>
-                    Sign Out
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <ProfileDropdown/>
 
 
           {/* Mobile Menu */}

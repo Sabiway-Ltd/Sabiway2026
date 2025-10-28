@@ -5,9 +5,9 @@ import { Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { DJANGO_DEPLOY_URL } from "@/app/utils/MyConstants";
+import { DJANGO_URL } from "@/app/utils/MyConstants";
 
-const API_URL = `${DJANGO_DEPLOY_URL}/api`;
+const API_URL = `${DJANGO_URL}/api`;
 
 export default function ChangePassword() {
   const [showPassword, setShowPassword] = useState(false);

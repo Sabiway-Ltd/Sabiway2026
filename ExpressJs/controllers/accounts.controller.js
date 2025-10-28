@@ -154,7 +154,7 @@ exports.confirmSignup = async (req, res) => {
     res.json({ message: "Signup successful", user: response.data.user });
   } catch (err) {
     console.error(err);
-    res.status(400).json({ error: "Invalid or expired token" });
+    res.status(400).json({ error: "Something went wrong. Please check your details and try again." });
   }
 };
 
