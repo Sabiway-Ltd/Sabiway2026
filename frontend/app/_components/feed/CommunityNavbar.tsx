@@ -12,6 +12,9 @@ import { useRouter, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
 import ProfileDropdown from "../profile/ProfileDropdown";
+import { Home, Smartphone } from "lucide-react";
+import IconTooltipButton from "../common/IconTooltipButton";
+
 
 // ✅ Include onReset here
 interface CommunityNavbarProps {
@@ -142,14 +145,31 @@ export default function CommunityNavbar({
     <nav className="w-full flex justify-center py-4 relative">
       <div className="bg-[#0087530D]/50 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
         {/* Left Section */}
-        <div className="flex items-center gap-x-4">
-          <button onClick={()=>{router.push('/')}}>
+        <div className="flex items-center md:gap-x-4 ">
+          {/* Logo */}
+          <button onClick={()=> router.push('/')}>
             <img
               src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
               alt="SabiWay Logo"
               className="w-28 sm:w-32 md:w-40 h-auto cursor-pointer hover:opacity-90 transition"
             />
           </button>
+
+          {/* Home Button */}
+          <IconTooltipButton
+            onClick={() => handleLogoClick()}
+            icon={Home}
+            label="Home"
+          />
+
+          {/* Mobile App Button */}
+          <IconTooltipButton
+            onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
+            icon={Smartphone}
+            label="Mobile App"
+            // bg="bg-[#008753]"
+            // textColor="text-white"
+          />
 
           {/* Desktop Search */}
           {
@@ -167,7 +187,7 @@ export default function CommunityNavbar({
               </div>
             )
           }
-          </div>
+        </div>
           
 
         {/* Right Section */}
@@ -188,10 +208,11 @@ export default function CommunityNavbar({
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <button
-              onClick={() => setNotifDropdownOpen((prev) => !prev)}
-              className="bg-white p-2 rounded-full relative"
+              onClick={() => setNotifDropdownOpen(prev => !prev)}
+              className="bg-white p-2 rounded-full relative flex items-center justify-center"
             >
-              <Bell className="h-4 w-4 md:h-6 w-6  text-[#008753]" />
+
+              <Bell className="h-5 w-5 md:h-6 md:w-6 text-[#008753]" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
                   {unreadCount}

@@ -6,7 +6,7 @@ export default function Herosection() {
       {/* LEFT SIDE — TEXT */}
       <div className="text-start md:text-left">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
-          Your <span className="text-[#FAAB2C]">People</span> Are Closer <br />
+          Your <span className="text-[#FAAB2C]">People</span> Are Closer 
           Than You <span className="text-[#008753]">Think</span>
         </h1>
 

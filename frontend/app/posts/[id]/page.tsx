@@ -57,6 +57,7 @@ export default function SinglePostPage() {
                 post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
                 phone_number: post.author.phone_number || "",
                 is_following: post.author.is_following,
+                job: post.author.job || "",
             }}
             content={post.content}
             image={post.image || null}

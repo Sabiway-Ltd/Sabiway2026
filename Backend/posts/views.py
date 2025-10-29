@@ -1,32 +1,73 @@
 # posts/views.py
+
 from django.shortcuts import get_object_or_404
+from django.db import models, transaction
+from django.db.models import Count, F
 from rest_framework import viewsets, status, generics, serializers
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from profiles.models import Profile
-from .pagination import PostPagination
-from rest_framework.pagination import PageNumberPagination
 
-from .models import Post, Like, Comment, Reply, Hashtag, Bookmark, Repost, CommentLike, ReplyLike 
+from profiles.models import Profile
+from .models import (
+    Post, Like, Comment, Reply, Hashtag, Bookmark,
+    CommentLike, ReplyLike, PostImpression
+)
 from .serializers import (
     PostListSerializer, PostCreateSerializer, PostDetailSerializer,
-    LikeSerializer, CommentSerializer, ReplySerializer, HashtagSerializer, BookmarkSerializer,
-    RepostSerializer
+    LikeSerializer, CommentSerializer, ReplySerializer,
+    HashtagSerializer, BookmarkSerializer
 )
-from django.db.models import Count
-from .models import PostImpression
-from django.db import models
+from .pagination import PostPagination
 
 
+# ------------------------
+# IMPRESSION TRACKING MIXIN
+# ------------------------
+class ImpressionTrackingMixin:
+    def track_impressions(self, request, posts):
+        """Track unique impressions per user per post."""
+        user = getattr(request.user, "profile", None)
+        if not user:
+            return
+
+        post_ids = [obj.id for obj in posts]
+        if not post_ids:
+            return
+
+        existing_ids = set(
+            PostImpression.objects.filter(user=user, post_id__in=post_ids)
+            .values_list("post_id", flat=True)
+        )
+        new_post_ids = set(post_ids) - existing_ids
+
+        if not new_post_ids:
+            return
+
+        PostImpression.objects.bulk_create([
+            PostImpression(post_id=pid, user=user)
+            for pid in new_post_ids
+        ], ignore_conflicts=True)
+
+        Post.objects.filter(id__in=new_post_ids).update(
+            impressions_count=F("impressions_count") + 1
+        )
+
+
+# ------------------------
+# HASHTAGS
+# ------------------------
 class HashtagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Hashtag.objects.all().order_by("-use_count")
     serializer_class = HashtagSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-class PostViewSet(viewsets.ModelViewSet):
+# ------------------------
+# POSTS
+# ------------------------
+class PostViewSet(ImpressionTrackingMixin, viewsets.ModelViewSet):
     queryset = Post.objects.select_related("author__user").prefetch_related("hashtags").all()
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = PostPagination
@@ -38,7 +79,6 @@ class PostViewSet(viewsets.ModelViewSet):
             return PostDetailSerializer
         return PostListSerializer
 
-    # ✅ Override create to return full serialized post
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -46,7 +86,6 @@ class PostViewSet(viewsets.ModelViewSet):
         full_serializer = PostDetailSerializer(post, context={"request": request})
         return Response(full_serializer.data, status=status.HTTP_201_CREATED)
 
-    # ✅ Override update to return full serialized post
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
@@ -57,20 +96,17 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(full_serializer.data, status=status.HTTP_200_OK)
 
     def perform_destroy(self, instance):
-        # Decrement author's post count
         author_profile = instance.author
         author_profile.posts_count = max(0, author_profile.posts_count - 1)
         author_profile.save(update_fields=["posts_count"])
 
-        # Decrement hashtags usage
         for tag in instance.hashtags.all():
             if tag.use_count > 0:
                 tag.use_count -= 1
                 tag.save(update_fields=["use_count"])
         instance.delete()
 
-
-    # ✅ Like a post
+    # ----- Likes -----
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
         post = self.get_object()
@@ -82,7 +118,6 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Liked"}, status=status.HTTP_201_CREATED)
         return Response({"detail": "Already liked"}, status=status.HTTP_200_OK)
 
-    # ✅ Unlike a post
     @action(detail=True, methods=["post"], url_path="unlike")
     def unlike(self, request, pk=None):
         post = self.get_object()
@@ -94,18 +129,15 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Unliked"}, status=status.HTTP_200_OK)
         return Response({"detail": "Not liked"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # ✅ Comments endpoint (GET + POST combined)
+    # ----- Comments -----
     @action(detail=True, methods=["get", "post"], url_path="comments")
     def comments(self, request, pk=None):
         post = self.get_object()
 
         if request.method == "GET":
-            qs = (
-                post.comments
-                .select_related("user__user")
-                .annotate(reply_count=Count("replies"))  # ✅ Add reply count
+            qs = post.comments.select_related("user__user") \
+                .annotate(reply_count=Count("replies")) \
                 .order_by("-created_at")
-            )
             serializer = CommentSerializer(qs, many=True, context={"request": request})
             return Response(serializer.data)
 
@@ -115,59 +147,46 @@ class PostViewSet(viewsets.ModelViewSet):
             serializer = CommentSerializer(data=data, context={"request": request})
             serializer.is_valid(raise_exception=True)
             comment = serializer.save()
-            return Response(
-                CommentSerializer(comment, context={"request": request}).data,
-                status=status.HTTP_201_CREATED,
-            )
-        
-    # ✅ Replies endpoint
+            return Response(CommentSerializer(comment, context={"request": request}).data,
+                            status=status.HTTP_201_CREATED)
+
+    # ----- Replies -----
     @action(detail=True, methods=["get"], url_path="replies")
     def list_replies(self, request, pk=None):
         post = self.get_object()
         replies = Reply.objects.filter(comment__post=post).select_related("user__user")
         serializer = ReplySerializer(replies, many=True, context={"request": request})
         return Response(serializer.data)
-    
 
-    
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        user_profile = getattr(request.user, "profile", None)
-
-        if user_profile:
-            # Create a unique impression for this user
-            obj, created = PostImpression.objects.get_or_create(post=instance, user=user_profile)
-            if created:
-                # Only increment if a new impression
-                instance.impressions_count = models.F('impressions_count') + 1
-                instance.save(update_fields=['impressions_count'])
-                instance.refresh_from_db()  # updated value
-
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-    
+    # ----- Posts by Username -----
     @action(detail=False, methods=["get"], url_path=r"user/(?P<username>[\w.@+-]+)")
     def user_posts(self, request, username=None):
-        """
-        GET /api/posts/user/<username>/ — Paginated posts by a given username.
-        """
         if username.startswith("@"):
             username = username[1:]
-
         profile = get_object_or_404(Profile, username=f"@{username}")
-
-        posts = (
-            Post.objects.filter(author=profile)
-            .select_related("author__user")
-            .prefetch_related("hashtags")
-            .order_by("-created_at")
-        )
-
-        # ✅ Apply pagination
+        posts = Post.objects.filter(author=profile).select_related("author__user").prefetch_related("hashtags").order_by("-created_at")
         paginator = PostPagination()
         paginated_posts = paginator.paginate_queryset(posts, request)
         serializer = PostListSerializer(paginated_posts, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
+
+    # ----- Track Impressions -----
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        results = response.data.get("results", response.data)
+        post_ids = [item["id"] for item in results]
+        posts = Post.objects.filter(id__in=post_ids)
+        self.track_impressions(request, posts)
+        return response
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        post = self.get_object()
+        self.track_impressions(request, [post])
+        return response
+
+
+
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -257,56 +276,7 @@ class MyBookmarksView(generics.ListAPIView):
             .order_by("-created_at")
         )
 
-class RepostView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request, id):
-        profile = getattr(request.user, "profile", request.user)
-        post = get_object_or_404(Post, id=id)
-        message = request.data.get("message", None)
-
-        repost, created = Repost.objects.get_or_create(user=profile, post=post)
-        if not created:
-            return Response({"detail": "Already reposted"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if message:
-            repost.message = message
-            repost.save(update_fields=["message"])
-
-        post.reposts_count += 1
-        post.save(update_fields=["reposts_count"])
-
-        serializer = RepostSerializer(repost, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class UnrepostView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, id, repost_id):
-        profile = getattr(request.user, "profile", request.user)
-        repost = get_object_or_404(Repost, id=repost_id, user=profile, post_id=id)
-        post = repost.post
-        repost.delete()
-
-        post.reposts_count = max(0, post.reposts_count - 1)
-        post.save(update_fields=["reposts_count"])
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class MyRepostsView(generics.ListAPIView):
-    serializer_class = RepostSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user_obj = getattr(self.request.user, "profile", self.request.user)
-        return Repost.objects.filter(user=user_obj).order_by("-created_at")
-
-
-class RepostViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Repost.objects.select_related("user__user", "post__author__user").all().order_by("-created_at")
-    serializer_class = RepostSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class TrendingHashtagsView(generics.ListAPIView):
@@ -383,3 +353,50 @@ class MyPostsView(generics.ListAPIView):
     def get_queryset(self):
         profile = self.request.user.profile
         return Post.objects.filter(author=profile).select_related("author__user").prefetch_related("hashtags").order_by("-created_at")
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def repost_post(request, post_id):
+    """
+    Repost an existing post — duplicates content and image automatically.
+    """
+    try:
+        original_post = Post.objects.get(id=post_id)
+    except Post.DoesNotExist:
+        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    user_profile = request.user.profile
+
+    # Prevent duplicate reposts by same user
+    if Post.objects.filter(author=user_profile, original_post=original_post).exists():
+        return Response({"error": "Already reposted this post."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create a new post with copied content and image
+    repost = Post.objects.create(
+        author=user_profile,
+        content=original_post.content,
+        image=original_post.image,
+        original_post=original_post,
+    )
+
+    # Copy hashtags properly
+    repost.hashtags.set(original_post.hashtags.all())
+
+    # Increment repost count safely
+    Post.objects.filter(id=original_post.id).update(
+        reposts_count=models.F("reposts_count") + 1
+    )
+
+    # Return serialized repost
+    serializer = PostDetailSerializer(repost, context={"request": request})
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class MyRepostsView(generics.ListAPIView):
+    serializer_class = PostListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        profile = self.request.user.profile
+        return Post.objects.filter(author=profile, original_post__isnull=False).order_by("-created_at")

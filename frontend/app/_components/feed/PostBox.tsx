@@ -8,6 +8,7 @@ import { useProfileStore } from "@/app/store/useProfileStore";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import toast from "react-hot-toast";
 import { EmojiClickData } from "emoji-picker-react";
+import { isRiskyContent } from "@/app/utils/contentValidator";
 
 
 // ✅ Dynamically import EmojiPicker (prevents SSR issues)
@@ -73,6 +74,13 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
     // Close immediately for snappy UI
     // onClose();
+    
+    // 🚫 Detect personal contact info
+
+    if (isRiskyContent(content)) {
+      toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+      return; // 🚫 Prevent submitting
+    }
 
     setSubmitting(true);
     const formData = new FormData();
@@ -119,7 +127,7 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
           <textarea
             ref={textareaRef}
-            placeholder="What's on your mind?"
+            placeholder="Ask question"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="flex-1 resize-none border-0 outline-none p-2 text-sm bg-transparent"

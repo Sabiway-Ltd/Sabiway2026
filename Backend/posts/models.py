@@ -34,13 +34,18 @@ class Post(models.Model):
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="posts")
     content = models.TextField(blank=True)
     image = cloudinary.models.CloudinaryField("image", blank=True, null=True)
-    hashtags = models.ManyToManyField(Hashtag, blank=True, related_name="posts")
+    hashtags = models.ManyToManyField("Hashtag", blank=True, related_name="posts")
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     impressions_count = models.PositiveIntegerField(default=0)
-    reposts_count = models.PositiveIntegerField(default=0)   # 🔥 new field
+    reposts_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # 👇 keeps track of which post this was reposted from
+    original_post = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="reposted_by"
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -54,11 +59,15 @@ class Post(models.Model):
             return
         for name in tag_names:
             tag_obj, created = Hashtag.objects.get_or_create(tag=name)
-            # attach if not already attached
             if not self.hashtags.filter(pk=tag_obj.pk).exists():
                 self.hashtags.add(tag_obj)
                 tag_obj.use_count = models.F("use_count") + 1
                 tag_obj.save(update_fields=["use_count"])
+
+    def increment_repost_count(self):
+        self.reposts_count = models.F("reposts_count") + 1
+        self.save(update_fields=["reposts_count"])
+
 
 
 class Like(models.Model):
@@ -120,14 +129,6 @@ class Bookmark(models.Model):
 
 
 
-class Repost(models.Model):
-    user = models.ForeignKey("profiles.Profile", on_delete=models.CASCADE, related_name="reposts")
-    post = models.ForeignKey("posts.Post", on_delete=models.CASCADE, related_name="reposts")
-    message = models.TextField(blank=True, null=True)  # optional quote
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("user", "post")  # prevent duplicate reposts
 
 
 class ReplyLike(models.Model):
@@ -150,17 +151,37 @@ class CommentLike(models.Model):
 
 
 # For Impression
+# posts/models.py
+
 class PostImpression(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="impressions")
-    user = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    session_key = models.CharField(max_length=100, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('post', 'user')  # ensures one impression per user
-        indexes = [
-            models.Index(fields=['post']),
-            models.Index(fields=['user']),
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "post"],
+                name="unique_user_post_impression",
+                condition=models.Q(user__isnull=False)
+            ),
+            models.UniqueConstraint(
+                fields=["session_key", "post"],
+                name="unique_session_post_impression",
+                condition=models.Q(session_key__isnull=False)
+            ),
+            models.UniqueConstraint(
+                fields=["ip_address", "post"],
+                name="unique_ip_post_impression",
+                condition=models.Q(ip_address__isnull=False)
+            ),
         ]
 
     def __str__(self):
-        return f"Impression by {self.user} on {self.post.id}"
+        if self.user:
+            return f"{self.user.username} viewed {self.post.title}"
+        return f"Anonymous viewed {self.post.title}"
+
+

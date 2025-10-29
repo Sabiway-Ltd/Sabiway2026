@@ -138,17 +138,29 @@ const handleFollowToggle = async (user: any) => {
   const handleEditProfile = () => {
     if (!profile) return;
     setEditedData({
-      full_name: profile.full_name,
+      full_name: profile.full_name || "",
       bio: profile.bio || "",
+      phone_number: profile.phone_number || "",
+      role: profile.role || "",
+      job: profile.job || "",
+      country: profile.country || "",
+      state: profile.state || "",
+      area: profile.area || "",
+      street: profile.street || ""
     });
     setEditing(true);
   };
 
   const handleSaveProfile = async () => {
     if (!profile) return;
-    await updateProfile(profile.user_id, editedData);
-    setEditing(false);
+    try {
+      await updateProfile(profile.user_id, editedData);
+      setEditing(false);
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+    }
   };
+
 
   // 🗑️ Handle Delete Post
   const handleDeletePost = async (id: string) => {
@@ -193,25 +205,25 @@ const handleFollowToggle = async (user: any) => {
   };
 
   const handleConfirmProfilePictureUpload = async () => {
-  if (!selectedImageFile || !profile) return;
+    if (!selectedImageFile || !profile) return;
 
-  const formData = new FormData();
-  formData.append("profile_picture", selectedImageFile);
+    const formData = new FormData();
+    formData.append("profile_picture", selectedImageFile);
 
-  try {
-    setUploadingImage(true);
-    await updateProfile(profile.user_id, formData);
-    await getMyProfile();
-    toast.success("Profile picture updated!");
-    setSelectedImagePreview(null);
-    setSelectedImageFile(null);
-  } catch (err) {
-    console.error("Profile picture upload error:", err);
-    toast.error("Failed to update profile picture");
-  } finally {
-    setUploadingImage(false);
-  }
-};
+    try {
+      setUploadingImage(true);
+      await updateProfile(profile.user_id, formData);
+      await getMyProfile();
+      toast.success("Profile picture updated!");
+      setSelectedImagePreview(null);
+      setSelectedImageFile(null);
+    } catch (err) {
+      console.error("Profile picture upload error:", err);
+      toast.error("Failed to update profile picture");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
 
 
@@ -447,22 +459,118 @@ const handleShowFollowing = async () => {
               <div className="space-y-4">
                 {editing ? (
                   <>
-                    <div>
+                    {/* Full Name */}
+                    <div className="text-sm">
                       <label className="block text-sm font-medium text-gray-700">Full Name</label>
                       <input
-                        value={editedData.full_name}
-                        onChange={(e) => setEditedData({ ...editedData, full_name: e.target.value })}
+                        value={editedData.full_name || ""}
+                        onChange={(e) =>
+                          setEditedData({ ...editedData, full_name: e.target.value })
+                        }
                         className="w-full border rounded-lg p-2"
                       />
                     </div>
+
+                    {/* Bio */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Bio</label>
-                      <input
-                        value={editedData.bio}
-                        onChange={(e) => setEditedData({ ...editedData, bio: e.target.value })}
+                      <textarea
+                        value={editedData.bio || ""}
+                        onChange={(e) =>
+                          setEditedData({ ...editedData, bio: e.target.value })
+                        }
                         className="w-full border rounded-lg p-2"
                       />
                     </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                      <input
+                        value={editedData.phone_number || ""}
+                        onChange={(e) =>
+                          setEditedData({ ...editedData, phone_number: e.target.value })
+                        }
+                        className="w-full border rounded-lg p-2"
+                      />
+                    </div>
+
+                    {/* Role */}
+                    {/* <div>
+                      <label className="block text-sm font-medium text-gray-700">Role</label>
+                      <select
+                        value={editedData.role || ""}
+                        onChange={(e) =>
+                          setEditedData({ ...editedData, role: e.target.value })
+                        }
+                        className="w-full border rounded-lg p-2"
+                      >
+                        <option value="">Select role</option>
+                        <option value="professional">Professional</option>
+                        <option value="client">Client</option>
+                      </select>
+                    </div> */}
+
+                    {/* Job */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Job</label>
+                      <input
+                        value={editedData.job || ""}
+                        onChange={(e) =>
+                          setEditedData({ ...editedData, job: e.target.value })
+                        }
+                        className="w-full border rounded-lg p-2"
+                      />
+                    </div>
+
+                    {/* Address group */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Country</label>
+                        <input
+                          value={editedData.country || ""}
+                          onChange={(e) =>
+                            setEditedData({ ...editedData, country: e.target.value })
+                          }
+                          className="w-full border rounded-lg p-2"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">State</label>
+                        <input
+                          value={editedData.state || ""}
+                          onChange={(e) =>
+                            setEditedData({ ...editedData, state: e.target.value })
+                          }
+                          className="w-full border rounded-lg p-2"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Area</label>
+                        <input
+                          value={editedData.area || ""}
+                          onChange={(e) =>
+                            setEditedData({ ...editedData, area: e.target.value })
+                          }
+                          className="w-full border rounded-lg p-2"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Street</label>
+                        <input
+                          value={editedData.street || ""}
+                          onChange={(e) =>
+                            setEditedData({ ...editedData, street: e.target.value })
+                          }
+                          className="w-full border rounded-lg p-2"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
                     <div className="flex gap-4">
                       <button
                         onClick={handleSaveProfile}
@@ -481,10 +589,31 @@ const handleShowFollowing = async () => {
                 ) : (
                   <>
                     <p className="text-sm"><strong>Email:</strong> {profile.email}</p>
-                    <p className="text-sm"><strong>Bio:</strong> {profile.bio || "—"}</p>
-
+                    {profile.bio && (
+                      <p className="text-sm"><strong>Bio:</strong> {profile.bio }</p>
+                    )}
+                    {profile.phone_number && (
+                      <p className="text-sm"><strong>Phone:</strong> {profile.phone_number }</p>
+                    )}
+                    {profile.role &&(
+                      <p className="text-sm"><strong>Role:</strong> {profile.role }</p>
+                    )}
+                    {profile.job && (
+                      <p className="text-sm"><strong>Job:</strong> {profile.job }</p>
+                    )}
+                    {profile.country && (
+                      <p className="text-sm"><strong>Country:</strong> {profile.country }</p>
+                    )}
+                    {profile.state && (
+                      <p className="text-sm"><strong>State:</strong> {profile.state }</p>
+                    )}
+                    {profile.area && (
+                      <p className="text-sm"><strong>Area:</strong> {profile.area }</p>
+                    )}
+                    {profile.street && (
+                      <p className="text-sm"><strong>Street:</strong> {profile.street }</p>
+                    )}
                     <div className="flex gap-x-4">
-                      {/* Edit */}
                       <button
                         onClick={handleEditProfile}
                         className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-full text-xs md:text-sm"
@@ -492,21 +621,20 @@ const handleShowFollowing = async () => {
                         Edit Profile
                       </button>
 
-                      {/* Logout */}
                       <button
-                      onClick={async () => {
-                        await logout();
-                      }}
-                      className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-xs md:text-sm"
-                    >
-                      Sign Out
-                    </button>
-                      
+                        onClick={async () => {
+                          await logout();
+                        }}
+                        className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-xs md:text-sm"
+                      >
+                        Sign Out
+                      </button>
                     </div>
                   </>
                 )}
               </div>
             )}
+
 
             {activeTab === "posts" && (
               <div className="flex ">
@@ -516,26 +644,27 @@ const handleShowFollowing = async () => {
                 ) : (
                   myPosts.map((postItem) => (
                     <PostCard
-                         key={postItem.id}
-                          id={postItem.id}
-                                        author={{
-                                          user_id: postItem.author.user_id,
-                                          full_name: postItem.author.full_name,
-                                          username: postItem.author.username,
-                                          profile_picture: postItem.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                                          phone_number: postItem.author.phone_number || "",
-                                          is_following: postItem.author.is_following,
-                                        }}
-                                        content={postItem.content}
-                                        image={postItem.image || null}
-                                        likes_count={postItem.likes_count}
-                                        comments_count={postItem.comments_count}
-                                        impressions_count={postItem.impressions_count || 0}
-                                        is_liked={postItem.is_liked ?? false}
-                                        is_bookmarked={postItem.is_bookmarked ?? false}
-                                        created_at={postItem.created_at}
-                                         onReloadPosts={() => getPostById(postItem.id)}
-                                      />
+                      key={postItem.id}
+                      id={postItem.id}
+                      author={{
+                        user_id: postItem.author.user_id,
+                        full_name: postItem.author.full_name,
+                        username: postItem.author.username,
+                        profile_picture: postItem.author.profile_picture || DEFAULT_PROFILE_PICTURE,
+                        phone_number: postItem.author.phone_number || "",
+                        is_following: postItem.author.is_following,
+                        job: post.author.job || "",
+                      }}
+                      content={postItem.content}
+                      image={postItem.image || null}
+                      likes_count={postItem.likes_count}
+                      comments_count={postItem.comments_count}
+                      impressions_count={postItem.impressions_count || 0}
+                      is_liked={postItem.is_liked ?? false}
+                      is_bookmarked={postItem.is_bookmarked ?? false}
+                      created_at={postItem.created_at}
+                        onReloadPosts={() => getPostById(postItem.id)}
+                    />
             ))
                 )}
               </div>
@@ -551,26 +680,27 @@ const handleShowFollowing = async () => {
                   bookmarks.map((bm) => (
                     // <ProfilePostCard key={bm.id} post={bm.post} />
                     <PostCard
-                        key={bm.post.id}
-                        id={bm.post.id}
-                                      author={{
-                                        user_id: bm.post.author.user_id,
-                                        full_name: bm.post.author.full_name,
-                                        username: bm.post.author.username,
-                                        profile_picture: bm.post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                                        phone_number: bm.post.author.phone_number || "",
-                                        is_following: bm.post.author.is_following,
-                                      }}
-                                      content={bm.post.content}
-                                      image={bm.post.image || null}
-                                      likes_count={bm.post.likes_count}
-                                      comments_count={bm.post.comments_count}
-                                      impressions_count={bm.post.impressions_count || 0}
-                                      is_liked={bm.post.is_liked ?? false}
-                                      is_bookmarked={bm.post.is_bookmarked ?? false}
-                                      created_at={bm.post.created_at}
-                                        onReloadPosts={() => getPostById(bm.post.id)}
-                                    />
+                      key={bm.post.id}
+                      id={bm.post.id}
+                      author={{
+                        user_id: bm.post.author.user_id,
+                        full_name: bm.post.author.full_name,
+                        username: bm.post.author.username,
+                        profile_picture: bm.post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
+                        phone_number: bm.post.author.phone_number || "",
+                        is_following: bm.post.author.is_following,
+                        job: post.author.job || "",
+                      }}
+                      content={bm.post.content}
+                      image={bm.post.image || null}
+                      likes_count={bm.post.likes_count}
+                      comments_count={bm.post.comments_count}
+                      impressions_count={bm.post.impressions_count || 0}
+                      is_liked={bm.post.is_liked ?? false}
+                      is_bookmarked={bm.post.is_bookmarked ?? false}
+                      created_at={bm.post.created_at}
+                        onReloadPosts={() => getPostById(bm.post.id)}
+                    />
                   ))
                 )}
               </div>

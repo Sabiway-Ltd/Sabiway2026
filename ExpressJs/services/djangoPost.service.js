@@ -15,13 +15,8 @@ const djangoPostService = {
     return res.data;
   },
 
-  // async createPost(token, data, files) {
-  //   // If you handle files, you may send form-data from frontend; here we assume JSON body
-  //   const res = await axiosClient.post(`${base}/`, data, {
-  //     headers: token ? { Authorization: `Bearer ${token}` } : {},
-  //   });
-  //   return res.data;
-  // },
+
+
 
    async createPost(token, data, file) {
     const FormData = require("form-data");

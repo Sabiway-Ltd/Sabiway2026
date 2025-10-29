@@ -20,6 +20,7 @@ exports.postCreated = (post) => broadcastEvent("post:created", post);
 exports.postUpdated = (post) => broadcastEvent("post:updated", post);
 exports.postDeleted = (data) => broadcastEvent("post:deleted", data);
 
+
 exports.postLiked = (data) => broadcastEvent("post:liked", data);
 exports.postUnliked = (data) => broadcastEvent("post:unliked", data);
 

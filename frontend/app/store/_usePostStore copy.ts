@@ -826,6 +826,51 @@ unlikePost: async (id: string) => {
 
 
 
+
+  // getRepliesByComment: async (commentId) => {
+  //   try {
+  //     const res = await post.getRepliesByComment(commentId);
+  //     set((state) => ({
+  //       repliesByComment: { ...state.repliesByComment, [commentId]: res.data },
+  //     }));
+  //   } catch (err) {
+  //     console.error("Get replies by comment error:", err);
+  //   }
+  // },
+
+  // For Search
+   // ✅ Filter by search query
+
+
+  /* -------------------------
+       Filter Posts by Search Query
+    --------------------------*/
+    // filterPostsBySearch: async (query) => {
+    //   try {
+    //     set({
+    //       loadingHashtag: true,
+    //       activeSearch: query,
+    //       activeHashtag: null, // clear hashtag when searching
+    //       error: null,
+    //     });
+    //     const res = await axios.get(`${DJANGO_URL}/api/search/?q=${query}`);
+    //     set({ filteredPosts: res.data, loadingHashtag: false });
+    //   } catch (error: any) {
+    //     set({ error: error.message, loadingHashtag: false });
+    //   }
+    // },
+
+    // /* -------------------------
+    //    Reset Filters
+    // --------------------------*/
+    // resetFilteredPosts: () => {
+    //   set({
+    //     filteredPosts: [],
+    //     activeHashtag: null,
+    //     activeSearch: null,
+    //   });
+    // },
+
     // usePostStore.ts
     filterBySearch: async (query, type = "posts") => {
       try {

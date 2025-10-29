@@ -24,6 +24,12 @@ def base_username_from_fullname(full_name: str) -> str:
     return slugify(base)
 
 
+ROLE_CHOICES = [
+    ("professional", "Professional"),
+    ("client", "Client"),
+]
+
+
 class Profile(models.Model):
     user = models.OneToOneField(
         User,
@@ -42,7 +48,7 @@ class Profile(models.Model):
     following_count = models.PositiveIntegerField(default=0)
     posts_count = models.PositiveIntegerField(default=0)
 
-    # 🔹 Updated contact and personal info fields
+    # Contact and personal info
     phone_number = models.CharField(max_length=32, blank=True)
     gender = models.CharField(
         max_length=20,
@@ -54,11 +60,43 @@ class Profile(models.Model):
         ]
     )
     date_of_birth = models.DateField(blank=True, null=True)
-    address = models.TextField(blank=True)
+
+    # Location details (all optional)
+    country = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    area = models.CharField(max_length=255, blank=True)
+    street = models.CharField(max_length=255, blank=True)
+    address = models.CharField(max_length=255, blank=True, editable=False)
+
+
+    # Work details
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        blank=True,
+        null=True,
+        default=None
+    )
+    job = models.CharField(max_length=255, blank=True, null=True)
+
     bio = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def generate_address(self):
+        parts = [self.street, self.area, self.state, self.country]
+        formatted = ", ".join([p for p in parts if p])
+        return formatted
+
+    def save(self, *args, **kwargs):
+        # Refresh initials in case name changed
+        self.initials = generate_initials(self.full_name)
+
+        # Auto-generate and update address
+        self.address = self.generate_address()
+
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-created_at"]

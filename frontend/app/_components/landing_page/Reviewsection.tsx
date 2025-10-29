@@ -25,7 +25,7 @@ export default function Reviewsection() {
   ];
 
   return (
-    <section className="w-full text-center  py-16 sm:py-20 md:py-24 lg:py-32 bg-gray-50 overflow-hidden">
+    <section id="review_section" className="w-full text-center  py-16 sm:py-20 md:py-24 lg:py-32 bg-gray-50 overflow-hidden">
       {/* Title */}
       <h3 className="text-gray-500 font-medium text-sm sm:text-base mb-2 sm:mb-3">
         What people are saying

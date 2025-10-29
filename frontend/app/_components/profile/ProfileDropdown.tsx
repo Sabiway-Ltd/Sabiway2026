@@ -48,11 +48,14 @@ export default function ProfileDropdown() {
         onClick={() => setProfileDropdownOpen(prev => !prev)}
         className="relative group focus:outline-none"
       >
-        <img
-          src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-          alt={profile?.full_name || "User"}
-          className="w-12 h-12 rounded-full object-cover border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm"
-        />
+        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm flex-shrink-0">
+          <img
+            src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
+            alt={profile?.full_name || "User"}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
       </button>
 
       <AnimatePresence>

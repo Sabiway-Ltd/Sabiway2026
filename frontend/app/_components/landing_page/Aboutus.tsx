@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Aboutus() {
   return (
-    <section className="w-full text-center px-6 sm:px-8 md:px-16 lg:px-24 py-16 sm:py-20 md:py-24 lg:py-32">
+    <section id="about_us" className="w-full text-center px-6 sm:px-8 md:px-16 lg:px-24 py-16 sm:py-20 md:py-24 lg:py-32">
       {/* Heading */}
       <h3 className="text-gray-500 font-medium text-sm sm:text-base mb-3 sm:mb-4">
         About Us

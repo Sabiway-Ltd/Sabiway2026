@@ -134,7 +134,7 @@ useEffect(() => {
 
       <section className="flex justify-center gap-3 lg:gap-4 max-w-screen-xl mx-auto">
         
-        <div className="md:w-[22rem] hidden lg:block">
+        <div className="md:w-[22rem] hidden lg:block mt-4">
           <PeopleYouMayKnow/>
         </div>
 
@@ -231,6 +231,19 @@ useEffect(() => {
               })}
             </div>
           )}
+          {searchType === "profiles" &&
+            !loading &&
+            !loadingHashtag &&
+            !hasProfiles &&
+            pendingSearch === null && (
+              <div className="text-center text-gray-400 py-8">
+                {activeSearch
+                  ? `No profiles found for "${activeSearch}".`
+                  : "No matching profiles found."}
+              </div>
+            )}
+
+
 
           {/* Hashtags search results */}
           {searchType === "hashtags" && hasHashtags && (
@@ -261,6 +274,7 @@ useEffect(() => {
                     profile_picture: post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
                     phone_number: post.author.phone_number || "",
                     is_following: post.author.is_following,
+                    job: post.author.job || "",
                   }}
                   content={post.content}
                   image={post.image || null}
@@ -299,9 +313,11 @@ useEffect(() => {
                   : "No posts yet — be the first to share something!"}
               </div>
             )}
+
+
         </main>
 
-        <aside className="hidden md:block md:w-[22rem] mt-4 ">
+        <aside className="hidden md:block md:w-[22rem] mt-2 ">
           <Aside />
         </aside>
       </section>

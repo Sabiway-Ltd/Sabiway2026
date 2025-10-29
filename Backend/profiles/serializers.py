@@ -20,12 +20,16 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             'user_id', 'full_name', 'initials', 'email', 'username', 'profile_picture',
-            'followers_count', 'following_count', 'posts_count', 'phone_number',
-            'gender', 'date_of_birth', 'address', 'bio', 'is_following'
+            'followers_count', 'following_count', 'posts_count',
+            'phone_number', 'gender', 'date_of_birth',
+            'country', 'state', 'area', 'street',
+            'role', 'job', 'bio',
+            'is_following', 'address',
         ]
+
         read_only_fields = (
             'email', 'initials', 'followers_count', 'following_count',
-            'posts_count', 'is_following'
+            'posts_count', 'is_following', 'address',
         )
 
     def validate_username(self, value):

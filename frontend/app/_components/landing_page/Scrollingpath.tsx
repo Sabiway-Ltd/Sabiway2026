@@ -16,7 +16,7 @@ export default function Scrollingpath () {
 
     return(
         
-         <section className="w-full bg-[#008753] py-6 overflow-hidden relative z-30 -mt-36">
+      <section className="w-full bg-[#008753] py-6 overflow-hidden relative z-30 -mt-36 md:-mt-40">
         <div className="flex animate-marquee space-x-12 whitespace-nowrap">
           {[...services, ...services].map((service, i) => (
             <div key={i} className="flex items-center space-x-2 text-white font-medium px-6">

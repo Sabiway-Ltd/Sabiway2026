@@ -7,6 +7,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { EmojiClickData } from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
+import { isRiskyContent } from "@/app/utils/contentValidator";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
@@ -141,16 +142,26 @@ export default function CommentThread({
 
   const handleReplySubmit = async () => {
     if (!replyText.trim() && !replyImage) return;
+
+    // ✅ Validate for risky external contact info
+
+    if (isRiskyContent(replyText)) {
+      toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (onReplySubmit) await onReplySubmit(id, replyText, replyImage);
       setReplyText("");
       removeReplyImage();
+
       if (showReplies) await getRepliesByComment(String(id));
       else {
         setShowReplies(true);
         await getRepliesByComment(String(id));
       }
+
       setShowReplyBox(false);
     } catch (err) {
       console.error("Reply submit error:", err);
@@ -158,6 +169,7 @@ export default function CommentThread({
       setSubmitting(false);
     }
   };
+
 
   const handleToggleReplies = async () => {
     setShowReplies((prev) => !prev);

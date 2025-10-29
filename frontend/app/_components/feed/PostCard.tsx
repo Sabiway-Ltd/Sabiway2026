@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Heart, MessageCircle, BarChart2, Share, Bookmark, Smile, Image as ImageIcon, X } from "lucide-react";
+import { Heart, MessageCircle, BarChart2, Repeat2, Share, Bookmark, Smile, Image as ImageIcon, X, } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
@@ -16,6 +16,8 @@ import DeleteConfirmModal from "../common/DeleteConfirmModal";
 import Link from "next/link";
 import ReportButton from "../common/ReportButton";
 import ReadMoreText from "../common/ReadMore";
+import { isRiskyContent } from "@/app/utils/contentValidator";
+
 
 // ✅ Load emoji picker only on client side
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -70,9 +72,11 @@ export default function PostCard({
     likeComment,
     unlikeComment,
     addReply,
+    repostPost, unrepostPost,
   } = usePostStore();
 
   const { followingStatus, toggleFollow, profile: currentUser } = useProfileStore();
+  const [repostLoading, setRepostLoading] = useState(false);
   const comments = commentsByPost[id] || [];
   const isFollowing = followingStatus[author.user_id] ?? author.is_following ?? false;
 
@@ -144,13 +148,21 @@ export default function PostCard({
 
   const handleCommentSubmit = async () => {
     if (!comment.trim() && !commentImage) return;
+
+    // ✅ Risky content validation (same patterns as posts)
+
+    if (isRiskyContent(comment)) {
+      toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await addComment(id, comment, commentImage || undefined);
       setComment("");
       setCommentImage(null);
       setCommentImagePreview(null);
-      setCommentCount((prev) => prev + 1);
+      setCommentCount(prev => prev + 1);
       await getComments(id);
     } catch (err) {
       console.error("Error adding comment:", err);
@@ -158,6 +170,7 @@ export default function PostCard({
       setSubmitting(false);
     }
   };
+
 
   const handleCommentImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -264,20 +277,45 @@ export default function PostCard({
     try {
       setUploadingPostImage(true);
       const { post } = await import("@/app/services/post");
+
       const fd = new FormData();
       fd.append("content", editedPostContent || "");
+
+      // Validate risky contact info
+      const forbiddenPatterns = [
+        /\b\d{7,15}\b/g, // phone numbers
+        /\+?\d{1,4}[\s-]?\(?\d+\)?[\s-]?\d+[\s-]?\d+/g, // intl phone
+        /\b(whatsapp|dm me|text me|call me|message me)\b/i,
+        /@[a-z][a-z0-9_.]{2,30}/gi, // external @handles
+        /\b\S+@\S+\.\S+\b/gi, // email
+        /(telegram|snapchat|instagram|facebook|twitter|x\.com)/i
+      ];
+
+      const risky = editedPostContent
+        ? forbiddenPatterns.some(pattern => pattern.test(editedPostContent))
+        : false;
+
+      if (risky) {
+        toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+        return;
+      }
+
       if (editedPostImage) fd.append("image", editedPostImage);
+
       await post.update(postId, fd);
+
       toast.success("Post updated successfully!");
       setEditingPostId(null);
       setEditedPostImage(null);
       onReloadPosts?.();
+
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to update post.");
     } finally {
       setUploadingPostImage(false);
     }
   };
+
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
@@ -297,6 +335,16 @@ export default function PostCard({
     }
   };
 
+  const handleRepost = async () => {
+    try {
+      setRepostLoading(true);
+      await repostPost(id); // your existing function
+      onReloadPosts?.();
+    } finally {
+      setRepostLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 border-b">
       {/* Header */}
@@ -310,7 +358,12 @@ export default function PostCard({
             />
             <div>
               <p className="font-semibold">{author.full_name}</p>
-              <p className="text-gray-500 text-sm">{author.username}</p>
+              
+              {
+                author.job && (
+                  <p className="text-gray-500 text-sm">{author.job}</p>
+                )
+              }
               <p className="text-[11px] text-gray-400">{formattedDate}</p>
             </div>
           </div>
@@ -576,14 +629,23 @@ export default function PostCard({
           <span>{impressionsCount}</span>
         </button>
 
-        {/* <button
-          onClick={handleWhatsappClick}
-          className={`flex items-center gap-1 transition-opacity duration-200 ${
-            !author.phone_number ? "opacity-50 cursor-not-allowed" : "opacity-100"
-          }`}
+        {/* <button onClick={() => repostPost(post.id)}>Repost</button> */}
+        <button
+          onClick={handleRepost}
+          disabled={repostLoading}
+          className="flex items-center"
         >
-          <FaWhatsapp size={20} />
-        </button> */}
+          {repostLoading ? (
+            <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+          ) : (
+            <Repeat2
+              size={25}
+              className="opacity-95 cursor-pointer text-gray-500"
+            />
+          )}
+        </button>
+
+
 
         <button
           onClick={handleBookmarkToggle}

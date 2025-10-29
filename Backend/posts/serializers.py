@@ -1,8 +1,9 @@
 # posts/serializers.py
 
 from rest_framework import serializers
-from .models import Post, Hashtag, Like, Comment, Reply, Bookmark, Repost
+from .models import Post, Hashtag, Like, Comment, Reply, Bookmark
 from profiles.models import Profile
+from profiles.serializers import ProfileSerializer
 
 
 class HashtagSerializer(serializers.ModelSerializer):
@@ -12,30 +13,28 @@ class HashtagSerializer(serializers.ModelSerializer):
 
 
 class PostListSerializer(serializers.ModelSerializer):
-    author = serializers.SerializerMethodField()
+    author = ProfileSerializer(read_only=True)
     hashtags = HashtagSerializer(many=True, read_only=True)
     is_liked = serializers.SerializerMethodField()
-    is_bookmarked = serializers.SerializerMethodField()  # ✅ new
+    is_bookmarked = serializers.SerializerMethodField()
+    original_post_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
             "id", "author", "content", "image",
-            "hashtags", "likes_count", "comments_count", 
-            "impressions_count", "reposts_count", 
+            "hashtags", "likes_count", "comments_count",
+            "impressions_count", "reposts_count",
             "created_at", "updated_at",
-            "is_liked", "is_bookmarked",  # ✅ added here
+            "is_liked", "is_bookmarked", "original_post", "original_post_data",
         ]
 
-    def get_author(self, obj):
-        p = obj.author
-        return {
-            "user_id": p.user.id,
-            "username": p.username,
-            "full_name": p.full_name,
-            "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "phone_number": p.phone_number,
-        }
+    def get_original_post_data(self, obj):
+        if obj.original_post:
+            return PostListSerializer(obj.original_post, context=self.context).data
+        return None
+
+    
 
     def get_is_liked(self, obj):
         request = self.context.get("request", None)
@@ -230,18 +229,59 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
 
 class RepostSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField(read_only=True)
+    original_post_data = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = Repost
-        fields = ["id", "user", "post", "message", "created_at"]
+        model = Post  # ✅ Reposts are still stored in the Post model
+        fields = [
+            "id",
+            "user",
+            "content",
+            "image",
+            "created_at",
+            "original_post",
+            "original_post_data",
+        ]
+        read_only_fields = ["id", "created_at", "user", "image", "original_post_data"]
 
     def get_user(self, obj):
-        p = obj.user
+        p = obj.author
         return {
             "user_id": p.user.id,
             "username": p.username,
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "phone_number": p.phone_number,
         }
+
+    def get_original_post_data(self, obj):
+        if obj.original_post:
+            return PostListSerializer(obj.original_post, context=self.context).data
+        return None
+
+    def create(self, validated_data):
+        """
+        Create a repost that duplicates text and image from the original post.
+        """
+        request = self.context["request"]
+        user_profile = request.user.profile
+        original_post = validated_data.get("original_post")
+
+        if not original_post:
+            raise serializers.ValidationError("Original post is required to repost.")
+
+        repost = Post.objects.create(
+            author=user_profile,
+            content=validated_data.get("content") or original_post.content,
+            image=original_post.image,
+            original_post=original_post,
+        )
+
+        # copy hashtags
+        repost.hashtags.set(original_post.hashtags.all())
+
+        # increment repost count
+        original_post.reposts_count += 1
+        original_post.save(update_fields=["reposts_count"])
+
+        return repost

@@ -20,6 +20,8 @@ exports.listPosts = async (req, res) => {
   }
 };
 
+
+
 exports.createPost = async (req, res) => {
   try {
     const token = req.headers._token;

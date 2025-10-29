@@ -34,9 +34,42 @@ export default function Navbar() {
         {/* CENTER NAV LINKS (Desktop Only) */}
         <ul className="hidden md:flex space-x-12 text-gray-800 font-medium">
           <li><a href="/community" className="hover:text-[#008753] transition">Community</a></li>
-          <li><a href="#" className="hover:text-[#008753] transition">About Us</a></li>
-          <li><a href="#" className="hover:text-[#008753] transition">Reviews</a></li>
-          <li><a href="#" className="hover:text-[#008753] transition">FAQs</a></li>
+          <li
+            onClick={() => {
+              const el = document.getElementById("about_us");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+                setMenuOpen(false); // closes mobile menu if open
+              }
+            }}
+            className="cursor-pointer hover:text-[#008753] transition"
+          >
+            About Us
+          </li>
+          <li
+            onClick={() => {
+              const el = document.getElementById("review_section");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+                setMenuOpen(false); // closes mobile menu if open
+              }
+            }}
+            className="cursor-pointer hover:text-[#008753] transition"
+          >
+            Reviews
+          </li>
+          <li
+            onClick={() => {
+              const el = document.getElementById("faqs_section");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+                setMenuOpen(false); // closes mobile menu if open
+              }
+            }}
+            className="cursor-pointer hover:text-[#008753] transition"
+          >
+            FAQs
+          </li>
         </ul>
 
         {/* RIGHT BUTTONS (Desktop) */}
@@ -89,10 +122,43 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
           <ul className="flex flex-col text-gray-800 font-medium text-center py-5 space-y-4">
-            <li><a href="#" className="hover:text-[#008753] transition">Community</a></li>
-            <li><a href="#" className="hover:text-[#008753] transition">About Us</a></li>
-            <li><a href="#" className="hover:text-[#008753] transition">Reviews</a></li>
-            <li><a href="#" className="hover:text-[#008753] transition">FAQs</a></li>
+            <li><a href="/community" className="hover:text-[#008753] transition">Community</a></li>
+            <li
+              onClick={() => {
+                const el = document.getElementById("about_us");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth" });
+                  setMenuOpen(false); // closes mobile menu if open
+                }
+              }}
+              className="cursor-pointer hover:text-[#008753] transition"
+            >
+              About Us
+            </li>
+            <li
+              onClick={() => {
+                const el = document.getElementById("review_section");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth" });
+                  setMenuOpen(false); // closes mobile menu if open
+                }
+              }}
+              className="cursor-pointer hover:text-[#008753] transition"
+            >
+              Reviews
+            </li>
+            <li
+              onClick={() => {
+                const el = document.getElementById("faqs_section");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth" });
+                  setMenuOpen(false); // closes mobile menu if open
+                }
+              }}
+              className="cursor-pointer hover:text-[#008753] transition"
+            >
+            FAQs
+          </li>
           </ul>
           <div className="flex flex-col items-center space-y-3 pb-6">
             <button
