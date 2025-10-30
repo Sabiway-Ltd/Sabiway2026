@@ -774,43 +774,6 @@ unlikePost: async (id: string) => {
     }
   },
 
-  // getRepliesByComment: async (commentId) => {
-  //   const token = localStorage.getItem("access");
-  //   if (!token) return toast.error("Not logged in");
-
-  //   try {
-  //     const res = await fetch(`${API_URL}/posts/comments/${commentId}/replies`, {
-  //       method: "GET",
-  //       credentials: "include",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     if (!res.ok) {
-  //       throw new Error(`Failed to fetch replies: ${res.statusText}`);
-  //     }
-
-  //     const data = await res.json();
-
-  //     // Filter only top-level replies
-  //     const topLevelReplies = data.filter(reply => reply.parent_reply_id === null);
-  //     // console.log(topLevelReplies)
-
-  //     set((state) => ({
-  //       repliesByComment: {
-  //         ...state.repliesByComment,
-  //         [commentId.toString()]: topLevelReplies,
-  //       },
-  //     }));
-  //   } catch (err) {
-  //     console.error("Get replies by comment error:", err);
-  //     toast.error("Failed to load replies");
-  //   }
-  // },
-
-
   getRepliesByComment: async (commentId) => {
     const token = localStorage.getItem("access");
     if (!token) return toast.error("Not logged in");

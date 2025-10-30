@@ -7,6 +7,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { EmojiClickData } from "emoji-picker-react";
 import { toast } from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
+import { useProfileStore } from "@/app/store/useProfileStore";
 import { isRiskyContent } from "@/app/utils/contentValidator";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -72,6 +73,9 @@ export default function CommentThread({
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [formattedDate, setFormattedDate] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+
+  
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const replies =
@@ -158,37 +162,80 @@ export default function CommentThread({
     }
   };
 
+  const { profile, getMyProfile } = useProfileStore();
+  useEffect(() => {
+    if (!profile) {
+      getMyProfile();
+    }
+  }, [profile, getMyProfile]);
   const handleReplySubmit = async () => {
-    if (!replyText.trim() && !replyImage) return;
-    if (isRiskyContent(replyText))
-      return toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+  if (!replyText.trim() && !replyImage) return;
+  if (isRiskyContent(replyText))
+    return toast.error("Sharing contact info outside SabiWay is not allowed ❌");
 
-    setSubmitting(true);
+  setSubmitting(true);
 
-    const store = usePostStore.getState();
+  const store = usePostStore.getState();
 
-    try {
-      if (parentType === "reply") {
-        // Replying to another reply
-        await store.addNestedReply(String(id), replyText, replyImage);
-      } else {
-        // Replying to a comment
-        await store.addReply(String(id), replyText, replyImage);
-      }
+  try {
+    let newReply;
 
-      // ✅ Reset inputs and show updated replies
-      setReplyText("");
-      removeReplyImage();
+    if (parentType === "reply") {
+      // Replying to another reply
+      newReply = await store.addNestedReply(String(id), replyText, replyImage);
+    } else {
+      // Replying to a comment
+      newReply = await store.addReply(String(id), replyText, replyImage);
+    }
+    
+
+    // ✅ Immediately update local UI
+    const localNewReply = {
+      id: newReply?.id || Date.now(),
+      parentId: id,
+      parentType: parentType === "reply" ? "reply" : "comment",
+
+      author: {
+        name: profile?.full_name || "You",
+        username: profile?.username || "",
+        avatar:
+          profile?.profile_picture ||
+          "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+      },
+      content: newReply?.content || replyText,
+      likes: 0,
+      is_liked: false,
+      created_at: new Date().toISOString(),
+      image: newReply?.image || (replyImage ? replyPreview : null),
+      replies: [],
+    };
+
+    // ✅ Add to local replies array instantly
+    if (parentType === "reply") {
       setShowReplies(true);
-      setShowReplyBox(false);
-    } catch (err) {
-      console.error("Failed to submit reply:", err);
-      toast.error("Failed to submit reply");
-    } finally {
-      setSubmitting(false);
+      // Append it to childReplies if we’re inside a nested reply thread
+      childReplies.push(localNewReply);
+    } else {
+      setShowReplies(true);
+      // Append to comment replies
+      const repliesList = repliesByComment[String(id)] || [];
+      repliesList.push(localNewReply);
+      store.repliesByComment[String(id)] = repliesList;
     }
 
-  };
+    // ✅ Reset UI
+    setReplyText("");
+    removeReplyImage();
+    setShowReplyBox(false);
+
+  } catch (err) {
+    console.error("Failed to submit reply:", err);
+    toast.error("Failed to submit reply");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
 
 
@@ -447,13 +494,15 @@ export default function CommentThread({
               id={reply.id}
               parentId={reply.parent_reply_id}
               parentType="reply"
+              
               author={{
-                name: reply.user?.full_name || "Unknown",
-                username: reply.user?.username || "",
+                name: reply.user?.full_name || profile?.full_name || "You",
+                username: reply.user?.username || profile?.username || "",
                 avatar:
                   reply.user?.profile_picture ||
+                  profile?.profile_picture ||
                   "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-                phone_number: reply.user?.phone_number || "",
+                phone_number: reply.user?.phone_number || profile?.phone_number || "",
               }}
               content={reply.content}
               likes={reply.likes_count || 0}
