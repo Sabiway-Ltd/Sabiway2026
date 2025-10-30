@@ -831,11 +831,22 @@ unlikePost: async (id: string) => {
 
       const data = await res.json();
 
-      // Filter only top-level replies
+      // Keep only top-level replies
+      const topLevelReplies = data.filter(reply => reply.parent_reply_id === null);
+
       set((state) => ({
         repliesByComment: {
           ...state.repliesByComment,
-          [commentId]: data,
+          [commentId]: [
+            // Merge with existing replies, avoiding duplicates
+            ...topLevelReplies.filter(
+              (newReply) =>
+                !state.repliesByComment[commentId]?.some(
+                  (existing) => existing.id === newReply.id
+                )
+            ),
+            ...(state.repliesByComment[commentId] || []),
+          ],
         },
       }));
     } catch (err) {

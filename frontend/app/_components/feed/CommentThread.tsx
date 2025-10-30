@@ -55,6 +55,7 @@ export default function CommentThread({
   isReply = false,
   created_at,
   image, // ✅ destructure
+  replies: childReplies = [],
 }: Comment) {
   let { repliesByComment, getRepliesByComment, getNestedReplies, nestedReplies } = usePostStore();
   repliesByComment = repliesByComment || {};
@@ -75,8 +76,12 @@ export default function CommentThread({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const replies =
   parentType === "reply"
-    ? nestedReplies[String(parentId)] || []  // use parentId instead of id
+    ? childReplies // <-- this uses the prop, not the store
     : repliesByComment[String(id)] || [];
+
+
+
+
 
 
 
@@ -166,11 +171,9 @@ export default function CommentThread({
       if (parentType === "reply") {
         // Replying to another reply
         await store.addNestedReply(String(id), replyText, replyImage);
-        // await getNestedReplies(String(id));
       } else {
         // Replying to a comment
         await store.addReply(String(id), replyText, replyImage);
-        // await getRepliesByComment(String(id));
       }
 
       // ✅ Reset inputs and show updated replies
@@ -195,16 +198,17 @@ export default function CommentThread({
   const handleToggleReplies = async () => {
     setShowReplies((prev) => !prev);
 
-    if (!showReplies && replies.length === 0) {
+    // Only fetch for top-level comments
+    if (!showReplies && parentType !== "reply" && replies.length === 0) {
       setLoadingReplies(true);
       try {
-        // Only fetch top-level replies (they include nested replies)
         await getRepliesByComment(String(id));
       } finally {
         setLoadingReplies(false);
       }
     }
   };
+
 
 
 
@@ -416,17 +420,18 @@ export default function CommentThread({
 
           {/* 💬 Replies */}
           {(reply_count ?? replies.length) > 0 && (
-            <button
-              onClick={handleToggleReplies}
-              className="text-xs text-blue-500 mt-1 hover:underline"
-            >
-              {showReplies
-                ? "Hide replies"
-                : isReply
-                ? `View nested ${reply_count || replies.length} replies`
-                : `View ${reply_count || replies.length} replies`}
-            </button>
-          )}
+              <button
+                onClick={handleToggleReplies}
+                className="text-xs text-blue-500 mt-1 hover:underline"
+              >
+                {showReplies
+                  ? "Hide replies"
+                  : isReply
+                  ? `View nested ${reply_count || replies.length} replies`
+                  : `View ${reply_count || replies.length} replies`}
+              </button>
+            )}
+
 
 
         </div>
@@ -458,6 +463,7 @@ export default function CommentThread({
               replies={reply.nested_replies || []} // ✅ pass nested replies explicitly
               onLike={() => usePostStore.getState().likeReply(String(reply.id))}
               onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}
+              reply_count={reply.nested_replies?.length || 0}
               isReply
             />
           ))
