@@ -102,22 +102,6 @@ class Comment(models.Model):
         return f"Comment {self.id} by {self.user.username}"
 
 
-class Reply(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="replies")
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="replies")
-    content = models.TextField()
-    image = cloudinary.models.CloudinaryField("image", blank=True, null=True)  # ✅ NEW
-    likes_count = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["created_at"]
-
-    def __str__(self):
-        return f"Reply {self.id} by {self.user.username}"
-
-
 
 class Bookmark(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookmarks")
@@ -129,29 +113,30 @@ class Bookmark(models.Model):
 
 
 
-
-
-class ReplyLike(models.Model):
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reply_likes")
-    reply = models.ForeignKey(Reply, on_delete=models.CASCADE, related_name="likes")
+class Reply(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="replies")
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="replies")
+    content = models.TextField()
+    image = cloudinary.models.CloudinaryField("image", blank=True, null=True)
+    likes_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # 👇 Add this line
+    parent_reply = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        related_name='child_replies',
+        on_delete=models.CASCADE
+    )
+
     class Meta:
-        unique_together = ("user", "reply")
+        ordering = ["created_at"]
 
+    def __str__(self):
+        return f"Reply {self.id} by {self.user.username}"
 
-class CommentLike(models.Model):
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="comment_likes")
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("user", "comment")
-
-
-
-# For Impression
-# posts/models.py
 
 class PostImpression(models.Model):
     user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
@@ -181,7 +166,63 @@ class PostImpression(models.Model):
 
     def __str__(self):
         if self.user:
-            return f"{self.user.username} viewed {self.post.title}"
-        return f"Anonymous viewed {self.post.title}"
+            return f"{self.user.username} viewed post {self.post.id}"
+        return f"Anonymous viewed post {self.post.id}"
+
+
+
+
+class ReplyLike(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reply_likes")
+    reply = models.ForeignKey(Reply, on_delete=models.CASCADE, related_name="likes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "reply")
+
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="comment_likes")
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "comment")
+
+
+
+# For Impression
+# posts/models.py
+
+# class PostImpression(models.Model):
+#     user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+#     post = models.ForeignKey(Post, on_delete=models.CASCADE)
+#     session_key = models.CharField(max_length=100, null=True, blank=True)
+#     ip_address = models.GenericIPAddressField(null=True, blank=True)
+#     timestamp = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         constraints = [
+#             models.UniqueConstraint(
+#                 fields=["user", "post"],
+#                 name="unique_user_post_impression",
+#                 condition=models.Q(user__isnull=False)
+#             ),
+#             models.UniqueConstraint(
+#                 fields=["session_key", "post"],
+#                 name="unique_session_post_impression",
+#                 condition=models.Q(session_key__isnull=False)
+#             ),
+#             models.UniqueConstraint(
+#                 fields=["ip_address", "post"],
+#                 name="unique_ip_post_impression",
+#                 condition=models.Q(ip_address__isnull=False)
+#             ),
+#         ]
+
+#     def __str__(self):
+#         if self.user:
+#             return f"{self.user.username} viewed {self.post.title}"
+#         return f"Anonymous viewed {self.post.title}"
 
 

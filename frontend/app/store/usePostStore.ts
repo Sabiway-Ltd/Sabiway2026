@@ -709,20 +709,6 @@ unlikePost: async (id: string) => {
     }
   },
 
-
-
-
-
-
-  // addReply: async (commentId, content) => {
-  //   try {
-  //     const res = await post.addReply({ comment: String(commentId), content });
-  //     set((state) => ({ replies: [...state.replies, res.data] }));
-  //   } catch (err) {
-  //     console.error("Add reply error:", err);
-  //   }
-  // },
-
  addReply: async (commentId: string, content: string, imageFile?: File) => {
   const token = localStorage.getItem("access");
   if (!token) return toast.error("Not logged in");
@@ -731,10 +717,10 @@ unlikePost: async (id: string) => {
     const formData = new FormData();
     formData.append("comment", commentId);
     formData.append("content", content);
-    if (imageFile) formData.append("image", imageFile); // ✅ optional image
+    if (imageFile) formData.append("image", imageFile);
 
     const res = await axios.post<Reply>(
-      `${API_URL}/posts/replies`,
+      `${DJANGO_URL}/api/posts/replies/`,
       formData,
       {
         headers: {
@@ -744,6 +730,14 @@ unlikePost: async (id: string) => {
       }
     );
 
+    // ✅ Append to local state for instant UI update
+    set((state) => ({
+      repliesByComment: {
+        ...state.repliesByComment,
+        [commentId]: [...(state.repliesByComment[commentId] || []), res.data],
+      },
+    }));
+
     toast.success("Reply added!");
   } catch (err) {
     console.error("Add reply error:", err);
@@ -752,18 +746,6 @@ unlikePost: async (id: string) => {
 },
 
 
-
-
-
-
-  // getReplies: async (postId) => {
-  //   try {
-  //     const res = await post.getReplies(postId);
-  //     set({ replies: res.data });
-  //   } catch (err) {
-  //     console.error("Get replies error:", err);
-  //   }
-  // },
 
   getReplies: async (postId: string) => {
     const token = localStorage.getItem("access");
@@ -823,6 +805,76 @@ unlikePost: async (id: string) => {
       toast.error("Failed to load replies");
     }
   },
+
+
+  // 🌀 Nested replies
+
+  getNestedReplies: async (parentReplyId: string) => {
+    const token = localStorage.getItem("access");
+    if (!token) return toast.error("Not logged in");
+
+    try {
+      const res = await axios.get<Reply[]>(
+        `${DJANGO_URL}/api/posts/replies/${parentReplyId}/children/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Organize by parentReplyId
+      set((state) => ({
+        nestedReplies: {
+          ...state.nestedReplies,
+          [parentReplyId]: res.data,
+        },
+      }));
+    } catch (err) {
+      console.error("Get nested replies error:", err);
+      toast.error("Failed to fetch nested replies.");
+    }
+  },
+
+  addNestedReply: async (
+    parentReplyId: string,
+    commentId: string,
+    content: string,
+    imageFile?: File
+  ) => {
+    const token = localStorage.getItem("access");
+    if (!token) return toast.error("Not logged in");
+
+    try {
+      const formData = new FormData();
+      formData.append("comment", commentId);
+      formData.append("content", content);
+      formData.append("parent_reply", parentReplyId);
+      if (imageFile) formData.append("image", imageFile);
+
+      const res = await axios.post<Reply>(
+        `${DJANGO_URL}/api/posts/replies/`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // ✅ Append to the same repliesByComment structure
+      set((state) => ({
+        repliesByComment: {
+          ...state.repliesByComment,
+          [commentId]: [...(state.repliesByComment[commentId] || []), res.data],
+        },
+      }));
+
+      toast.success("Nested reply added!");
+    } catch (err) {
+      console.error("Add nested reply error:", err);
+      toast.error("Failed to add nested reply.");
+    }
+  },
+
+
 
 
 

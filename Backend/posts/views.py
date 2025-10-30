@@ -8,6 +8,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .pagination import ReplyPagination
 
 from profiles.models import Profile
 from .models import (
@@ -400,3 +401,26 @@ class MyRepostsView(generics.ListAPIView):
     def get_queryset(self):
         profile = self.request.user.profile
         return Post.objects.filter(author=profile, original_post__isnull=False).order_by("-created_at")
+
+
+class ReplyViewSet(viewsets.ModelViewSet):
+    queryset = Reply.objects.select_related("user__user", "comment__post").all()
+    serializer_class = ReplySerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = ReplyPagination
+
+    # For nested replies
+    def list(self, request, *args, **kwargs):
+        parent_reply_id = request.query_params.get("parent_reply", None)
+        if parent_reply_id:
+            queryset = Reply.objects.filter(parent_reply_id=parent_reply_id)
+        else:
+            queryset = self.get_queryset().filter(parent_reply__isnull=True)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context={"request": request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)

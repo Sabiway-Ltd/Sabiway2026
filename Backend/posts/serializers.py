@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import Post, Hashtag, Like, Comment, Reply, Bookmark
 from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
-
+from .pagination import ReplyPagination
 
 class HashtagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -178,11 +178,16 @@ class ReplySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     image = serializers.ImageField(required=False, allow_null=True)
+    nested_replies = serializers.SerializerMethodField()
+    parent_reply_id = serializers.SerializerMethodField()  # ✅ corrected
 
     class Meta:
         model = Reply
-        fields = ["id", "user", "comment", "content", "image", "likes_count", "created_at", "is_liked"]
-        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked"]
+        fields = [
+            "id", "user", "comment", "parent_reply_id", "content", "image",
+            "likes_count", "created_at", "is_liked", "nested_replies"
+        ]
+        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked", "nested_replies"]
 
     def get_user(self, obj):
         p = obj.user
@@ -201,21 +206,34 @@ class ReplySerializer(serializers.ModelSerializer):
         profile = getattr(request.user, "profile", request.user)
         return obj.likes.filter(user=profile).exists()
 
+    def get_parent_reply_id(self, obj):
+        return obj.parent_reply.id if obj.parent_reply else None  # ✅ safe for top-level replies
+
+    def get_nested_replies(self, obj):
+        """
+        Recursively fetch nested replies (safe depth-limited).
+        """
+        depth = self.context.get("depth", 0)
+        if depth >= 3:  # stop at depth 3
+            return []
+
+        qs = obj.child_replies.all().order_by("created_at")
+        serializer = ReplySerializer(qs, many=True, context={**self.context, "depth": depth + 1})
+        return serializer.data
+
+
     def create(self, validated_data):
-        """
-        Include image when creating a reply.
-        """
         request = self.context["request"]
         profile = request.user.profile
-        comment = validated_data["comment"]
-
         reply = Reply.objects.create(
             user=profile,
-            comment=comment,
+            comment=validated_data["comment"],
+            parent_reply=validated_data.get("parent_reply"),
             content=validated_data.get("content"),
-            image=validated_data.get("image", None),  # ✅ include image
+            image=validated_data.get("image", None),
         )
         return reply
+
 
 
 

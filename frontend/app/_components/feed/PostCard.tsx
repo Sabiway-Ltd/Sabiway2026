@@ -73,6 +73,7 @@ export default function PostCard({
     unlikeComment,
     addReply,
     repostPost, unrepostPost,
+    addNestedReply,
   } = usePostStore();
 
   const { followingStatus, toggleFollow, profile: currentUser } = useProfileStore();
@@ -85,6 +86,41 @@ export default function PostCard({
     if (url.startsWith("http")) return url;
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${url}`;
   };
+
+
+  const handleReplySubmit = async (
+    parentId: string, 
+    content: string, 
+    image?: File, 
+    isNested = false, 
+    commentId?: string
+  ) => {
+    if (!content.trim() && !image) return;
+    
+    // Optional: risky content validation
+    if (isRiskyContent(content)) {
+      toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+      return;
+    }
+
+    try {
+      if (isNested && commentId) {
+        // Nested reply to a reply
+        await addNestedReply(parentId, commentId, content, image);
+      } else {
+        // Top-level reply to comment
+        await addReply(parentId, content, image);
+      }
+
+      // Optionally refresh comments after submitting
+      await getComments(id);
+
+    } catch (err) {
+      console.error("Reply submission error:", err);
+      toast.error("Failed to submit reply.");
+    }
+  };
+
 
   useEffect(() => {
     const options: Intl.DateTimeFormatOptions = {
@@ -801,7 +837,7 @@ export default function PostCard({
                   reply_count={c.reply_count || 0}
                   image={c.image}
                   created_at={c.created_at}
-                  onReplySubmit={(parentId, content, image) => addReply(String(parentId), content, image)}
+                  onReplySubmit={handleReplySubmit}
                   onLike={(id) => likeComment(String(id))}
                   onUnlike={(id) => unlikeComment(String(id))}
                 />

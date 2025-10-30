@@ -32,6 +32,11 @@ urlpatterns = [
     path("replies/<uuid:id>/like/", ReplyLikeToggleView.as_view(), name="reply-like"),
     path("replies/<uuid:id>/unlike/", ReplyUnlikeToggleView.as_view(), name="reply-unlike"),
 
+
+    # Nested replies (optional, but makes it explicit)
+    path("replies/<uuid:parent_reply>/children/", ReplyViewSet.as_view({"get": "list"}), name="reply-children"),
+
+
     path("me/", MyPostsView.as_view(), name="my-posts"),
 
 

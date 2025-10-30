@@ -14,6 +14,8 @@ const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 // ✅ Updated Comment interface
 interface Comment {
   id: string | number;
+  parentId?: string | number; // ✅ the parent comment or reply ID
+  parentType?: "comment" | "reply"; // ✅ to distinguish
   author: {
     name: string;
     username: string;
@@ -28,7 +30,8 @@ interface Comment {
   onReplySubmit?: (
     parentId: string | number,
     content: string,
-    imageFile?: File | null
+    imageFile?: File | null,
+    parentType?: "comment" | "reply"
   ) => Promise<void> | void;
   onLike?: (id: string | number) => Promise<void> | void;
   onUnlike?: (id: string | number) => Promise<void> | void;
@@ -39,6 +42,8 @@ interface Comment {
 
 export default function CommentThread({
   id,
+  parentId,          // ✅ Add this
+  parentType,   
   author,
   content,
   likes,
@@ -51,7 +56,7 @@ export default function CommentThread({
   created_at,
   image, // ✅ destructure
 }: Comment) {
-  const { repliesByComment, getRepliesByComment } = usePostStore();
+  const { repliesByComment, getRepliesByComment, getNestedReplies } = usePostStore();
   const [showReplies, setShowReplies] = useState(false);
   const [localLikes, setLocalLikes] = useState(likes);
   const [liked, setLiked] = useState(is_liked);
@@ -142,33 +147,42 @@ export default function CommentThread({
 
   const handleReplySubmit = async () => {
     if (!replyText.trim() && !replyImage) return;
-
-    // ✅ Validate for risky external contact info
-
-    if (isRiskyContent(replyText)) {
-      toast.error("Sharing contact info outside SabiWay is not allowed ❌");
-      return;
-    }
+    if (isRiskyContent(replyText))
+      return toast.error("Sharing contact info outside SabiWay is not allowed ❌");
 
     setSubmitting(true);
-    try {
-      if (onReplySubmit) await onReplySubmit(id, replyText, replyImage);
-      setReplyText("");
-      removeReplyImage();
 
-      if (showReplies) await getRepliesByComment(String(id));
-      else {
-        setShowReplies(true);
+    try {
+      const store = usePostStore.getState();
+      const targetId = parentId ?? id; // ensure we always have a target
+
+      // 🧠 Distinguish between reply to a comment or reply to a reply
+      if (parentType === "reply") {
+        // Nested reply
+        await store.addNestedReply(String(targetId), replyText, replyImage);
+        await getNestedReplies(String(targetId));
+      } else {
+        // Regular reply to comment
+        await store.addReply(String(targetId), replyText, replyImage);
         await getRepliesByComment(String(id));
       }
 
+      // ✅ Reset inputs and UI state
+      setReplyText("");
+      removeReplyImage();
+      setShowReplies(true);
       setShowReplyBox(false);
     } catch (err) {
-      console.error("Reply submit error:", err);
+      console.error("Failed to submit reply:", err);
+      toast.error("Failed to submit reply");
     } finally {
       setSubmitting(false);
     }
   };
+
+
+
+
 
 
   const handleToggleReplies = async () => {
@@ -245,30 +259,17 @@ export default function CommentThread({
               <span className="text-xs">{localLikes}</span>
             </button>
 
-            {!isReply && (
-              <button
+            <button
                 className="flex items-center gap-1 hover:text-blue-500"
                 onClick={() => setShowReplyBox(!showReplyBox)}
               >
-                <MessageCircle className="h-4 w-4" />
-                <span className="text-xs">Reply</span>
-              </button>
-            )}
-
-            {/* <button
-              onClick={handleWhatsappClick}
-              className={`flex items-center gap-1 transition-opacity duration-200 hover:text-green-500 ${
-                !author.phone_number
-                  ? "opacity-50 cursor-not-allowed"
-                  : "opacity-100"
-              }`}
-            >
-              <FaWhatsapp size={16} />
-            </button> */}
+              <MessageCircle className="h-4 w-4" />
+              <span className="text-xs">Reply</span>
+            </button>
           </div>
 
           {/* ✍️ Reply Box */}
-          {!isReply && showReplyBox && (
+          {showReplyBox && (
             <div className="mt-2 border rounded-2xl px-4 pt-2 bg-white flex w-full justify-between items-start relative">
               <div className="flex-1">
                 <textarea
@@ -427,6 +428,8 @@ export default function CommentThread({
             replies.map((reply) => (
               <CommentThread
                 key={reply.id}
+                parentId={id} // ✅ reply is parent for nested replies
+                parentType="reply"
                 id={reply.id}
                 author={{
                   name: reply.user?.full_name || "Unknown",

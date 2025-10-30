@@ -70,6 +70,10 @@ export const post = {
   getRepliesByComment: (commentId: string) =>
     api.get(`/posts/comments/${commentId}/replies/`),
 
+  // 💭 Fetch nested replies of a reply
+  getNestedReplies: (parentReplyId: string) =>
+    api.get(`/posts/replies/${parentReplyId}/children/`),
+
    // 🔍 SEARCH
   search: (q: string, type: "posts" | "profiles" | "hashtags" = "posts") =>
     api.get(`/search/?q=${encodeURIComponent(q)}&type=${type}`),
