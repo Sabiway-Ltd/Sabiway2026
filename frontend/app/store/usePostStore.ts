@@ -923,7 +923,7 @@ unlikePost: async (id: string) => {
         };
       });
 
-      toast.success("Nested reply added!");
+      toast.success("Reply added!");
     } catch (err) {
       console.error("Add nested reply error:", err);
       toast.error("Failed to add nested reply.");

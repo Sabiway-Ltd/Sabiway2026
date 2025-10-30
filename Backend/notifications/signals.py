@@ -84,13 +84,31 @@ def new_comment(sender, instance, created, **kwargs):
 # -------------------
 @receiver(post_save, sender=Reply)
 def new_reply(sender, instance, created, **kwargs):
-    if created:
-        create_notification(
-            user=instance.comment.user,  # or instance.comment.author depending on your model
-            actor=instance.user,          # or instance.author
-            notif_type="reply",
-            target=instance
-        )
+    if not created:
+        return
+
+    # Case 1: Nested reply (replying to another reply)
+    if instance.parent_reply:
+        parent_user = instance.parent_reply.user
+        if parent_user != instance.user:  # avoid self-notification
+            create_notification(
+                user=parent_user,
+                actor=instance.user,
+                notif_type="reply",
+                target=instance
+            )
+
+    # Case 2: Replying directly to a comment
+    else:
+        comment_user = instance.comment.user
+        if comment_user != instance.user:
+            create_notification(
+                user=comment_user,
+                actor=instance.user,
+                notif_type="reply",
+                target=instance
+            )
+
 
 
 # -------------------

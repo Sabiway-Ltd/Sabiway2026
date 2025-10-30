@@ -9,6 +9,8 @@ import { toast } from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { isRiskyContent } from "@/app/utils/contentValidator";
+import { getProfileSrc } from "@/app/helper";
+import Link from "next/link";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
@@ -19,7 +21,7 @@ interface Comment {
   parentType?: "comment" | "reply"; // ✅ to distinguish
   author: {
     name: string;
-    username: string;
+    job: string;
     avatar: string;
     phone_number: string;
   };
@@ -195,21 +197,23 @@ export default function CommentThread({
       parentId: id,
       parentType: parentType === "reply" ? "reply" : "comment",
 
-      author: {
-        name: profile?.full_name || "You",
-        username: profile?.username || "",
-        avatar:
-          profile?.profile_picture ||
-          "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+      // ✅ mimic the API structure (use user instead of author)
+      user: {
+        user_id: profile?.user_id,
+        full_name: profile?.full_name || "You",
+        job: profile?.job || "",
+        profile_picture: profile?.profile_picture || null,
+        phone_number: profile?.phone_number || "",
       },
+
       content: newReply?.content || replyText,
-      likes: 0,
+      likes_count: 0,
       is_liked: false,
       created_at: new Date().toISOString(),
       image: newReply?.image || (replyImage ? replyPreview : null),
+
       replies: [],
     };
-
     // ✅ Add to local replies array instantly
     if (parentType === "reply") {
       setShowReplies(true);
@@ -276,22 +280,23 @@ export default function CommentThread({
   return (
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start gap-3 mb-2">
-        <img
-          src={
-            author.avatar && author.avatar.trim() !== ""
-              ? author.avatar
-              : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
-          }
-          alt={author.name}
-          className="w-8 h-8 rounded-full object-cover"
-        />
+        <Link href={`/profile/${author.username}`}>
+          <img
+            src={author.avatar}
+            alt={author.name}
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        </Link>
 
         <div className="flex-1">
-          <p className="font-semibold text-sm">
-            {author.name}{" "}
-            <span className="text-gray-500">{author.username}</span>
-          </p>
-          <p className="text-[11px] text-gray-400">{formattedDate}</p>
+          <Link href={`/profile/${author.username}`}>
+            <p className="font-semibold text-sm">
+              {author.name}{" "}
+              <span className="font-normal">| </span>
+              <span className="text-gray-500 font-light">{author.job}</span>
+            </p>
+            <p className="text-[11px] text-gray-400">{formattedDate}</p>
+          </Link>
 
           {/* 🖼️ Comment/Reply content */}
           <p className="text-gray-800 text-sm">{content}</p>
@@ -497,11 +502,9 @@ export default function CommentThread({
               
               author={{
                 name: reply.user?.full_name || profile?.full_name || "You",
-                username: reply.user?.username || profile?.username || "",
-                avatar:
-                  reply.user?.profile_picture ||
-                  profile?.profile_picture ||
-                  "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                job: reply.user?.job || profile?.job || "",
+                avatar: getProfileSrc(reply.user?.profile_picture)||
+                  getProfileSrc(profile?.profile_picture),
                 phone_number: reply.user?.phone_number || profile?.phone_number || "",
               }}
               content={reply.content}

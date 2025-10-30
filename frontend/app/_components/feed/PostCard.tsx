@@ -827,7 +827,7 @@ export default function PostCard({
                   id={String(c.id)}
                   author={{
                     name: c.user?.full_name || "Unknown",
-                    username: c.user?.username || "unknown",
+                    job: c.user?.job || "",
                     avatar: getProfileSrc(c.user?.profile_picture),
                     phone_number: c.user?.phone_number || "",
                   }}

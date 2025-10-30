@@ -143,6 +143,7 @@ class CommentSerializer(serializers.ModelSerializer):
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
             "phone_number": p.phone_number,
+            "job": p.job,
         }
 
     def get_is_liked(self, obj):
@@ -208,6 +209,7 @@ class ReplySerializer(serializers.ModelSerializer):
             "full_name": p.full_name,
             "profile_picture": str(p.profile_picture) if p.profile_picture else None,
             "phone_number": p.phone_number,
+            "job": p.job,
         }
 
     def get_is_liked(self, obj):
