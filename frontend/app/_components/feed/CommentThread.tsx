@@ -152,22 +152,20 @@ export default function CommentThread({
 
     setSubmitting(true);
 
-    try {
-      const store = usePostStore.getState();
-      const targetId = parentId ?? id; // ensure we always have a target
+    const store = usePostStore.getState();
 
-      // 🧠 Distinguish between reply to a comment or reply to a reply
+    try {
       if (parentType === "reply") {
-        // Nested reply
-        await store.addNestedReply(String(targetId), replyText, replyImage);
-        await getNestedReplies(String(targetId));
+        // Replying to another reply
+        await store.addNestedReply(String(id), replyText, replyImage);
+        await getNestedReplies(String(id));
       } else {
-        // Regular reply to comment
-        await store.addReply(String(targetId), replyText, replyImage);
+        // Replying to a comment
+        await store.addReply(String(id), replyText, replyImage);
         await getRepliesByComment(String(id));
       }
 
-      // ✅ Reset inputs and UI state
+      // ✅ Reset inputs and show updated replies
       setReplyText("");
       removeReplyImage();
       setShowReplies(true);
@@ -178,6 +176,7 @@ export default function CommentThread({
     } finally {
       setSubmitting(false);
     }
+
   };
 
 
@@ -428,7 +427,7 @@ export default function CommentThread({
             replies.map((reply) => (
               <CommentThread
                 key={reply.id}
-                parentId={id} // ✅ reply is parent for nested replies
+                parentId={reply.id} // ✅ reply is parent for nested replies
                 parentType="reply"
                 id={reply.id}
                 author={{

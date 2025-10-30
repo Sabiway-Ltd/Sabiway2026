@@ -834,7 +834,6 @@ unlikePost: async (id: string) => {
 
   addNestedReply: async (
     parentReplyId: string,
-    commentId: string,
     content: string,
     imageFile?: File
   ) => {
@@ -843,7 +842,6 @@ unlikePost: async (id: string) => {
 
     try {
       const formData = new FormData();
-      formData.append("comment", commentId);
       formData.append("content", content);
       formData.append("parent_reply", parentReplyId);
       if (imageFile) formData.append("image", imageFile);
@@ -859,13 +857,29 @@ unlikePost: async (id: string) => {
         }
       );
 
-      // ✅ Append to the same repliesByComment structure
-      set((state) => ({
-        repliesByComment: {
-          ...state.repliesByComment,
-          [commentId]: [...(state.repliesByComment[commentId] || []), res.data],
-        },
-      }));
+      // ✅ Find which comment this parent reply belongs to
+      set((state) => {
+        const commentId = Object.keys(state.repliesByComment).find((cid) =>
+          (state.repliesByComment[cid] || []).some(
+            (r) => r.id === parentReplyId
+          )
+        );
+
+        if (!commentId) {
+          console.warn("Parent reply not found in state; cannot append.");
+          return state;
+        }
+
+        return {
+          repliesByComment: {
+            ...state.repliesByComment,
+            [commentId]: [
+              ...(state.repliesByComment[commentId] || []),
+              res.data,
+            ],
+          },
+        };
+      });
 
       toast.success("Nested reply added!");
     } catch (err) {
@@ -873,6 +887,7 @@ unlikePost: async (id: string) => {
       toast.error("Failed to add nested reply.");
     }
   },
+
 
 
 

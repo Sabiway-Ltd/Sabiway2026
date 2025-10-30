@@ -211,9 +211,36 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class ReplyViewSet(viewsets.ModelViewSet):
-    queryset = Reply.objects.select_related("user__user", "comment__post").all()
+    queryset = Reply.objects.all().select_related('user', 'comment', 'parent_reply')
     serializer_class = ReplySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        user = request.user.profile  # ✅ Use Profile, not raw user
+
+        comment_id = data.get("comment")
+        parent_reply_id = data.get("parent_reply")
+
+        # If replying to a reply, inherit its comment automatically
+        if parent_reply_id and not comment_id:
+            try:
+                parent_reply = Reply.objects.get(id=parent_reply_id)
+                data["comment"] = str(parent_reply.comment.id)
+                data["parent_reply"] = str(parent_reply.id)  # ✅ Ensure this stays attached
+            except Reply.DoesNotExist:
+                return Response(
+                    {"error": "Parent reply not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=user)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
 
 
 class LikeViewSet(viewsets.ModelViewSet):
@@ -403,24 +430,4 @@ class MyRepostsView(generics.ListAPIView):
         return Post.objects.filter(author=profile, original_post__isnull=False).order_by("-created_at")
 
 
-class ReplyViewSet(viewsets.ModelViewSet):
-    queryset = Reply.objects.select_related("user__user", "comment__post").all()
-    serializer_class = ReplySerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = ReplyPagination
 
-    # For nested replies
-    def list(self, request, *args, **kwargs):
-        parent_reply_id = request.query_params.get("parent_reply", None)
-        if parent_reply_id:
-            queryset = Reply.objects.filter(parent_reply_id=parent_reply_id)
-        else:
-            queryset = self.get_queryset().filter(parent_reply__isnull=True)
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True, context={"request": request})
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True, context={"request": request})
-        return Response(serializer.data)
