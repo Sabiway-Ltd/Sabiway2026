@@ -276,11 +276,13 @@ useEffect(() => {
                     is_following: post.author.is_following,
                     job: post.author.job || "",
                   }}
+                  original_post_data={post.original_post_data}
                   content={post.content}
                   image={post.image || null}
                   likes_count={post.likes_count}
                   comments_count={post.comments_count}
                   impressions_count={post.impressions_count || 0}
+                  reposts_count={post.reposts_count || 0}
                   is_liked={post.is_liked ?? false}
                   is_bookmarked={post.is_bookmarked ?? false}
                   created_at={post.created_at}

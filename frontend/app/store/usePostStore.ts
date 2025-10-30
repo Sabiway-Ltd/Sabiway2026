@@ -986,19 +986,141 @@ unlikePost: async (id: string) => {
     },
 
 
+    // UPDATE AND DELETE COMMENTS, REPLIES AND NESTED REPLIES
+    // ✏️ Update a comment
+    updateComment: async (commentId: string, content: string, imageFile?: File) => {
+      const token = localStorage.getItem("access");
+      if (!token) return toast.error("Not logged in");
+
+      try {
+        const formData = new FormData();
+        formData.append("content", content);
+        if (imageFile) formData.append("image", imageFile);
+
+        const res = await axios.put(
+          `${DJANGO_URL}/api/posts/comments/${commentId}/`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        // ✅ Update local state
+        set((state) => ({
+          commentsByPost: Object.fromEntries(
+            Object.entries(state.commentsByPost).map(([postId, comments]) => [
+              postId,
+              comments.map((c) => (c.id === commentId ? res.data : c)),
+            ])
+          ),
+        }));
+
+        toast.success("Comment updated!");
+      } catch (err) {
+        console.error("Update comment error:", err);
+        toast.error("Failed to update comment.");
+      }
+    },
+
+    // 🗑️ Delete a comment
+    deleteComment: async (commentId: string) => {
+      const token = localStorage.getItem("access");
+      if (!token) return toast.error("Not logged in");
+
+      try {
+        await axios.delete(`${DJANGO_URL}/api/posts/comments/${commentId}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        set((state) => ({
+          commentsByPost: Object.fromEntries(
+            Object.entries(state.commentsByPost).map(([postId, comments]) => [
+              postId,
+              comments.filter((c) => c.id !== commentId),
+            ])
+          ),
+        }));
+
+        toast.success("Comment deleted!");
+      } catch (err) {
+        console.error("Delete comment error:", err);
+        toast.error("Failed to delete comment.");
+      }
+    },
+
+
+
+    // ✏️ Update a reply
+    updateReply: async (replyId: string, content: string, imageFile?: File) => {
+      const token = localStorage.getItem("access");
+      if (!token) return toast.error("Not logged in");
+
+      try {
+        const formData = new FormData();
+        formData.append("content", content);
+        if (imageFile) formData.append("image", imageFile);
+
+        const res = await axios.put(
+          `${DJANGO_URL}/api/posts/replies/${replyId}/`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        // ✅ Update local state
+        set((state) => ({
+          repliesByComment: Object.fromEntries(
+            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
+              commentId,
+              replies.map((r) => (r.id === replyId ? res.data : r)),
+            ])
+          ),
+        }));
+
+        toast.success("Reply updated!");
+      } catch (err) {
+        console.error("Update reply error:", err);
+        toast.error("Failed to update reply.");
+      }
+    },
+
+    // 🗑️ Delete a reply
+    deleteReply: async (replyId: string) => {
+      const token = localStorage.getItem("access");
+      if (!token) return toast.error("Not logged in");
+
+      try {
+        await axios.delete(`${DJANGO_URL}/api/posts/replies/${replyId}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        set((state) => ({
+          repliesByComment: Object.fromEntries(
+            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
+              commentId,
+              replies.filter((r) => r.id !== replyId),
+            ])
+          ),
+        }));
+
+        toast.success("Reply deleted!");
+      } catch (err) {
+        console.error("Delete reply error:", err);
+        toast.error("Failed to delete reply.");
+      }
+    },
 
 
 
 
 
-
-  // repostPost: async (id, message) => {
-  //   try {
-  //     await post.repost(id, { message });
-  //   } catch (err) {
-  //     console.error("Repost error:", err);
-  //   }
-  // },
 
 
   /* -------------------------
@@ -1118,3 +1240,6 @@ unlikePost: async (id: string) => {
   resetFilteredPosts: () =>
     set({ filteredPosts: [], activeHashtag: null,  activeSearch: null, loadingHashtag: false }),
 }));
+
+
+

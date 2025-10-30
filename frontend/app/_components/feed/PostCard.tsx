@@ -25,11 +25,13 @@ const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 export default function PostCard({
   id,
   author,
+  original_post_data,
   content,
   image,
   likes_count,
   comments_count,
   impressions_count,
+  reposts_count,
   is_liked = false,
   is_bookmarked = false,
   created_at,
@@ -383,6 +385,43 @@ export default function PostCard({
 
   return (
     <div className="p-4 border-b">
+      {/* If it is repost */}
+      {original_post_data && (
+        <div className="text-sm text-gray-600 border-l-2 border-gray-300 pl-3 mt-2">
+          <p>
+            🔁 Repost from{" "}
+            <Link
+              href={`/profile/${original_post_data.author?.username}`}
+              className="font-medium text-gray-800 hover:underline"
+            >
+              {original_post_data.author?.full_name}
+            </Link>
+          </p>
+
+          <Link href={`/posts/${original_post_data.id}`}>
+            <p className="truncate text-gray-500">
+              {original_post_data.content.length > 80
+                ? original_post_data.content.slice(0, 80) + "..."
+                : original_post_data.content}
+            </p>
+          </Link>
+
+          {original_post_data.image && (
+            <Link href={`/posts/${original_post_data.id}`}>
+              <img
+                src={
+                  original_post_data.image.startsWith("http")
+                    ? original_post_data.image
+                    : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${original_post_data.image}`
+                }
+                alt="Original post"
+                className="w-16 h-16 object-cover rounded-md mt-2 border border-gray-200"
+              />
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex md:flex-row flex-col-reverse md:justify-between md:items-center gap-3">
         <Link href={`/profile/${author.username}`}>
@@ -649,7 +688,7 @@ export default function PostCard({
       )}
 
       {/* Actions */}
-      <div className="flex justify-between text-gray-800 mt-3 lg:w-[40%] md:w-[60%]">
+      <div className="flex justify-between text-gray-800 mt-3 lg:w-[60%] md:w-[80%]">
         <button onClick={handleToggleLike} className="flex items-center gap-1">
           <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
           <span>{likesCount}</span>
@@ -674,10 +713,13 @@ export default function PostCard({
           {repostLoading ? (
             <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
           ) : (
+            <div className="flex gap-x-1">
             <Repeat2
               size={25}
               className="opacity-95 cursor-pointer text-gray-500"
             />
+            <span>{reposts_count}</span>
+            </div>
           )}
         </button>
 

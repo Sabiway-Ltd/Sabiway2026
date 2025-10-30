@@ -3,13 +3,14 @@
 from django.shortcuts import get_object_or_404
 from django.db import models, transaction
 from django.db.models import Count, F
-from rest_framework import viewsets, status, generics, serializers
+from rest_framework import viewsets, status, generics, serializers, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .pagination import ReplyPagination
-
+from django.db.models import Q, Case, When, IntegerField
+from profiles.models import Follow
 from profiles.models import Profile
 from .models import (
     Post, Like, Comment, Reply, Hashtag, Bookmark,
@@ -79,6 +80,39 @@ class PostViewSet(ImpressionTrackingMixin, viewsets.ModelViewSet):
         if self.action == "retrieve":
             return PostDetailSerializer
         return PostListSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+
+        if user.is_authenticated and hasattr(user, "profile"):
+            profile = user.profile
+
+            # Get IDs of users this profile follows
+            following_ids = Follow.objects.filter(follower=profile).values_list("following_id", flat=True)
+            # Get IDs of users who follow this profile
+            follower_ids = Follow.objects.filter(following=profile).values_list("follower_id", flat=True)
+
+            related_ids = set(following_ids) | set(follower_ids)
+
+            # Annotate rank:
+            # 0 = user's own posts
+            # 1 = followed/followers
+            # 2 = everyone else
+            qs = qs.annotate(
+                rank=Case(
+                    When(author=profile, then=0),
+                    When(author__in=related_ids, then=1),
+                    default=2,
+                    output_field=IntegerField(),
+                )
+            ).order_by("rank", "-created_at")
+
+        else:
+            qs = qs.order_by("-created_at")
+
+        return qs
+
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -417,6 +451,8 @@ def repost_post(request, post_id):
     )
 
     # Return serialized repost
+    # Re-fetch the repost with its original_post data
+    repost = Post.objects.select_related("original_post", "original_post__author__user").get(id=repost.id)
     serializer = PostDetailSerializer(repost, context={"request": request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 

@@ -653,13 +653,14 @@ const handleShowFollowing = async () => {
                         profile_picture: postItem.author.profile_picture || DEFAULT_PROFILE_PICTURE,
                         phone_number: postItem.author.phone_number || "",
                         is_following: postItem.author.is_following,
-                        job: post.author.job || "",
+                        job: postItem.author.job || "",
                       }}
                       content={postItem.content}
                       image={postItem.image || null}
                       likes_count={postItem.likes_count}
                       comments_count={postItem.comments_count}
                       impressions_count={postItem.impressions_count || 0}
+                      reposts_count={postItem.reposts_count || 0}
                       is_liked={postItem.is_liked ?? false}
                       is_bookmarked={postItem.is_bookmarked ?? false}
                       created_at={postItem.created_at}
