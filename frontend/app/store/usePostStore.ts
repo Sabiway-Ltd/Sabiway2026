@@ -774,17 +774,54 @@ unlikePost: async (id: string) => {
     }
   },
 
+  // getRepliesByComment: async (commentId) => {
+  //   const token = localStorage.getItem("access");
+  //   if (!token) return toast.error("Not logged in");
+
+  //   try {
+  //     const res = await fetch(`${API_URL}/posts/comments/${commentId}/replies`, {
+  //       method: "GET",
+  //       credentials: "include",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     if (!res.ok) {
+  //       throw new Error(`Failed to fetch replies: ${res.statusText}`);
+  //     }
+
+  //     const data = await res.json();
+
+  //     // Filter only top-level replies
+  //     const topLevelReplies = data.filter(reply => reply.parent_reply_id === null);
+  //     // console.log(topLevelReplies)
+
+  //     set((state) => ({
+  //       repliesByComment: {
+  //         ...state.repliesByComment,
+  //         [commentId.toString()]: topLevelReplies,
+  //       },
+  //     }));
+  //   } catch (err) {
+  //     console.error("Get replies by comment error:", err);
+  //     toast.error("Failed to load replies");
+  //   }
+  // },
+
+
   getRepliesByComment: async (commentId) => {
     const token = localStorage.getItem("access");
     if (!token) return toast.error("Not logged in");
 
     try {
-      const res = await fetch(`${API_URL}/posts/comments/${commentId}/replies`, {
+      const res = await fetch(`${DJANGO_URL}/api/posts/comments/${commentId}/replies/`, {
         method: "GET",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ include token
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -794,10 +831,11 @@ unlikePost: async (id: string) => {
 
       const data = await res.json();
 
+      // Filter only top-level replies
       set((state) => ({
         repliesByComment: {
           ...state.repliesByComment,
-          [commentId.toString()]: data, // normalize key to string
+          [commentId]: data,
         },
       }));
     } catch (err) {
@@ -805,6 +843,35 @@ unlikePost: async (id: string) => {
       toast.error("Failed to load replies");
     }
   },
+
+
+  // getRepliesByComment: async (commentId: string) => {
+  //   const token = localStorage.getItem("token");
+  //   try {
+  //     const res = await fetch(`${API_URL}/api/posts/comments/${commentId}/replies`, {
+  //       method: "GET",
+  //       credentials: "include",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     if (!res.ok) throw new Error("Failed to fetch replies");
+  //     const data = await res.json();
+
+  //     // You can store this structured data directly
+  //     set((state) => ({
+  //       repliesByComment: {
+  //         ...state.repliesByComment,
+  //         [commentId]: data,
+  //       },
+  //     }));
+  //   } catch (error) {
+  //     console.error("Error fetching replies:", error);
+  //   }
+  // },
+
 
 
   // 🌀 Nested replies
@@ -820,12 +887,13 @@ unlikePost: async (id: string) => {
       );
 
       // Organize by parentReplyId
+      // ✅ Ensure it's stored under the correct parentReplyId
       set((state) => ({
         nestedReplies: {
           ...state.nestedReplies,
-          [parentReplyId]: res.data,
+          [parentReplyId]: res.data, // store replies under parentReplyId
         },
-      }));
+    }));
     } catch (err) {
       console.error("Get nested replies error:", err);
       toast.error("Failed to fetch nested replies.");

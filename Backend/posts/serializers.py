@@ -179,15 +179,26 @@ class ReplySerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     image = serializers.ImageField(required=False, allow_null=True)
     nested_replies = serializers.SerializerMethodField()
-    parent_reply_id = serializers.SerializerMethodField()  # ✅ corrected
+    parent_reply_id = serializers.SerializerMethodField()
+    parent_reply = serializers.PrimaryKeyRelatedField(
+        queryset=Reply.objects.all(),
+        required=False,
+        allow_null=True,
+        write_only=True,  # 👈 so it can be POSTed but not shown in response
+    )
 
     class Meta:
         model = Reply
         fields = [
-            "id", "user", "comment", "parent_reply_id", "content", "image",
-            "likes_count", "created_at", "is_liked", "nested_replies"
+            "id", "user", "comment", "parent_reply", "parent_reply_id",
+            "content", "image", "likes_count", "created_at", "is_liked",
+            "nested_replies"
         ]
-        read_only_fields = ["id", "likes_count", "created_at", "user", "is_liked", "nested_replies"]
+        read_only_fields = [
+            "id", "likes_count", "created_at", "user", "is_liked",
+            "nested_replies", "parent_reply_id"
+        ]
+
 
     def get_user(self, obj):
         p = obj.user

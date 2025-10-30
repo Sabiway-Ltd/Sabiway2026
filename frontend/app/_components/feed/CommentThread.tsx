@@ -56,7 +56,10 @@ export default function CommentThread({
   created_at,
   image, // ✅ destructure
 }: Comment) {
-  const { repliesByComment, getRepliesByComment, getNestedReplies } = usePostStore();
+  let { repliesByComment, getRepliesByComment, getNestedReplies, nestedReplies } = usePostStore();
+  repliesByComment = repliesByComment || {};
+  nestedReplies = nestedReplies || {};
+
   const [showReplies, setShowReplies] = useState(false);
   const [localLikes, setLocalLikes] = useState(likes);
   const [liked, setLiked] = useState(is_liked);
@@ -70,7 +73,12 @@ export default function CommentThread({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const replies = repliesByComment[String(id)] || [];
+  const replies =
+  parentType === "reply"
+    ? nestedReplies[String(parentId)] || []  // use parentId instead of id
+    : repliesByComment[String(id)] || [];
+
+
 
   // 🧭 Handle reply image selection
   const handleReplyImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,11 +166,11 @@ export default function CommentThread({
       if (parentType === "reply") {
         // Replying to another reply
         await store.addNestedReply(String(id), replyText, replyImage);
-        await getNestedReplies(String(id));
+        // await getNestedReplies(String(id));
       } else {
         // Replying to a comment
         await store.addReply(String(id), replyText, replyImage);
-        await getRepliesByComment(String(id));
+        // await getRepliesByComment(String(id));
       }
 
       // ✅ Reset inputs and show updated replies
@@ -186,15 +194,19 @@ export default function CommentThread({
 
   const handleToggleReplies = async () => {
     setShowReplies((prev) => !prev);
+
     if (!showReplies && replies.length === 0) {
       setLoadingReplies(true);
       try {
+        // Only fetch top-level replies (they include nested replies)
         await getRepliesByComment(String(id));
       } finally {
         setLoadingReplies(false);
       }
     }
   };
+
+
 
   const handleWhatsappClick = () => {
     if (author.phone_number)
@@ -403,61 +415,61 @@ export default function CommentThread({
           )}
 
           {/* 💬 Replies */}
-          {!isReply && (reply_count ?? replies.length) > 0 && (
+          {(reply_count ?? replies.length) > 0 && (
             <button
               onClick={handleToggleReplies}
               className="text-xs text-blue-500 mt-1 hover:underline"
             >
               {showReplies
                 ? "Hide replies"
-                : `View ${reply_count || replies.length} ${
-                    reply_count === 1 ? "reply" : "replies"
-                  }`}
+                : isReply
+                ? `View nested ${reply_count || replies.length} replies`
+                : `View ${reply_count || replies.length} replies`}
             </button>
           )}
+
+
         </div>
       </div>
 
       {/* 🧩 Replies Section */}
       {showReplies && (
-        <div className="mt-2 space-y-2">
-          {loadingReplies ? (
-            <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
-          ) : replies.length > 0 ? (
-            replies.map((reply) => (
-              <CommentThread
-                key={reply.id}
-                parentId={reply.id} // ✅ reply is parent for nested replies
-                parentType="reply"
-                id={reply.id}
-                author={{
-                  name: reply.user?.full_name || "Unknown",
-                  username: reply.user?.username || "",
-                  avatar:
-                    reply.user?.profile_picture ||
-                    "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
-                  phone_number: reply.user?.phone_number || "",
-                }}
-                content={reply.content}
-                likes={reply.likes_count || 0}
-                is_liked={reply.is_liked || false}
-                created_at={reply.created_at}
-                image={reply.image}
-                onLike={() =>
-                  usePostStore.getState().likeReply(String(reply.id))
-                }
-                onUnlike={() =>
-                  usePostStore.getState().unlikeReply(String(reply.id))
-                }
-                onReplySubmit={onReplySubmit}
-                isReply
-              />
-            ))
-          ) : (
-            <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
-          )}
-        </div>
-      )}
+      <div className="mt-2 space-y-2">
+        {replies.length > 0 ? (
+          replies.map((reply) => (
+            <CommentThread
+              key={reply.id}
+              id={reply.id}
+              parentId={reply.parent_reply_id}
+              parentType="reply"
+              author={{
+                name: reply.user?.full_name || "Unknown",
+                username: reply.user?.username || "",
+                avatar:
+                  reply.user?.profile_picture ||
+                  "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+                phone_number: reply.user?.phone_number || "",
+              }}
+              content={reply.content}
+              likes={reply.likes_count || 0}
+              is_liked={reply.is_liked || false}
+              created_at={reply.created_at}
+              image={reply.image}
+              replies={reply.nested_replies || []} // ✅ pass nested replies explicitly
+              onLike={() => usePostStore.getState().likeReply(String(reply.id))}
+              onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}
+              isReply
+            />
+          ))
+        ) : loadingReplies ? (
+          <p className="text-xs text-gray-400 ml-10">Loading replies...</p>
+        ) : (
+          <p className="text-xs text-gray-400 ml-10">No replies yet.</p>
+        )}
+      </div>
+    )}
+
+
     </div>
   );
 }
