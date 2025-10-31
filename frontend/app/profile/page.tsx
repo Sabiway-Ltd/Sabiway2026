@@ -718,23 +718,25 @@ const handleShowFollowing = async () => {
                       className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
                     >
                       {/* User Info */}
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={
-                            user.profile_picture
-                              ? user.profile_picture.startsWith("http")
-                                ? user.profile_picture
-                                : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
-                              : DEFAULT_PROFILE_PICTURE
-                          }
-                          alt={user.full_name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="font-medium">{user.full_name}</p>
-                          <p className="md:text-sm text-gray-500">{user.username}</p>
+                      <Link href={`/profile/${user.username}`}>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              user.profile_picture
+                                ? user.profile_picture.startsWith("http")
+                                  ? user.profile_picture
+                                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
+                                : DEFAULT_PROFILE_PICTURE
+                            }
+                            alt={user.full_name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="font-medium">{user.full_name}</p>
+                            <p className="md:text-sm text-gray-500">{user.username}</p>
+                          </div>
                         </div>
-                      </div>
+                      </Link>
 
                       {/* Follow/Unfollow Button */}
                       <motion.button
@@ -773,23 +775,25 @@ const handleShowFollowing = async () => {
                       key={user.user_id}
                       className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
                     >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={
-                            user.profile_picture
-                              ? user.profile_picture.startsWith("http")
-                                ? user.profile_picture
-                                : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
-                              : DEFAULT_PROFILE_PICTURE
-                          }
-                          alt={user.full_name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="font-medium">{user.full_name}</p>
-                          <p className="md:text-sm text-gray-500">{user.username}</p>
+                      <Link href={`/profile/${user.username}`}>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              user.profile_picture
+                                ? user.profile_picture.startsWith("http")
+                                  ? user.profile_picture
+                                  : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
+                                : DEFAULT_PROFILE_PICTURE
+                            }
+                            alt={user.full_name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="font-medium">{user.full_name}</p>
+                            <p className="md:text-sm text-gray-500">{user.username}</p>
+                          </div>
                         </div>
-                      </div>
+                      </Link>
 
                       <button
                         onClick={async () => {

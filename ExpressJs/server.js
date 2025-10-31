@@ -8,18 +8,16 @@ const { initNotificationSocket } = require("./socket/notificationEvents");
 const { initSocket: initUserSocket } = require("./socket/socket"); // ✅ consistent export
 require("dotenv").config();
 const reportRoutes = require("./routes/report");
-
 const accountRoutes = require("./routes/accounts.routes");
 const forwardAuth = require("./middleware/authForward");
+const {FRONTEND_URL} = require("./config")
+
 
 const app = express();
 const server = http.createServer(app);
 
 // ✅ CORS
-const allowedOrigins = [
-  'http://localhost:3000', // local dev
-  'https://sabiway2025.vercel.app', // production
-];
+const allowedOrigins = [FRONTEND_URL];
 
 app.use(
   cors({
@@ -60,7 +58,7 @@ app.use("/api/test-email", testEmailRoute);
 // ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST"],
   },

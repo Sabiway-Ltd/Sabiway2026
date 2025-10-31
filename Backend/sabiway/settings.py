@@ -47,29 +47,22 @@ RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
 DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 
 # For Forget Password reset link
-# BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
 
 
 # BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
 # FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-# import os
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_URL,
+    BACKEND_URL,
+]
 
-# DEBUG = os.getenv("DEBUG", "False") == "True"
-
-# BACKEND_URL = os.getenv(
-#     "BACKEND_URL",
-#     "http://localhost:8000" if DEBUG else "https://sabiway-9wq4.onrender.com"
-# )
-
-# FRONTEND_URL = os.getenv(
-#     "FRONTEND_URL",
-#     "http://localhost:3000" if DEBUG else "https://sabiway2025.vercel.app"
-# )
+CORS_ALLOW_CREDENTIALS = True
 
 
 
@@ -94,6 +87,7 @@ INSTALLED_APPS = [
 
     # Third-party apps
     "rest_framework",
+    'drf_yasg',
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "cloudinary",
@@ -112,13 +106,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://sabiway2025.vercel.app",
-    "https://sabiway-9wq4.onrender.com",
-]
 
-CORS_ALLOW_CREDENTIALS = True
 
 
 ROOT_URLCONF = "sabiway.urls"
@@ -145,10 +133,10 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 # Database
 # ---------------------------------------------------------------------
 # Use DATABASE_URL from .env if available, otherwise SQLite
-DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgresql://sabiway:Y8iCotGBb63RjHe3RGhu5oRNM37ccGJD@dpg-d3es3opr0fns73cvbuq0-a.oregon-postgres.render.com/sabiway_37ve")
-}
 
+DATABASES = {
+    "default": env.db("DATABASE_URL", default="postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db")
+}
 
 
 # ---------------------------------------------------------------------
@@ -192,6 +180,9 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 
@@ -216,8 +207,8 @@ cloudinary.config(
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),   # 1 hour
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),      # 7 days
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),   # 3 days
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),      # 90 days
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 
