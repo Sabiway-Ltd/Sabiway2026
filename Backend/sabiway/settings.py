@@ -50,12 +50,13 @@ DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
 
+# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
 # FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_URL,
@@ -180,9 +181,6 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
 }
 
 
