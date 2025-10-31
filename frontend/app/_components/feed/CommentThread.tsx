@@ -186,75 +186,33 @@ export default function CommentThread({
     }
   }, [profile, getMyProfile]);
   const handleReplySubmit = async () => {
-  if (!replyText.trim() && !replyImage) return;
-  if (isRiskyContent(replyText))
-    return toast.error("Sharing contact info outside SabiWay is not allowed ❌");
+    if (!replyText.trim() && !replyImage) return;
+    if (isRiskyContent(replyText))
+      return toast.error("Sharing contact info outside SabiWay is not allowed ❌");
 
-  setSubmitting(true);
+    setSubmitting(true);
+    const store = usePostStore.getState();
 
-  const store = usePostStore.getState();
+    try {
+      if (parentType === "reply") {
+        await store.addNestedReply(String(id), replyText, replyImage);
+      } else {
+        await store.addReply(String(id), replyText, replyImage);
+      }
 
-  try {
-    let newReply;
-
-    if (parentType === "reply") {
-      // Replying to another reply
-      newReply = await store.addNestedReply(String(id), replyText, replyImage);
-    } else {
-      // Replying to a comment
-      newReply = await store.addReply(String(id), replyText, replyImage);
+      // Reset UI
+      setReplyText("");
+      removeReplyImage();
+      setShowReplyBox(false);
+      setShowReplies(true); // optional: auto-expand replies
+    } catch (err) {
+      console.error("Failed to submit reply:", err);
+      toast.error("Failed to submit reply");
+    } finally {
+      setSubmitting(false);
     }
-    
+  };
 
-    // ✅ Immediately update local UI
-    const localNewReply = {
-      id: newReply?.id || Date.now(),
-      parentId: id,
-      parentType: parentType === "reply" ? "reply" : "comment",
-
-      // ✅ mimic the API structure (use user instead of author)
-      user: {
-        user_id: profile?.user_id,
-        full_name: profile?.full_name || "You",
-        job: profile?.job || "",
-        username: profile?.username || "",
-        profile_picture: profile?.profile_picture || null,
-        phone_number: profile?.phone_number || "",
-      },
-
-      content: newReply?.content || replyText,
-      likes_count: 0,
-      is_liked: false,
-      created_at: new Date().toISOString(),
-      image: newReply?.image || (replyImage ? replyPreview : null),
-
-      replies: [],
-    };
-    // ✅ Add to local replies array instantly
-    if (parentType === "reply") {
-      setShowReplies(true);
-      // Append it to childReplies if we’re inside a nested reply thread
-      childReplies.push(localNewReply);
-    } else {
-      setShowReplies(true);
-      // Append to comment replies
-      const repliesList = repliesByComment[String(id)] || [];
-      repliesList.push(localNewReply);
-      store.repliesByComment[String(id)] = repliesList;
-    }
-
-    // ✅ Reset UI
-    setReplyText("");
-    removeReplyImage();
-    setShowReplyBox(false);
-
-  } catch (err) {
-    console.error("Failed to submit reply:", err);
-    toast.error("Failed to submit reply");
-  } finally {
-    setSubmitting(false);
-  }
-};
 
 
 
@@ -356,20 +314,17 @@ export default function CommentThread({
         <div className="flex-1">
           <div className="flex gap-3 justify-between">
             <Link href={`/profile/${author.username}`}>
-              <p className="font-semibold text-sm flex gap-x-1">
-                {author.name}{" "}
-                {
-                  author.job && (
-                    <div className="flex gap-x-1">
-                      <span className="font-normal">| </span>
-                      <span className="text-gray-500 font-light">{author.job}</span>
-                    </div>
-                  )
-                }
-                
-              </p>
+              <div className="font-semibold text-sm flex flex-col md:flex-row md:items-center gap-x-1">
+                <span>{author.name}</span>
+                {author.job && (
+                  <span className="text-gray-500 font-light md:ml-1">
+                    {`| ${author.job}`}
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-gray-400">{formattedDate}</p>
             </Link>
+
 
             
             {/* ⋮ Options for edit/delete (only for user's own comment) */}
@@ -676,7 +631,7 @@ export default function CommentThread({
               id={reply.id}
               parentId={reply.parent_reply_id}
               parentType="reply"
-              
+              postId={reply.id}
               author={{
                 name: reply.user?.full_name || profile?.full_name || "You",
                 job: reply.user?.job || profile?.job || "",
