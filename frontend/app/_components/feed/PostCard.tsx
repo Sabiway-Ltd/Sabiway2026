@@ -867,9 +867,12 @@ export default function PostCard({
                 <CommentThread
                   key={c.id}
                   id={String(c.id)}
+                  postId={c.post}
+                  parentType="comment"
                   author={{
                     name: c.user?.full_name || "Unknown",
                     job: c.user?.job || "",
+                    username: c.user?.username ,
                     avatar: getProfileSrc(c.user?.profile_picture),
                     phone_number: c.user?.phone_number || "",
                   }}
@@ -882,6 +885,7 @@ export default function PostCard({
                   onReplySubmit={handleReplySubmit}
                   onLike={(id) => likeComment(String(id))}
                   onUnlike={(id) => unlikeComment(String(id))}
+                  comment={c.comment}
                 />
               ))
             )}

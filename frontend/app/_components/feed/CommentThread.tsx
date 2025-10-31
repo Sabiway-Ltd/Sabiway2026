@@ -11,6 +11,8 @@ import { useProfileStore } from "@/app/store/useProfileStore";
 import { isRiskyContent } from "@/app/utils/contentValidator";
 import { getProfileSrc } from "@/app/helper";
 import Link from "next/link";
+import { MoreHorizontal, Pencil, Trash2, X, Check } from "lucide-react";
+
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
@@ -18,14 +20,17 @@ const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 interface Comment {
   id: string | number;
   parentId?: string | number; // ✅ the parent comment or reply ID
+  postId?: string | number;
   parentType?: "comment" | "reply"; // ✅ to distinguish
   author: {
     name: string;
     job: string;
+    username: string;
     avatar: string;
     phone_number: string;
   };
   content: string;
+  comment?: string | number;
   likes: number;
   is_liked?: boolean;
   reply_count?: number;
@@ -49,6 +54,8 @@ export default function CommentThread({
   parentType,   
   author,
   content,
+  comment,
+  postId,
   likes,
   is_liked = false,
   reply_count = 0,
@@ -75,6 +82,14 @@ export default function CommentThread({
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [formattedDate, setFormattedDate] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  // ✏️ Edit/Delete state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(content);
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editPreview, setEditPreview] = useState<string | null>(image || null);
+  const [showOptions, setShowOptions] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
   
 
   
@@ -202,6 +217,7 @@ export default function CommentThread({
         user_id: profile?.user_id,
         full_name: profile?.full_name || "You",
         job: profile?.job || "",
+        username: profile?.username || "",
         profile_picture: profile?.profile_picture || null,
         phone_number: profile?.phone_number || "",
       },
@@ -277,6 +293,55 @@ export default function CommentThread({
       : `https://res.cloudinary.com/devqbjptr/${path}`;
   };
 
+
+
+  const { updateComment, deleteComment, updateReply, deleteReply } = usePostStore();
+
+  const handleEditSave = async () => {
+    if (!editText.trim() && !editImage) return;
+    setUpdating(true);
+
+    try {
+      if (parentType === "reply") {
+        // ✅ Reply update — must have `comment` field in props
+        await updateReply(String(id), editText, String(comment), editImage || undefined);
+      } 
+      else if (parentType === "comment") {
+        // ✅ Top-level comment update
+        await updateComment(String(id), editText, String(postId), editImage || undefined);
+      } 
+      else {
+        console.warn("⚠️ Unknown parentType, skipping update.");
+        toast.error("Unknown item type — cannot update.");
+      }
+
+      // toast.success("Updated successfully!");
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Edit failed:", err);
+      toast.error("Update failed");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this?")) return;
+    try {
+      if (parentType === "reply") {
+        await deleteReply(String(id));
+      } else {
+        await deleteComment(String(id));
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+      toast.error("Failed to delete");
+    }
+  };
+
+
   return (
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start gap-3 mb-2">
@@ -289,17 +354,129 @@ export default function CommentThread({
         </Link>
 
         <div className="flex-1">
-          <Link href={`/profile/${author.username}`}>
-            <p className="font-semibold text-sm">
-              {author.name}{" "}
-              <span className="font-normal">| </span>
-              <span className="text-gray-500 font-light">{author.job}</span>
-            </p>
-            <p className="text-[11px] text-gray-400">{formattedDate}</p>
-          </Link>
+          <div className="flex gap-3 justify-between">
+            <Link href={`/profile/${author.username}`}>
+              <p className="font-semibold text-sm flex gap-x-1">
+                {author.name}{" "}
+                {
+                  author.job && (
+                    <div className="flex gap-x-1">
+                      <span className="font-normal">| </span>
+                      <span className="text-gray-500 font-light">{author.job}</span>
+                    </div>
+                  )
+                }
+                
+              </p>
+              <p className="text-[11px] text-gray-400">{formattedDate}</p>
+            </Link>
+
+            
+            {/* ⋮ Options for edit/delete (only for user's own comment) */}
+            {profile?.username === author.username && (
+              <div className="relative inline-block float-right">
+                <button
+                  onClick={() => setShowOptions(!showOptions)}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded"
+                >
+                  {/* <MoreHorizontal size={16} /> */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5 text-gray-600"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                    />
+                  </svg>
+                </button>
+
+                {showOptions && (
+                  <div className="absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        setIsEditing(true);
+                        setShowOptions(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-1 text-xs hover:bg-gray-100 w-full text-left"
+                    >
+                      <Pencil size={12} /> Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleDelete();
+                        setShowOptions(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-1 text-xs text-red-500 hover:bg-gray-100 w-full text-left"
+                    >
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+
+
+
+
 
           {/* 🖼️ Comment/Reply content */}
-          <p className="text-gray-800 text-sm">{content}</p>
+          {/* <p className="text-gray-800 text-sm">{content}</p> */}
+
+          {isEditing ? (
+            <div className="mt-1">
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                rows={2}
+              />
+              {editPreview && (
+                <div className="mt-2 relative inline-block">
+                  <img
+                    src={editPreview}
+                    alt="preview"
+                    className="w-32 h-32 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditImage(null);
+                      setEditPreview(null);
+                    }}
+                    className="absolute top-1 right-1 bg-white text-gray-700 hover:text-red-500 rounded-full p-1 shadow-md border border-gray-200"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+              <div className="flex justify-end mt-2 gap-2">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                >
+                  <X size={12} /> Cancel
+                </button>
+                <button
+                  onClick={handleEditSave}
+                  disabled={updating}
+                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                >
+                  {updating ? "Saving..." : <><Check size={12} /> Save</>}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-800 text-sm">{content}</p>
+          )}
+
 
           {/* ✅ Show image if present */}
           {image && (
@@ -503,6 +680,7 @@ export default function CommentThread({
               author={{
                 name: reply.user?.full_name || profile?.full_name || "You",
                 job: reply.user?.job || profile?.job || "",
+                username: reply.user?.username || profile?.username || "",
                 avatar: getProfileSrc(reply.user?.profile_picture)||
                   getProfileSrc(profile?.profile_picture),
                 phone_number: reply.user?.phone_number || profile?.phone_number || "",
@@ -516,6 +694,7 @@ export default function CommentThread({
               onLike={() => usePostStore.getState().likeReply(String(reply.id))}
               onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}
               reply_count={reply.nested_replies?.length || 0}
+              comment={reply.comment}
               isReply
             />
           ))

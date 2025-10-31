@@ -988,22 +988,33 @@ unlikePost: async (id: string) => {
 
     // UPDATE AND DELETE COMMENTS, REPLIES AND NESTED REPLIES
     // ✏️ Update a comment
-    updateComment: async (commentId: string, content: string, imageFile?: File) => {
+    updateComment: async (commentId: string, content: string, postId: string, imageFile?: File) => {
       const token = localStorage.getItem("access");
       if (!token) return toast.error("Not logged in");
 
       try {
-        const formData = new FormData();
-        formData.append("content", content);
-        if (imageFile) formData.append("image", imageFile);
+        let dataToSend: any;
+        let contentType: string;
+
+        if (imageFile) {
+          const formData = new FormData();
+          formData.append("content", content);
+          formData.append("post", postId);
+          formData.append("image", imageFile);
+          dataToSend = formData;
+          contentType = "multipart/form-data";
+        } else {
+          dataToSend = { content, post: postId };
+          contentType = "application/json";
+        }
 
         const res = await axios.put(
           `${DJANGO_URL}/api/posts/comments/${commentId}/`,
-          formData,
+          dataToSend,
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
+              "Content-Type": contentType,
             },
           }
         );
@@ -1011,8 +1022,8 @@ unlikePost: async (id: string) => {
         // ✅ Update local state
         set((state) => ({
           commentsByPost: Object.fromEntries(
-            Object.entries(state.commentsByPost).map(([postId, comments]) => [
-              postId,
+            Object.entries(state.commentsByPost).map(([pid, comments]) => [
+              pid,
               comments.map((c) => (c.id === commentId ? res.data : c)),
             ])
           ),
@@ -1024,6 +1035,7 @@ unlikePost: async (id: string) => {
         toast.error("Failed to update comment.");
       }
     },
+
 
     // 🗑️ Delete a comment
     deleteComment: async (commentId: string) => {
@@ -1054,31 +1066,42 @@ unlikePost: async (id: string) => {
 
 
     // ✏️ Update a reply
-    updateReply: async (replyId: string, content: string, imageFile?: File) => {
+    updateReply: async (replyId: string, content: string, commentId: string, imageFile?: File) => {
       const token = localStorage.getItem("access");
       if (!token) return toast.error("Not logged in");
 
       try {
-        const formData = new FormData();
-        formData.append("content", content);
-        if (imageFile) formData.append("image", imageFile);
+        let dataToSend: any;
+        let contentType: string;
+
+        if (imageFile) {
+          const formData = new FormData();
+          formData.append("content", content);
+          formData.append("comment", commentId);
+          formData.append("image", imageFile);
+          dataToSend = formData;
+          contentType = "multipart/form-data";
+        } else {
+          dataToSend = { content, comment: commentId };
+          contentType = "application/json";
+        }
+
 
         const res = await axios.put(
           `${DJANGO_URL}/api/posts/replies/${replyId}/`,
-          formData,
+          dataToSend,
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
+              "Content-Type": contentType,
             },
           }
         );
 
-        // ✅ Update local state
         set((state) => ({
           repliesByComment: Object.fromEntries(
-            Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-              commentId,
+            Object.entries(state.repliesByComment).map(([cId, replies]) => [
+              cId,
               replies.map((r) => (r.id === replyId ? res.data : r)),
             ])
           ),
