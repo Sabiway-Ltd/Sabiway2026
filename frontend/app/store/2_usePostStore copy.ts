@@ -725,7 +725,7 @@ unlikePost: async (id: string) => {
       },
     }));
 
-    // toast.success("Reply added!");
+    toast.success("Reply added!");
   } catch (err) {
     console.error("Add reply error:", err);
     toast.error("Failed to add reply.");
@@ -821,52 +821,61 @@ unlikePost: async (id: string) => {
     }
   },
 
-  addNestedReply: async (parentReplyId, content, imageFile) => {
-  const token = localStorage.getItem("access");
-  if (!token) return toast.error("Not logged in");
+  addNestedReply: async (
+    parentReplyId: string,
+    content: string,
+    imageFile?: File
+  ) => {
+    const token = localStorage.getItem("access");
+    if (!token) return toast.error("Not logged in");
 
-  try {
-    const formData = new FormData();
-    formData.append("content", content);
-    formData.append("parent_reply", parentReplyId);
-    if (imageFile) formData.append("image", imageFile);
+    try {
+      const formData = new FormData();
+      formData.append("content", content);
+      formData.append("parent_reply", parentReplyId);
+      if (imageFile) formData.append("image", imageFile);
 
-    const res = await axios.post(`${DJANGO_URL}/api/posts/replies/`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    // ✅ Place nested reply below its parent
-    set((state) => {
-      const commentId = Object.keys(state.repliesByComment).find((cid) =>
-        (state.repliesByComment[cid] || []).some(
-          (r) => r.id === parentReplyId
-        )
+      const res = await axios.post<Reply>(
+        `${DJANGO_URL}/api/posts/replies/`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
-      if (!commentId) return state;
+      // ✅ Find which comment this parent reply belongs to
+      set((state) => {
+        const commentId = Object.keys(state.repliesByComment).find((cid) =>
+          (state.repliesByComment[cid] || []).some(
+            (r) => r.id === parentReplyId
+          )
+        );
 
-      const updatedReplies = (state.repliesByComment[commentId] || []).flatMap(
-        (r) => (r.id === parentReplyId ? [r, res.data] : [r])
-      );
+        if (!commentId) {
+          console.warn("Parent reply not found in state; cannot append.");
+          return state;
+        }
 
-      return {
-        repliesByComment: {
-          ...state.repliesByComment,
-          [commentId]: updatedReplies,
-        },
-      };
-    });
+        return {
+          repliesByComment: {
+            ...state.repliesByComment,
+            [commentId]: [
+              ...(state.repliesByComment[commentId] || []),
+              res.data,
+            ],
+          },
+        };
+      });
 
-    // toast.success("Reply added!");
-  } catch (err) {
-    console.error("Add nested reply error:", err);
-    toast.error("Failed to add nested reply.");
-  }
-},
-
+      toast.success("Reply added!");
+    } catch (err) {
+      console.error("Add nested reply error:", err);
+      toast.error("Failed to add nested reply.");
+    }
+  },
 
 
 
@@ -967,7 +976,7 @@ unlikePost: async (id: string) => {
           ),
         }));
 
-        // toast.success("Comment updated!");
+        toast.success("Comment updated!");
       } catch (err) {
         console.error("Update comment error:", err);
         toast.error("Failed to update comment.");
@@ -994,7 +1003,7 @@ unlikePost: async (id: string) => {
           ),
         }));
 
-        // toast.success("Comment deleted!");
+        toast.success("Comment deleted!");
       } catch (err) {
         console.error("Delete comment error:", err);
         toast.error("Failed to delete comment.");
@@ -1045,7 +1054,7 @@ unlikePost: async (id: string) => {
           ),
         }));
 
-        // toast.success("Reply updated!");
+        toast.success("Reply updated!");
       } catch (err) {
         console.error("Update reply error:", err);
         toast.error("Failed to update reply.");
@@ -1071,7 +1080,7 @@ unlikePost: async (id: string) => {
           ),
         }));
 
-        // toast.success("Reply deleted!");
+        toast.success("Reply deleted!");
       } catch (err) {
         console.error("Delete reply error:", err);
         toast.error("Failed to delete reply.");

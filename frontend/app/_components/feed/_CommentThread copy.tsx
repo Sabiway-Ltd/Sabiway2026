@@ -12,7 +12,6 @@ import { isRiskyContent } from "@/app/utils/contentValidator";
 import { getProfileSrc } from "@/app/helper";
 import Link from "next/link";
 import { MoreHorizontal, Pencil, Trash2, X, Check } from "lucide-react";
-import ReplyDeleteConfirmModal from "../common/ReplyDeleteConfirmModal";
 
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -215,7 +214,6 @@ export default function CommentThread({
     removeReplyImage();
     setShowReplyBox(false);
     setShowReplies(true);
-    toast.success("Reply added!");
   } catch (err) {
     console.error("Failed to submit reply:", err);
     toast.error("Failed to submit reply");
@@ -286,7 +284,6 @@ const handleToggleReplies = async () => {
       }
 
       setIsEditing(false);
-      toast.success("Reply updated!");
     } catch (err) {
       console.error("Edit failed:", err);
       toast.error("Update failed");
@@ -298,31 +295,18 @@ const handleToggleReplies = async () => {
 
 
   const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this?")) return;
     try {
       if (parentType === "reply") {
         await deleteReply(String(id));
-
-        // ✅ Refresh replies after deleting a reply
-        if (comment) {
-          await getRepliesByComment(comment);
-        }
-
       } else {
         await deleteComment(String(id));
-
-        // ✅ Refresh replies for the parent comment after deleting a comment reply thread
-        if (comment) {
-          await getRepliesByComment(comment);
-        }
       }
-
-      toast.success("Deleted successfully");
     } catch (err) {
       console.error("Delete failed:", err);
       toast.error("Failed to delete");
     }
   };
-
 
 
   return (
@@ -389,36 +373,54 @@ const handleToggleReplies = async () => {
                     </button>
 
                     <button
-                      onClick={() => {
-                        // Open confirmation modal instead of immediate delete
-                        setIsDeleteModalOpen(true);
-                        setShowOptions(false);
+                      onClick={async () => {
+                        // keep modal open during deletion
+                        setUpdating(true);
+                        try {
+                          await handleDelete();
+                        } finally {
+                          setUpdating(false);
+                          // only close after deletion finishes
+                          setShowOptions(false);
+                        }
                       }}
-                      className="flex items-center gap-2 px-3 py-1 text-xs text-red-500 hover:bg-gray-100 w-full text-left"
+                      disabled={updating}
+                      className={`flex items-center gap-2 px-3 py-1 text-xs w-full text-left ${
+                        updating ? "text-gray-400 cursor-not-allowed" : "text-red-500 hover:bg-gray-100"
+                      }`}
                     >
-                      <Trash2 size={12} /> Delete
+                      {updating ? (
+                        <>
+                          <svg
+                            className="animate-spin h-3.5 w-3.5 text-gray-500"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v8z"
+                            ></path>
+                          </svg>
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 size={12} /> Delete
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
-
-                {/* Delete confirmation modal */}
-                <ReplyDeleteConfirmModal
-                  isOpen={isDeleteModalOpen}
-                  onClose={() => {
-                    setIsDeleteModalOpen(false);
-                  }}
-                  onConfirm={async () => {
-                    setUpdating(true);
-                    try {
-                      await handleDelete();
-                    } finally {
-                      setUpdating(false);
-                      setIsDeleteModalOpen(false);
-                    }
-                  }}
-                  updating={updating}
-                />
-
 
               </div>
             )}
