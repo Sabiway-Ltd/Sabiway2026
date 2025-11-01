@@ -17,7 +17,7 @@ const app = express();
 const server = http.createServer(app);
 
 // ✅ CORS
-const allowedOrigins = [FRONTEND_URL];
+const allowedOrigins = [FRONTEND_URL, "http://localhost:3000"];
 
 app.use(
   cors({
@@ -58,7 +58,7 @@ app.use("/api/test-email", testEmailRoute);
 // ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: ["http://localhost:3000", FRONTEND_URL],
     credentials: true,
     methods: ["GET", "POST"],
   },
