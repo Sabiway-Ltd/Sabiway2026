@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
+import Navbar from "@/app/_components/landing_page/Navbar";
 
 const API_URL = `${DJANGO_URL}/api`;
 
@@ -86,6 +87,8 @@ export default function ChangePassword() {
   if (validToken === false) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+        <Navbar />
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

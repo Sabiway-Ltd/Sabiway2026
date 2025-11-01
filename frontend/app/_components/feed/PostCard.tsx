@@ -413,7 +413,7 @@ export default function PostCard({
 
       <div>
         {/* Header */}
-        <div className="flex md:flex-row flex-col-reverse md:justify-between md:items-center gap-3">
+        <div className="flex  justify-between items-center gap-3">
           <Link href={`/profile/${author.username}`}>
             <div className="flex items-center gap-3">
               <img
@@ -440,7 +440,7 @@ export default function PostCard({
                 <button
                   onClick={handleFollowToggle}
                   disabled={followingLoading}
-                  className={`ml-auto px-3 py-1 rounded-sm text-sm font-medium flex 
+                  className={`ml-auto md:px-3 py-1 rounded-sm text-sm font-medium flex 
                     text-[#008753] hover:bg-[#008753]/30 
                     items-center justify-center gap-2 transition-all duration-200 
                     ${followingLoading ? "opacity-70 cursor-not-allowed" : ""}`}
@@ -470,7 +470,11 @@ export default function PostCard({
                       {/* <span className="text-xs">Following...</span> */}
                     </>
                   ) : (
-                    <span>+ Follow</span>
+                    <div>
+                      <span className="md:block hidden">+ Follow</span>
+
+                      <span className="md:hidden">+</span>
+                    </div>
                   )}
                 </button>
               )}
@@ -678,7 +682,7 @@ export default function PostCard({
         )}
 
         {/* Actions */}
-        <div className="flex justify-between text-gray-800 mt-3 lg:w-[40%] md:w-[60%]">
+        <div className="flex justify-between md:justify-start md:gap-x-4 text-gray-800 mt-3 w-full">
           <button onClick={handleToggleLike} className="flex items-center gap-1">
             <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
             <span>{likesCount}</span>

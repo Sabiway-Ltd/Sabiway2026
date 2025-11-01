@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
+import Navbar from "@/app/_components/landing_page/Navbar";
 
 const API_URL = `${DJANGO_URL}/api`
 
@@ -56,6 +57,8 @@ export default function ForgetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <Navbar />
+      
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,6 @@
 "use client";
 
+import Navbar from "@/app/_components/landing_page/Navbar";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -10,6 +11,8 @@ export default function CheckEmail() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <Navbar />
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
