@@ -61,6 +61,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_URL,
     BACKEND_URL,
+    "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
