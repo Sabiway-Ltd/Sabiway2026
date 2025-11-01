@@ -14,7 +14,6 @@ import { Loader2 } from "lucide-react";
 import { getProfileImage } from "../utils/getProfileImage";
 import Link from "next/link";
 import PeopleYouMayKnow from "../_components/profile/PeopleYouMayKnow";
-import { RenderPostList } from "../_components/common/RenderPostList ";
 
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
@@ -264,11 +263,32 @@ useEffect(() => {
           {/* Posts */}
           {searchType === "posts" && displayedPosts.length > 0 && (
             <div className="space-y-4">
-               <RenderPostList 
-                  posts={displayedPosts}
-                  emptyMessage=""
-                  reloadFn={getAllPosts}
+              {displayedPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  id={post.id}
+                  author={{
+                    user_id: post.author.user_id,
+                    full_name: post.author.full_name,
+                    username: post.author.username,
+                    profile_picture: post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
+                    phone_number: post.author.phone_number || "",
+                    is_following: post.author.is_following,
+                    job: post.author.job || "",
+                  }}
+                  original_post_data={post.original_post_data}
+                  content={post.content}
+                  image={post.image || null}
+                  likes_count={post.likes_count}
+                  comments_count={post.comments_count}
+                  impressions_count={post.impressions_count || 0}
+                  reposts_count={post.reposts_count || 0}
+                  is_liked={post.is_liked ?? false}
+                  is_bookmarked={post.is_bookmarked ?? false}
+                  created_at={post.created_at}
+                  onReloadPosts={getAllPosts}
                 />
+              ))}
               {loading && (
                 <div className="flex justify-center items-center gap-2 py-4">
                   <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />

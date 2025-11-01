@@ -21,7 +21,7 @@ import Link from "next/link";
 import ProfilePostCard from "../_components/profile/ProfilePostCard";
 import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
 import PostCard from "../_components/feed/PostCard";
-
+import { RenderPostList } from "../_components/common/RenderPostList ";
 
 
 export default function ProfilePage() {
@@ -68,6 +68,7 @@ const { currentPost, getPostById, error } = usePostStore();
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
   const [modalUsers, setModalUsers] = useState<Profile[]>([]);
+
 
   const { fetchMyFollowers, fetchMyFollowing, myFollowers, myFollowing } = useProfileStore();
 
@@ -381,12 +382,12 @@ const handleShowFollowing = async () => {
             </div>
 
             <div className="text-center md:text-left">
-              <h1 className="text-2xl font-bold text-[#008753]">{profile.full_name}</h1>
-              <div className="flex gap-2 items-center">
+              <h1 className="text-xl font-bold text-[#008753]">{profile.full_name}</h1>
+              <div className="flex items-center md:justify-start justify-center">
                 <p className="text-gray-600">{profile.username}</p>
                 <button
                     onClick={() => {handleCopyProfileLink(profile.username)}}
-                    className="flex items-center gap-1 text-xs px-2 py-2 h-auto bg-gray-200 rounded-md"
+                    className="flex items-center gap-1 text-xs ml-2 h-auto 0 rounded-md"
                   >
                     <BiLinkAlt size={16} />
                   </button>
@@ -638,73 +639,23 @@ const handleShowFollowing = async () => {
 
             {activeTab === "posts" && (
               <div className="flex ">
-              <div className="space-y-4  w-full">
-                {myPosts.length === 0 ? (
-                  <p className="text-gray-600">You haven’t posted anything yet.</p>
-                ) : (
-                  myPosts.map((postItem) => (
-                    <PostCard
-                      key={postItem.id}
-                      id={postItem.id}
-                      author={{
-                        user_id: postItem.author.user_id,
-                        full_name: postItem.author.full_name,
-                        username: postItem.author.username,
-                        profile_picture: postItem.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                        phone_number: postItem.author.phone_number || "",
-                        is_following: postItem.author.is_following,
-                        job: postItem.author.job || "",
-                      }}
-                      content={postItem.content}
-                      image={postItem.image || null}
-                      likes_count={postItem.likes_count}
-                      comments_count={postItem.comments_count}
-                      impressions_count={postItem.impressions_count || 0}
-                      reposts_count={postItem.reposts_count || 0}
-                      is_liked={postItem.is_liked ?? false}
-                      is_bookmarked={postItem.is_bookmarked ?? false}
-                      created_at={postItem.created_at}
-                        onReloadPosts={() => getPostById(postItem.id)}
-                    />
-            ))
-                )}
-              </div>
+              <RenderPostList
+                posts={myPosts}
+                emptyMessage="You haven’t posted anything yet."
+                reloadFn={getPostById}
+              />
+
               </div>
             )}
 
 
             {activeTab === "bookmarks" && (
-              <div className="space-y-4  w-full">
-                {bookmarks.length === 0 ? (
-                  <p className="text-gray-600">No bookmarks yet.</p>
-                ) : (
-                  bookmarks.map((bm) => (
-                    // <ProfilePostCard key={bm.id} post={bm.post} />
-                    <PostCard
-                      key={bm.post.id}
-                      id={bm.post.id}
-                      author={{
-                        user_id: bm.post.author.user_id,
-                        full_name: bm.post.author.full_name,
-                        username: bm.post.author.username,
-                        profile_picture: bm.post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                        phone_number: bm.post.author.phone_number || "",
-                        is_following: bm.post.author.is_following,
-                        job: post.author.job || "",
-                      }}
-                      content={bm.post.content}
-                      image={bm.post.image || null}
-                      likes_count={bm.post.likes_count}
-                      comments_count={bm.post.comments_count}
-                      impressions_count={bm.post.impressions_count || 0}
-                      is_liked={bm.post.is_liked ?? false}
-                      is_bookmarked={bm.post.is_bookmarked ?? false}
-                      created_at={bm.post.created_at}
-                        onReloadPosts={() => getPostById(bm.post.id)}
-                    />
-                  ))
-                )}
-              </div>
+              <RenderPostList
+                posts={bookmarks.map(bm => bm.post)}
+                emptyMessage="No bookmarks yet."
+                reloadFn={getPostById}
+              />
+
             )}
 
             {activeTab === "followers" && (

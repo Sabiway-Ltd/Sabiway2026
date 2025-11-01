@@ -14,12 +14,12 @@ export default function Navbar() {
   
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-gray-50  ">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white  ">
       {/* WHITE BACKGROUND RECTANGLE */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gray-50 "></div>
+      <div className="absolute top-0 left-0 w-full h-full  bg-white"></div>
       
       {/* ROUNDED LIGHT GREEN NAVBAR */}
-      <div className="relative mx-4 md:mx-8 mt-6 flex items-center justify-between bg-[#F5FAF8] rounded-full shadow-sm py-3 px-5 sm:px-8">
+      <div className="relative mx-4 md:mx-8 mt-6 flex items-center justify-between bg-[#008753]/5 rounded-full shadow-sm py-3 px-5 sm:px-8">
         
         {/* LOGO */}
         <div className="flex-shrink-0 cursor-pointer" onClick={() => router.push("/")}>

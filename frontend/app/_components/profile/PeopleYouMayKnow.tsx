@@ -54,8 +54,8 @@ export default function PeopleYouMayKnow() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-4">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+    <div className="bg-[#008753]/5 rounded-lg p-4">
+      <h3 className="text-[1rem] font-semibold mb-4 text-gray-800 flex items-center gap-2">
         People You May Know
       </h3>
 
@@ -67,7 +67,7 @@ export default function PeopleYouMayKnow() {
             <motion.div
               key={profile.user_id}
               whileHover={{ scale: 1.02 }}
-              className="flex items-start gap-x-2 justify-between bg-gray-50 hover:bg-gray-100 p-3 rounded-xl transition"
+              className="flex items-start gap-x-2 justify-between bg-white  p-3 rounded-xl transition"
             >
               <Link href={`/profile/${profile.username}`}>
                 <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function PeopleYouMayKnow() {
                   )}
 
                   <div>
-                    <p className="text-[13px] font-semibold text-gray-800">
+                    <p className="text-[13.5px] font-semibold text-gray-800">
                       {profile.full_name}
                     </p>
                     <p className="text-xs text-gray-500">{profile.username}</p>
@@ -103,7 +103,7 @@ export default function PeopleYouMayKnow() {
                   size="sm"
                   disabled={loadingFollowId === profile.user_id}
                   variant={isFollowing ? "secondary" : "default"}
-                  className={`text-sm flex items-center justify-center gap-2 ${
+                  className={`text-xs flex items-center justify-center gap-2 ${
                     isFollowing
                       ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       : "bg-[#008753] text-white hover:bg-green-900"

@@ -12,7 +12,7 @@ import Footer from "./_components/landing_page/Footer";
 export default function Home() {
 
   return (
-    <main className="bg-gray-50  overflow-x-hidden">
+    <main className=" overflow-x-hidden">
       
       {/* NAVBAR */}
       <Navbar />

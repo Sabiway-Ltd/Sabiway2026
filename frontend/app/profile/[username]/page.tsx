@@ -17,6 +17,7 @@ import PostCard from "@/app/_components/feed/PostCard";
 import { DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import IconTooltipButton from "@/app/_components/common/IconTooltipButton";
 import { Smartphone } from "lucide-react";
+import { RenderPostList } from "@/app/_components/common/RenderPostList ";
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -219,30 +220,12 @@ export default function ProfilePage() {
 
           {userPosts.length > 0 ? (
             <div className="space-y-6">
-              {userPosts.map((post) => (
-                <PostCard
-                    key={post.id}
-                    id={post.id}
-                    author={{
-                      user_id: post.author.user_id,
-                      full_name: post.author.full_name,
-                      username: post.author.username,
-                      profile_picture: post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                      phone_number: post.author.phone_number || "",
-                      is_following: post.author.is_following,
-                      job: post.author.job || "",
-                    }}
-                    content={post.content}
-                    image={post.image || null}
-                    likes_count={post.likes_count}
-                    comments_count={post.comments_count}
-                    impressions_count={post.impressions_count || 0}
-                    is_liked={post.is_liked ?? false}
-                    is_bookmarked={post.is_bookmarked ?? false}
-                    created_at={post.created_at}
-                      onReloadPosts={() => getPostById(post.id)}
-                  />
-              ))}
+              <RenderPostList
+                posts={userPosts}
+                emptyMessage="No Post"
+                reloadFn={getPostById}
+              />
+
 
               {postsLoading && (
                 <div className="flex justify-center items-center gap-2 py-4">

@@ -29,7 +29,7 @@ export default function Faqs() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
   return (
-    <section id="faqs_section" className="w-full px-5 sm:px-10 md:px-16 lg:px-24 py-16 md:py-24 bg-[#F0FFF8]">
+    <section id="faqs_section" className="w-full px-5 sm:px-10 md:px-16 lg:px-24 py-16 md:py-24 bg-[#E7FFF6]">
       <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 text-center mb-10 md:mb-12">
         FAQs
       </h2>

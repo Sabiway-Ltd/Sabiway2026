@@ -33,10 +33,10 @@ export default function Aside() {
   };
 
   return (
-    <aside className="w-full  bg-[#F9FAFB]  rounded-lg">
+    <aside className="w-full   rounded-lg py-2">
       {/* Trending Topics */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-3">Trending Topics</h2>
+      <div className="mb-4 bg-[#008753]/5 rounded-lg p-4">
+        <h2 className="text-[1rem] font-semibold mb-3">Trending Topics</h2>
         <div className="flex flex-wrap gap-2">
           {trendingHashtags.length > 0 ? (
             trendingHashtags.map((tag, idx) => {
@@ -62,8 +62,8 @@ export default function Aside() {
 
      
       {/* Top Contributors */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3">Top Contributors</h2>
+      <div className="bg-[#008753]/5 rounded-lg p-4">
+        <h2 className="text-[1rem] font-semibold mb-3">Top Contributors</h2>
         <div className="flex flex-col gap-y-3">
           {loading ? (
             <p className="text-gray-400 text-sm">Loading...</p>
@@ -88,7 +88,7 @@ export default function Aside() {
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{c.full_name}</p>
+                    <p className="text-[13.5px] font-semibold">{c.full_name}</p>
                     <p className="text-xs text-gray-500">{c.username}</p>
                   </div>
                 </div>
