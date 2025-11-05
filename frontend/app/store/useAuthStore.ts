@@ -99,6 +99,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         body: JSON.stringify(form),
       });
 
+      console.log("express url is:" + EXPRESS_URL);
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
@@ -135,6 +137,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         body: JSON.stringify(form),
       });
 
+      console.log("express url is:" + EXPRESS_URL);
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
@@ -170,6 +174,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // Wait for socket to be ready before emitting Google login
     // get().connectSocket(user);
+    console.log("express url is:" + EXPRESS_URL);
     
     if (socket && socket.connected) {
       socket.emit("user:google_login", user);

@@ -93,7 +93,7 @@ class GoogleLoginView(APIView):
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
             "grant_type": "authorization_code",
         }
         r = requests.post(token_url, data=data)
@@ -170,11 +170,11 @@ class GenerateGoogleAuthURLView(APIView):
         base_url = "https://accounts.google.com/o/oauth2/v2/auth"
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
-            "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google-login/",  # e.g. https://sabiway.onrender.com/api/auth/google-login/
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,  # ✅ frontend URL
             "response_type": "code",
             "scope": "openid email profile",
-            "access_type": "offline",  # so refresh_token is included
-            "prompt": "consent",       # forces Google to show account chooser
+            "access_type": "offline",
+            "prompt": "consent",
         }
         url = f"{base_url}?{urlencode(params)}"
         return JsonResponse({"auth_url": url})

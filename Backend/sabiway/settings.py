@@ -31,11 +31,13 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ---------------------------------------------------------------------
 DEBUG = env("DEBUG", default="True")
 SECRET_KEY = env("SECRET_KEY", default="insecure-secret")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
-    "localhost",
-    "127.0.0.1",
-    "sabiway-9wq4.onrender.com",
-])
+# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+#     "localhost",
+#     "127.0.0.1",
+#     "sabiway-9wq4.onrender.com",
+# ])
+
+ALLOWED_HOSTS = ['*']
 
 
 # Google OAuth
@@ -46,24 +48,27 @@ GOOGLE_CLIENT_SECRET = "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"
 RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
 DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 
-# For Forget Password reset link
-BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
+# ---------------------------------------------------------------------
+# URLs
+# ---------------------------------------------------------------------
+# Use Docker environment variables if provided, otherwise fallback to defaults
+# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")      # internal Django container
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")  # internal Next.js container
 
-# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-
-# BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-
+# settings.py
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", f"{BACKEND_URL}/api/auth/google-login/")
 
 
+# ---------------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
-    FRONTEND_URL,
-    BACKEND_URL,
-    "http://localhost:3000",
+    "http://frontent:3000",
+    "http://localhost:3000",  # in case you test locally outside Docker
+    "http://127.0.0.1:3000",
 ]
-
 CORS_ALLOW_CREDENTIALS = True
 
 
@@ -136,9 +141,24 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 # ---------------------------------------------------------------------
 # Use DATABASE_URL from .env if available, otherwise SQLite
 
+# DATABASES = {
+#     "default": env.db("DATABASE_URL", default="postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db")
+# }
+
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db")
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'u487143489_sabiway_db',
+        'USER': 'u487143489_sabiway',
+        'PASSWORD': 'Sabiway@2025',
+        'HOST': 'nl-srv-web929.main-hosting.eu',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        },
+    }
 }
+
 
 
 # ---------------------------------------------------------------------

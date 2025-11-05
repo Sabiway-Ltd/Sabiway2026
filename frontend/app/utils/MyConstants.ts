@@ -1,10 +1,28 @@
-// export const EXPRESS_URL = "http://localhost:5000"
+// frontend/app/utils/MyConstants.ts
 
-// export const DJANGO_URL = "http://localhost:8000"
+const isBrowser = typeof window !== "undefined";
 
-// export const EXPRESS_URL = "https://sabiwayexpress.onrender.com"
+/**
+ * EXPRESS_URL
+ * - Uses NEXT_PUBLIC_EXPRESS_API_URL from environment (set in Docker or .env)
+ * - Fallbacks for local dev or server-side rendering
+ */
+export const EXPRESS_URL = isBrowser
+  ? process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://localhost:5000" // Browser fallback
+  : process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://express:5000";  // SSR / Docker internal
 
-export const EXPRESS_URL = "https://sabiway2025-49a4.vercel.app"
+/**
+ * DJANGO_URL
+ * - Uses NEXT_PUBLIC_DJANGO_API_URL from environment
+ * - Fallbacks for local dev or server-side rendering
+ */
+export const DJANGO_URL = isBrowser
+  ? process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://localhost:8000"
+  : process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://web:8000";
 
-
-export const DJANGO_URL = "https://sabiway-9wq4.onrender.com"
+/**
+ * FRONTEND_URL
+ * - The URL of your frontend, used for redirects / OAuth callbacks
+ */
+export const FRONTEND_URL =
+  process.env.NEXT_PUBLIC_FRONTEND_URL || (isBrowser ? window.location.origin : "http://localhost:3000");

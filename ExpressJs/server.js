@@ -5,43 +5,46 @@ const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
 const { initSocket } = require("./socket/postEvents");
 const { initNotificationSocket } = require("./socket/notificationEvents");
-const { initSocket: initUserSocket } = require("./socket/socket"); // ✅ consistent export
+const { initSocket: initUserSocket } = require("./socket/socket");
 require("dotenv").config();
+
 const reportRoutes = require("./routes/report");
 const accountRoutes = require("./routes/accounts.routes");
 const forwardAuth = require("./middleware/authForward");
-const {FRONTEND_URL} = require("./config")
-
+const { FRONTEND_URL } = require("./config");
 
 const app = express();
 const server = http.createServer(app);
 
-// ✅ CORS
-const allowedOrigins = [FRONTEND_URL, "http://localhost:3000"];
+// ✅ CORS setup
+const allowedOrigins = [
+  FRONTEND_URL,
+  "http://localhost:3000",
+  "http://frontend:3000",
+];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (like Postman)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
-        return callback(new Error('Not allowed by CORS'));
+        console.warn("❌ Blocked by CORS:", origin);
+        return callback(null, false);
       }
     },
-    credentials: true, // needed if you send cookies or auth headers
+    credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(forwardAuth);
 
 // ✅ Routes
-// Base route
-app.get("/", (req, res) => {
-  res.send("Welcome to SabiWay");
-});
+app.get("/", (req, res) => res.send("Welcome to SabiWay"));
+app.get("/health", (req, res) => res.json({ status: "ok", service: "express" }));
 
 app.use("/api/auth", accountRoutes);
 app.use("/api/profiles", require("./routes/profiles.routes"));
@@ -49,28 +52,23 @@ app.use("/api/posts", require("./routes/posts.routes"));
 app.use("/api/notifications", require("./routes/notifications.routes"));
 app.use("/api/search", require("./routes/search.routes"));
 app.use("/api/report", reportRoutes);
-
-
-const testEmailRoute = require("./routes/testEmail");
-app.use("/api/test-email", testEmailRoute);
-
+app.use("/api/test-email", require("./routes/testEmail"));
 
 // ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", FRONTEND_URL],
+    origin: ["http://localhost:3000", "http://frontend:3000", FRONTEND_URL],
     credentials: true,
     methods: ["GET", "POST"],
   },
 });
 
-// Initialize sockets
-initUserSocket(io);          // 🟢 your main socket
-initSocket(io);              // post events
-initNotificationSocket(io);  // notification events
+initUserSocket(io);
+initSocket(io);
+initNotificationSocket(io);
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`🚀 Express server running on http://localhost:${PORT}`)
+server.listen(PORT, "0.0.0.0", () =>
+  console.log(`🚀 Express server running on http://0.0.0.0:${PORT}`)
 );
