@@ -1,28 +1,37 @@
 // frontend/app/utils/MyConstants.ts
 
-const isBrowser = typeof window !== "undefined";
+// FOR TESTING
+export const EXPRESS_URL = "https://sabiway2025-49a4.vercel.app"
 
-/**
- * EXPRESS_URL
- * - Uses NEXT_PUBLIC_EXPRESS_API_URL from environment (set in Docker or .env)
- * - Fallbacks for local dev or server-side rendering
- */
-export const EXPRESS_URL = isBrowser
-  ? process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://localhost:5000" // Browser fallback
-  : process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://express:5000";  // SSR / Docker internal
+export const DJANGO_URL = "https://sabiway-9wq4.onrender.com"
 
-/**
- * DJANGO_URL
- * - Uses NEXT_PUBLIC_DJANGO_API_URL from environment
- * - Fallbacks for local dev or server-side rendering
- */
-export const DJANGO_URL = isBrowser
-  ? process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://localhost:8000"
-  : process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://web:8000";
 
-/**
- * FRONTEND_URL
- * - The URL of your frontend, used for redirects / OAuth callbacks
- */
-export const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || (isBrowser ? window.location.origin : "http://localhost:3000");
+
+// FOR DOCKER AND LOCAL TESTING
+
+// const isBrowser = typeof window !== "undefined";
+
+// /**
+//  * EXPRESS_URL
+//  * - Uses NEXT_PUBLIC_EXPRESS_API_URL from environment (set in Docker or .env)
+//  * - Fallbacks for local dev or server-side rendering
+//  */
+// export const EXPRESS_URL = isBrowser
+//   ? process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://localhost:5000" // Browser fallback
+//   : process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://express:5000";  // SSR / Docker internal
+
+// /**
+//  * DJANGO_URL
+//  * - Uses NEXT_PUBLIC_DJANGO_API_URL from environment
+//  * - Fallbacks for local dev or server-side rendering
+//  */
+// export const DJANGO_URL = isBrowser
+//   ? process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://localhost:8000"
+//   : process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://web:8000";
+
+// /**
+//  * FRONTEND_URL
+//  * - The URL of your frontend, used for redirects / OAuth callbacks
+//  */
+// export const FRONTEND_URL =
+//   process.env.NEXT_PUBLIC_FRONTEND_URL || (isBrowser ? window.location.origin : "http://localhost:3000");

@@ -429,7 +429,7 @@ export default function PostCard({
                     <p className="text-gray-500 text-sm">{author.job}</p>
                   )
                 }
-                <p className="text-[11px] text-gray-400">{formatTimeAgo(formattedDate)}</p>
+                <p className="text-[11px] text-gray-400">{formatTimeAgo(created_at)}</p>
               </div>
             </div>
           </Link>
