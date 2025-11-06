@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Heart, MessageCircle, BarChart2, Repeat2, Share, Bookmark, Smile, Image as ImageIcon, X, } from "lucide-react";
+import { Heart, MessageCircle, BarChart2, Repeat2, Share, Bookmark, Smile, Image as ImageIcon, X, Undo2} from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
@@ -27,6 +27,7 @@ export default function PostCard({
   id,
   author,
   original_post_data,
+  repost_post_data,
   content,
   image,
   likes_count,
@@ -41,6 +42,7 @@ export default function PostCard({
   post,
   onReloadPosts,
   alwaysShowComments = false,
+  clickable = false
 }: any) {
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likesCount, setLikesCount] = useState(likes_count);
@@ -74,8 +76,9 @@ export default function PostCard({
     commentsByPost,
     likeComment,
     unlikeComment,
-    addReply,
+    addReply, nextPage,
     repostPost, unrepostPost,
+    myReposts, getMyReposts,
     addNestedReply,
   } = usePostStore();
 
@@ -346,7 +349,8 @@ export default function PostCard({
       toast.success("Post updated successfully!");
       setEditingPostId(null);
       setEditedPostImage(null);
-      onReloadPosts?.();
+      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
+      getAllPosts(currentPage);
 
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to update post.");
@@ -368,7 +372,8 @@ export default function PostCard({
       const { post } = await import("@/app/services/post");
       await post.delete(postId);
       toast.success("Post deleted successfully!");
-      onReloadPosts?.();
+      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
+      getAllPosts(currentPage);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to delete post.");
     }
@@ -378,11 +383,36 @@ export default function PostCard({
     try {
       setRepostLoading(true);
       await repostPost(id); // your existing function
-      onReloadPosts?.();
+      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
+      getAllPosts(currentPage);
     } finally {
       setRepostLoading(false);
     }
   };
+
+  const handleUnRepost = async () => {
+    try {
+      setRepostLoading(true);
+      await unrepostPost(id); // your existing function
+      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
+      getAllPosts(currentPage);
+    } finally {
+      setRepostLoading(false);
+    }
+  };
+
+
+  // Check if this post was reposted by the user
+  useEffect(() => {
+    getMyReposts();
+  }, []);
+
+  useEffect(() => {
+    
+  }, [myReposts]); // ✅ logs only after store updates
+
+  const hasReposted = myReposts.includes(id);
+
 
   return (
     <div className=" bg-[#008753]/5 rounded-lg p-4">
@@ -390,20 +420,20 @@ export default function PostCard({
       {original_post_data && (
         <div className="text-sm text-gray-600 border-b border-gray-200 pb-3 mt-1 mb-2 flex gap-x-2 items-center">
           <Link
-              href={`/profile/${original_post_data.author?.username}`}
+              href={`/profile/${repost_post_data.author?.username?.replace(/^@/, '')}`}
             >
              <img
-                src={getProfileSrc(original_post_data.author.profile_picture)}
-                alt={original_post_data.author.full_name}
+                src={getProfileSrc(repost_post_data.author.profile_picture)}
+                alt={repost_post_data.author.full_name}
                 className="w-9 h-9 rounded-full object-cover border border-gray-200 shadow-sm"
               />
           </Link>
           <p>
             <Link
-              href={`/profile/${original_post_data.author?.username}`}
+              href={`/profile/${repost_post_data.author?.username?.replace(/^@/, '')}`}
               className="font-medium  text-gray-800 hover:underline"
             >
-              {original_post_data.author?.full_name}
+              {repost_post_data.author?.full_name}
             </Link>
             {" "}
             reposted this
@@ -414,7 +444,7 @@ export default function PostCard({
       <div>
         {/* Header */}
         <div className="flex  justify-between items-center gap-3">
-          <Link href={`/profile/${author.username}`}>
+          <Link href={`/profile/${author?.username?.replace(/^@/, '')}`}>
             <div className="flex items-center gap-3">
               <img
                 src={getProfileSrc(author.profile_picture)}
@@ -426,7 +456,7 @@ export default function PostCard({
                 
                 {
                   author.job && (
-                    <p className="text-gray-500 text-sm">{author.job}</p>
+                    <p className="text-gray-500 text-[13px]">{author.job}</p>
                   )
                 }
                 <p className="text-[11px] text-gray-400">{formatTimeAgo(created_at)}</p>
@@ -665,19 +695,42 @@ export default function PostCard({
           </div>
         ) : (
           <>
-            <Link href={`/posts/${id}`} key={id}>
-              {/* <div className="mt-3 text-gray-800 text-sm">{content}</div> */}
-              <ReadMoreText content={content} maxLength={150} />
-              {image && (
-                <div className="mt-3 rounded-xl overflow-hidden">
-                  <img
-                    src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
-                    alt="Post image"
-                    className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
-                  />
+            {/* <Link href={`/posts/${id}`} key={id}> */}
+            {
+              clickable && (
+                <Link href={`/posts/${id}`}>
+                  <ReadMoreText content={content} maxLength={150} />
+                  {image && (
+                    <div className="mt-3 rounded-xl overflow-hidden">
+                      <img
+                        src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
+                        alt="Post image"
+                        className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
+                      />
+                    </div>
+                  )}
+                </Link>
+              )
+            }
+
+            {
+              !clickable && (
+                <div>
+                  <ReadMoreText content={content} maxLength={150} />
+                  {image && (
+                    <div className="mt-3 rounded-xl overflow-hidden">
+                      <img
+                        src={image.startsWith("http") ? image : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`}
+                        alt="Post image"
+                        className="object-cover w-full max-h-[450px] rounded-xl border border-gray-100"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </Link>
+              )
+            }
+            
+            
           </>
         )}
 
@@ -699,23 +752,90 @@ export default function PostCard({
           </button>
 
           {/* <button onClick={() => repostPost(post.id)}>Repost</button> */}
-          <button
-            onClick={handleRepost}
-            disabled={repostLoading}
-            className="flex items-center"
-          >
-            {repostLoading ? (
-              <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
-            ) : (
-              <div className="flex gap-x-1">
-              <Repeat2
-                size={25}
-                className="opacity-95 cursor-pointer text-gray-500"
-              />
-              <span>{reposts_count}</span>
-              </div>
-            )}
-          </button>
+          {
+          // Show Repost/Unrepost only if this is the original (not a reposted copy)
+          !original_post_data && (
+            <button
+              onClick={hasReposted ? handleUnRepost : handleRepost}
+              disabled={repostLoading}
+              className="flex items-center"
+            >
+              {repostLoading ? (
+                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+              ) : (
+                <div className="flex gap-x-1">
+                  {hasReposted ? (
+                    <>
+                      <Undo2 size={25} className="opacity-95 cursor-pointer text-gray-500" />
+                      <span>{reposts_count}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Repeat2 size={25} className="opacity-95 cursor-pointer text-gray-500" />
+                      <span>{reposts_count}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </button>
+          )
+        }
+
+
+
+          {
+            original_post_data && currentUser?.user_id === repost_post_data.author.user_id && (
+            <button
+              onClick={handleUnRepost}
+              disabled={repostLoading}
+              className="flex items-center"
+            >
+              {repostLoading ? (
+                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+              ) : (
+                <div className="flex gap-x-1">
+                  
+                      <div className="flex gap-x-1">
+                        <Undo2
+                          size={25}
+                          className="opacity-95 cursor-pointer text-gray-500"
+                        />
+                        <span>{reposts_count}</span>
+                      </div>
+                  
+                
+                </div>
+              )}
+            </button>
+            )
+          }
+
+          {
+            original_post_data && currentUser?.user_id !== repost_post_data.author.user_id && (
+            <button
+              onClick={handleRepost}
+              disabled={repostLoading}
+              className="flex items-center"
+            >
+              {repostLoading ? (
+                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+              ) : (
+                <div className="flex gap-x-1">
+                  
+                      <div className="flex gap-x-1">
+                        <Repeat2
+                          size={25}
+                          className="opacity-95 cursor-pointer text-gray-500"
+                        />
+                        <span>{reposts_count}</span>
+                      </div>
+                  
+                
+                </div>
+              )}
+            </button>
+            )
+          }
 
 
 

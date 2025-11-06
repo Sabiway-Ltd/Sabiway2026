@@ -191,38 +191,3 @@ class CommentLike(models.Model):
 
 
 
-# For Impression
-# posts/models.py
-
-# class PostImpression(models.Model):
-#     user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
-#     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-#     session_key = models.CharField(max_length=100, null=True, blank=True)
-#     ip_address = models.GenericIPAddressField(null=True, blank=True)
-#     timestamp = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         constraints = [
-#             models.UniqueConstraint(
-#                 fields=["user", "post"],
-#                 name="unique_user_post_impression",
-#                 condition=models.Q(user__isnull=False)
-#             ),
-#             models.UniqueConstraint(
-#                 fields=["session_key", "post"],
-#                 name="unique_session_post_impression",
-#                 condition=models.Q(session_key__isnull=False)
-#             ),
-#             models.UniqueConstraint(
-#                 fields=["ip_address", "post"],
-#                 name="unique_ip_post_impression",
-#                 condition=models.Q(ip_address__isnull=False)
-#             ),
-#         ]
-
-#     def __str__(self):
-#         if self.user:
-#             return f"{self.user.username} viewed {self.post.title}"
-#         return f"Anonymous viewed {self.post.title}"
-
-

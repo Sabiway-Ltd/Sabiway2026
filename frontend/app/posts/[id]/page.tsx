@@ -15,13 +15,20 @@ export default function SinglePostPage() {
   const { currentPost, getPostById, loading, error } = usePostStore();
 
   useEffect(() => {
-    if (id) {
-        usePostStore.getState().getPostById(id as string);
-    }
-    }, [id]);
+    if (!id) return;
 
+    const fetchPost = async () => {
+      const post = await getPostById(id as string);
+      if (!post) {
+        console.error("Failed to fetch post:", id);
+      }
+    };
 
-  if (loading || !currentPost) {
+    fetchPost();
+  }, [id, getPostById]);
+
+  // Loader
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-600">
         <Loader2 className="w-6 h-6 animate-spin mr-2" />
@@ -30,7 +37,8 @@ export default function SinglePostPage() {
     );
   }
 
-  if (error) {
+  // Error or missing post
+  if (!currentPost || error) {
     return (
       <div className="text-center text-red-500 py-12">
         {error || "Failed to load post."}
@@ -42,22 +50,23 @@ export default function SinglePostPage() {
 
   return (
     <div>
-        <div className="md:px-6 px-3">
-            <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
-        </div>
-        <div className="min-h-screen bg-gray-50 flex justify-center px-3 md:px-6">
+      <div className="md:px-6 px-3">
+        <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
+      </div>
+
+      <div className="min-h-screen bg-gray-50 flex justify-center px-3 md:px-6">
         <div className="max-w-2xl w-full mt-6">
-            <PostCard
+          <PostCard
             id={post.id}
             author={{
-                user_id: post.author.user_id,
-                full_name: post.author.full_name,
-                username: post.author.username,
-                profile_picture:
+              user_id: post.author.user_id,
+              full_name: post.author.full_name,
+              username: post.author.username,
+              profile_picture:
                 post.author.profile_picture || DEFAULT_PROFILE_PICTURE,
-                phone_number: post.author.phone_number || "",
-                is_following: post.author.is_following,
-                job: post.author.job || "",
+              phone_number: post.author.phone_number || "",
+              is_following: post.author.is_following,
+              job: post.author.job || "",
             }}
             content={post.content}
             image={post.image || null}
@@ -69,9 +78,9 @@ export default function SinglePostPage() {
             created_at={post.created_at}
             onReloadPosts={() => getPostById(post.id)} // reload single post after edit/delete
             alwaysShowComments={true}
-            />
+          />
         </div>
-        </div>
+      </div>
     </div>
   );
 }

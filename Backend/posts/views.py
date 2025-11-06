@@ -466,4 +466,25 @@ class MyRepostsView(generics.ListAPIView):
         return Post.objects.filter(author=profile, original_post__isnull=False).order_by("-created_at")
 
 
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def unrepost_post(request, post_id):
+    """
+    Remove a repost made by the authenticated user for the given post.
+    """
+    user = request.user
+    try:
+        # Find the repost made by this user that points to the original post
+        repost = Post.objects.get(author=user.profile, original_post__id=post_id)
+    except Post.DoesNotExist:
+        return Response({"detail": "You haven’t reposted this post."}, status=status.HTTP_404_NOT_FOUND)
 
+    original_post = repost.original_post
+    repost.delete()
+
+    # Decrement repost count safely
+    if original_post:
+        original_post.reposts_count = max(0, original_post.reposts_count - 1)
+        original_post.save(update_fields=["reposts_count"])
+
+    return Response({"detail": "Repost removed successfully."}, status=status.HTTP_204_NO_CONTENT)

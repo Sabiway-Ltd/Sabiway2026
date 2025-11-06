@@ -76,6 +76,7 @@ type PostState = {
   filteredPosts: Post[];
   activeHashtag: string | null;
   socket: Socket | null;
+  myReposts: [];
 
   // State setters
   set: (partial: Partial<PostState>) => void;
@@ -135,6 +136,7 @@ export const usePostStore = create<PostState>((set, get) => ({
   myPosts: [],
   myNextPage: 1,
   myHasMore: true,
+  myReposts: [],
   
 
   refreshFeed: false,
@@ -402,6 +404,7 @@ export const usePostStore = create<PostState>((set, get) => ({
       const res = await axios.get(`${API_URL}/posts/?page=${page}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(res.data)
 
       // DRF pagination returns { count, next, previous, results }
       const newPosts = res.data.results || res.data;
@@ -1096,7 +1099,7 @@ unlikePost: async (id: string) => {
       const res = await axios.post(`${API_URL}/posts/${id}/repost/`, { message }, { headers });
       const repostData = res.data;
 
-      // ✅ Update local state immediately
+      // ✅ Update local state immediately for responsiveness
       set((state) => ({
         posts: state.posts.map((p) =>
           p.id === id
@@ -1105,7 +1108,7 @@ unlikePost: async (id: string) => {
         ),
       }));
 
-      // ✅ Emit socket event for real-time sync
+      // ✅ Emit socket event for real-time updates
       const socket = get().socket;
       socket?.emit("post:reposted", { postId: id, repost: repostData });
 
@@ -1123,10 +1126,14 @@ unlikePost: async (id: string) => {
       if (!token) throw new Error("Not authenticated");
 
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.post(`${API_URL}/posts/${id}/unrepost/`, {}, { headers });
+
+      const res = await axios.delete(`${DJANGO_URL}/api/posts/${id}/unrepost/`, {
+        headers,
+      });
+
       const result = res.data;
 
-      // ✅ Update local state immediately
+      // Update repost count locally for instant UI feedback
       set((state) => ({
         posts: state.posts.map((p) =>
           p.id === id
@@ -1135,16 +1142,46 @@ unlikePost: async (id: string) => {
         ),
       }));
 
-      // ✅ Emit socket event for real-time sync
+      // Emit socket event
       const socket = get().socket;
       socket?.emit("post:unreposted", { postId: id, result });
 
       toast.success("Repost removed!");
+
     } catch (err: any) {
       console.error("Unrepost error:", err);
       toast.error("Failed to remove repost.");
     }
   },
+
+  getMyReposts: async () => {
+    try {
+      const token = localStorage.getItem("access");
+      if (!token) return [];
+
+      const res = await axios.get(`${API_URL}/posts/me/reposts/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Flatten to original posts if needed
+      const formattedReposts = res.data.map((r: any) => r.original_post ?? r);
+      console.log("From Store", formattedReposts)
+
+      // Store in the global state
+      set({ myReposts: formattedReposts });
+
+      return formattedReposts; // ✅ return for immediate use if needed
+    } catch (err) {
+      console.error("Failed to fetch my reposts:", err);
+      return [];
+    }
+  },
+
+
+
+
+
+
 
 
 

@@ -3,6 +3,7 @@
 module.exports = {
   // FOR DOCKER
   // DJANGO_BASE_URL: "http://web:8000/api",
+  // FRONTEND_URL: "http://localhost:3000",
 
   // FOR LOCAL TESTING
   // DJANGO_BASE_URL: "http://localhost:8000/api",

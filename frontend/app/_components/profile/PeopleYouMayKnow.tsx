@@ -64,9 +64,8 @@ export default function PeopleYouMayKnow() {
           const isFollowing = followingStatus[profile.user_id] || false;
 
           return (
-            <motion.div
+            <div
               key={profile.user_id}
-              whileHover={{ scale: 1.02 }}
               className="flex items-start gap-x-2 justify-between bg-white  p-3 rounded-xl transition"
             >
               <Link href={`/profile/${profile.username}`}>
@@ -119,7 +118,7 @@ export default function PeopleYouMayKnow() {
                   )}
                 </Button>
               )}
-            </motion.div>
+            </div>
           );
         })}
       </div>

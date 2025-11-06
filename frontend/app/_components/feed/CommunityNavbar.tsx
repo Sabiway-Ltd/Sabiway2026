@@ -156,20 +156,24 @@ export default function CommunityNavbar({
           </button>
 
           {/* Home Button */}
-          <IconTooltipButton
-            onClick={() => handleLogoClick()}
-            icon={Home}
-            label="Home"
-          />
+          <div className="md:mt-3 mt-1">
+            <IconTooltipButton
+              onClick={() => handleLogoClick()}
+              icon={Home}
+              label="Home"
+            />
+          </div>
 
           {/* Mobile App Button */}
-          <IconTooltipButton
-            onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
-            icon={Smartphone}
-            label="Mobile App"
-            // bg="bg-[#008753]"
-            // textColor="text-white"
-          />
+          <div className="md:mt-3 mt-1">
+            <IconTooltipButton
+              onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
+              icon={Smartphone}
+              label="Mobile App"
+              // bg="bg-[#008753]"
+              // textColor="text-white"
+            />
+          </div>
 
           {/* Desktop Search */}
           {
@@ -226,7 +230,7 @@ export default function CommunityNavbar({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute md:right-0 -right-14 space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
+                  className="absolute md:right-0 -right-24 space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
                 >
                   {loading && notifications.length === 0 ? (
                     <p className="text-sm text-center text-gray-500 py-4">Loading...</p>

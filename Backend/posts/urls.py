@@ -5,7 +5,7 @@ from django.urls import path, include
 from .views import (
     PostViewSet, CommentViewSet, ReplyViewSet, HashtagViewSet,
     BookmarkPostView, UnbookmarkPostView, MyBookmarksView, LikeViewSet,
-    MyRepostsView, repost_post, TrendingHashtagsView,
+    MyRepostsView, repost_post, unrepost_post, TrendingHashtagsView,
     CommentLikeToggleView, CommentUnlikeToggleView, ReplyLikeToggleView,
     ReplyUnlikeToggleView, MyPostsView,
 )
@@ -19,6 +19,7 @@ router.register(r"", PostViewSet, basename="post")  # keep last
 
 urlpatterns = [
     path("<uuid:post_id>/repost/", repost_post, name="repost_post"),
+    path("<uuid:post_id>/unrepost/", unrepost_post, name="unrepost_post"),
     path("<uuid:id>/bookmark/", BookmarkPostView.as_view(), name="bookmark-post"),
     path("<uuid:id>/unbookmark/", UnbookmarkPostView.as_view(), name="unbookmark-post"),
     path("me/bookmarks/", MyBookmarksView.as_view(), name="my-bookmarks"),

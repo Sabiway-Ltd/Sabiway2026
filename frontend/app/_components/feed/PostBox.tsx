@@ -108,8 +108,8 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
 
   return (
-    <div className="w-full mt-4 px-3 relative">
-      <div className="bg-white rounded-xl shadow-md w-full p-4 relative">
+    <div className="w-full mt-4 px-3 relative mb-6">
+      <div className="bg-white rounded-xl shadow w-full p-4 relative">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"

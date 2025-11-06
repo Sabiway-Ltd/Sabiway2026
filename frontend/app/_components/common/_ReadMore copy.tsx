@@ -1,23 +1,24 @@
-"use client";
+// app/_components/common/ReadMore.tsx
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+
 import { useState } from "react";
 
 const ReadMoreText = ({ content, maxLength = 120 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const router = useRouter();
 
   if (!content) return null;
 
   const formatText = (text) => {
     // Detect links and hashtags
-    const regex = /(\bhttps?:\/\/[^\s]+)|(#\w+)/g;
+    const regex =
+      /(\bhttps?:\/\/[^\s]+)|(#\w+)/g;
 
     return text.split(regex).map((part, i) => {
       if (!part) return null;
 
-      // Handle internal sabiway links
+      // Handle links
       if (part.match(/^https:\/\/sabiway2025\.vercel\.app/)) {
         const path = part.replace("https://sabiway2025.vercel.app", "");
         return (
@@ -32,19 +33,10 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
         );
       }
 
-      // Handle hashtags safely (no <a> inside <a>)
+      // Handle hashtags
       if (part.startsWith("#")) {
-        const tag = part.slice(1);
         return (
-          <span
-            key={i}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              router.push(`/hashtag/${encodeURIComponent(tag)}`);
-            }}
-            className="text-[#008753] font-medium hover:underline cursor-pointer"
-          >
+          <span key={i} className="text-blue-500">
             {part}
           </span>
         );
@@ -55,6 +47,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
     });
   };
 
+  // Shorten text if not expanded
   const displayText = isExpanded
     ? content
     : content.substring(0, maxLength) +
