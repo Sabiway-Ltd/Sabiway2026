@@ -21,14 +21,17 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (part.match(/^https:\/\/sabiway2025\.vercel\.app/)) {
         const path = part.replace("https://sabiway2025.vercel.app", "");
         return (
-          <Link
+          <span
             key={i}
-            href={path}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(path);
+            }}
             className="text-blue-500 hover:underline break-all"
-            onClick={(e) => e.stopPropagation()}
           >
             {part}
-          </Link>
+          </span>
         );
       }
 
@@ -61,7 +64,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       (content.length > maxLength ? "..." : "");
 
   return (
-    <div className="mt-3 text-gray-800 text-sm break-words break-all whitespace-pre-wrap">
+    <div className="mt-3 text-gray-800 text-sm break-words  whitespace-pre-wrap">
       {formatText(displayText)}
       {content.length > maxLength && (
         <button

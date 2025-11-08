@@ -691,7 +691,7 @@ const handleToggleReplies = async () => {
                 {showReplies
                   ? "Hide replies"
                   : isReply
-                  ? `View nested ${reply_count || replies.length} replies`
+                  ? `View ${reply_count || replies.length} replies`
                   : `View ${reply_count || replies.length} replies`}
               </button>
             )}

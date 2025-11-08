@@ -22,6 +22,7 @@ import ProfilePostCard from "../_components/profile/ProfilePostCard";
 import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
 import PostCard from "../_components/feed/PostCard";
 import { RenderPostList } from "../_components/common/RenderPostList ";
+import ProfileImageModal from "../_components/common/ProfileImageModal";
 
 
 export default function ProfilePage() {
@@ -113,12 +114,6 @@ const handleFollowToggle = async (user: any) => {
       setLoading(true);
       try {
         await getMyProfile();
-
-        const postsRes = await post.getByMe();
-        setMyPosts(postsRes.data.results || postsRes.data);
-
-        const bmRes = await post.getMyBookmarks();
-        setBookmarks(bmRes.data.results || bmRes.data);
       } catch (err) {
         console.error("Profile page load error:", err);
       } finally {
@@ -127,11 +122,6 @@ const handleFollowToggle = async (user: any) => {
     })();
   }, [getMyProfile]);
 
-  const handleCopyPostLink = async () => {
-    const postUrl = `${window.location.origin}/posts/${post.id}`;
-    await navigator.clipboard.writeText(postUrl);
-    toast.success("Post link copied");
-  };
 
   
 
@@ -159,34 +149,6 @@ const handleFollowToggle = async (user: any) => {
       setEditing(false);
     } catch (error) {
       console.error("Failed to save profile:", error);
-    }
-  };
-
-
-  // 🗑️ Handle Delete Post
-  const handleDeletePost = async (id: string) => {
-    try {
-      await post.delete(id);
-      setMyPosts((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Post deleted successfully");
-    } catch (err) {
-      console.error("Delete post error:", err);
-      toast.error("Failed to delete post");
-    }
-  };
-
-  // 🔖 Handle Unbookmark
- const handleUnbookmark = async (postId: string) => {
-    try {
-      setLoadingId(postId); // show spinner for this post
-      await post.unbookmark(postId);
-      setBookmarks((prev) => prev.filter((b) => b.post.id !== postId));
-      toast.success("Removed from bookmarks");
-    } catch (err) {
-      console.error("Unbookmark error:", err);
-      toast.error("Failed to unbookmark post");
-    } finally {
-      setLoadingId(null); // stop spinner
     }
   };
 
@@ -245,89 +207,17 @@ const handleFollowToggle = async (user: any) => {
   }
 
 
-  // Start editing a post
-  const handleEditPost = (postId: string, content: string) => {
-    setEditingPostId(postId);
-    setEditedPostContent(content);
-  };
-
-  
-// Cancel editing
-const handleCancelEditPost = () => {
-  setEditingPostId(null);
-  setEditedPostContent("");
-};
-
-const handlePostImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  setEditedPostImage(file);
-};
-
-const handleSavePost = async (postId: string) => {
-  const postIndex = myPosts.findIndex((p) => p.id === postId);
-  if (postIndex === -1) return;
-
-  try {
-    setUploadingPostImage(true);
-
-    const fd = new FormData();
-    fd.append("content", editedPostContent || "");
-
-    // Only append new image if user changed it
-    if (editedPostImage) {
-      fd.append("image", editedPostImage);
-    }
-
-    // Use post.update service
-    const response = await post.update(postId, fd);
-
-    if (response?.data) {
-      // Update local posts array
-      setMyPosts((prev) =>
-        prev.map((p) => (p.id === postId ? response.data : p))
-      );
-
-      toast.success("Post updated successfully!");
-      setEditingPostId(null);
-      setEditedPostContent("");
-      setEditedPostImage(null);
-    }
-  } catch (error: any) {
-    console.error("Update post error:", error.response?.data || error.message);
-    toast.error(error.response?.data?.detail || "Failed to update post.");
-  } finally {
-    setUploadingPostImage(false);
-  }
-};
-
-
-const handleShowFollowers = async () => {
-  await fetchMyFollowers();
-  setModalUsers(myFollowers);
-  setIsFollowersModalOpen(true);
-};
-
-const handleShowFollowing = async () => {
-  await fetchMyFollowing();
-  setModalUsers(myFollowing);
-  setIsFollowingModalOpen(true);
-};
-
-
-
-
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 ">
-      <div className="md:px-6 px-3">
+    <div className="flex flex-col min-h-screen  ">
+      <div className="md:px-6 px-1">
         <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
       </div>
 
-      <main className="mx-auto px-4 py-8 flex justify-center w-full flex-1">
-        <div className="lg:w-[60%] md:w-[90%] ">
+      <main className="mx-auto md:px-4 md:py-8 py-2 flex justify-center w-full flex-1 ">
+        <div className="lg:w-[60%] md:w-[90%] w-full px-2 ">
           {/* 🧩 Profile Header */}
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8 relative">
+          <div className="flex flex-col  items-center  gap-4 mb-8 relative">
             <div className="relative w-[100px] h-[100px]">
               <div className="relative w-24 h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
                 <button
@@ -343,7 +233,7 @@ const handleShowFollowing = async () => {
                         : DEFAULT_PROFILE_PICTURE
                     }
                     alt={profile?.full_name || "User"}
-                    className="w-full h-full rounded-full object-cover hover:opacity-80 transition"
+                    className="w-full h-full rounded-full object-cover transition-transform duration-200 hover:scale-105"
                     onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)} // fallback safety
                   />
 
@@ -381,9 +271,9 @@ const handleShowFollowing = async () => {
 
             </div>
 
-            <div className="text-center md:text-left">
+            <div className="text-center ">
               <h1 className="text-xl font-bold text-[#008753]">{profile.full_name}</h1>
-              <div className="flex items-center md:justify-start justify-center">
+              <div className="flex items-center  justify-center">
                 <p className="text-gray-600">{profile.username}</p>
                 <button
                     onClick={() => {handleCopyProfileLink(profile.username)}}
@@ -392,30 +282,28 @@ const handleShowFollowing = async () => {
                     <BiLinkAlt size={16} />
                   </button>
                 </div>
-              <div className="flex gap-6 mt-3 text-sm text-gray-700">
-                <button
-                  onClick={handleShowFollowers}
-                  className="hover:underline"
-                >
-                  {profile.followers_count} Followers
-                </button>
-
-                <button
-                  onClick={handleShowFollowing}
-                  className="hover:underline"
-                >
-                  {profile.following_count} Following
-                </button>
-
-                <span>{profile.posts_count} Posts</span>
-              </div>
-
             </div>
+
+
+            <div className=" flex justify-around text-center w-full">
+                <div>
+                  <p className="font-semibold text-lg">{profile.followers_count}</p>
+                  <p className="text-gray-500 text-sm">Followers</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">{profile.following_count}</p>
+                  <p className="text-gray-500 text-sm">Following</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">{profile.posts_count}</p>
+                  <p className="text-gray-500 text-sm">Posts</p>
+                </div>
+              </div>
           </div>
 
           <div className="text-[0.6rem] md:text-lg w-full">
             {/* 🧩 Tabs */}
-            <div className="flex gap-1 md:gap-6 border-b mb-3 md:mb-6 w-full">
+            <div className="flex gap-1 md:gap-6 border-b mb-3 md:mb-6 w-full justify-between">
               <Button
                 className={`pb-2 ${activeTab === "about" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={() => setActiveTab("about")}
@@ -424,31 +312,70 @@ const handleShowFollowing = async () => {
               </Button>
               <Button
                 className={`pb-2 ${activeTab === "posts" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
-                onClick={() => setActiveTab("posts")}
+                onClick={async () => {
+                  try{
+                    document.body.style.cursor = "wait";
+                    const postsRes = await post.getByMe();
+                    setMyPosts(postsRes.data.results || postsRes.data);
+                  }catch (error){
+                    console.log(error)
+                  }finally{
+                    setActiveTab("posts")
+                    document.body.style.cursor = "default";
+                  }
+                }}
               >
                 My Posts
               </Button>
               <Button
                 className={`pb-2 ${activeTab === "bookmarks" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
-                onClick={() => setActiveTab("bookmarks")}
+                onClick={async () => {
+                  try{
+                    document.body.style.cursor = "wait";
+                    const bmRes = await post.getMyBookmarks();
+                    setBookmarks(bmRes.data.results || bmRes.data);
+                    
+                  }catch (error){
+                    console.log(error)
+                  }finally{
+                    setActiveTab("bookmarks")
+                    document.body.style.cursor = "default";
+                  }
+                }}
               >
                 Bookmarks
               </Button>
               <Button
                 className={`pb-2 ${activeTab === "followers" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={async () => {
-                  await fetchMyFollowers();
-                  setActiveTab("followers");
+                  try {
+                    document.body.style.cursor = "wait";
+                    await fetchMyFollowers();
+                  } catch (error) {
+                    console.error(error);
+                  } finally {
+                    setActiveTab("followers");
+                    document.body.style.cursor = "default";
+                  }
                 }}
+
               >
                 Followers
               </Button>
               <Button
                 className={`pb-2 ${activeTab === "following" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={async () => {
-                  await fetchMyFollowing();
-                  setActiveTab("following");
+                  try {
+                    document.body.style.cursor = "wait";
+                    await fetchMyFollowing();
+                  } catch (error) {
+                    console.error(error);
+                  } finally {
+                    setActiveTab("following");
+                    document.body.style.cursor = "default";
+                  }
                 }}
+
               >
                 Following
               </Button>
@@ -787,7 +714,7 @@ const handleShowFollowing = async () => {
                                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                               ></path>
                             </svg>
-                            <span>Unfollowing...</span>
+                            {/* <span>Unfollowing...</span> */}
                           </>
                         ) : (
                           "Unfollow"
@@ -800,102 +727,19 @@ const handleShowFollowing = async () => {
               </div>
             )}
           </div>
-
-
-
-          {(isFollowersModalOpen || isFollowingModalOpen) && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-              onClick={() => {
-                setIsFollowersModalOpen(false);
-                setIsFollowingModalOpen(false);
-              }}
-            >
-              <div
-                className="bg-white rounded-lg shadow-lg p-4 max-w-md w-full max-h-[80vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2 className="text-lg font-semibold mb-4">
-                  {isFollowersModalOpen ? "Followers" : "Following"}
-                </h2>
-                {modalUsers.length === 0 ? (
-                  <p className="text-gray-600">No users found.</p>
-                ) : (
-                  modalUsers.map((user) => (
-                    <div
-                      key={user.user_id}
-                      className="flex items-center gap-3 mb-3 p-2 hover:bg-gray-100 rounded"
-                    >
-                      <img
-                        src={
-                          user.profile_picture
-                            ? user.profile_picture.startsWith("http")
-                              ? user.profile_picture
-                              : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${user.profile_picture}`
-                            : DEFAULT_PROFILE_PICTURE
-                        }
-                        alt={user.full_name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="font-medium">{user.full_name}</p>
-                        <p className="text-sm text-gray-500">{user.username}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-
-          <DeleteConfirmModal
-            isOpen={isDeleteModalOpen}
-            onClose={() => setIsDeleteModalOpen(false)}
-            onConfirm={async () => {
-              if (postToDelete) {
-                await handleDeletePost(postToDelete);
-              }
-              setIsDeleteModalOpen(false);
-              setPostToDelete(null);
-            }}
-          />
-
+        
         
         </div>
       </main>
 
 
-      {/* 🖼️ Profile Picture Modal */}
-      {isImageModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 bg-opacity-30"
-          onClick={() => setIsImageModalOpen(false)}
-        >
-          <div
-            className="relative bg-white rounded-lg shadow-lg p-2 max-w-[90%] max-h-[90%]"
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
-          >
-            <button
-              onClick={() => setIsImageModalOpen(false)}
-              className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80"
-            >
-              ✕
-            </button>
-            <img
-              src={
-                  profile?.profile_picture
-                    ? profile.profile_picture.startsWith("http")
-                      ? profile.profile_picture
-                      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile.profile_picture}`
-                    : DEFAULT_PROFILE_PICTURE
-                }
-              alt={profile.full_name || "User"}
-              className="rounded-lg max-w-full max-h-[80vh] object-contain"
-            />
-          </div>
-        </div>
-      )}
+     {/* 🖼️ Profile Picture Modal */}
+      <ProfileImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        imageUrl={profile?.profile_picture}
+        altText={profile?.full_name || "User"}
+      />
 
 
       {/* 🖼️ Profile Picture Preview Modal */}

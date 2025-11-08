@@ -50,12 +50,12 @@ export default function SinglePostPage() {
 
   return (
     <div>
-      <div className="md:px-6 px-3">
+      <div className="md:px-6 px-1">
         <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
       </div>
 
-      <div className="min-h-screen bg-gray-50 flex justify-center px-3 md:px-6">
-        <div className="max-w-2xl w-full mt-6">
+      <div className="min-h-screen bg-gray-50 flex justify-center px-2 md:px-6">
+        <div className="max-w-2xl w-full md:mt-6 ">
           <PostCard
             id={post.id}
             author={{

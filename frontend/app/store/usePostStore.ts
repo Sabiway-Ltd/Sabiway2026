@@ -1165,7 +1165,6 @@ unlikePost: async (id: string) => {
 
       // Flatten to original posts if needed
       const formattedReposts = res.data.map((r: any) => r.original_post ?? r);
-      console.log("From Store", formattedReposts)
 
       // Store in the global state
       set({ myReposts: formattedReposts });

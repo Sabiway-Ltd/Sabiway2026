@@ -1,7 +1,7 @@
 import PostCard from "../feed/PostCard";
 
 export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false }) => (
-  <div className="space-y-4 w-full">
+  <div className="md:space-y-4 space-y-2 w-full">
     {posts.length === 0 ? (
   <p className="text-gray-600">{emptyMessage}</p>
     ) : (

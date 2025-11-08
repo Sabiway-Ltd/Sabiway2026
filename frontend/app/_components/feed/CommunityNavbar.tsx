@@ -230,7 +230,9 @@ export default function CommunityNavbar({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute md:right-0 -right-24 space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
+                  className={`absolute md:right-0 
+                    ${ pathname === "/community" ?  '-right-28' : '-right-14' }
+                    space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto`}
                 >
                   {loading && notifications.length === 0 ? (
                     <p className="text-sm text-center text-gray-500 py-4">Loading...</p>

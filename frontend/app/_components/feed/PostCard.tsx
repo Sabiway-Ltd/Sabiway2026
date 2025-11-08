@@ -680,7 +680,7 @@ export default function PostCard({
             <div className="flex gap-2 mt-2">
               <button
                 onClick={() => handleSavePost(id)}
-                className="bg-green-500 text-white px-3 py-1 rounded"
+                className="bg-[#008753] text-white px-3 py-1 rounded"
                 disabled={uploadingPostImage}
               >
                 {uploadingPostImage ? "Saving..." : "Save"}

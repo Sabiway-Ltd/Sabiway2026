@@ -123,7 +123,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen md:px-6 px-3 pb-5">
+    <div className="min-h-screen md:px-6 px-1 pb-5">
       <CommunityNavbar
         onCreatePost={() => setShowPostBox(true)}
         onSearch={handleSearchSubmit}
@@ -133,13 +133,13 @@ useEffect(() => {
         }}
       />
 
-      <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10 px-5 mx-auto">
+      <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10  mx-auto">
         
-        <div className="md:w-[22rem] hidden lg:block mt-4">
+        <div className="md:w-[22rem] hidden lg:block md:mt-4">
           <PeopleYouMayKnow/>
         </div>
 
-        <main className="flex-[3] mt-4  w-full">
+        <main className="flex-[3] md:mt-4  w-full">
           <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
           {/* Search type buttons */}
@@ -263,7 +263,7 @@ useEffect(() => {
 
           {/* Posts */}
           {searchType === "posts" && displayedPosts.length > 0 && (
-            <div className="space-y-4">
+            <div className="md:space-y-4 space-y-1">
                <RenderPostList 
                   posts={displayedPosts}
                   emptyMessage=""

@@ -22,9 +22,9 @@ export default function HashtagPage() {
   const posts = Array.isArray(filteredPosts) ? filteredPosts : [];
 
   return (
-    <div className="min-h-screen md:px-6 px-3 pb-5">
+    <div className="min-h-screen md:px-6 px-1 pb-5">
       <CommunityNavbar />
-      <main className="flex justify-center mt-5 w-full md:px-10 px-5 mx-auto">
+      <main className="flex justify-center md:mt-5 w-full md:px-10 px-1 mx-auto">
         <div className="flex-[3] w-full max-w-2xl">
           <h1 className="text-xl font-semibold mb-4 text-gray-800">
             Posts tagged with <span className="text-[#008753]">#{tag}</span>

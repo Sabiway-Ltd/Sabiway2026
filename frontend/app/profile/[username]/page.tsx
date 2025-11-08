@@ -18,11 +18,15 @@ import { DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import IconTooltipButton from "@/app/_components/common/IconTooltipButton";
 import { Smartphone } from "lucide-react";
 import { RenderPostList } from "@/app/_components/common/RenderPostList ";
+import ProfileImageModal from "@/app/_components/common/ProfileImageModal";
+
 
 export default function ProfilePage() {
   const { username } = useParams();
   const { user } = useAuthStore();
-   const { profile: currentUser } = useProfileStore();
+  const { profile: currentUser } = useProfileStore();
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
 
   // console.log(currentUser)
 
@@ -124,99 +128,111 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <div className="md:px-6 px-3">
+      <div className="md:px-6 px-1">
         <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
       </div>
 
-      <div className="max-w-3xl mx-auto pb-5 px-4">
-        {/* 🔹 Header */}
-        <div className="flex justify-center">
-          <div className="flex gap-3 items-center">
-            <img
-              src={
-                profile_picture && profile_picture.startsWith("http")
-                  ? profile_picture
-                  : profile_picture
-                  ? `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile_picture}`
-                  : DEFAULT_AVATAR
-              }
-              alt={full_name}
-              className="w-24 h-24 rounded-full object-cover border border-gray-300"
-            />
-            <div className="space-y-1">
-              <h1 className="mt-4 text-2xl font-semibold">{full_name}</h1>
+      <div className="max-w-3xl mx-auto pb-5 md:px-4 px-2">
+        {/* 🔹 Profile Header */}
+        <div className="flex flex-col items-center gap-4 mb-8 relative">
+          {/* 🖼 Profile Picture */}
+          <div className="relative w-[100px] h-[100px]">
+            <div className="relative w-24 h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
+              <button
+                onClick={() => setIsImageModalOpen(true)}
+                className="block w-full h-full focus:outline-none"
+              >
+                <img
+                  src={
+                    profile_picture && profile_picture.startsWith("http")
+                      ? profile_picture
+                      : profile_picture
+                      ? `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile_picture}`
+                      : DEFAULT_AVATAR
+                  }
+                  alt={full_name}
+                  className="w-full h-full rounded-full object-cover transition-transform duration-200 hover:scale-105"
+                  onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
+                />
+              </button>
+            </div>
+          </div>
 
-              <div className="flex items-center gap-2">
-                <p className="text-gray-500">{userUsername}</p>
-                <Button
-                  onClick={handleCopyProfileLink}
-                  variant="outline"
-                  className="flex items-center gap-1 text-xs px-1 py-2 h-auto"
-                >
-                  <BiLinkAlt size={12} />
-                </Button>
+          {/* 🧾 Profile Info */}
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-[#008753]">{full_name}</h1>
 
+            <div className="flex items-center justify-center gap-1">
+              <p className="text-gray-600">{userUsername}</p>
+              <button
+                onClick={handleCopyProfileLink}
+                className="flex items-center gap-1 text-xs ml-2 h-auto rounded-md text-[#008753] hover:text-green-900 transition"
+              >
+                <BiLinkAlt size={16} />
+              </button>
+            </div>
 
-                {currentUser?.user_id !== user_id && (
-                  <Button
-                    onClick={handleFollowToggle}
-                    disabled={loadingFollow}
-                    variant={isFollowing ? "secondary" : "default"}
-                    className={`text-xs px-3 py-2 h-auto ${
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-3">
+              {job && (
+                <div className="flex items-center gap-1 text-gray-600 text-sm">
+                  {job}
+                </div>
+              )}
+
+              {currentUser?.user_id !== user_id && (
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={loadingFollow}
+                  className={`text-xs px-4 py-2 rounded-md font-medium shadow-sm transition-all duration-200 focus:outline-none
+                    ${
                       isFollowing
                         ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                         : "bg-[#008753] text-white hover:bg-green-900"
-                    }`}
-                  >
-                    {loadingFollow ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : isFollowing ? (
-                      "Following"
-                    ) : (
-                      "Follow"
-                    )}
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-x-3">
-                {job && (
-                  <div className="text-gray-600 flex gap-1 items-center">
-                    {job}
-                  </div>
-                )}
-                <IconTooltipButton
-                  onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
-                  icon={Smartphone}
-                  label="Contact on Mobile App"
-                  // bg="bg-[#008753]"
-                  // textColor="text-white"
-                />
-              </div>
+                    }
+                    ${loadingFollow ? "opacity-70 cursor-not-allowed" : ""}
+                  `}
+                >
+                  {loadingFollow ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : isFollowing ? (
+                    "Following"
+                  ) : (
+                    "Follow"
+                  )}
+                </button>
+              )}
+
+              <IconTooltipButton
+                onClick={() =>
+                  window.open("https://play.google.com/store/apps?hl=en", "_blank")
+                }
+                icon={Smartphone}
+                label="Contact on Mobile App"
+              />
+            </div>
+
+          </div>
+
+          {/* 📊 Stats */}
+          <div className="flex justify-around text-center w-full mt-4">
+            <div>
+              <p className="font-semibold text-lg">{followers_count}</p>
+              <p className="text-gray-500 text-sm">Followers</p>
+            </div>
+            <div>
+              <p className="font-semibold text-lg">{following_count}</p>
+              <p className="text-gray-500 text-sm">Following</p>
+            </div>
+            <div>
+              <p className="font-semibold text-lg">{posts_count}</p>
+              <p className="text-gray-500 text-sm">Posts</p>
             </div>
           </div>
         </div>
 
-        {/* 🔹 Stats */}
-        <div className="mt-6 flex justify-around text-center">
-          <div>
-            <p className="font-semibold text-lg">{followers_count}</p>
-            <p className="text-gray-500 text-sm">Followers</p>
-          </div>
-          <div>
-            <p className="font-semibold text-lg">{following_count}</p>
-            <p className="text-gray-500 text-sm">Following</p>
-          </div>
-          <div>
-            <p className="font-semibold text-lg">{posts_count}</p>
-            <p className="text-gray-500 text-sm">Posts</p>
-          </div>
-        </div>
-
-      
-
         {/* 🔹 Posts Section */}
         <div className="mt-8">
-          <h2 className="font-semibold text-lg mb-3">Posts</h2>
+          <h2 className="font-semibold text-lg mb-3 text-center border-b border-solid pb-2">Posts</h2>
 
           {userPosts.length > 0 ? (
             <div className="space-y-6">
@@ -226,19 +242,29 @@ export default function ProfilePage() {
                 reloadFn={getPostById}
               />
 
-
               {postsLoading && (
                 <div className="flex justify-center items-center gap-2 py-4">
-                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                <p className="text-gray-400 text-sm">Loading more posts...</p>
-              </div>
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                  <p className="text-gray-400 text-sm">Loading more posts...</p>
+                </div>
               )}
             </div>
           ) : (
-            <p className="text-gray-500">No posts yet.</p>
+            <p className="text-gray-500 text-center">No posts yet.</p>
           )}
         </div>
       </div>
+
+
+
+      {/* 🖼️ Profile Picture Modal */}
+      <ProfileImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        imageUrl={profile_picture}
+        altText={full_name}
+      />
+
     </div>
   );
 }
