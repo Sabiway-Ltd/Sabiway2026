@@ -34,8 +34,8 @@ services:
       # FRONTEND_URL: "http://localhost:3000"      # user-facing frontend
 
       # FOR VPS
-      BACKEND_URL: "http://195.110.58.46:8000"       # must match Google Cloud redirect URI
-      FRONTEND_URL: "http://195.110.58.46:3000"      # user-facing frontend
+      BACKEND_URL: "https://django.sabiway.com"       # must match Google Cloud redirect URI
+      FRONTEND_URL: "https://www.sabiway.com"      # user-facing frontend
 
       # Cloudinary
       CLOUDINARY_CLOUD_NAME: "devqbjptr"
@@ -70,8 +70,8 @@ services:
       # FRONTEND_URL: "http://localhost:3000"     # frontend accessible from host
 
       # For VPS
-      DJANGO_API_URL: "http://195.110.58.46:8000"   # backend from host
-      FRONTEND_URL: "http://195.110.58.46:3000"  
+      DJANGO_API_URL: "https://django.sabiway.com"   # backend from host
+      FRONTEND_URL: "https://www.sabiway.com"  
       PORT: 5000
     command: ["node", "server.js"]
 
@@ -96,7 +96,7 @@ services:
       # NEXT_PUBLIC_FRONTEND_URL: "http://localhost:3000"
       
       # For VPS
-      NEXT_PUBLIC_FRONTEND_URL: "http://195.110.58.46:3000"
+      NEXT_PUBLIC_FRONTEND_URL: "https://www.sabiway.com"
 
     depends_on:
       - express

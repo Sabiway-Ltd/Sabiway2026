@@ -7,7 +7,7 @@ module.exports = {
 
   // FOR VPS
   DJANGO_BASE_URL: "http://web:8000/api",
-  FRONTEND_URL: "http://195.110.58.46:3000",
+  FRONTEND_URL: "https://www.sabiway.com",
 
   // FOR LOCAL TESTING
   // DJANGO_BASE_URL: "http://localhost:8000/api",

@@ -51,7 +51,7 @@
  * - Fallbacks for local dev or server-side rendering
  */
 export const EXPRESS_URL = isBrowser
-  ? process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://195.110.58.46:5000" // Browser fallback
+  ? process.env.NEXT_PUBLIC_EXPRESS_API_URL || "https://express.sabiway.com" // Browser fallback
   : process.env.NEXT_PUBLIC_EXPRESS_API_URL || "http://express:5000";  // SSR / Docker internal
 
 /**
@@ -60,7 +60,7 @@ export const EXPRESS_URL = isBrowser
  * - Fallbacks for local dev or server-side rendering
  */
 export const DJANGO_URL = isBrowser
-  ? process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://195.110.58.46:8000"
+  ? process.env.NEXT_PUBLIC_DJANGO_API_URL || "https://django.sabiway.com"
   : process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://web:8000";
 
 /**
@@ -68,4 +68,4 @@ export const DJANGO_URL = isBrowser
  * - The URL of your frontend, used for redirects / OAuth callbacks
  */
 export const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || (isBrowser ? window.location.origin : "http://195.110.58.46:3000");
+  process.env.NEXT_PUBLIC_FRONTEND_URL || (isBrowser ? window.location.origin : "https://www.sabiway.com");
