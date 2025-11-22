@@ -21,6 +21,7 @@ const allowedOrigins = [
   FRONTEND_URL,
   "http://localhost:3000",
   "http://frontend:3000",
+  "http://195.110.58.46:3000"
 ];
 
 app.use(
@@ -57,7 +58,7 @@ app.use("/api/test-email", require("./routes/testEmail"));
 // ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://frontend:3000", FRONTEND_URL],
+    origin: ["http://localhost:3000", "http://frontend:3000", FRONTEND_URL, "http://195.110.58.46:3000"],
     credentials: true,
     methods: ["GET", "POST"],
   },

@@ -52,8 +52,12 @@ DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 # URLs
 # ---------------------------------------------------------------------
 # Use Docker environment variables if provided, otherwise fallback to defaults
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
+# FOR VPS
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://195.110.58.46:3000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://195.110.58.46:8000")
 
 # FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
 # BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
