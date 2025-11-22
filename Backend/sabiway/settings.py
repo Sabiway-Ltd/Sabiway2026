@@ -60,7 +60,7 @@ DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 # BACKEND_URL = os.getenv("BACKEND_URL", "https://django.sabiway.com")
 
 # Half VPS
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
+FRONTEND_URL = "https://sabiway2025.vercel.app"
 BACKEND_URL = os.getenv("BACKEND_URL", "https://django.sabiway.com")
 
 
