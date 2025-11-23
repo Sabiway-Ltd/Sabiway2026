@@ -53,12 +53,12 @@ DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 # URLs
 # ---------------------------------------------------------------------
 # Use Docker environment variables if provided, otherwise fallback to defaults
-FRONTEND_URL = "http://localhost:3000"
-BACKEND_URL = "http://localhost:8000"
+# FRONTEND_URL = "http://localhost:3000"
+# BACKEND_URL = "http://localhost:8000"
 
 # FOR VPS
-# FRONTEND_URL = "https://www.sabiway.com"
-# BACKEND_URL = "https://django.sabiway.com"
+FRONTEND_URL = "https://www.sabiway.com"
+BACKEND_URL = "https://django.sabiway.com"
 
 # Half VPS
 # FRONTEND_URL = "https://sabiway2025.vercel.app"

@@ -1,13 +1,13 @@
 // config/index.js
 
 module.exports = {
-  // FOR DOCKER
+  // FOR LOCAL DOCKER
   DJANGO_BASE_URL: "http://172.17.0.1:8000/api",
   FRONTEND_URL: "http://localhost:3000",
 
   // FOR VPS
-  // DJANGO_BASE_URL: "http://web:8000/api",
-  // FRONTEND_URL: "https://www.sabiway.com",
+  DJANGO_BASE_URL: "http://172.17.0.1:8000/api",
+  FRONTEND_URL: "https://www.sabiway.com",
 
   // Half VPS
   // DJANGO_BASE_URL: "http://web:8000/api",

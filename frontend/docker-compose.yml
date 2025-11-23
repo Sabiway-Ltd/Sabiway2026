@@ -9,6 +9,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_DJANGO_URL: "http://localhost:8000/api"  # Django backend
-      NEXT_PUBLIC_EXPRESS_URL: "http://localhost:5000"     # Express backend
+    # For Local Docker
+      # NEXT_PUBLIC_DJANGO_URL: "http://localhost:8000/api"  # Django backend
+      # NEXT_PUBLIC_EXPRESS_URL: "http://localhost:5000"     # Express backend
+
+      # For VPS
+      NEXT_PUBLIC_DJANGO_URL: "https://django.sabiway.com"  # Django backend
+      NEXT_PUBLIC_EXPRESS_URL: "https://express.sabiway.com"     # Express backend
     restart: unless-stopped
