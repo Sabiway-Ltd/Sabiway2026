@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: waitlist_app
+    ports:
+      - "4000:4000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=4000
+      - RESEND_API_KEY=re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ  # Set this in your host environment
+    volumes:
+      - .:/app
