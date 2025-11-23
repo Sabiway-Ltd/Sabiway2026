@@ -283,7 +283,7 @@
       submitBtn.textContent = "Joining...";
 
       try {
-        const res = await axios.post("https://sabiwaywaitlist.onrender.com/api/waitlist", { name, email });
+        const res = await axios.post("/api/waitlist", { name, email });
 
         if (res.data.status === "success" || res.data.success) {
           showPopup("Success 🎉", "You’re on the waitlist! We'll be in touch soon.", true);

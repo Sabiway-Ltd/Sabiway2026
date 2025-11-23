@@ -4,7 +4,7 @@ import io
 import pandas as pd
 import requests
 from datetime import datetime
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
@@ -246,6 +246,15 @@ def export_waitlist():
         as_attachment=True,
         download_name="waitlist.xlsx"
     )
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
 
 # -----------------------------
 # Run
