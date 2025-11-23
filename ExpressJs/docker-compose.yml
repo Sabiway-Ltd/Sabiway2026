@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  express:
+    build:
+      context: .
+      dockerfile: Dockerfile   # make sure your Dockerfile is in the same folder
+    container_name: express_app
+    ports:
+      - "5000:5000"            # maps container port 5000 to host port 5000
+    environment:
+      PORT: 5000               # optional, can be used in server.js
+      DJANGO_URL: "http://172.17.0.1:8000"  # if you need to call Django externally
+    restart: unless-stopped

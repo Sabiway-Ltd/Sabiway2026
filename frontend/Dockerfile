@@ -1,29 +1,20 @@
-# frontend/Dockerfile
+# Use Node.js 20 base image
+FROM node:20-alpine
 
-# Use an official Node.js image
-FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy and install dependencies
+# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN npm install
 
-# Copy all app files
+# Copy rest of the project
 COPY . .
 
-# Build the Next.js app
+# Build Next.js production assets
 RUN npm run build
 
-# Run the production server
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-# Copy necessary files from builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-
-# Expose the port and start the app
+# Expose port
 EXPOSE 3000
-CMD ["npm", "start"]
+
+# Run Next.js production server
+CMD ["npm", "run", "start"]

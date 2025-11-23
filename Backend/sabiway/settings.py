@@ -10,6 +10,7 @@ from pathlib import Path
 import environ
 import os
 from datetime import timedelta
+import dj_database_url
 
 # ---------------------------------------------------------------------
 # Paths
@@ -30,7 +31,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # Core settings
 # ---------------------------------------------------------------------
 DEBUG = env("DEBUG", default="True")
-SECRET_KEY = env("SECRET_KEY", default="insecure-secret")
+SECRET_KEY = "insecure-secret"
 # ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
 #     "localhost",
 #     "127.0.0.1",
@@ -52,27 +53,27 @@ DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
 # URLs
 # ---------------------------------------------------------------------
 # Use Docker environment variables if provided, otherwise fallback to defaults
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-# BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+FRONTEND_URL = "http://localhost:3000"
+BACKEND_URL = "http://localhost:8000"
 
 # FOR VPS
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "https://www.sabiway.com")
-# BACKEND_URL = os.getenv("BACKEND_URL", "https://django.sabiway.com")
+# FRONTEND_URL = "https://www.sabiway.com"
+# BACKEND_URL = "https://django.sabiway.com"
 
 # Half VPS
-FRONTEND_URL = "https://sabiway2025.vercel.app"
-BACKEND_URL = os.getenv("BACKEND_URL", "https://django.sabiway.com")
+# FRONTEND_URL = "https://sabiway2025.vercel.app"
+# BACKEND_URL = "https://django.sabiway.com"
 
 
 
-# FRONTEND_URL = os.getenv("FRONTEND_URL", "https://sabiway2025.vercel.app")
-# BACKEND_URL = os.getenv("BACKEND_URL", "https://sabiway-9wq4.onrender.com")
+# FRONTEND_URL = "https://sabiway2025.vercel.app"
+# BACKEND_URL = "https://sabiway-9wq4.onrender.com"
 
 
 
 
 
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", f"{BACKEND_URL}/api/auth/google-login/")
+GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
 
 # ---------------------------------------------------------------------
@@ -157,24 +158,12 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 # Use DATABASE_URL from .env if available, otherwise SQLite
 
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db")
+    "default": dj_database_url.parse(
+        "postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db",
+        conn_max_age=600,
+        ssl_require=True,  # Render PostgreSQL requires SSL
+    )
 }
-
-# FOR DOCKER
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'u487143489_sabiway_db',
-#         'USER': 'u487143489_sabiway',
-#         'PASSWORD': 'Sabiway@2025',
-#         'HOST': 'nl-srv-web929.main-hosting.eu',
-#         'PORT': '3306',
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-#         },
-#     }
-# }
 
 
 

@@ -1,21 +1,21 @@
-# ExpressJs/Dockerfile
-
 # Use lightweight Node.js base image
 FROM node:20-alpine
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy package files for dependency installation
+# Copy package files first for caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --production
+# Install production dependencies
+RUN npm install --production && npm cache clean --force
 
 # Copy all project files
 COPY . .
 
-# Expose the Express port
+# Set port environment variable
+ENV PORT=5000
+
+# Expose Express port
 EXPOSE 5000
 
 # Run the server

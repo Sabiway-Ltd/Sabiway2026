@@ -2,16 +2,16 @@
 
 module.exports = {
   // FOR DOCKER
-  // DJANGO_BASE_URL: "http://web:8000/api",
-  // FRONTEND_URL: "http://localhost:3000",
+  DJANGO_BASE_URL: "http://172.17.0.1:8000/api",
+  FRONTEND_URL: "http://localhost:3000",
 
   // FOR VPS
   // DJANGO_BASE_URL: "http://web:8000/api",
   // FRONTEND_URL: "https://www.sabiway.com",
 
   // Half VPS
-  DJANGO_BASE_URL: "http://web:8000/api",
-  FRONTEND_URL: "https://sabiway2025.vercel.app",
+  // DJANGO_BASE_URL: "http://web:8000/api",
+  // FRONTEND_URL: "https://sabiway2025.vercel.app",
 
   // FOR LOCAL TESTING
   // DJANGO_BASE_URL: "http://localhost:8000/api",
