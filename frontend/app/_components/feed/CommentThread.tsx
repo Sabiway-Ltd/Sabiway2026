@@ -215,7 +215,7 @@ export default function CommentThread({
     removeReplyImage();
     setShowReplyBox(false);
     setShowReplies(true);
-    toast.success("Reply added!");
+    // toast.success("Reply added!");
   } catch (err) {
     console.error("Failed to submit reply:", err);
     toast.error("Failed to submit reply");

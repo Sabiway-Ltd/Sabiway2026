@@ -6,6 +6,7 @@ import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import PeopleYouMayKnow from "../profile/PeopleYouMayKnow";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Aside() {
   const {
@@ -16,6 +17,8 @@ export default function Aside() {
     activeHashtag,
     loadingHashtag,
   } = usePostStore();
+
+  const router = useRouter()
 
   const { topContributors, getTopContributors, loading } = useProfileStore();
 
@@ -44,8 +47,12 @@ export default function Aside() {
               return (
                 <button
                   key={idx}
-                  onClick={() => handleHashtagClick(tag.tag)}
-                  disabled={loadingHashtag && !isActive}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(`/hashtag/${encodeURIComponent(tag.tag)}`);
+                  }}
+                  // disabled={loadingHashtag && !isActive}
                   className={`px-4 py-2 border rounded-md text-sm font-medium shadow-sm transition
                     ${isActive ? "bg-[#008753] text-white border-[#008753]" : "bg-white text-gray-700 hover:bg-gray-100"}
                     ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}

@@ -7,6 +7,7 @@ import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { usePostStore } from "@/app/store/usePostStore";
+import Link from "next/link";
 
 export default function ProfileDropdown() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -26,7 +27,8 @@ export default function ProfileDropdown() {
       : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
   };
 
-  const handleLogoClick = () => {
+  const handleHomeClick = () => {
+    // router.push("/community");
     window.location.href = "/community";
     triggerRefresh();
   };
@@ -68,11 +70,7 @@ export default function ProfileDropdown() {
             className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2"
           >
             {pathname !== "/profile" && (
-              <button
-                onClick={() => {
-                  setProfileDropdownOpen(false);
-                  router.push("/profile");
-                }}
+              <Link href={"/profile"}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
               >
                 <img
@@ -81,12 +79,12 @@ export default function ProfileDropdown() {
                   alt="Profile"
                 />
                 Profile
-              </button>
+              </Link>
             )}
 
             {pathname !== "/community" && (
               <button
-                onClick={() => handleLogoClick()}
+                onClick={() => handleHomeClick()}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
               >
                 <svg

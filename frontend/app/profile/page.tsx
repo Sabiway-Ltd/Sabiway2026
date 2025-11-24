@@ -23,6 +23,7 @@ import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
 import PostCard from "../_components/feed/PostCard";
 import { RenderPostList } from "../_components/common/RenderPostList ";
 import ProfileImageModal from "../_components/common/ProfileImageModal";
+import ProfilePageSkeleton from "../_components/profile/ProfilePageSkeleton";
 
 
 export default function ProfilePage() {
@@ -51,7 +52,7 @@ export default function ProfilePage() {
   toggleFollow, // ✅ add this
 } = useProfileStore();
 
-const { currentPost, getPostById, error } = usePostStore();
+const { currentPost, getPostById, error,  } = usePostStore();
 
   const { set } = usePostStore.getState(); // direct access for updating
 
@@ -77,25 +78,25 @@ const { currentPost, getPostById, error } = usePostStore();
 const [loadingId, setLoadingId] = useState<number | null>(null);
 
 
-const handleFollowToggle = async (user: any) => {
-  const isFollowing = localFollowing[user.user_id] ?? user.is_following_you;
 
-  // Optimistic update
-  setLocalFollowing((prev) => ({ ...prev, [user.user_id]: !isFollowing }));
-  setLoadingFollowId(user.user_id);
+  const handleFollowToggle = async (user: any) => {
+    const isFollowing = localFollowing[user.user_id] ?? user.is_following;
 
-  try {
-    await toggleFollow(user.user_id);
-    toast.success(isFollowing ? `Unfollowed ${user.full_name}` : `Followed ${user.full_name}`);
-  } catch (err) {
-    console.error(err);
-    toast.error("Action failed");
-    // Rollback on error
-    setLocalFollowing((prev) => ({ ...prev, [user.user_id]: isFollowing }));
-  } finally {
-    setLoadingFollowId(null);
-  }
-};
+    // Optimistic update (instant UI update)
+    setLocalFollowing((prev) => ({ ...prev, [user.user_id]: !isFollowing }));
+
+    try {
+      await toggleFollow(user.user_id);
+      // toast.success(isFollowing ? `Unfollowed ${user.full_name}` : `Followed ${user.full_name}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Action failed");
+
+      // Rollback
+      setLocalFollowing((prev) => ({ ...prev, [user.user_id]: isFollowing }));
+    }
+  };
+
 
 
   const handleCopyProfileLink = async (userUsername) => {
@@ -189,11 +190,58 @@ const handleFollowToggle = async (user: any) => {
   };
 
 
+  const fetchMyPosts = async () => {
+    try{
+      document.body.style.cursor = "wait";
+      const postsRes = await post.getByMe();
+      setMyPosts(postsRes.data.results || postsRes.data);
+    }catch (error){
+      console.log(error)
+    }finally{
+      document.body.style.cursor = "default";
+    }
+  }
+
+  const fetchBookmarkPosts = async () => {
+    try{
+      document.body.style.cursor = "wait";
+      const bmRes = await post.getMyBookmarks();
+      setBookmarks(bmRes.data.results || bmRes.data);
+      
+    }catch (error){
+      console.log(error)
+    }finally{
+      document.body.style.cursor = "default";
+    }
+  }
+
+  const handleUnfollow = async (user: any) => {
+    const wasFollowing = localFollowing[user.user_id] ?? user.is_following;
+
+    // Instantly flip button UI
+    setLocalFollowing(prev => ({ ...prev, [user.user_id]: false }));
+
+    try {
+      await toggleFollow(user.user_id);
+    } catch (err) {
+      console.error(err);
+
+      // Rollback
+      setLocalFollowing(prev => ({ ...prev, [user.user_id]: wasFollowing }));
+    }
+  };
+
+
+
 
   if (loading || profileLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">Loading your profile...</p>
+      <div>
+        <div className="md:px-6 px-1">
+          <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
+        </div>
+
+        <ProfilePageSkeleton/>
       </div>
     );
   }
@@ -201,7 +249,7 @@ const handleFollowToggle = async (user: any) => {
   if (!profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">No profile found.</p>
+        {/* <p className="text-gray-600">No profile found.</p> */}
       </div>
     );
   }
@@ -313,16 +361,8 @@ const handleFollowToggle = async (user: any) => {
               <Button
                 className={`pb-2 ${activeTab === "posts" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={async () => {
-                  try{
-                    document.body.style.cursor = "wait";
-                    const postsRes = await post.getByMe();
-                    setMyPosts(postsRes.data.results || postsRes.data);
-                  }catch (error){
-                    console.log(error)
-                  }finally{
-                    setActiveTab("posts")
-                    document.body.style.cursor = "default";
-                  }
+                  setActiveTab("posts");
+                  fetchMyPosts()
                 }}
               >
                 My Posts
@@ -330,17 +370,8 @@ const handleFollowToggle = async (user: any) => {
               <Button
                 className={`pb-2 ${activeTab === "bookmarks" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={async () => {
-                  try{
-                    document.body.style.cursor = "wait";
-                    const bmRes = await post.getMyBookmarks();
-                    setBookmarks(bmRes.data.results || bmRes.data);
-                    
-                  }catch (error){
-                    console.log(error)
-                  }finally{
-                    setActiveTab("bookmarks")
-                    document.body.style.cursor = "default";
-                  }
+                  setActiveTab("bookmarks");
+                  fetchBookmarkPosts()
                 }}
               >
                 Bookmarks
@@ -348,13 +379,13 @@ const handleFollowToggle = async (user: any) => {
               <Button
                 className={`pb-2 ${activeTab === "followers" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={async () => {
+                  setActiveTab("followers");
                   try {
                     document.body.style.cursor = "wait";
                     await fetchMyFollowers();
                   } catch (error) {
                     console.error(error);
                   } finally {
-                    setActiveTab("followers");
                     document.body.style.cursor = "default";
                   }
                 }}
@@ -365,13 +396,13 @@ const handleFollowToggle = async (user: any) => {
               <Button
                 className={`pb-2 ${activeTab === "following" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
                 onClick={async () => {
+                  setActiveTab("following");
                   try {
                     document.body.style.cursor = "wait";
                     await fetchMyFollowing();
                   } catch (error) {
                     console.error(error);
                   } finally {
-                    setActiveTab("following");
                     document.body.style.cursor = "default";
                   }
                 }}
@@ -568,8 +599,8 @@ const handleFollowToggle = async (user: any) => {
               <div className="flex ">
               <RenderPostList
                 posts={myPosts}
-                emptyMessage="You haven’t posted anything yet."
-                reloadFn={getPostById}
+                // emptyMessage="You haven’t posted anything yet."
+                reloadFn={fetchMyPosts}
               />
 
               </div>
@@ -579,8 +610,8 @@ const handleFollowToggle = async (user: any) => {
             {activeTab === "bookmarks" && (
               <RenderPostList
                 posts={bookmarks.map(bm => bm.post)}
-                emptyMessage="No bookmarks yet."
-                reloadFn={getPostById}
+                // emptyMessage="No bookmarks yet."
+                reloadFn={fetchBookmarkPosts}
               />
 
             )}
@@ -588,7 +619,7 @@ const handleFollowToggle = async (user: any) => {
             {activeTab === "followers" && (
               <div className="space-y-4">
                 {myFollowers.length === 0 ? (
-                  <p className="text-gray-600">You have no followers yet.</p>
+                  <p className="text-gray-600"></p>
                 ) : (
                   myFollowers.map((user) => (
                     <div
@@ -621,21 +652,15 @@ const handleFollowToggle = async (user: any) => {
                         whileTap={{ scale: 0.95 }}
                         whileHover={{ scale: 1.05 }}
                         onClick={() => handleFollowToggle(user)}
-                        disabled={loadingFollowId === user.user_id}
                         className={`px-3 py-1 rounded-full text-sm flex items-center justify-center gap-2 transition-all ${
                           (localFollowing[user.user_id] ?? user.is_following)
                             ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                             : "bg-[#008753] text-white hover:bg-green-700"
                         }`}
                       >
-                        {loadingFollowId === user.user_id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (localFollowing[user.user_id] ?? user.is_following) ? (
-                          "Following"
-                        ) : (
-                          "Follow"
-                        )}
+                        {(localFollowing[user.user_id] ?? user.is_following) ? "Following" : "Follow"}
                       </motion.button>
+
                     </div>
                   ))
                 )}
@@ -646,7 +671,7 @@ const handleFollowToggle = async (user: any) => {
             {activeTab === "following" && (
               <div className="space-y-4">
                 {myFollowing.length === 0 ? (
-                  <p className="text-gray-600">You are not following anyone yet.</p>
+                  <p className="text-gray-600"></p>
                 ) : (
                   myFollowing.map((user) => (
                     <div
@@ -674,52 +699,19 @@ const handleFollowToggle = async (user: any) => {
                       </Link>
 
                       <button
-                        onClick={async () => {
-                          try {
-                            setUnfollowingUserId(user.user_id); // start loading
-                            await toggleFollow(user.user_id);
-                          } catch (err) {
-                            console.error(err);
-                          } finally {
-                            setUnfollowingUserId(null); // stop loading
-                          }
-                        }}
-                        disabled={unfollowingUserId === user.user_id}
+                        onClick={() => handleUnfollow(user)}
                         className={`flex items-center justify-center gap-2 px-3 py-1 rounded-full md:text-sm transition 
                           ${
-                            unfollowingUserId === user.user_id
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-red-500 hover:bg-red-600 text-white"
-                          }`}
+                            localFollowing[user.user_id] === false
+                              ? "bg-gray-200 text-gray-700 hover:bg-gray-300 pointer-events-none"
+                              : "bg-red-500 text-white hover:bg-red-600"
+                          }
+                        `}
                       >
-                        {unfollowingUserId === user.user_id ? (
-                          <>
-                            <svg
-                              className="animate-spin h-4 w-4 text-white"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                              ></path>
-                            </svg>
-                            {/* <span>Unfollowing...</span> */}
-                          </>
-                        ) : (
-                          "Unfollow"
-                        )}
+                        {localFollowing[user.user_id] === false ? "Follow" : "Unfollow"}
                       </button>
+
+
 
                     </div>
                   ))

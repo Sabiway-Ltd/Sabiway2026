@@ -19,6 +19,7 @@ import IconTooltipButton from "@/app/_components/common/IconTooltipButton";
 import { Smartphone } from "lucide-react";
 import { RenderPostList } from "@/app/_components/common/RenderPostList ";
 import ProfileImageModal from "@/app/_components/common/ProfileImageModal";
+import ProfilePageSkeleton from "@/app/_components/profile/ProfilePageSkeleton";
 
 
 export default function ProfilePage() {
@@ -74,8 +75,12 @@ export default function ProfilePage() {
   // ✅ Handle loading + error states
   if (profileLoading || (postsLoading && userPosts.length === 0)) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-gray-500">Loading profile...</p>
+      <div>
+        <div className="md:px-6 px-1">
+          <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
+        </div>
+
+        <ProfilePageSkeleton/>
       </div>
     );
   }
@@ -92,7 +97,7 @@ export default function ProfilePage() {
   if (!otherProfile) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <p className="text-gray-500">Profile not found.</p>
+        {/* <p className="text-gray-500">Profile not found.</p> */}
       </div>
     );
   }

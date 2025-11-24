@@ -99,11 +99,12 @@ export default function CommunityNavbar({
     } else if (e.key === "Escape") {
       setSearchQuery("");
     }
+    setMenuOpen(false);
   };
 
   // 🟢 Handle SabiWay logo click
   const { triggerRefresh } = usePostStore.getState();
-  const handleLogoClick = () => {
+  const handleHomeClick = () => {
     // router.push("/community");
     window.location.href = "/community"
     triggerRefresh();
@@ -113,9 +114,6 @@ export default function CommunityNavbar({
   // For Notification
   const handleNotificationClick = async (n) => {
     try {
-      // 1️⃣ Mark as read in backend
-      await markAsRead(n.id);
-
       // 2️⃣ Navigate to relevant page
       if (n.target) {
         switch (n.target.type) {
@@ -136,6 +134,8 @@ export default function CommunityNavbar({
       }else if(n.type == "follow"){
         router.push(`/profile/${n.actor.username.replace("@", "")}`);
       }
+      // 1️⃣ Mark as read in backend
+      await markAsRead(n.id);
     } catch (err) {
       console.error("Error handling notification click:", err);
     }
@@ -157,11 +157,13 @@ export default function CommunityNavbar({
 
           {/* Home Button */}
           <div className="md:mt-3 mt-1">
-            <IconTooltipButton
-              onClick={() => handleLogoClick()}
-              icon={Home}
-              label="Home"
-            />
+            <div>
+              <IconTooltipButton
+                onClick={() => handleHomeClick()}
+                icon={Home}
+                label="Home"
+              />
+            </div>
           </div>
 
           {/* Mobile App Button */}

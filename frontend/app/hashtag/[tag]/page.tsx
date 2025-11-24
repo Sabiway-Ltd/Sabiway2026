@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import CommunityNavbar from "@/app/_components/feed/CommunityNavbar";
 import PostBox from "@/app/_components/feed/PostBox";
 import { RenderPostList } from "@/app/_components/common/RenderPostList ";
+import PostSkeleton from "@/app/_components/feed/PostSkeleton";
 
 export default function HashtagPage() {
   const { tag } = useParams();

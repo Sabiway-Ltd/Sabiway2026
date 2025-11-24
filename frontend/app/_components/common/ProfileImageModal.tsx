@@ -31,7 +31,7 @@ export default function ProfileImageModal({
       onClick={onClose}
     >
       <div
-        className="relative bg-white rounded-lg shadow-lg p-2 max-w-[90%] max-h-[90%]"
+        className="relative bg-white rounded-lg shadow-lg max-w-[90%] max-h-[90%]"
         onClick={(e) => e.stopPropagation()} // prevent close on inner click
       >
         <button

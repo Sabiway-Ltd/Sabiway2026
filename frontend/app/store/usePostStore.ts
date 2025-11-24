@@ -664,7 +664,7 @@ unlikePost: async (id: string) => {
         }
       );
 
-      toast.success("Comment added!");
+      // toast.success("Comment added!");
     } catch (err) {
       console.error("Add comment error:", err);
       toast.error("Failed to add comment.");

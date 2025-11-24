@@ -21,19 +21,32 @@ export default function PeopleYouMayKnow() {
 
   const [loadingFollowId, setLoadingFollowId] = useState<number | null>(null);
 
+  const [localFollowing, setLocalFollowing] = useState<{ [key: number]: boolean }>({});
+
+
+
   // Load “people you may know” on mount
   useEffect(() => {
     getNotFollowedProfiles();
   }, [getNotFollowedProfiles]);
 
-  const handleFollowToggle = async (id: number) => {
-    setLoadingFollowId(id);
+  const handleFollowToggle = async (user_id: number) => {
+    const isCurrentlyFollowing = localFollowing[user_id] ?? followingStatus[user_id] ?? false;
+
+    // Optimistic update
+    setLocalFollowing(prev => ({ ...prev, [user_id]: !isCurrentlyFollowing }));
+
     try {
-      await toggleFollow(id);
-    } finally {
-      setLoadingFollowId(null);
+      await toggleFollow(user_id);
+    } catch (err) {
+      console.error(err);
+      // Rollback on error
+      setLocalFollowing(prev => ({ ...prev, [user_id]: isCurrentlyFollowing }));
     }
   };
+
+
+
 
   if (loading) {
     return (
@@ -98,25 +111,41 @@ export default function PeopleYouMayKnow() {
               </Link>
 
               {user?.id !== profile.user_id && (
+                // <Button
+                //   size="sm"
+                //   disabled={loadingFollowId === profile.user_id}
+                //   variant={isFollowing ? "secondary" : "default"}
+                //   className={`text-xs flex items-center justify-center gap-2 ${
+                //     isFollowing
+                //       ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                //       : "bg-[#008753] text-white hover:bg-green-900"
+                //   }`}
+                //   onClick={() => handleFollowToggle(profile.user_id)}
+                // >
+                //   {loadingFollowId === profile.user_id ? (
+                //     <Loader2 className="w-4 h-4 animate-spin" />
+                //   ) : isFollowing ? (
+                //     "Following"
+                //   ) : (
+                //     "Follow"
+                //   )}
+                // </Button>
+
+
                 <Button
                   size="sm"
-                  disabled={loadingFollowId === profile.user_id}
-                  variant={isFollowing ? "secondary" : "default"}
+                  variant={(localFollowing[profile.user_id] ?? followingStatus[profile.user_id]) ? "secondary" : "default"}
                   className={`text-xs flex items-center justify-center gap-2 ${
-                    isFollowing
+                    (localFollowing[profile.user_id] ?? followingStatus[profile.user_id])
                       ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       : "bg-[#008753] text-white hover:bg-green-900"
                   }`}
                   onClick={() => handleFollowToggle(profile.user_id)}
                 >
-                  {loadingFollowId === profile.user_id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : isFollowing ? (
-                    "Following"
-                  ) : (
-                    "Follow"
-                  )}
+                  {(localFollowing[profile.user_id] ?? followingStatus[profile.user_id]) ? "Following" : "Follow"}
                 </Button>
+
+
               )}
             </div>
           );

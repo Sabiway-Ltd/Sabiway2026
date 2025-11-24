@@ -64,6 +64,9 @@ export default function PostCard({
   const [editedPostImage, setEditedPostImage] = useState<File | null>(null);
   const [uploadingPostImage, setUploadingPostImage] = useState(false);
 
+  const [localFollowing, setLocalFollowing] = useState(false); // initially not following
+
+
   const {
     getAllPosts,
     getPostById,
@@ -227,17 +230,19 @@ export default function PostCard({
   };
 
   const handleBookmarkToggle = async () => {
-    setLoading(true);
+    // Optimistic UI: flip bookmark state instantly
+    setIsBookmarked(prev => !prev);
+
     try {
       if (isBookmarked) await unbookmarkPost(id);
       else await bookmarkPost(id);
-      setIsBookmarked(!isBookmarked);
     } catch (err) {
       console.error("Bookmark error:", err);
-    } finally {
-      setLoading(false);
+      // Rollback on error
+      setIsBookmarked(prev => !prev);
     }
   };
+
 
   const handleWhatsappClick = () => {
     if (author.phone_number) {
@@ -252,7 +257,7 @@ export default function PostCard({
     setFollowingLoading(true);
     try {
       await toggleFollow(author.user_id);
-      toast.success(`${isFollowing ? "Unfollowed" : "Following"} ${author.full_name}`);
+      // toast.success(`${isFollowing ? "Unfollowed" : "Following"} ${author.full_name}`);
     } catch {
       toast.error("Failed to update follow status");
     } finally {
@@ -349,8 +354,9 @@ export default function PostCard({
       toast.success("Post updated successfully!");
       setEditingPostId(null);
       setEditedPostImage(null);
-      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
-      getAllPosts(currentPage);
+      // const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
+      // getAllPosts(currentPage);
+      onReloadPosts()
 
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to update post.");
@@ -473,39 +479,13 @@ export default function PostCard({
                   className={`ml-auto md:px-3 py-1 rounded-sm text-sm font-medium flex 
                     text-[#008753] hover:bg-[#008753]/30 
                     items-center justify-center gap-2 transition-all duration-200 
-                    ${followingLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+                    ${followingLoading ? "opacity-70 cursor-not-allowed hidden" : ""}`}
                 >
-                  {followingLoading ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4 text-current"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        ></path>
-                      </svg>
-                      {/* <span className="text-xs">Following...</span> */}
-                    </>
-                  ) : (
-                    <div>
-                      <span className="md:block hidden">+ Follow</span>
+                  <div>
+                    <span className="md:block hidden">+ Follow</span>
 
-                      <span className="md:hidden">+</span>
-                    </div>
-                  )}
+                    <span className="md:hidden">+</span>
+                  </div>
                 </button>
               )}
 
@@ -554,32 +534,12 @@ export default function PostCard({
                       {
                         isFollowing && (
                           <button
-                            onClick={handleFollowToggle}
+                            onClick={()=>{handleFollowToggle(); setMenuOpen(false);}}
                             className="block w-full text-left px-4 rounded-lg py-2 text-sm hover:bg-gray-100"
                           >
                             {followingLoading ? (
                               <>
-                                <svg
-                                  className="animate-spin h-4 w-4 text-current"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v8z"
-                                  ></path>
-                                </svg>
-                                {/* <span className="text-xs">Following...</span> */}
+                                
                               </>
                             ) : (
                               <span>Unfollow</span>
@@ -651,7 +611,7 @@ export default function PostCard({
 
         {/* Content / Edit Post */}
         {editingPostId === id ? (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-2 text-sm">
             <textarea
               value={editedPostContent}
               onChange={(e) => setEditedPostContent(e.target.value)}
@@ -839,21 +799,14 @@ export default function PostCard({
 
 
 
-          <button
-            onClick={handleBookmarkToggle}
-            className="flex items-center gap-1"
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="h-[1.35rem] w-[1.35rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
-            ) : (
-              <Bookmark
-                className={`h-[1.35rem] w-[1.35rem] ${
-                  isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
-                }`}
-              />
-            )}
-          </button>
+          <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
+  <Bookmark
+    className={`h-[1.35rem] w-[1.35rem] ${
+      isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
+    }`}
+  />
+</button>
+
 
           {/* <button className="flex items-center gap-1">
             <Share className="h-5 w-5" />
