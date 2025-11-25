@@ -12,7 +12,7 @@ const postEvents = require("../socket/postEvents");
 exports.listPosts = async (req, res) => {
   try {
     const token = req.headers._token;
-    const { page = 1, page_size = 5 } = req.query;
+    const { page = 1, page_size = 10 } = req.query;
     const data = await djangoPost.listPosts(token, { page, page_size });
     res.json(data);
   } catch (err) {
@@ -356,7 +356,7 @@ exports.userPosts = async (req, res) => {
   try {
     const token = req.headers._token;
     const username = req.params.username;
-    const { page = 1, page_size = 5 } = req.query;
+    const { page = 1, page_size = 10 } = req.query;
     const data = await djangoPost.userPosts(token, username, { page, page_size });
     res.json(data);
   } catch (err) {

@@ -21,7 +21,8 @@ const allowedOrigins = [
   FRONTEND_URL,
   "http://localhost:3000",
   "http://frontend:3000",
-  "https://www.sabiway.com"
+  "https://www.sabiway.com",
+  "https://sabiway2025.vercel.app"
 ];
 
 app.use(
@@ -58,7 +59,13 @@ app.use("/api/test-email", require("./routes/testEmail"));
 // ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://frontend:3000", FRONTEND_URL, "https://www.sabiway.com"],
+    origin: [
+      FRONTEND_URL, 
+      "http://localhost:3000", 
+      "http://frontend:3000", 
+      "https://www.sabiway.com",
+      "https://sabiway2025.vercel.app"
+    ],
     credentials: true,
     methods: ["GET", "POST"],
   },

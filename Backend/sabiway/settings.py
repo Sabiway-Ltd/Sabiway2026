@@ -84,6 +84,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://frontent:3000",
     "http://localhost:3000",  # in case you test locally outside Docker
     "http://127.0.0.1:3000",
+    "https://sabiway2025.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
