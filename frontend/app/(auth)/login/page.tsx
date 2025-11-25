@@ -56,7 +56,7 @@ export default function Login() {
       <Navbar />
 
       {/* ✅ Add top padding equal to navbar height */}
-      <div className="flex-1 flex items-center justify-center px-4 pt-24">
+      <div className="flex-1 flex items-center justify-center px-4 md:pt-24 pt-12">
         {/* ↑ Adjust pt-24 if your Navbar height differs (24 = ~6rem = 96px) */}
 
         <motion.div
@@ -66,7 +66,7 @@ export default function Login() {
           className="w-full max-w-md bg-white rounded-3xl px-8 py-4 shadow-md border border-gray-100"
         >
           <h1 className="text-lg sm:text-xl font-semibold text-center text-gray-900">
-            Welcome back! Sign in to your Sabiway account
+            Sign in to your Sabiway Account
           </h1>
 
           <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
@@ -118,12 +118,12 @@ export default function Login() {
                 </button>
               </div>
               <div className="flex justify-end mt-1">
-                <Link
+                <a
                   href="/forgot-password"
                   className="text-[#008753] text-xs hover:underline font-medium"
                 >
                   Forgot Password?
-                </Link>
+                </a>
               </div>
             </div>
 

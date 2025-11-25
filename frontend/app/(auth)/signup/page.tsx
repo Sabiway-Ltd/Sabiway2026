@@ -57,7 +57,7 @@ export default function Signup() {
       <Navbar />
 
       {/* ✅ Content area (centered, with padding to clear the Navbar) */}
-      <div className="flex-1 flex items-center justify-center px-4 pt-24">
+      <div className="flex-1 flex items-center justify-center px-4 md:pt-24 pt-14">
         {/* ↑ Adjust pt-24 to match your Navbar height */}
 
         <motion.div

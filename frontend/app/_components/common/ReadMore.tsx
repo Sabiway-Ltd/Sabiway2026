@@ -21,17 +21,17 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (part.match(/^https:\/\/sabiway2025\.vercel\.app/)) {
         const path = part.replace("https://sabiway2025.vercel.app", "");
         return (
-          <span
+          <a href={path}
             key={i}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              router.push(path);
-            }}
+            // onClick={(e) => {
+            //   e.preventDefault();
+            //   e.stopPropagation();
+            //   router.push(path);
+            // }}
             className="text-blue-500 hover:underline break-all"
           >
             {part}
-          </span>
+          </a>
         );
       }
 

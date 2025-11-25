@@ -46,7 +46,7 @@ export default function SinglePostPage() {
           <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center px-2">
           <div className="space-y-4 pb-6 md:w-[50%] w-full">
             {[...Array(1)].map((_, i) => (
               <PostSkeleton key={i} />

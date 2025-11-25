@@ -627,7 +627,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                       className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
                     >
                       {/* User Info */}
-                      <Link href={`/profile/${user.username}`}>
+                      <a href={`/profile/${user.username}`}>
                         <div className="flex items-center gap-3">
                           <img
                             src={
@@ -645,7 +645,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                             <p className="md:text-sm text-gray-500">{user.username}</p>
                           </div>
                         </div>
-                      </Link>
+                      </a>
 
                       {/* Follow/Unfollow Button */}
                       <motion.button
@@ -678,7 +678,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                       key={user.user_id}
                       className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
                     >
-                      <Link href={`/profile/${user.username}`}>
+                      <a href={`/profile/${user.username}`}>
                         <div className="flex items-center gap-3">
                           <img
                             src={
@@ -696,7 +696,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                             <p className="md:text-sm text-gray-500">{user.username}</p>
                           </div>
                         </div>
-                      </Link>
+                      </a>
 
                       <button
                         onClick={() => handleUnfollow(user)}

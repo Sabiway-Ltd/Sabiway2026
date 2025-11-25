@@ -45,20 +45,14 @@ export default function Aside() {
             trendingHashtags.map((tag, idx) => {
               const isActive = activeHashtag === tag.tag;
               return (
-                <button
+                <a href={`/hashtag/${encodeURIComponent(tag.tag)}`}
                   key={idx}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    router.push(`/hashtag/${encodeURIComponent(tag.tag)}`);
-                  }}
-                  // disabled={loadingHashtag && !isActive}
                   className={`px-4 py-2 border rounded-md text-sm font-medium shadow-sm transition
                     ${isActive ? "bg-[#008753] text-white border-[#008753]" : "bg-white text-gray-700 hover:bg-gray-100"}
                     ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}
                 >
                   {tag.tag}
-                </button>
+                </a>
               );
             })
           ) : (
@@ -76,7 +70,7 @@ export default function Aside() {
             <p className="text-gray-400 text-sm">Loading...</p>
           ) : topContributors.length > 0 ? (
             topContributors.map((c) => (
-              <Link href={`/profile/${c.username}`} key={c.user_id}>
+              <a href={`/profile/${c.username}`} key={c.user_id}>
                 <div
                   
                   className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
@@ -99,7 +93,7 @@ export default function Aside() {
                     <p className="text-xs text-gray-500">{c.username}</p>
                   </div>
                 </div>
-              </Link>
+              </a>
             ))
           ) : (
             <p className="text-gray-400 text-sm">No contributors yet</p>

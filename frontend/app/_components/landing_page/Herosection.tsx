@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Herosection() {
   return (
-    <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 px-6 sm:px-10 md:px-16 pt-40 md:pt-56 pb-24 md:pb-36 items-center relative overflow-hidden">
+    <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 px-6 sm:px-10 md:px-16 pt-24 md:pt-40 pb-24 md:pb-36 items-center relative overflow-hidden">
       {/* LEFT SIDE — TEXT */}
       <div className="text-start md:text-left">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
@@ -18,7 +18,7 @@ export default function Herosection() {
         </p>
 
         <button className="mt-8 px-8 py-4 bg-[#008753] md:mb-14 text-white rounded-[15px] font-semibold shadow hover:bg-[#006B42] transition w-fit sm:w-auto">
-          <Link href={"https://waitlist.sabiway.com"}>Join the Waitlist</Link>
+          <a href={"https://waitlist.sabiway.com"}>Join the Waitlist</a>
         </button>
       </div>
 

@@ -45,18 +45,19 @@ export default function ProfileDropdown() {
   }, []);
 
   return (
-    <div className="relative" ref={profileRef}>
+    <div className="relative " ref={profileRef}>
       <button
         onClick={() => setProfileDropdownOpen(prev => !prev)}
-        className="relative group focus:outline-none"
+        className="relative block group focus:outline-none"
       >
-        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm flex-shrink-0">
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#008753] transition-all duration-200 group-hover:scale-105 cursor-pointer shadow-sm flex-shrink-0">
           <img
             src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
             alt={profile?.full_name || "User"}
             className="w-full h-full object-cover"
           />
         </div>
+
 
       </button>
 
@@ -70,7 +71,7 @@ export default function ProfileDropdown() {
             className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2"
           >
             {pathname !== "/profile" && (
-              <Link href={"/profile"}
+              <a href={"/profile"}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
               >
                 <img
@@ -79,7 +80,7 @@ export default function ProfileDropdown() {
                   alt="Profile"
                 />
                 Profile
-              </Link>
+              </a>
             )}
 
             {pathname !== "/community" && (
