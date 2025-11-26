@@ -2,8 +2,8 @@
 
 module.exports = {
   // FOR LOCAL DOCKER
-  // DJANGO_BASE_URL: "http://172.17.0.1:8000/api",
-  // FRONTEND_URL: "http://localhost:3000",
+  DJANGO_BASE_URL: "http://172.17.0.1:8000/api",
+  FRONTEND_URL: "http://localhost:3000",
 
   // FOR VPS
   DJANGO_BASE_URL: "http://172.17.0.1:8000/api",
