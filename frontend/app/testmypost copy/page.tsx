@@ -7,33 +7,27 @@ import Aside from "../_components/feed/Aside";
 import { useState } from "react";
 import MyPostsMain from "./MyPostsMain";
 import MyBookmarksMain from "./MyBookmarksMain";
-import MyProfile from "./MyProfile";
 
 export default function page() {
     const [showPostBox, setShowPostBox] = useState(false);
 
 
   return (
-    <div className="">
+    <div className="min-h-screen md:px-6 px-1 pb-5">
       <CommunityNavbar
         onCreatePost={() => setShowPostBox(true)}
         hideSearch={true}
       />
 
       <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10 mx-auto">
-        {/* Left Sidebar */}
         <div className="md:w-[22rem] hidden lg:block mt-4">
           <div className="sticky top-4">
             <PeopleYouMayKnow />
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 mt-4">
-          <MyProfile/>
-        </main>
+        <MyBookmarksMain/>
 
-        {/* Right Sidebar */}
         <aside className="hidden md:block md:w-[22rem] mt-2">
           <div className="sticky top-4">
             <Aside />

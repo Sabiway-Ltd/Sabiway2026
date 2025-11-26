@@ -329,6 +329,7 @@ class UnbookmarkPostView(generics.DestroyAPIView):
 class MyBookmarksView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = BookmarkSerializer
+    pagination_class = PostPagination
 
     def get_queryset(self):
         user_obj = self.request.user  # ✅ Use User, not Profile
@@ -411,6 +412,7 @@ class ReplyUnlikeToggleView(APIView):
 class MyPostsView(generics.ListAPIView):
     serializer_class = PostListSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PostPagination
 
     def get_queryset(self):
         profile = self.request.user.profile

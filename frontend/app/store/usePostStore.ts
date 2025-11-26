@@ -84,6 +84,7 @@ type PostState = {
   // Actions
   initSocket: () => void;
   getAllPosts: (page?: number) => Promise<void>;
+  getMyPosts: (page?: number) => Promise<void>;
   createPost: (data: FormData | object) => Promise<void>;
   // ... Add other actions like likePost, addComment, repost, etc.
 };
@@ -137,7 +138,13 @@ export const usePostStore = create<PostState>((set, get) => ({
   myNextPage: 1,
   myHasMore: true,
   myReposts: [],
-  
+
+  bookmarks: [],
+  loadingBookmarks: false,
+  bookmarksError: null,
+  nextBookmarksPage: 1,
+  hasMoreBookmarks: true,
+    
 
   refreshFeed: false,
   triggerRefresh: () => set({ refreshFeed: true }),
@@ -451,29 +458,72 @@ export const usePostStore = create<PostState>((set, get) => ({
 
 
   getMyPosts: async (page = 1) => {
-    const { loading } = get();
-    if (loading) return;
+    const { loadingMyPosts, nextMyPostsPage } = get();
 
-    set({ loading: true, error: null });
+    // Prevent double fetch
+    if (loadingMyPosts || (page !== nextMyPostsPage && page !== 1)) return;
+
+    set({ loadingMyPosts: true, myPostsError: null });
+
+    const token = localStorage.getItem("access");
+    if (!token) return set({ myPostsError: "Not logged in", loadingMyPosts: false });
 
     try {
-      const res = await post.getByMe(page);
+      const res = await axios.get(`${DJANGO_URL}/api/posts/me/?page=${page}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("My Posts:", res.data);
+
       const newPosts = res.data.results || res.data;
 
       set((state) => ({
         myPosts: page === 1 ? newPosts : [...state.myPosts, ...newPosts],
-        myNextPage: res.data.next ? page + 1 : null,
-        myHasMore: !!res.data.next,
-        loading: false,
+        nextMyPostsPage: res.data.next ? page + 1 : null,
+        hasMoreMyPosts: !!res.data.next,
+        loadingMyPosts: false,
       }));
-    } catch (err: any) {
-      console.error("❌ Error fetching my posts:", err);
-      set({
-        error: err.response?.data?.detail || "Failed to fetch your posts",
-        loading: false,
-      });
+    } catch (err) {
+      console.error("Get my posts error:", err);
+      set({ myPostsError: "Failed to fetch my posts", loadingMyPosts: false });
     }
   },
+
+
+  getBookmarks: async (page = 1) => {
+    const { loadingBookmarks, nextBookmarksPage } = get();
+
+    // Prevent duplicate loads
+    if (loadingBookmarks || (page !== nextBookmarksPage && page !== 1)) return;
+
+    set({ loadingBookmarks: true, bookmarksError: null });
+
+    const token = localStorage.getItem("access");
+    if (!token) return set({ bookmarksError: "Not logged in", loadingBookmarks: false });
+
+    try {
+      const res = await axios.get(`${DJANGO_URL}/api/posts/me/bookmarks/?page=${page}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("Bookmarks:", res.data);
+
+      const newBookmarks = res.data.results || res.data;
+
+      set((state) => ({
+        bookmarks: page === 1 ? newBookmarks : [...state.bookmarks, ...newBookmarks],
+        nextBookmarksPage: res.data.next ? page + 1 : null,
+        hasMoreBookmarks: !!res.data.next,
+        loadingBookmarks: false,
+      }));
+    } catch (err) {
+      console.error("Get bookmarks error:", err);
+      set({ bookmarksError: "Failed to fetch bookmarks", loadingBookmarks: false });
+    }
+  },
+
+
+
 
   // ✅ --- Optional: Reset my posts (for profile refresh) ---
   resetMyPosts: () => set({ myPosts: [], myNextPage: 1, myHasMore: true }),

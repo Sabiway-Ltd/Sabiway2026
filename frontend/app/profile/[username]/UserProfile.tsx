@@ -7,12 +7,13 @@ import { Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import ProfileImageModal from "@/app/_components/common/ProfileImageModal";
 import IconTooltipButton from "@/app/_components/common/IconTooltipButton";
-import { RenderPostList } from "../common/RenderPostList ";
+import { RenderPostList } from "../../_components/common/RenderPostList ";
 import { DEFAULT_AVATAR } from "@/app/utils/getProfileImage";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { usePostStore } from "@/app/store/usePostStore";
-import ProfilePageSkeleton from "./ProfilePageSkeleton";
+import ProfilePageSkeleton from "../../_components/profile/ProfilePageSkeleton";
+import UserPostsMain from "./UserPostsMain";
 
 interface ProfileProps {
   username: string;
@@ -195,20 +196,8 @@ export default function UserProfile({ username }: ProfileProps) {
       <div className="mt-8">
         <h2 className="font-semibold text-lg mb-3 text-center border-b border-solid pb-2">Posts</h2>
 
-        {userPosts.length > 0 ? (
-          <div className="space-y-6">
-            <RenderPostList posts={userPosts} emptyMessage="No Post" reloadFn={getPostById} />
-
-            {postsLoading && (
-              <div className="flex justify-center items-center gap-2 py-4">
-                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                <p className="text-gray-400 text-sm">Loading more posts...</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center">No posts yet.</p>
-        )}
+        {/* Replace RenderPostList with UserPostsMain */}
+        <UserPostsMain username={username} />
       </div>
 
       {/* Profile Image Modal */}

@@ -11,12 +11,20 @@ const handleError = (res, err) => {
 };
 
 /* -------------------------
-   List all notifications for the current user
+   List all notifications for the current user (with pagination)
+   Accepts query params: page, page_size
 --------------------------*/
 exports.listNotifications = async (req, res) => {
   try {
     const token = req.headers._token;
-    const notifications = await djangoNotification.listNotifications(token);
+
+    // Extract pagination query params (default to page=1, page_size=10)
+    const page = parseInt(req.query.page) || 1;
+    const page_size = parseInt(req.query.page_size) || 20;
+
+    const notifications = await djangoNotification.listNotifications(token, { page, page_size });
+
+    // Expected response: { count, next, previous, results }
     res.json(notifications);
   } catch (err) {
     handleError(res, err);

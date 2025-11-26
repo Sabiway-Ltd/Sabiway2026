@@ -1,6 +1,6 @@
 "use client";
 
-import UserProfile from "@/app/_components/profile/UserProfile";
+import UserProfile from "@/app/profile/[username]/UserProfile";
 import CommunityNavbar from "@/app/_components/feed/CommunityNavbar";
 import { useParams } from "next/navigation";
 import { useAuthStore } from "@/app/store/useAuthStore";

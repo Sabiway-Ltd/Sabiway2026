@@ -14,9 +14,11 @@ interface NotificationState {
   notifications: Notification[];
   loading: boolean;
   error: string | null;
-  getNotifications: () => Promise<void>;
+  nextPage: number | null; // ✅ for pagination
+  pageSize: number;
+  getNotifications: (reset?: boolean) => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
-  addNotification: (newNotif: Notification) => void; // 👈 add this
+  addNotification: (newNotif: Notification) => void;
   unreadCount: number;
 }
 
@@ -24,12 +26,29 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   loading: false,
   error: null,
+  nextPage: 1,        // start at page 1
+  pageSize: 10,       // default items per page
 
-  getNotifications: async () => {
-    set({ loading: true });
+  // Fetch notifications (paginated)
+  getNotifications: async (reset = false) => {
+    const { loading, nextPage, pageSize, notifications } = get();
+
+    if (loading || (nextPage === null && !reset)) return;
+
+    set({ loading: true, error: null });
+
     try {
-      const res = await notification.getAll();
-      set({ notifications: res.data, loading: false });
+      const pageToFetch = reset ? 1 : nextPage;
+      const res = await notification.getAll({ page: pageToFetch, page_size: pageSize });
+
+      // If reset, replace; otherwise append
+      const newNotifications = reset ? res.results : [...notifications, ...res.results];
+
+      set({
+        notifications: newNotifications,
+        loading: false,
+        nextPage: res.next ? pageToFetch + 1 : null, // if next exists, increment page
+      });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }
@@ -48,7 +67,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  // 🆕 Real-time push
   addNotification: (newNotif) => {
     set({
       notifications: [newNotif, ...get().notifications],

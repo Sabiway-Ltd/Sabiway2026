@@ -5,24 +5,27 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { Edit, Trash, Bookmark, Camera } from "lucide-react";
-import CommunityNavbar from "../feed/CommunityNavbar";
+import CommunityNavbar from "../_components/feed/CommunityNavbar";
 import { useProfileStore, type Profile } from "@/app/store/useProfileStore";
 import { usePostStore } from "@/app/store/usePostStore";
 import { post } from "@/app/services/post";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import toast from "react-hot-toast";
-import Button from "../common/Button";
+import Button from "../_components/common/Button";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import ProfilePostCard from "./ProfilePostCard";
+import ProfilePostCard from "../_components/profile/ProfilePostCard";
 import { BiEnvelope, BiLinkAlt } from "react-icons/bi";
-import PostCard from "../feed/PostCard";
-import { RenderPostList } from "../common/RenderPostList ";
-import ProfileImageModal from "../common/ProfileImageModal";
-import ProfilePageSkeleton from "./ProfilePageSkeleton";
-import PeopleYouMayKnow from "./PeopleYouMayKnow";
-import Aside from "../feed/Aside";
+import PostCard from "../_components/feed/PostCard";
+import { RenderPostList } from "../_components/common/RenderPostList ";
+import ProfileImageModal from "../_components/common/ProfileImageModal";
+import ProfilePageSkeleton from "../_components/profile/ProfilePageSkeleton";
+import PeopleYouMayKnow from "../_components/profile/PeopleYouMayKnow";
+import Aside from "../_components/feed/Aside";
+import MyPostsTab from "../_components/feed/MyPostsTab";
+import MyPostsMain, { MyPostsMainRef } from "./MyPostsMain";
+import MyBookmarksMain, {MyBookmarksMainRef} from "./MyBookmarksMain";
 
 
 export default function MyProfile() {
@@ -37,6 +40,9 @@ export default function MyProfile() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [unfollowingUserId, setUnfollowingUserId] = useState<string | null>(null);
   const { logout } = useAuthStore();
+
+  const myPostsRef = useRef<MyPostsMainRef>(null);
+  const bookmarksRef = useRef<MyBookmarksMainRef>(null);
   
 
   const [loadingFollowId, setLoadingFollowId] = useState<number | null>(null);
@@ -103,6 +109,18 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
     await navigator.clipboard.writeText(profileUrl);
     toast.success("Profile link copied");
   };
+
+  useEffect(() => {
+  if (activeTab === "posts") {
+    myPostsRef.current?.fetchMyPosts();
+  }
+}, [activeTab]);
+
+useEffect(() => {
+  if (activeTab === "bookmarks") {
+    bookmarksRef.current?.fetchBookmarks();
+  }
+}, [activeTab]);
 
 
 
@@ -189,17 +207,17 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
   };
 
 
-  const fetchMyPosts = async () => {
-    try{
-      document.body.style.cursor = "wait";
-      const postsRes = await post.getByMe();
-      setMyPosts(postsRes.data.results || postsRes.data);
-    }catch (error){
-      console.log(error)
-    }finally{
-      document.body.style.cursor = "default";
-    }
-  }
+  // const fetchMyPosts = async () => {
+  //   try{
+  //     document.body.style.cursor = "wait";
+  //     const postsRes = await post.getByMe();
+  //     setMyPosts(postsRes.data.results || postsRes.data);
+  //   }catch (error){
+  //     console.log(error)
+  //   }finally{
+  //     document.body.style.cursor = "default";
+  //   }
+  // }
 
   const fetchBookmarkPosts = async () => {
     try{
@@ -359,10 +377,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                     <p className="text-gray-500 text-sm">Following</p>
                   </button>
                   <button
-                  onClick={async () => {
-                    setActiveTab("posts");
-                    fetchMyPosts()
-                  }}
+                  onClick={() => setActiveTab("posts")}
                   >
                     <p className="font-semibold text-lg">{profile.posts_count}</p>
                     <p className="text-gray-500 text-sm">Posts</p>
@@ -370,7 +385,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                 </div>
             </div>
 
-            <div className="text-[0.6rem] md:text-lg w-full">
+            <div className="text-[0.9rem] md:text-[1rem] w-full">
               {/* 🧩 Tabs */}
               <div className="flex gap-1 md:gap-6 border-b mb-3 md:mb-6 w-full justify-between">
                 <Button
@@ -380,56 +395,20 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                   About Me
                 </Button>
                 <Button
-                  className={`pb-2 ${activeTab === "posts" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
-                  onClick={async () => {
-                    setActiveTab("posts");
-                    fetchMyPosts()
-                  }}
+                  className={`pb-2 ${
+                    activeTab === "posts"
+                      ? "text-[#008753] border-b-2 border-[#008753]"
+                      : "text-gray-600"
+                  }`}
+                  onClick={() => setActiveTab("posts")}
                 >
                   My Posts
                 </Button>
                 <Button
                   className={`pb-2 ${activeTab === "bookmarks" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
-                  onClick={async () => {
-                    setActiveTab("bookmarks");
-                    fetchBookmarkPosts()
-                  }}
+                  onClick={() => setActiveTab("bookmarks")}
                 >
                   Bookmarks
-                </Button>
-                <Button
-                  className={`hidden pb-2 ${activeTab === "followers" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
-                  onClick={async () => {
-                    setActiveTab("followers");
-                    try {
-                      document.body.style.cursor = "wait";
-                      await fetchMyFollowers();
-                    } catch (error) {
-                      console.error(error);
-                    } finally {
-                      document.body.style.cursor = "default";
-                    }
-                  }}
-
-                >
-                  Followers
-                </Button>
-                <Button
-                  className={`hidden pb-2 ${activeTab === "following" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
-                  onClick={async () => {
-                    setActiveTab("following");
-                    try {
-                      document.body.style.cursor = "wait";
-                      await fetchMyFollowing();
-                    } catch (error) {
-                      console.error(error);
-                    } finally {
-                      document.body.style.cursor = "default";
-                    }
-                  }}
-
-                >
-                  Following
                 </Button>
               </div>
 
@@ -474,22 +453,6 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                           className="w-full border rounded-lg p-2"
                         />
                       </div>
-
-                      {/* Role */}
-                      {/* <div>
-                        <label className="block text-sm font-medium text-gray-700">Role</label>
-                        <select
-                          value={editedData.role || ""}
-                          onChange={(e) =>
-                            setEditedData({ ...editedData, role: e.target.value })
-                          }
-                          className="w-full border rounded-lg p-2"
-                        >
-                          <option value="">Select role</option>
-                          <option value="professional">Professional</option>
-                          <option value="client">Client</option>
-                        </select>
-                      </div> */}
 
                       {/* Job */}
                       <div>
@@ -551,19 +514,21 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
                       </div>
 
                       {/* Buttons */}
-                      <div className="flex gap-4">
-                        <button
-                          onClick={handleSaveProfile}
-                          className="bg-[#008753] text-white px-4 py-2 rounded-full text-sm"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditing(false)}
-                          className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
-                        >
-                          Cancel
-                        </button>
+                      <div className="flex justify-center">
+                        <div className=" space-x-4 ">
+                          <button
+                            onClick={handleSaveProfile}
+                            className="bg-[#008753] text-white w-28 py-2 rounded-md text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditing(false)}
+                            className="bg-gray-400 text-white w-28 py-2 rounded-md text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
                     </>
                   ) : (
@@ -618,22 +583,14 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
 
               {activeTab === "posts" && (
                 <div className="flex ">
-                <RenderPostList
-                  posts={myPosts}
-                  // emptyMessage="You haven’t posted anything yet."
-                  reloadFn={fetchMyPosts}
-                />
+                <MyPostsMain ref={myPostsRef} />
 
                 </div>
               )}
 
 
               {activeTab === "bookmarks" && (
-                <RenderPostList
-                  posts={bookmarks.map(bm => bm.post)}
-                  // emptyMessage="No bookmarks yet."
-                  reloadFn={fetchBookmarkPosts}
-                />
+                <MyBookmarksMain ref={bookmarksRef} />
 
               )}
 
