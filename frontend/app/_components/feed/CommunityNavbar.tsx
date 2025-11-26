@@ -147,57 +147,59 @@ export default function CommunityNavbar({
         {/* Left Section */}
         <div className="flex items-center md:gap-x-4 gap-x-2">
           {/* Logo */}
-          <a href="/">
+          <Link href="/">
             <img
               src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
               alt="SabiWay Logo"
               className="w-20 md:w-32 h-auto cursor-pointer hover:opacity-90 transition"
             />
-          </a>
+          </Link>
 
           {/* Home Button */}
-          <div className="md:mt-3 mt-1">
-            <div className="md:p-1 p-0.5 bg-white rounded-full">
-              <IconTooltipButton
-                onClick={() => handleHomeClick()}
-                icon={Home}
-                label="Home"
-                size={15}
-              />
-            </div>
+          <div className="p-1 bg-white rounded-full mt-0.5">
+            <IconTooltipButton
+              onClick={() => handleHomeClick()}
+              icon={Home}
+              label="Home"
+              size={17}
+            />
           </div>
 
           {/* Mobile App Button */}
-          <div className="md:mt-3 mt-1 md:p-1 p-0.5 bg-white rounded-full">
+          <div className="p-1 bg-white rounded-full mt-0.5">
             <IconTooltipButton
-              onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
+              onClick={() =>
+                window.open(
+                  "https://play.google.com/store/apps?hl=en",
+                  "_blank"
+                )
+              }
               icon={Smartphone}
               label="Mobile App"
-              size={15}
+              size={17}
             />
           </div>
 
           {/* Desktop Search */}
-          {
-            pathname === "/community" &&(
-              <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-full py-2.5 bg-white items-center shadow-sm">
-                <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search Community"
-                  className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKey}
-                />
-              </div>
-            )
-          }
+          {pathname === "/community" && (
+            <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-full py-2.5 bg-white items-center shadow-sm">
+              <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
+              <input
+                type="text"
+                placeholder="Search Community"
+                className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKey}
+              />
+            </div>
+          )}
         </div>
+
           
 
         {/* Right Section */}
-        <div className="flex items-center space-x-3 sm:space-x-4 relative">
+        <div className="flex items-center gap-x-3 md:gap-x-4 relative">
           {pathname === "/community" && (
             <button
               onClick={onCreatePost}
@@ -218,7 +220,7 @@ export default function CommunityNavbar({
                 onClick={() => setNotifDropdownOpen(prev => !prev)}
                 icon={Bell}
                 label="Notification"
-                size={15}
+                size={18}
               />
 
               {unreadCount > 0 && (
@@ -247,7 +249,7 @@ export default function CommunityNavbar({
                       const link = getNotificationLink(n);
 
                       return (
-                        <a
+                        <Link
                           key={n.id}
                           href={link}
                           onClick={() => {
@@ -287,7 +289,7 @@ export default function CommunityNavbar({
                           </div>
 
                           {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
-                        </a>
+                        </Link>
                       );
                     })
                   )}

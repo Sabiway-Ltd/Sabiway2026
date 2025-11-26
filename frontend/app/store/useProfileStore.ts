@@ -20,6 +20,7 @@ type ProfileState = {
   profile: Profile | null;
   profiles: Profile[];
   loading: boolean;
+  otherProfile: Profile | null;
   error: string | null;
   topContributors: Profile[];
 
@@ -44,6 +45,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   profiles: [],
   loading: false,
+  otherProfile: null,
   error: null,
   topContributors: [],
   followingStatus: {},

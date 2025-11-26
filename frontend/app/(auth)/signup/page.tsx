@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { EXPRESS_URL } from "@/app/utils/MyConstants";
 import Navbar from "@/app/_components/landing_page/Navbar";
+import Link from "next/link";
 
 export default function Signup() {
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -73,13 +74,13 @@ export default function Signup() {
           {/* Policy */}
           <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
             By continuing, you agree to our{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <Link href="#" className="text-[#008753] font-medium hover:underline">
               Privacy Policy
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <Link href="#" className="text-[#008753] font-medium hover:underline">
               Terms of Use
-            </a>
+            </Link>
             , and consent to receive emails.
           </p>
 
@@ -163,12 +164,12 @@ export default function Signup() {
           {/* Already have account */}
           <p className="text-center text-gray-600 text-[11px] sm:text-xs mt-5 sm:mt-6">
             Already have an account?{" "}
-            <a
+            <Link
               href="/login"
               className="text-[#008753] font-medium hover:underline"
             >
               Sign in
-            </a>
+            </Link>
           </p>
         </motion.div>
       </div>

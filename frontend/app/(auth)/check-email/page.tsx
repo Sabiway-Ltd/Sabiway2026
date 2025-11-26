@@ -35,14 +35,14 @@ export default function CheckEmail() {
         </div>
         
 
-        <a href="/login">
+        <Link href="/login">
             <button
                 type="submit"
                 className="w-full bg-[#008753] text-white py-2 rounded-lg text-sm font-medium hover:bg-[#007047] transition disabled:opacity-60"
             >
                 Back to Login
             </button>
-        </a>
+        </Link>
 
       </motion.div>
     </div>

@@ -51,7 +51,7 @@ export default function ProfilePostCard({ post }) {
     <div className="border rounded-xl p-4 bg-white hover:shadow-sm transition relative">
       {/* 🔹 Header */}
       <div className="flex justify-between items-start">
-        <a href={`/profile/${post.author.username}`}>
+        <Link href={`/profile/${post.author.username}`}>
           <div className="flex items-center gap-3">
             <img
               src={getProfileImage(post.author.profile_picture)}
@@ -64,7 +64,7 @@ export default function ProfilePostCard({ post }) {
               <p className="text-gray-500 text-xs">{formattedDate}</p>
             </div>
           </div>
-        </a>
+        </Link>
 
         <ProfileKebab
           handleCopyPostLink={handleCopyPostLink}
@@ -75,13 +75,13 @@ export default function ProfilePostCard({ post }) {
       </div>
 
       {/* 🔹 Content */}
-      <a href={`/posts/${post.id}`} key={post.id}>
+      <Link href={`/posts/${post.id}`} key={post.id}>
         <p className="text-gray-700 mt-3 whitespace-pre-line">{post.content}</p>
-      </a>
+      </Link>
 
       {/* 🔹 Image (if available) */}
       {post.image && (
-        <a href={`/posts/${post.id}`}>
+        <Link href={`/posts/${post.id}`}>
           <img
             src={
               post.image.startsWith("http")
@@ -91,7 +91,7 @@ export default function ProfilePostCard({ post }) {
             alt="Post"
             className="w-full rounded-lg mt-3 object-cover"
           />
-        </a>
+        </Link>
       )}
     </div>
   );

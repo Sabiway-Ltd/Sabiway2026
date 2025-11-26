@@ -46,14 +46,14 @@ export default function Aside() {
             trendingHashtags.map((tag, idx) => {
               const isActive = activeHashtag === tag.tag;
               return (
-                <a href={`/hashtag/${encodeURIComponent(tag.tag)}`}
+                <Link href={`/hashtag/${encodeURIComponent(tag.tag)}`}
                   key={idx}
                   className={`px-4 py-2 border rounded-md text-sm font-medium shadow-sm transition
                     ${isActive ? "bg-[#008753] text-white border-[#008753]" : "bg-white text-gray-700 hover:bg-gray-100"}
                     ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}
                 >
                   {tag.tag}
-                </a>
+                </Link>
               );
             })
           ) : (
@@ -71,7 +71,7 @@ export default function Aside() {
             <p className="text-gray-400 text-sm">Loading...</p>
           ) : topContributors.length > 0 ? (
             topContributors.map((c) => (
-              <a href={`/profile/${c.username}`} key={c.user_id}>
+              <Link href={`/profile/${c.username}`} key={c.user_id}>
                 <div
                   
                   className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
@@ -94,7 +94,7 @@ export default function Aside() {
                     <p className="text-xs text-gray-500">{c.username}</p>
                   </div>
                 </div>
-              </a>
+              </Link>
             ))
           ) : (
             <p className="text-gray-400 text-sm">No contributors yet</p>

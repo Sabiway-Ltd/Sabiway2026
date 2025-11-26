@@ -16,10 +16,11 @@ import ProfilePageSkeleton from "./ProfilePageSkeleton";
 
 interface ProfileProps {
   username: string;
-  currentUserId?: string;
 }
 
-export default function UserProfile({ username, currentUserId }: ProfileProps) {
+export default function UserProfile({ username }: ProfileProps) {
+  const { profile } = useProfileStore();
+  const currentUserId = profile?.user_id;
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [loadingFollow, setLoadingFollow] = useState(false);
 
@@ -158,9 +159,9 @@ export default function UserProfile({ username, currentUserId }: ProfileProps) {
                 {loadingFollow ? (
                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                 ) : isFollowing ? (
-                  "Following"
+                  `Following`
                 ) : (
-                  "Follow"
+                  `Follow`
                 )}
               </button>
             )}

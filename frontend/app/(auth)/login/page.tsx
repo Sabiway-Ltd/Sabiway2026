@@ -71,13 +71,13 @@ export default function Login() {
 
           <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
             By continuing, you agree to our{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <Link href="#" className="text-[#008753] font-medium hover:underline">
               Privacy Policy
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <Link href="#" className="text-[#008753] font-medium hover:underline">
               Terms of Use
-            </a>
+            </Link>
             , and consent to receive emails.
           </p>
 
@@ -118,12 +118,12 @@ export default function Login() {
                 </button>
               </div>
               <div className="flex justify-end mt-1">
-                <a
+                <Link
                   href="/forgot-password"
                   className="text-[#008753] text-xs hover:underline font-medium"
                 >
                   Forgot Password?
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -168,9 +168,9 @@ export default function Login() {
 
           <p className="text-center text-gray-600 text-xs mt-5">
             Don’t have an account?{" "}
-            <a href="/signup" className="text-[#008753] font-medium hover:underline">
+            <Link href="/signup" className="text-[#008753] font-medium hover:underline">
               Sign up
-            </a>
+            </Link>
           </p>
         </motion.div>
       </div>

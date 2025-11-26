@@ -39,21 +39,21 @@ export default function Navbar() {
       <div className="relative mx-4 md:mx-8 mt-6 flex items-center justify-between bg-[#008753]/5 rounded-full shadow-sm md:py-3 py-2 px-5 sm:px-8">
         
         {/* LOGO */}
-        <a href="/" className="flex-shrink-0 cursor-pointer" >
+        <Link href="/" className="flex-shrink-0 cursor-pointer" >
           <img
               src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
               alt="SabiWay Logo"
               className="w-20 md:w-32 h-auto cursor-pointer hover:opacity-90 transition"
             />
-        </a>
+        </Link>
 
         {/* CENTER NAV LINKS (Desktop Only) */}
         <div className="hidden md:flex space-x-12 text-gray-800 font-medium">
 
           <div>
-            <a href="/community" className="hover:text-[#008753] transition">
+            <Link href="/community" className="hover:text-[#008753] transition">
               Community
-            </a>
+            </Link>
           </div>
 
           <div>
@@ -137,13 +137,13 @@ export default function Navbar() {
 
             {/* Community link */}
             <div>
-              <a
+              <Link
                 href="/community"
                 onClick={() => setMenuOpen(false)}
                 className="hover:text-[#008753] transition"
               >
                 Community
-              </a>
+              </Link>
             </div>
 
             {/* About Us */}

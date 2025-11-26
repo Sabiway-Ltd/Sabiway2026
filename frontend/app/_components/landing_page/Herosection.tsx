@@ -18,7 +18,7 @@ export default function Herosection() {
         </p>
 
         <button className="mt-8 px-8 py-4 bg-[#008753] md:mb-14 text-white rounded-[15px] font-semibold shadow hover:bg-[#006B42] transition w-fit sm:w-auto">
-          <a href={"https://waitlist.sabiway.com"}>Join the Waitlist</a>
+          <Link href={"https://waitlist.sabiway.com"}>Join the Waitlist</Link>
         </button>
       </div>
 

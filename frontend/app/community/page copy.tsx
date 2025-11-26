@@ -144,10 +144,8 @@ useEffect(() => {
 
       <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10  mx-auto">
         
-        <div className="md:w-[22rem] hidden lg:block mt-4">
-          <div className="sticky top-4">
-            <PeopleYouMayKnow />
-          </div>
+        <div className="md:w-[22rem] hidden lg:block md:mt-4">
+          <PeopleYouMayKnow/>
         </div>
 
         <main className="flex-[3] md:mt-4  w-full">
@@ -325,10 +323,8 @@ useEffect(() => {
 
         </main>
 
-        <aside className="hidden md:block md:w-[22rem] mt-2">
-          <div className="sticky top-4">
-            <Aside />
-          </div>
+        <aside className="hidden md:block md:w-[22rem] mt-2 ">
+          <Aside />
         </aside>
       </section>
     </div>

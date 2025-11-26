@@ -18,10 +18,10 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (!part) return null;
 
       // Handle internal sabiway links
-      if (part.match(/^https:\/\/sabiway2025\.vercel\.app/)) {
-        const path = part.replace("https://sabiway2025.vercel.app", "");
+      if (part.match(/^https:\/\/sabiway\.vercel\.app/)) {
+        const path = part.replace("https://sabiway.vercel.app", "");
         return (
-          <a href={path}
+          <Link href={path}
             key={i}
             // onClick={(e) => {
             //   e.preventDefault();
@@ -31,11 +31,11 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
             className="text-blue-500 hover:underline break-all"
           >
             {part}
-          </a>
+          </Link>
         );
       }
 
-      // Handle hashtags safely (no <a> inside <a>)
+      // Handle hashtags safely (no <Link> inside <Link>)
       if (part.startsWith("#")) {
         const tag = part.slice(1);
         return (

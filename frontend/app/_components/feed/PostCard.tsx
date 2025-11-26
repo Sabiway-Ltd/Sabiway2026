@@ -59,6 +59,9 @@ export default function PostCard({
   const [followingLoading, setFollowingLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const { profile } = useProfileStore();
+    const currentUserId = profile?.user_id;
+
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editedPostContent, setEditedPostContent] = useState(content);
   const [editedPostImage, setEditedPostImage] = useState<File | null>(null);
@@ -425,7 +428,7 @@ export default function PostCard({
       {/* If it is repost */}
       {original_post_data && (
         <div className="text-sm text-gray-600 border-b border-gray-200 pb-3 mt-1 mb-2 flex gap-x-2 items-center">
-          <a
+          <Link
               href={`/profile/${repost_post_data.author?.username?.replace(/^@/, '')}`}
             >
              <img
@@ -433,14 +436,14 @@ export default function PostCard({
                 alt={repost_post_data.author.full_name}
                 className="w-9 h-9 rounded-full object-cover border border-gray-200 shadow-sm"
               />
-          </a>
+          </Link>
           <p>
-            <a
+            <Link
               href={`/profile/${repost_post_data.author?.username?.replace(/^@/, '')}`}
               className="font-medium  text-gray-800 hover:underline"
             >
               {repost_post_data.author?.full_name}
-            </a>
+            </Link>
             {" "}
             reposted this
           </p>
@@ -450,7 +453,7 @@ export default function PostCard({
       <div>
         {/* Header */}
         <div className="flex  justify-between items-center gap-3">
-          <a href={`/profile/${author?.username?.replace(/^@/, '')}`}>
+          <Link href={`/profile/${author?.username?.replace(/^@/, '')}`}>
             <div className="flex items-center gap-3">
               <img
                 src={getProfileSrc(author.profile_picture)}
@@ -468,9 +471,9 @@ export default function PostCard({
                 <p className="text-[11px] text-gray-400">{formatTimeAgo(created_at)}</p>
               </div>
             </div>
-          </a>
+          </Link>
 
-          {author.user_id !== currentUser?.user_id ? (
+          {author.user_id !== currentUserId ? (
             <div className="flex gap-1 justify-end">
             {  !isFollowing && (
                 <button
@@ -655,10 +658,10 @@ export default function PostCard({
           </div>
         ) : (
           <>
-            {/* <a href={`/posts/${id}`} key={id}> */}
+            {/* <Link href={`/posts/${id}`} key={id}> */}
             {
               clickable && (
-                <a href={`/posts/${id}`}>
+                <Link href={`/posts/${id}`}>
                   <ReadMoreText content={content} maxLength={150} />
                   {image && (
                     <div className="mt-3 rounded-xl overflow-hidden">
@@ -669,7 +672,7 @@ export default function PostCard({
                       />
                     </div>
                   )}
-                </a>
+                </Link>
               )
             }
 
@@ -744,7 +747,7 @@ export default function PostCard({
 
 
           {
-            original_post_data && currentUser?.user_id === repost_post_data.author.user_id && (
+            original_post_data && currentUserId === repost_post_data.author.user_id && (
             <button
               onClick={handleUnRepost}
               disabled={repostLoading}
@@ -771,7 +774,7 @@ export default function PostCard({
           }
 
           {
-            original_post_data && currentUser?.user_id !== repost_post_data.author.user_id && (
+            original_post_data && currentUserId !== repost_post_data.author.user_id && (
             <button
               onClick={handleRepost}
               disabled={repostLoading}
