@@ -28,7 +28,8 @@ export default function Login() {
     const success = await login(form);
     if (success) {
       connectSocket();
-      router.push("/community");
+      // router.push("/community");
+      window.location.href = "/community"
     }
   };
 
