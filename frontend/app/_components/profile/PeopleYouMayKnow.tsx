@@ -79,7 +79,7 @@ export default function PeopleYouMayKnow() {
           return (
             <div
               key={profile.user_id}
-              className="flex items-start gap-x-2 justify-between bg-white  p-3 rounded-lg transition"
+              className="flex items-center gap-x-2 justify-between bg-white  p-3 rounded-lg transition"
             >
               <Link href={`/profile/${profile.username}`}>
                 <div className="flex items-center gap-3">
@@ -111,27 +111,6 @@ export default function PeopleYouMayKnow() {
               </Link>
 
               {user?.id !== profile.user_id && (
-                // <Button
-                //   size="sm"
-                //   disabled={loadingFollowId === profile.user_id}
-                //   variant={isFollowing ? "secondary" : "default"}
-                //   className={`text-xs flex items-center justify-center gap-2 ${
-                //     isFollowing
-                //       ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                //       : "bg-[#008753] text-white hover:bg-green-900"
-                //   }`}
-                //   onClick={() => handleFollowToggle(profile.user_id)}
-                // >
-                //   {loadingFollowId === profile.user_id ? (
-                //     <Loader2 className="w-4 h-4 animate-spin" />
-                //   ) : isFollowing ? (
-                //     "Following"
-                //   ) : (
-                //     "Follow"
-                //   )}
-                // </Button>
-
-
                 <Button
                   size="sm"
                   variant={(localFollowing[profile.user_id] ?? followingStatus[profile.user_id]) ? "secondary" : "default"}

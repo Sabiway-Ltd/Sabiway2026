@@ -474,12 +474,12 @@ export default function PostCard({
           </Link>
 
           {author.user_id !== currentUserId ? (
-            <div className="flex gap-1 justify-end">
+            <div className="flex  justify-end ">
             {  !isFollowing && (
                 <button
                   onClick={handleFollowToggle}
                   disabled={followingLoading}
-                  className={`ml-auto md:px-3 py-1 rounded-sm text-sm font-medium flex 
+                  className={`ml-auto md:px-3 py-1  rounded-sm text-sm font-medium flex 
                     text-[#008753] hover:bg-[#008753]/30 
                     items-center justify-center gap-2 transition-all duration-200 
                     ${followingLoading ? "opacity-70 cursor-not-allowed hidden" : ""}`}
@@ -487,7 +487,7 @@ export default function PostCard({
                   <div>
                     <span className="md:block hidden">+ Follow</span>
 
-                    <span className="md:hidden">+</span>
+                    <span className="md:hidden text-lg ">+</span>
                   </div>
                 </button>
               )}
@@ -698,19 +698,19 @@ export default function PostCard({
         )}
 
         {/* Actions */}
-        <div className="flex justify-between md:justify-start md:gap-x-4 text-gray-800 mt-3 w-full">
-          <button onClick={handleToggleLike} className="flex items-center gap-1">
-            <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+        <div className="flex justify-start gap-x-2 md:gap-x-4 text-gray-800 mt-3 w-full">
+          <button onClick={handleToggleLike} className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
+            <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
             <span>{likesCount}</span>
           </button>
 
-          <button onClick={handleToggleComments} className="flex items-center gap-1">
-            <MessageCircle className="h-5 w-5" />
+          <button onClick={handleToggleComments} className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
+            <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
             <span>{commentCount}</span>
           </button>
 
-          <button className="flex items-center gap-1">
-            <BarChart2 className="h-5 w-5" />
+          <button className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
+            <BarChart2 className="h-4 w-4 md:h-5 md:w-5" />
             <span>{impressionsCount}</span>
           </button>
 
@@ -724,17 +724,19 @@ export default function PostCard({
               className="flex items-center"
             >
               {repostLoading ? (
-                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-[#008753] rounded-full"></div>
               ) : (
-                <div className="flex gap-x-1">
+                <div className="flex gap-x-1 items-center bg-white py-1 px-2 justify-center rounded-2xl">
                   {hasReposted ? (
                     <>
-                      <Undo2 size={25} className="opacity-95 cursor-pointer text-gray-500" />
+                      <Undo2 className="opacity-95 cursor-pointer text-gray-500
+                      h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]" />
                       <span>{reposts_count}</span>
                     </>
                   ) : (
                     <>
-                      <Repeat2 size={25} className="opacity-95 cursor-pointer text-gray-500" />
+                      <Repeat2  className="opacity-95 cursor-pointer text-gray-500
+                      h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]" />
                       <span>{reposts_count}</span>
                     </>
                   )}
@@ -754,14 +756,14 @@ export default function PostCard({
               className="flex items-center"
             >
               {repostLoading ? (
-                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-[#008753] rounded-full"></div>
               ) : (
                 <div className="flex gap-x-1">
                   
-                      <div className="flex gap-x-1">
+                      <div className="flex gap-x-1 items-center bg-white py-1 px-2 justify-center rounded-2xl">
                         <Undo2
-                          size={25}
-                          className="opacity-95 cursor-pointer text-gray-500"
+                          className="opacity-95 cursor-pointer text-gray-500
+                          h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]"
                         />
                         <span>{reposts_count}</span>
                       </div>
@@ -781,14 +783,14 @@ export default function PostCard({
               className="flex items-center"
             >
               {repostLoading ? (
-                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                <div className="h-[1.5rem] w-[1.5rem] animate-spin border-2 border-gray-300 border-t-[#008753] rounded-full"></div>
               ) : (
                 <div className="flex gap-x-1">
                   
-                      <div className="flex gap-x-1">
+                      <div className="flex gap-x-1 items-center bg-white py-1 px-2 justify-center rounded-2xl">
                         <Repeat2
-                          size={25}
-                          className="opacity-95 cursor-pointer text-gray-500"
+                          className="opacity-95 cursor-pointer text-gray-500
+                          h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]"
                         />
                         <span>{reposts_count}</span>
                       </div>
@@ -802,13 +804,13 @@ export default function PostCard({
 
 
 
-          <button onClick={handleBookmarkToggle} className="flex items-center gap-1">
-  <Bookmark
-    className={`h-[1.35rem] w-[1.35rem] ${
-      isBookmarked ? "fill-blue-500 text-blue-500" : "text-gray-500"
-    }`}
-  />
-</button>
+          <button onClick={handleBookmarkToggle} className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
+            <Bookmark
+              className={`h-[1.1rem] w-[1.1rem] md:h-[1.35rem] md:w-[1.35rem] ${
+                isBookmarked ? "fill-[#008753] text-[#008753]" : "text-gray-500"
+              }`}
+            />
+          </button>
 
 
           {/* <button className="flex items-center gap-1">
@@ -852,7 +854,7 @@ export default function PostCard({
 
                 <div className="flex items-center gap-3 mr-2">
                   {/* Image Upload */}
-                  <label className="cursor-pointer text-gray-500 hover:text-blue-500 transition flex items-center">
+                  <label className="cursor-pointer text-gray-500 hover:text-[#008753] transition flex items-center">
                     <ImageIcon className="w-5 h-5" />
                     <input
                       type="file"

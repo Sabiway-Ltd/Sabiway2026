@@ -52,7 +52,7 @@ export default function IconTooltipButton({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
             transition={{ duration: 0.15 }}
-            className={`absolute top-9 px-2 py-1 rounded-md shadow-lg whitespace-nowrap text-[10px] ${tooltipBg} ${tooltipTextColor}`}
+            className={`absolute top-9 px-2 py-1 md:block hidden rounded-md shadow-lg whitespace-nowrap text-[10px] ${tooltipBg} ${tooltipTextColor}`}
           >
             {label}
           </motion.div>

@@ -29,6 +29,9 @@ export default function CommunityNavbar({
   onReset, // ✅ added
 }: CommunityNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
   
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -141,245 +144,243 @@ export default function CommunityNavbar({
 
 
   return (
-    <nav className="w-full flex justify-center py-4 relative">
-      <div className="bg-[#008753]/5 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 px-4 md:px-7 shadow-sm">
-        {/* Left Section */}
-        <div className="flex items-center md:gap-x-4 gap-x-2">
-          {/* Logo */}
-          <Link href="/">
-            <img
-              src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
-              alt="SabiWay Logo"
-              className="w-20 md:w-32 h-auto cursor-pointer hover:opacity-90 transition"
-            />
-          </Link>
+    <div>
+      <nav className="w-full flex justify-center py-4 relative">
+        <div className="bg-[#008753]/5 rounded-full max-w-[1400px] w-full relative flex items-center justify-between py-2 pl-1 pr-3 md:pl-7 md:pr-8 shadow-sm">
+          {/* I want all the contens inside this block to tak the usinform hight of this div */}
+          <div className="flex items-center gap-x-2 justify-between w-full md:h-[3rem] h-[2.5rem] ">
+            {/* Left Section */}
+            <div className="flex items-center md:gap-x-4 gap-x-2 h-full">
+              {/* Logo */}
+              <Link href="/">
+                <img
+                  src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
+                  alt="SabiWay Logo"
+                  className="w-20 md:w-32 cursor-pointer hover:opacity-90 transition md:block hidden"
+                />
+              </Link>
 
-          {/* Home Button */}
-          <div className="p-1 bg-white rounded-full mt-0.5">
-            <IconTooltipButton
-              onClick={() => handleHomeClick()}
-              icon={Home}
-              label="Home"
-              size={17}
-            />
-          </div>
+              <Link href="/">
+                <img
+                  src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764248519/sabiway_small_logo_pmddcw.png"
+                  alt="SabiWay Logo"
+                  className="h-6 w-auto cursor-pointer hover:opacity-90 transition md:hidden"
+                />
+              </Link>
 
-          {/* Mobile App Button */}
-          <div className="p-1 bg-white rounded-full mt-0.5">
-            <IconTooltipButton
-              onClick={() =>
-                window.open(
-                  "https://play.google.com/store/apps?hl=en",
-                  "_blank"
-                )
-              }
-              icon={Smartphone}
-              label="Mobile App"
-              size={17}
-            />
-          </div>
-
-          {/* Desktop Search */}
-          {pathname === "/community" && (
-            <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-full py-2.5 bg-white items-center shadow-sm">
-              <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Search Community"
-                className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKey}
-              />
-            </div>
-          )}
-        </div>
-
-          
-
-        {/* Right Section */}
-        <div className="flex items-center gap-x-3 md:gap-x-4 relative">
-          {pathname === "/community" && (
-            <button
-              onClick={onCreatePost}
-              className="hidden sm:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
-            >
-              <div className="flex items-center justify-center py-1 px-1 rounded-full bg-white/20 text-white font-semibold text-xs">
-                {profile?.initials}
+              {/* Home Button */}
+              <div className="md:p-1 p-0.5 bg-white rounded-full ">
+                <IconTooltipButton
+                  onClick={() => handleHomeClick()}
+                  icon={Home}
+                  label="Home"
+                  size={17}
+                />
               </div>
-              <span>Create Post</span>
-              <Plus className="h-4 w-4" />
-            </button>
-          )}
 
-          {/* Notifications */}
-          {/* Notifications */}
-          <div className="relative" ref={notifRef}>
-            <div className="md:p-1 p-0.5 bg-white rounded-full relative">
-              <IconTooltipButton
-                onClick={() => setNotifDropdownOpen((prev) => !prev)}
-                icon={Bell}
-                label="Notification"
-                size={18}
-              />
+              {/* Mobile App Button */}
+              <div className="md:p-1 p-0.5 bg-white rounded-full ">
+                <IconTooltipButton
+                  onClick={() =>
+                    window.open(
+                      "https://play.google.com/store/apps?hl=en",
+                      "_blank"
+                    )
+                  }
+                  icon={Smartphone}
+                  label="Mobile App"
+                  size={17}
+                />
+              </div>
 
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
-                  {unreadCount}
-                </span>
+              {/* Desktop Search */}
+              {pathname === "/community" && (
+                <div className="hidden md:flex w-60 px-3 gap-x-3 rounded-full py-2.5 bg-white items-center shadow-sm">
+                  <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search Community"
+                    className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKey}
+                  />
+                </div>
               )}
             </div>
 
-            <AnimatePresence>
-              {notifDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className={`absolute md:right-0 
-                    ${pathname === "/community" ? "-right-28" : "-right-14"}
-                    space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto`}
-                >
-                  {loading && notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">
-                      Loading...
-                    </p>
-                  ) : notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">
-                      No notifications
-                    </p>
-                  ) : (
-                    <>
-                      {notifications.map((n, index) => {
-                        const link = getNotificationLink(n);
+              
 
-                        return (
-                          <Link
-                            key={n.id}
-                            href={link}
-                            onClick={() => {
-                              if (!n.is_read) {
-                                markNotificationRead(n.id);
-                              }
-                              setNotifDropdownOpen(false);
-                            }}
-                            className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
-                              n.is_read
-                                ? "bg-gray-50 hover:bg-gray-100"
-                                : "bg-[#008753]/10 hover:bg-[#008753]/20"
-                            }`}
-                          >
-                            <img
-                              src={getCloudinaryImage(n.actor.profile_picture)}
-                              alt={n.actor.full_name || "User"}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
+            {/* Right Section */}
+            <div className="flex items-center gap-x-2 md:gap-x-4 relative">
+              {pathname === "/community" && (
+                <div>
+                  <button
+                    onClick={onCreatePost}
+                    className="hidden md:flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-2 text-sm font-medium text-white"
+                  >
+                    <div className="flex items-center justify-center py-1 px-1 rounded-full bg-white/20 text-white font-semibold text-xs">
+                      {profile?.initials}
+                    </div>
+                    <span>Create Post</span>
+                    <Plus className="h-4 w-4" />
+                  </button>
 
-                            <div className="flex-1">
-                              <p className="text-sm text-gray-800">
-                                <span className="font-semibold">{n.actor.full_name}</span>{" "}
-                                {n.message}
-                              </p>
+                  <button
+                    onClick={onCreatePost}
+                    className="md:hidden  items-center gap-x-2 text-[#008753] bg-white py-2.5 px-2.5 rounded-full  text-sm font-medium "
+                  >
+                    <span></span>
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
 
-                              <p className="text-xs text-gray-500">
-                                {new Date(n.created_at).toLocaleString("en-GB", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                })}
-                              </p>
-                            </div>
+              {/* Mobile Search */}
+              {pathname === "/community" && (
+                <div className="md:hidden md:p-1 p-0.5 bg-white rounded-full ">
+                  <IconTooltipButton
+                    onClick={() => setMobileSearchOpen((prev) => !prev)}
+                    icon={Search}
+                    label="Search Community"
+                    size={18}
+                  />
+                </div>
+              )}
 
-                            {!n.is_read && (
-                              <Check className="h-4 w-4 text-[#008753] flex-shrink-0" />
-                            )}
-                          </Link>
-                        );
-                      })}
 
-                      {/* Button to view all notifications */}
-                      <Link
-                        href="/notifications"
-                        className="block text-center text-sm text-[#008753] font-medium py-2 hover:underline mt-2"
-                        onClick={() => setNotifDropdownOpen(false)}
-                      >
-                        View All Notifications
-                      </Link>
+              {/* Notifications */}
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                <div className="md:p-1 p-0.5 bg-white rounded-full relative">
+                  <IconTooltipButton
+                    onClick={() => setNotifDropdownOpen((prev) => !prev)}
+                    icon={Bell}
+                    label="Notification"
+                    size={18}
+                  />
 
-                    </>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
+                      {unreadCount}
+                    </span>
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
 
+                <AnimatePresence>
+                  {notifDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className={`absolute md:right-0 
+                        ${pathname === "/community" ? "-right-28" : "-right-14"}
+                        space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto`}
+                    >
+                      {loading && notifications.length === 0 ? (
+                        <p className="text-sm text-center text-gray-500 py-4">
+                          Loading...
+                        </p>
+                      ) : notifications.length === 0 ? (
+                        <p className="text-sm text-center text-gray-500 py-4">
+                          No notifications
+                        </p>
+                      ) : (
+                        <>
+                          {notifications.map((n, index) => {
+                            const link = getNotificationLink(n);
+
+                            return (
+                              <Link
+                                key={n.id}
+                                href={link}
+                                onClick={() => {
+                                  if (!n.is_read) {
+                                    markNotificationRead(n.id);
+                                  }
+                                  setNotifDropdownOpen(false);
+                                }}
+                                className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
+                                  n.is_read
+                                    ? "bg-gray-50 hover:bg-gray-100"
+                                    : "bg-[#008753]/10 hover:bg-[#008753]/20"
+                                }`}
+                              >
+                                <img
+                                  src={getCloudinaryImage(n.actor.profile_picture)}
+                                  alt={n.actor.full_name || "User"}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-800">
+                                    <span className="font-semibold">{n.actor.full_name}</span>{" "}
+                                    {n.message}
+                                  </p>
+
+                                  <p className="text-xs text-gray-500">
+                                    {new Date(n.created_at).toLocaleString("en-GB", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })}
+                                  </p>
+                                </div>
+
+                                {!n.is_read && (
+                                  <Check className="h-4 w-4 text-[#008753] flex-shrink-0" />
+                                )}
+                              </Link>
+                            );
+                          })}
+
+                          {/* Button to view all notifications */}
+                          <Link
+                            href="/notifications"
+                            className="block text-center text-sm text-[#008753] font-medium py-2 hover:underline mt-2"
+                            onClick={() => setNotifDropdownOpen(false)}
+                          >
+                            View All Notifications
+                          </Link>
+
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+              </div>
+
+
+              {/* Profile Picture Dropdown */}
+              <ProfileDropdown/>
+
+              
+            </div>
           </div>
-
-
-          {/* Profile Picture Dropdown */}
-          <ProfileDropdown/>
-
-
-          {/* Mobile Menu */}
-          {pathname === "/community" && (
-            <button className="md:hidden bg-white p-2 rounded-full" onClick={() => setMenuOpen(true)}>
-              <Menu className="h-5 w-5 text-[#008753]" />
-            </button>
-          )}
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Drawer */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/20 flex justify-end"
-          onClick={() => setMenuOpen(false)}
-        >
-          <div
-            className="bg-white w-[80%] sm:w-1/2 max-w-xs h-full shadow-lg flex flex-col p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-[#008753]">Menu</h2>
-              <button onClick={() => setMenuOpen(false)}>
-                <X className="h-6 w-6 text-gray-700" />
-              </button>
-            </div>
-
-            {/* Mobile Search */}
-            <div className="w-full px-3 text-xs gap-x-2 rounded py-2 bg-gray-100 flex items-center mb-4">
-              <Search className="h-4 w-4 text-gray-600" />
-              <input
-                type="text"
-                placeholder="Search Community"
-                className="flex-1 outline-none focus:ring-0 text-sm bg-transparent"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKey}
-              />
-            </div>
-
-            <button
-              onClick={() => {
-                onCreatePost();
-                setMenuOpen(false);
-              }}
-              className="flex items-center gap-x-2 bg-[#008753] rounded-full px-4 py-3 text-sm font-medium text-white"
-            >
-              <img
-                src={getCloudinaryImage(profile?.profile_picture ?? DEFAULT_PROFILE_PICTURE)}
-                alt={profile?.full_name || "User"}
-                className="w-7 h-7 rounded-full object-cover"
-              />
-              Create Post
-              <Plus className="h-4 w-4" />
-            </button>
+      {mobileSearchOpen && (
+        <div className="md:hidden mb-2 w-full px-4 py-2 shadow-sm bg-[#008753]/5 rounded-lg p-4">
+          <div className="flex items-center gap-x-2 rounded-full bg-white px-3 py-2">
+            <Search className="h-4 w-4 text-gray-600" />
+            <input
+              type="text"
+              placeholder="Search Community"
+              className="flex-1 outline-none bg-transparent text-sm placeholder-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKey} // use your existing Enter/Escape handler
+            />
           </div>
         </div>
       )}
-    </nav>
+    </div>
+
   );
 }

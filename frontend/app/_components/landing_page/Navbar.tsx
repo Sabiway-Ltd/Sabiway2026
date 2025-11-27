@@ -84,19 +84,28 @@ export default function Navbar() {
 
 
         {/* RIGHT BUTTONS (Desktop) */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="flex items-center space-x-4">
           {
             !token && (
               <div className="flex gap-6">
+
                 <button
                   onClick={() => router.push("/login")}
-                  className="text-gray-700 font-medium hover:text-[#008753] transition"
+                  className="px-5 py-1.5 md:hidden bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
                 >
                   Login
                 </button>
+
+                <button
+                  onClick={() => router.push("/login")}
+                  className="text-gray-700 hidden md:block font-medium hover:text-[#008753] transition"
+                >
+                  Login
+                </button>
+
                 <button
                   onClick={() => router.push("/signup")}
-                  className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
+                  className="px-6 py-2 hidden md:block bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
                 >
                   Sign Up
                 </button>
@@ -110,7 +119,7 @@ export default function Navbar() {
         {
           !token && (
             <button
-              className="md:hidden text-gray-800"
+              className="hidden text-gray-800"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
             >

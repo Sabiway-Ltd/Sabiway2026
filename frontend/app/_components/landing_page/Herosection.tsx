@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export default function Herosection() {
+export default function Herosection({HandleWaitListPopUp}) {
   return (
     <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 px-6 sm:px-10 md:px-16 pt-24 md:pt-40 pb-24 md:pb-36 items-center relative overflow-hidden">
       {/* LEFT SIDE — TEXT */}
@@ -17,9 +17,23 @@ export default function Herosection() {
           SabiWay connects you to reliable local services — fast, easy, and secure.
         </p>
 
-        <button className="mt-8 px-8 py-4 bg-[#008753] md:mb-14 text-white rounded-[15px] font-semibold shadow hover:bg-[#006B42] transition w-fit sm:w-auto">
-          <Link href={"https://waitlist.sabiway.com"}>Join the Waitlist</Link>
-        </button>
+        <div className="flex gap-x-2 text-xs sm:text-[0.85rem] md:text-sm">
+          <button 
+            onClick={HandleWaitListPopUp}
+            >
+            <div className="mt-8 w-[9rem] sm:w-[10rem] md:w-[12rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
+              Join App Waitlist
+            </div>
+          </button>
+
+          <Link 
+            href={"/signup"}
+            >
+              <div className="mt-8 w-[9rem] sm:w-[10rem] md:w-[12rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
+                Join the Community
+              </div>
+          </Link>
+        </div>
       </div>
 
       {/* RIGHT SIDE — IMAGE */}

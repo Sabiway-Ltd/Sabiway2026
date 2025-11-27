@@ -155,20 +155,26 @@ useEffect(() => {
 
           {/* Search type buttons */}
           {pendingSearch && (
-            <div className="flex justify-center gap-4 mb-4">
-              <button
-                onClick={() => handleSearchTypeChange("posts")}
-                className="px-4 py-1.5 rounded-full border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              >
-                Posts
-              </button>
-              <button
-                onClick={() => handleSearchTypeChange("profiles")}
-                className="px-4 py-1.5 rounded-full border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              >
-                Profiles
-              </button>
-              
+            <div className="flex flex-col items-center gap-3 mb-4">
+              <p className="text-gray-600 font-medium">
+                What do you want to search?
+              </p>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => handleSearchTypeChange("posts")}
+                  className="px-4 py-2 rounded-full bg-[#008753] text-white font-medium shadow hover:bg-[#007045] active:scale-95 transition"
+                >
+                  Posts
+                </button>
+
+                <button
+                  onClick={() => handleSearchTypeChange("profiles")}
+                  className="px-4 py-2 rounded-full bg-gray-700 text-white font-medium shadow hover:bg-gray-800 active:scale-95 transition"
+                >
+                  Profiles
+                </button>
+              </div>
             </div>
           )}
 

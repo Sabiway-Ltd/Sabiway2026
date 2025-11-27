@@ -28,7 +28,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
             //   e.stopPropagation();
             //   router.push(path);
             // }}
-            className="text-blue-500 hover:underline break-all"
+            className="text-[#008753] hover:underline break-all"
           >
             {part}
           </Link>
@@ -73,7 +73,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className="ml-1 text-blue-500 font-medium hover:underline"
+          className="ml-1 text-[#008753] font-medium hover:underline"
         >
           {isExpanded ? "Show less" : "Read more"}
         </button>

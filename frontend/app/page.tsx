@@ -1,4 +1,6 @@
 "use client";
+import { useState } from "react";
+
 import Navbar from "./_components/landing_page/Navbar";
 import Herosection from "./_components/landing_page/Herosection";
 import Scrollingpath from "./_components/landing_page/Scrollingpath";
@@ -8,43 +10,43 @@ import Reviewsection from "./_components/landing_page/Reviewsection";
 import Faqs from "./_components/landing_page/Faqs";
 import Appsection from "./_components/landing_page/Appsection";
 import Footer from "./_components/landing_page/Footer";
+import WaitlistForm from "./_components/common/WaitlistForm";
+
 
 export default function Home() {
+  const [showWaitlist, setShowWaitlist] = useState(false);
+
+  const HandleWaitListPopUp = () => {
+    setShowWaitlist(true);
+  };
 
   return (
-    <main className=" overflow-x-hidden">
-      
-      {/* NAVBAR */}
+    <main className="overflow-x-hidden">
       <Navbar />
 
+      <Herosection HandleWaitListPopUp={HandleWaitListPopUp} />
 
-      {/* ================= HERO SECTION ================= */}
-      <Herosection  />
-      
-      {/* ================= SERVICES MARQUEE ================= */}
-      <Scrollingpath  />
+      {showWaitlist && (
+  <WaitlistForm 
+    show={showWaitlist}
+    onSuccess={() => setShowWaitlist(false)} 
+  />
+)}
 
-      {/* ================= ABOUT US SECTION ================= */}
-      <Aboutus  />
 
-      {/* ================= PROVIDERS SECTION ================= */}
+      <Scrollingpath />
+      <Aboutus />
       <Serviceprovider />
+      <Reviewsection />
+      <Faqs />
 
-      {/* ================= REVIEWS MARQUEE ================= */}
-      <Reviewsection  />
-
-      {/* ================= FAQ SECTION ================= */}
-      <Faqs  />
-      
-      {/* ================= APP + FOOTER SECTION ================= */}
       <div className="relative">
         <Appsection />
         <div className="relative -mt-20 z-10">
           <Footer />
         </div>
       </div>
-    
-      
     </main>
   );
 }
+
