@@ -3,7 +3,6 @@
 import { create } from "zustand";
 import axios from "axios";
 import { DJANGO_URL } from "../utils/MyConstants";
-import { EXPRESS_URL } from "../utils/MyConstants";
 
 // ----------------------
 // Types
@@ -53,39 +52,38 @@ export interface NotificationItem {
 }
 
 // ----------------------
-// Zustand Store Type
+// Store Type
 // ----------------------
-interface NotificationStore {
-  notifications: NotificationItem[];
+interface AllNotificationsStore {
+  allNotifications: NotificationItem[];
   loading: boolean;
   error: string | null;
   nextPage: number | null;
   hasMore: boolean;
 
-  getAllNotifications: (page?: number) => Promise<void>;
-  resetNotifications: () => void;
+  fetchAllNotifications: (page?: number) => Promise<void>;
+  resetAllNotifications: () => void;
 
   markNotificationRead: (id: number) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
-
 }
 
 // ----------------------
 // Zustand Store
 // ----------------------
-export const useNotificationStore = create<NotificationStore>((set, get) => ({
-  notifications: [],
+export const useAllNotificationsStore = create<AllNotificationsStore>((set, get) => ({
+  allNotifications: [],
   loading: false,
   error: null,
   nextPage: 1,
   hasMore: true,
 
-  // Fetch notifications
-  getAllNotifications: async (page = 1) => {
-    const { loading, nextPage } = get();
+  fetchAllNotifications: async (page = 1) => {
+    const { loading, nextPage, allNotifications } = get();
 
-    // Prevent duplicate calls
-    if (loading || (page !== nextPage && page !== 1)) return;
+    // Prevent invalid duplicate requests
+    if (loading) return;
+    if (page !== 1 && page !== nextPage) return;
 
     set({ loading: true, error: null });
 
@@ -96,27 +94,30 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
 
     try {
-      const res = await axios.get(`${DJANGO_URL}/api/notifications/?page=${page}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get(
+        `${DJANGO_URL}/api/notifications/?page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const newNotifications: NotificationItem[] =
         res.data.results || res.data;
 
-      set((state) => ({
-        notifications:
+      set({
+        allNotifications:
           page === 1
             ? newNotifications
-            : [...state.notifications, ...newNotifications],
+            : [...allNotifications, ...newNotifications],
 
         nextPage: res.data.next ? page + 1 : null,
         hasMore: Boolean(res.data.next),
         loading: false,
-      }));
+      });
     } catch (err) {
-      console.error("Failed to fetch notifications:", err);
+      console.error("Failed to fetch all notifications:", err);
       set({ error: "Failed to fetch notifications", loading: false });
     }
   },
@@ -136,9 +137,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         }
       );
 
-      // Update state
       set((state) => ({
-        notifications: state.notifications.map((n) =>
+        allNotifications: state.allNotifications.map((n) =>
           n.id === id ? { ...n, is_read: true } : n
         ),
       }));
@@ -146,7 +146,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       console.error("Failed to mark notification as read:", err);
     }
   },
-
 
   markAllNotificationsRead: async () => {
     const token = localStorage.getItem("access");
@@ -164,7 +163,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       );
 
       set((state) => ({
-        notifications: state.notifications.map((n) => ({
+        allNotifications: state.allNotifications.map((n) => ({
           ...n,
           is_read: true,
         })),
@@ -174,15 +173,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-
-
-  // Optional: To clear notification list
-  resetNotifications: () =>
+  resetAllNotifications: () =>
     set({
-      notifications: [],
+      allNotifications: [],
+      loading: false,
+      error: null,
       nextPage: 1,
       hasMore: true,
-      error: null,
-      loading: false,
     }),
 }));

@@ -26,3 +26,26 @@ class MarkNotificationReadView(generics.UpdateAPIView):
         notif.is_read = True
         notif.save(update_fields=["is_read"])
         return Response({"detail": "Notification marked as read"})
+
+
+
+class MarkAllNotificationsReadView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        user_profile = request.user.profile
+
+        # Efficient bulk update (NO looping, updates all in one query)
+        updated_count = (
+            Notification.objects
+            .filter(user=user_profile, is_read=False)
+            .update(is_read=True)
+        )
+
+        return Response(
+            {
+                "detail": "All notifications marked as read.",
+                "updated_count": updated_count,
+            },
+            status=status.HTTP_200_OK,
+        )

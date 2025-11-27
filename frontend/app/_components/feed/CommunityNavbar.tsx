@@ -45,8 +45,12 @@ export default function CommunityNavbar({
 
   const { profile, getMyProfile } = useProfileStore();
   const { socket } = useAuthStore();
-  const { notifications, getNotifications, markAsRead, addNotification, loading } =
-    useNotificationStore();
+  const {
+    notifications,
+    loading,
+    getAllNotifications,
+    markNotificationRead,
+  } = useNotificationStore();
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
   
@@ -54,21 +58,16 @@ export default function CommunityNavbar({
   // 🔁 Auto-refresh notifications
   useEffect(() => {
     if (!profile) getMyProfile();
-    getNotifications();
-    const interval = setInterval(() => getNotifications(), 5000);
+
+    getAllNotifications();
+
+    const interval = setInterval(() => {
+      getAllNotifications(1); // always refresh first page
+    }, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
-  // 🔔 Socket listener
-  useEffect(() => {
-    if (!socket) return;
-    const handleNewNotification = (notif: any) => {
-      addNotification(notif);
-      toast.success(notif.message || "New notification!");
-    };
-    socket.on("notification:new", handleNewNotification);
-    return () => socket.off("notification:new", handleNewNotification);
-  }, [socket, addNotification]);
 
   // 🪟 Close dropdown on outside click
   useEffect(() => {
@@ -214,10 +213,11 @@ export default function CommunityNavbar({
           )}
 
           {/* Notifications */}
+          {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <div className="md:p-1 p-0.5 bg-white rounded-full relative">
               <IconTooltipButton
-                onClick={() => setNotifDropdownOpen(prev => !prev)}
+                onClick={() => setNotifDropdownOpen((prev) => !prev)}
                 icon={Bell}
                 label="Notification"
                 size={18}
@@ -229,8 +229,9 @@ export default function CommunityNavbar({
                 </span>
               )}
             </div>
+
             <AnimatePresence>
-              {notifDropdownOpen  && (
+              {notifDropdownOpen && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -241,63 +242,82 @@ export default function CommunityNavbar({
                     space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto`}
                 >
                   {loading && notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
+                    <p className="text-sm text-center text-gray-500 py-4">
+                      Loading...
+                    </p>
                   ) : notifications.length === 0 ? (
-                    <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
+                    <p className="text-sm text-center text-gray-500 py-4">
+                      No notifications
+                    </p>
                   ) : (
-                    notifications.map((n) => {
-                      const link = getNotificationLink(n);
+                    <>
+                      {notifications.map((n, index) => {
+                        const link = getNotificationLink(n);
 
-                      return (
-                        <Link
-                          key={n.id}
-                          href={link}
-                          onClick={() => {
-                            markAsRead(n.id);
-                            setNotifDropdownOpen(false);
-                          }}
-                          className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
-                            n.is_read
-                              ? "bg-gray-50 hover:bg-gray-100"
-                              : "bg-[#008753]/10 hover:bg-[#008753]/20"
-                          }`}
-                        >
-                          <img
-                            src={getCloudinaryImage(n.actor.profile_picture)}
-                            alt={n.actor.full_name || "User"}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
+                        return (
+                          <Link
+                            key={n.id}
+                            href={link}
+                            onClick={() => {
+                              if (!n.is_read) {
+                                markNotificationRead(n.id);
+                              }
+                              setNotifDropdownOpen(false);
+                            }}
+                            className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
+                              n.is_read
+                                ? "bg-gray-50 hover:bg-gray-100"
+                                : "bg-[#008753]/10 hover:bg-[#008753]/20"
+                            }`}
+                          >
+                            <img
+                              src={getCloudinaryImage(n.actor.profile_picture)}
+                              alt={n.actor.full_name || "User"}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
 
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">
-                              <span className="font-semibold">
-                                {n.actor.full_name}
-                              </span>{" "}
-                              {n.message}
-                            </p>
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-800">
+                                <span className="font-semibold">{n.actor.full_name}</span>{" "}
+                                {n.message}
+                              </p>
 
-                            <p className="text-xs text-gray-500">
-                              {new Date(n.created_at).toLocaleString("en-GB", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true,
-                              })}
-                            </p>
-                          </div>
+                              <p className="text-xs text-gray-500">
+                                {new Date(n.created_at).toLocaleString("en-GB", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </p>
+                            </div>
 
-                          {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
-                        </Link>
-                      );
-                    })
+                            {!n.is_read && (
+                              <Check className="h-4 w-4 text-[#008753] flex-shrink-0" />
+                            )}
+                          </Link>
+                        );
+                      })}
+
+                      {/* Button to view all notifications */}
+                      <Link
+                        href="/notifications"
+                        className="block text-center text-sm text-[#008753] font-medium py-2 hover:underline mt-2"
+                        onClick={() => setNotifDropdownOpen(false)}
+                      >
+                        View All Notifications
+                      </Link>
+
+                    </>
                   )}
                 </motion.div>
-
               )}
             </AnimatePresence>
+
           </div>
+
 
           {/* Profile Picture Dropdown */}
           <ProfileDropdown/>
