@@ -2,7 +2,6 @@
 import "./globals.css";
 import { Montserrat } from "next/font/google";
 import { Toaster } from "react-hot-toast";
-import ClientProvider from "./_components/common/ClientProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -18,8 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={montserrat.className}>
-        {/* Wrap the app in client-side provider for loader */}
-        <ClientProvider>{children}</ClientProvider>
+        {children}
 
         <Toaster
           position="top-right"

@@ -433,83 +433,83 @@ const handleToggleReplies = async () => {
           {/* <p className="text-gray-800 text-sm">{content}</p> */}
 
           {isEditing ? (
-  <div className="mt-1">
-    <textarea
-      value={editText}
-      onChange={(e) => setEditText(e.target.value)}
-      className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
-      rows={2}
-    />
+            <div className="mt-1">
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                rows={2}
+              />
 
-    {/* 🖼️ Image preview if editing */}
-    {editPreview && (
-      <div className="mt-2 relative inline-block">
-        <img
-          src={editPreview}
-          alt="preview"
-          className="w-32 h-32 object-cover rounded-md"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setEditImage(null);
-            setEditPreview(null);
-          }}
-          className="absolute top-1 right-1 bg-white text-gray-700 hover:text-red-500 rounded-full p-1 shadow-md border border-gray-200"
-        >
-          <X size={12} />
-        </button>
-      </div>
-    )}
+              {/* 🖼️ Image preview if editing */}
+              {editPreview && (
+                <div className="mt-2 relative inline-block">
+                  <img
+                    src={editPreview}
+                    alt="preview"
+                    className="w-32 h-32 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditImage(null);
+                      setEditPreview(null);
+                    }}
+                    className="absolute top-1 right-1 bg-white text-gray-700 hover:text-red-500 rounded-full p-1 shadow-md border border-gray-200"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
 
-    {/* 📤 Upload new image (optional) */}
-    <div className="mt-2 flex items-center gap-3">
-      <input
-        id={`edit-img-${id}`}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            setEditImage(file);
-            setEditPreview(URL.createObjectURL(file));
-          }
-        }}
-      />
-      <label
-        htmlFor={`edit-img-${id}`}
-        className="cursor-pointer text-gray-600 hover:text-blue-500 flex items-center gap-1 text-xs font-medium"
-      >
-        <ImageIcon size={14} />
-        Change Image
-      </label>
-    </div>
+              {/* 📤 Upload new image (optional) */}
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  id={`edit-img-${id}`}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setEditImage(file);
+                      setEditPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                <label
+                  htmlFor={`edit-img-${id}`}
+                  className="cursor-pointer text-gray-600 hover:text-[#008753] flex items-center gap-1 text-xs font-medium"
+                >
+                  <ImageIcon size={14} />
+                  Change Image
+                </label>
+              </div>
 
-    {/* ✅ Buttons */}
-    <div className="flex justify-end mt-3 gap-2">
-      <button
-        onClick={() => setIsEditing(false)}
-        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-      >
-        <X size={12} /> Cancel
-      </button>
-      <button
-        onClick={handleEditSave}
-        disabled={updating}
-        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-      >
-        {updating ? "Saving..." : (
-          <>
-            <Check size={12} /> Save
-          </>
-        )}
-      </button>
-    </div>
-  </div>
-) : (
-  <p className="text-gray-800 text-sm">{content}</p>
-)}
+              {/* ✅ Buttons */}
+              <div className="flex justify-end mt-3 gap-2">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                >
+                  <X size={12} /> Cancel
+                </button>
+                <button
+                  onClick={handleEditSave}
+                  disabled={updating}
+                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                >
+                  {updating ? "Saving..." : (
+                    <>
+                      <Check size={12} /> Save
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-800 text-sm">{content}</p>
+          )}
 
 
 
@@ -527,7 +527,7 @@ const handleToggleReplies = async () => {
           {/* ❤️ / 💬 / 📞 Actions */}
           <div className="flex flex-wrap md:gap-x-3 gap-x-2 text-gray-800 mt-2">
             <button
-              className="flex items-center gap-1 hover:text-red-500"
+              className="flex items-center gap-1 hover:text-red-500 bg-white py-1 px-2 justify-center rounded-2xl"
               onClick={handleLikeToggle}
             >
               <Heart
@@ -539,7 +539,7 @@ const handleToggleReplies = async () => {
             </button>
 
             <button
-                className="flex items-center gap-1 hover:text-blue-500"
+                className="flex items-center gap-1 hover:text-[#008753] bg-white py-1 px-2 justify-center rounded-2xl"
                 onClick={() => setShowReplyBox(!showReplyBox)}
               >
               <MessageCircle className="h-4 w-4" />
@@ -613,7 +613,7 @@ const handleToggleReplies = async () => {
                 />
                 <label
                   htmlFor={`reply-img-${id}`}
-                  className="text-gray-500 cursor-pointer hover:text-blue-500 transition flex items-center"
+                  className="text-gray-500 cursor-pointer hover:text-[#008753] transition flex items-center"
                 >
                   <ImageIcon className="h-5 w-5" />
                 </label>
@@ -686,7 +686,7 @@ const handleToggleReplies = async () => {
           {(reply_count ?? replies.length) > 0 && (
               <button
                 onClick={handleToggleReplies}
-                className="text-xs text-blue-500 mt-1 hover:underline"
+                className="text-xs text-[#008753] mt-1 hover:underline"
               >
                 {showReplies
                   ? "Hide replies"
