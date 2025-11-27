@@ -42,7 +42,7 @@ export default function SinglePostPage() {
   if (loading) {
     return (
       <div>
-        <div className="flex justify-center px-2">
+        <div className="flex justify-center px-1">
           <div className="space-y-4 pb-6 w-full">
             {[...Array(1)].map((_, i) => (
               <PostSkeleton key={i} />

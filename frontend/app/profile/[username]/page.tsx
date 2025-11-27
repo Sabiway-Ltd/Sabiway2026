@@ -12,7 +12,7 @@ export default function ProfilePage() {
   const { user } = useAuthStore();
 
   return (
-    <div>
+    <div className="px-1">
       <CommunityNavbar onCreatePost={() => alert("Create Post Clicked")} />
 
       <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10 mx-auto">

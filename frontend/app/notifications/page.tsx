@@ -12,7 +12,7 @@ export default function page() {
 
 
   return (
-    <div className="">
+    <div className="px-1">
       <CommunityNavbar
         onCreatePost={() => setShowPostBox(true)}
         hideSearch={true}
