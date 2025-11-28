@@ -101,70 +101,54 @@ export default function UserProfile({ username }: ProfileProps) {
   const isFollowing = followingStatus[user_id] || false;
 
   return (
-    <div className="max-w-3xl mx-auto pb-5 ">
+    <div className="max-w-3xl mx-auto pb-5 md:px-4 px-2">
       {/* Profile Header */}
-      <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8 relative bg-[#008753]/5 rounded-lg py-5 px-4.5">
+      <div className="flex flex-col items-center gap-4 mb-8 relative">
+        {/* Profile Picture */}
+        <div className="relative w-[100px] h-[100px]">
+          <div className="relative w-24 h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
+            <button
+              onClick={() => setIsImageModalOpen(true)}
+              className="block w-full h-full focus:outline-none"
+            >
+              <img
+                src={
+                  profile_picture?.startsWith("http")
+                    ? profile_picture
+                    : profile_picture
+                    ? `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile_picture}`
+                    : DEFAULT_AVATAR
+                }
+                alt={full_name}
+                className="w-full h-full rounded-full object-cover transition-transform duration-200 hover:scale-105"
+                onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
+              />
+            </button>
+          </div>
+        </div>
 
-        {/* Row 1: Profile picture + info */}
-        <div className="flex items-center gap-4 flex-1">
-          
-          {/* Profile Picture */}
-          <div className="relative w-[80px] h-[80px] md:w-[100px] md:h-[100px]">
-            <div className="relative w-20 h-20 md:w-24 md:h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
-              <button
-                onClick={() => setIsImageModalOpen(true)}
-                className="block w-full h-full focus:outline-none"
-              >
-                <img
-                  src={
-                    profile_picture?.startsWith("http")
-                      ? profile_picture
-                      : profile_picture
-                      ? `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile_picture}`
-                      : DEFAULT_AVATAR
-                  }
-                  alt={full_name}
-                  className="w-full h-full rounded-full object-cover transition-transform duration-200 hover:scale-105"
-                  onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
-                />
-              </button>
-            </div>
+        {/* Profile Info */}
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-[#008753]">{full_name}</h1>
+
+          <div className="flex items-center justify-center gap-1">
+            <p className="text-gray-600">{userUsername}</p>
+            <button
+              onClick={handleCopyProfileLink}
+              className="flex items-center gap-1 text-xs ml-2 h-auto rounded-md text-[#008753] hover:text-green-900 transition"
+            >
+              <BiLinkAlt size={16} />
+            </button>
           </div>
 
-          {/* Profile Info */}
-          <div className="flex-1">
-            <h1 className="text-base md:text-xl font-bold text-[#008753]">
-              {full_name}
-            </h1>
-
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-sm md:text-[0.95rem] text-gray-500 truncate max-w-[200px] sm:max-w-full">
-                {job ? job : username}
-              </p>
-
-              <button
-                onClick={handleCopyProfileLink}
-                className="flex items-center gap-1 text-xs rounded-md text-[#008753] hover:text-green-900 transition"
-              >
-                <BiLinkAlt size={16} />
-              </button>
-            </div>
-
-
-            {/* Follow for Mobile */}
-          <div className="md:hidden -ml-2  flex justify-start gap-x-2 items-center w-full md:w-auto">
-            
-            <IconTooltipButton
-              onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
-              icon={Smartphone}
-              label="Mobile App"
-            />
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-3">
+            {job && <div className="flex items-center gap-1 text-gray-600 text-sm">{job}</div>}
 
             {currentUserId !== user_id && (
               <button
                 onClick={handleFollowToggle}
                 disabled={loadingFollow}
-                className={`text-xs px-3 py-1.5 rounded-md font-medium shadow-sm transition-all duration-200
+                className={`text-xs px-4 py-2 rounded-md font-medium shadow-sm transition-all duration-200 focus:outline-none
                   ${
                     isFollowing
                       ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -176,60 +160,41 @@ export default function UserProfile({ username }: ProfileProps) {
                 {loadingFollow ? (
                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                 ) : isFollowing ? (
-                  "Following"
+                  `Following`
                 ) : (
-                  "Follow"
+                  `Follow`
                 )}
               </button>
             )}
-          </div>
+
+            <IconTooltipButton
+              onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
+              icon={Smartphone}
+              label="Contact on Mobile App"
+            />
           </div>
         </div>
 
-        {/* Row 2: Action buttons */}
-        <div className="hidden md:flex justify-start md:justify-end gap-x-2 items-center w-full md:w-auto">
-          
-          <IconTooltipButton
-            onClick={() => window.open("https://play.google.com/store/apps?hl=en", "_blank")}
-            icon={Smartphone}
-            label="Mobile App"
-          />
-
-          {currentUserId !== user_id && (
-            <button
-              onClick={handleFollowToggle}
-              disabled={loadingFollow}
-              className={`text-xs px-3 py-1.5 rounded-md font-medium shadow-sm transition-all duration-200
-                ${
-                  isFollowing
-                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    : "bg-[#008753] text-white hover:bg-green-900"
-                }
-                ${loadingFollow ? "opacity-70 cursor-not-allowed" : ""}
-              `}
-            >
-              {loadingFollow ? (
-                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-              ) : isFollowing ? (
-                "Following"
-              ) : (
-                "Follow"
-              )}
-            </button>
-          )}
+        {/* Stats */}
+        <div className="flex justify-around text-center w-full mt-4">
+          <div>
+            <p className="font-semibold text-lg">{followers_count}</p>
+            <p className="text-gray-500 text-sm">Followers</p>
+          </div>
+          <div>
+            <p className="font-semibold text-lg">{following_count}</p>
+            <p className="text-gray-500 text-sm">Following</p>
+          </div>
+          <div>
+            <p className="font-semibold text-lg">{posts_count}</p>
+            <p className="text-gray-500 text-sm">Posts</p>
+          </div>
         </div>
-
       </div>
-
 
       {/* Posts Section */}
       <div className="mt-8">
-        <div className="font-semibold text-md mb-3 border-b border-solid">
-          <h2 className="border-b-2 border-solid border-[#008753] w-fit pb-2">
-            Posts
-          </h2>
-        </div>
-
+        <h2 className="font-semibold text-lg mb-3 text-center border-b border-solid pb-2">Posts</h2>
 
         {/* Replace RenderPostList with UserPostsMain */}
         <UserPostsMain username={username} />

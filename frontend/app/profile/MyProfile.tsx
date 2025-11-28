@@ -272,12 +272,12 @@ useEffect(() => {
   return (
     <div className="flex flex-col min-h-screen  ">
       <section>
-        <main className="mx-auto md:px-4 md:py-8 py-2 flex justify-center w-full flex-1 ">
+        <main className="mx-auto md:pb-8 pb-2 flex justify-center w-full flex-1 ">
           <div className=" w-full px-2 ">
             {/* 🧩 Profile Header */}
-            <div className="flex flex-col  items-center  gap-4 mb-8 relative">
-              <div className="relative w-[100px] h-[100px]">
-                <div className="relative w-24 h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
+            <div className="flex flex-row  items-center  gap-4 mb-3 relative bg-[#008753]/5 rounded-lg pb-5 pt-3 md:pb-7 md:pt-6 md:px-4 px-3">
+              <div className="relative w-[75px] h-[75px]">
+                <div className="relative w-20 h-20 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
                   <button
                     onClick={() => setIsImageModalOpen(true)}
                     className="block w-full h-full focus:outline-none"
@@ -316,111 +316,116 @@ useEffect(() => {
                   type="button"
                   onClick={() => document.getElementById("profilePicUpload")?.click()}
                   disabled={uploadingImage}
-                  className={`absolute bottom-0 right-0 bg-[#008753] text-white p-2 rounded-full shadow-md transition ${
-                    uploadingImage ? "opacity-60 cursor-not-allowed" : "hover:bg-green-600"
+                  className={`absolute bottom-0 right-0 bg-[#008753] text-white p-1 rounded-full shadow-md transition ${
+                    uploadingImage ? "opacity-60 cursor-not-allowed" : "hover:bg-green-800"
                   }`}
                 >
                   {uploadingImage ? (
                     <span className="text-xs animate-pulse">...</span>
                   ) : (
-                    <Camera className="h-4 w-4" />
+                    <Camera className="h-3 w-3" />
                   )}
                 </button>
 
               </div>
 
-              <div className="text-center ">
-                <h1 className="text-xl font-bold text-[#008753]">{profile.full_name}</h1>
-                <div className="flex items-center  justify-center">
-                  <p className="text-gray-600">{profile.username}</p>
-                  <button
-                      onClick={() => {handleCopyProfileLink(profile.username)}}
-                      className="flex items-center gap-1 text-xs ml-2 h-auto 0 rounded-md"
-                    >
-                      <BiLinkAlt size={16} />
-                    </button>
-                  </div>
-              </div>
-
-
-              <div className=" flex justify-around text-center w-full">
-                  <button
-                  onClick={async () => {
-                    setActiveTab("followers");
-                    try {
-                      document.body.style.cursor = "wait";
-                      await fetchMyFollowers();
-                    } catch (error) {
-                      console.error(error);
-                    } finally {
-                      document.body.style.cursor = "default";
+              <div>
+                <div className="text-center ">
+                  <h1 className="text-xl font-bold text-[#008753]">{profile.full_name}</h1>
+                  <div className="flex items-center  text-sm">
+                    <p className=" text-sm text-gray-500">
+                    {
+                      profile.job ? 
+                      `${profile.job}` : 
+                      `${profile.username}`
                     }
-                  }}
-                  >
-                    <p className="font-semibold text-lg">{profile.followers_count}</p>
-                    <p className="text-gray-500 text-sm">Followers</p>
-                  </button>
-                  <button
-                  onClick={async () => {
-                    setActiveTab("following");
-                    try {
-                      document.body.style.cursor = "wait";
-                      await fetchMyFollowing();
-                    } catch (error) {
-                      console.error(error);
-                    } finally {
-                      document.body.style.cursor = "default";
-                    }
-                  }}
-                  >
-                    <p className="font-semibold text-lg">{profile.following_count}</p>
-                    <p className="text-gray-500 text-sm">Following</p>
-                  </button>
-                  <button
-                  onClick={() => setActiveTab("posts")}
-                  >
-                    <p className="font-semibold text-lg">{profile.posts_count}</p>
-                    <p className="text-gray-500 text-sm">Posts</p>
-                  </button>
+                    </p>
+                    <button
+                        onClick={() => {handleCopyProfileLink(profile.username)}}
+                        className="flex items-center gap-1 text-xs ml-2 h-auto 0 rounded-md"
+                      >
+                        <BiLinkAlt size={16} />
+                      </button>
+                    </div>
                 </div>
+
+
+                
+                </div> 
             </div>
 
-            <div className="text-[0.9rem] md:text-[1rem] w-full">
+            <div className="text-[0.8rem] w-full">
               {/* 🧩 Tabs */}
-              <div className="flex gap-1 md:gap-6 border-b mb-3 md:mb-6 w-full justify-between">
-                <Button
-                  className={`pb-2 ${activeTab === "about" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
+              <div className="flex gap-1 border-b mb-3 md:mb-6 w-full ">
+                <button
+                  className={`p-2 text-black font-medium ${activeTab === "about" ? "border-b-2 border-solid border-[#008753]" : ""}`}
                   onClick={() => setActiveTab("about")}
                 >
-                  About Me
-                </Button>
-                <Button
-                  className={`pb-2 ${
+                  About
+                </button>
+                <button
+                  className={`p-2 text-black font-medium ${
                     activeTab === "posts"
-                      ? "text-[#008753] border-b-2 border-[#008753]"
-                      : "text-gray-600"
+                      ? "border-b-2 border-solid border-[#008753]" : ""
                   }`}
                   onClick={() => setActiveTab("posts")}
                 >
-                  My Posts
-                </Button>
-                <Button
-                  className={`pb-2 ${activeTab === "bookmarks" ? "text-[#008753] border-b-2 border-[#008753]" : "text-gray-600"}`}
+                  Posts
+                </button>
+                <button
+                  className={`p-2 text-black font-medium 
+                    ${activeTab === "bookmarks" ? "border-b-2 border-solid border-[#008753]" : ""}`}
                   onClick={() => setActiveTab("bookmarks")}
                 >
                   Bookmarks
-                </Button>
+                </button>
+                <button
+                    className={`p-2 hidden md:flex gap-x-2 font-medium 
+                    ${activeTab === "followers" ? "border-b-2 border-solid border-[#008753]" : ""}`}
+                    onClick={async () => {
+                      setActiveTab("followers");
+                      try {
+                        document.body.style.cursor = "wait";
+                        await fetchMyFollowers();
+                      } catch (error) {
+                        console.error(error);
+                      } finally {
+                        document.body.style.cursor = "default";
+                      }
+                    }}
+                    >
+                      <p className="">{profile.followers_count}</p>
+                      <p className="">Followers</p>
+                    </button>
+                <button
+                className={`p-2  flex gap-x-2 font-medium 
+                    ${activeTab === "following" ? "border-b-2 border-solid border-[#008753]" : ""}`}
+                    onClick={async () => {
+                      setActiveTab("following");
+                      try {
+                        document.body.style.cursor = "wait";
+                        await fetchMyFollowing();
+                      } catch (error) {
+                        console.error(error);
+                      } finally {
+                        document.body.style.cursor = "default";
+                      }
+                    }}
+                    >
+                      <p className="">{profile.following_count}</p>
+                      <p className="">Following</p>
+                    </button>
               </div>
 
 
               {/* 🧩 Tab Content */}
               {activeTab === "about" && (
-                <div className="space-y-4">
+                <div className="space-y-4 bg-[#008753]/5 rounded-lg p-4">
                   {editing ? (
                     <>
                       {/* Full Name */}
-                      <div className="text-sm">
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                      <div className="">
+                        <label className="block  font-medium text-gray-700">Full Name</label>
                         <input
                           value={editedData.full_name || ""}
                           onChange={(e) =>
@@ -432,7 +437,7 @@ useEffect(() => {
 
                       {/* Bio */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Bio</label>
+                        <label className="block  font-medium text-gray-700">Bio</label>
                         <textarea
                           value={editedData.bio || ""}
                           onChange={(e) =>
@@ -444,7 +449,7 @@ useEffect(() => {
 
                       {/* Phone Number */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <label className="block  font-medium text-gray-700">Phone Number</label>
                         <input
                           value={editedData.phone_number || ""}
                           onChange={(e) =>
@@ -456,7 +461,7 @@ useEffect(() => {
 
                       {/* Job */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Job</label>
+                        <label className="block  font-medium text-gray-700">Job</label>
                         <input
                           value={editedData.job || ""}
                           onChange={(e) =>
@@ -469,7 +474,7 @@ useEffect(() => {
                       {/* Address group */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Country</label>
+                          <label className="block  font-medium text-gray-700">Country</label>
                           <input
                             value={editedData.country || ""}
                             onChange={(e) =>
@@ -480,7 +485,7 @@ useEffect(() => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">State</label>
+                          <label className="block  font-medium text-gray-700">State</label>
                           <input
                             value={editedData.state || ""}
                             onChange={(e) =>
@@ -491,7 +496,7 @@ useEffect(() => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Area</label>
+                          <label className="block  font-medium text-gray-700">Area</label>
                           <input
                             value={editedData.area || ""}
                             onChange={(e) =>
@@ -502,7 +507,7 @@ useEffect(() => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Street</label>
+                          <label className="block  font-medium text-gray-700">Street</label>
                           <input
                             value={editedData.street || ""}
                             onChange={(e) =>
@@ -532,36 +537,36 @@ useEffect(() => {
                       </div>
                     </>
                   ) : (
-                    <>
-                      <p className="text-sm"><strong>Email:</strong> {profile.email}</p>
+                    <div className="space-y-2">
+                      <p className=""><span className="font-medium">Email:</span> {profile.email}</p>
                       {profile.bio && (
-                        <p className="text-sm"><strong>Bio:</strong> {profile.bio }</p>
+                        <p className=""><span className="font-medium">Bio:</span> {profile.bio }</p>
                       )}
                       {profile.phone_number && (
-                        <p className="text-sm"><strong>Phone:</strong> {profile.phone_number }</p>
+                        <p className=""><span className="font-medium">Phone:</span> {profile.phone_number }</p>
                       )}
                       {profile.role &&(
-                        <p className="text-sm"><strong>Role:</strong> {profile.role }</p>
+                        <p className=""><span className="font-medium">Role:</span> {profile.role }</p>
                       )}
                       {profile.job && (
-                        <p className="text-sm"><strong>Job:</strong> {profile.job }</p>
+                        <p className=""><span className="font-medium">Job:</span> {profile.job }</p>
                       )}
                       {profile.country && (
-                        <p className="text-sm"><strong>Country:</strong> {profile.country }</p>
+                        <p className=""><span className="font-medium">Country:</span> {profile.country }</p>
                       )}
                       {profile.state && (
-                        <p className="text-sm"><strong>State:</strong> {profile.state }</p>
+                        <p className=""><span className="font-medium">State:</span> {profile.state }</p>
                       )}
                       {profile.area && (
-                        <p className="text-sm"><strong>Area:</strong> {profile.area }</p>
+                        <p className=""><span className="font-medium">Area:</span> {profile.area }</p>
                       )}
                       {profile.street && (
-                        <p className="text-sm"><strong>Street:</strong> {profile.street }</p>
+                        <p className=""><span className="font-medium">Street:</span> {profile.street }</p>
                       )}
                       <div className="flex gap-x-4">
                         <button
                           onClick={handleEditProfile}
-                          className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-full text-xs md:text-sm"
+                          className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-md "
                         >
                           Edit Profile
                         </button>
@@ -570,12 +575,12 @@ useEffect(() => {
                           onClick={async () => {
                             await logout();
                           }}
-                          className="mt-4 bg-red-500 text-white px-4 py-2 rounded-full text-xs md:text-sm"
+                          className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md "
                         >
-                          Sign Out
+                          Log Out
                         </button>
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
@@ -595,14 +600,14 @@ useEffect(() => {
               )}
 
               {activeTab === "followers" && (
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-3 ">
                   {myFollowers.length === 0 ? (
                     <p className="text-gray-600"></p>
                   ) : (
                     myFollowers.map((user) => (
                       <div
                         key={user.user_id}
-                        className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
+                        className="flex items-center justify-between gap-3 bg-[#008753]/5 rounded-lg p-4 hover:bg-[#008753]/10"
                       >
                         {/* User Info */}
                         <Link href={`/profile/${user.username}`}>
@@ -619,8 +624,15 @@ useEffect(() => {
                               className="w-10 h-10 rounded-full object-cover"
                             />
                             <div>
-                              <p className="font-medium">{user.full_name}</p>
-                              <p className="md:text-sm text-gray-500">{user.username}</p>
+                              <p className="font-medium text-sm">{user.full_name}</p>
+                              
+                              <p className=" text-gray-500">
+                              {
+                                user.job ? 
+                                `${user.job}` : 
+                                `${user.username}`
+                              }
+                              </p>
                             </div>
                           </div>
                         </Link>
@@ -647,14 +659,14 @@ useEffect(() => {
 
 
               {activeTab === "following" && (
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-3">
                   {myFollowing.length === 0 ? (
                     <p className="text-gray-600"></p>
                   ) : (
                     myFollowing.map((user) => (
                       <div
                         key={user.user_id}
-                        className="flex items-center justify-between gap-3 p-2 border rounded hover:bg-gray-50"
+                        className="flex items-center justify-between gap-3 bg-[#008753]/5 rounded-lg p-4 hover:bg-[#008753]/10"
                       >
                         <Link href={`/profile/${user.username}`}>
                           <div className="flex items-center gap-3">
@@ -670,8 +682,15 @@ useEffect(() => {
                               className="w-10 h-10 rounded-full object-cover"
                             />
                             <div>
-                              <p className="font-medium">{user.full_name}</p>
-                              <p className="md:text-sm text-gray-500">{user.username}</p>
+                              <p className="font-medium text-sm">{user.full_name}</p>
+                              
+                              <p className=" text-gray-500">
+                              {
+                                user.job ? 
+                                `${user.job}` : 
+                                `${user.username}`
+                              }
+                              </p>
                             </div>
                           </div>
                         </Link>
@@ -681,8 +700,8 @@ useEffect(() => {
                           className={`flex items-center justify-center gap-2 px-3 py-1 rounded-full md:text-sm transition 
                             ${
                               localFollowing[user.user_id] === false
-                                ? "bg-gray-200 text-gray-700 hover:bg-gray-300 pointer-events-none"
-                                : "bg-red-500 text-white hover:bg-red-600"
+                                ? "bg-[#008753] text-white hover:bg-green-700 pointer-events-none"
+                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                             }
                           `}
                         >

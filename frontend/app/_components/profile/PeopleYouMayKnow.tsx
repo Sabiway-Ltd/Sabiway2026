@@ -102,10 +102,15 @@ export default function PeopleYouMayKnow() {
                   )}
 
                   <div>
-                    <p className="text-[13.5px] font-semibold text-gray-800">
-                      {profile.full_name}
+                    <p className="text-[13.5px] font-semibold">{profile.full_name}</p>
+                              
+                    <p className=" text-xs text-gray-500">
+                    {
+                      profile.job ? 
+                      `${profile.job}` : 
+                      `${profile.username}`
+                    }
                     </p>
-                    <p className="text-xs text-gray-500">{profile.username}</p>
                   </div>
                 </div>
               </Link>

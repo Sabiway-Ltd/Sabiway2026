@@ -91,7 +91,14 @@ export default function Aside() {
                   </div>
                   <div>
                     <p className="text-[13.5px] font-semibold">{c.full_name}</p>
-                    <p className="text-xs text-gray-500">{c.username}</p>
+                              
+                    <p className=" text-xs text-gray-500">
+                    {
+                      c.job ? 
+                      `${c.job}` : 
+                      `${c.username}`
+                    }
+                    </p>
                   </div>
                 </div>
               </Link>

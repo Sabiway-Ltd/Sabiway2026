@@ -88,30 +88,33 @@ class PostViewSet(ImpressionTrackingMixin, viewsets.ModelViewSet):
         if user.is_authenticated and hasattr(user, "profile"):
             profile = user.profile
 
-            # Get IDs of users this profile follows
-            following_ids = Follow.objects.filter(follower=profile).values_list("following_id", flat=True)
-            # Get IDs of users who follow this profile
-            follower_ids = Follow.objects.filter(following=profile).values_list("follower_id", flat=True)
+            # Get following + followers
+            following_ids = Follow.objects.filter(
+                follower=profile
+            ).values_list("following_id", flat=True)
+
+            follower_ids = Follow.objects.filter(
+                following=profile
+            ).values_list("follower_id", flat=True)
 
             related_ids = set(following_ids) | set(follower_ids)
 
-            # Annotate rank:
-            # 0 = user's own posts
-            # 1 = followed/followers
-            # 2 = everyone else
+            # First group (rank 0): my posts + related users posts
+            # Second group (rank 1): everyone else
             qs = qs.annotate(
                 rank=Case(
                     When(author=profile, then=0),
-                    When(author__in=related_ids, then=1),
-                    default=2,
+                    When(author__in=related_ids, then=0),
+                    default=1,
                     output_field=IntegerField(),
                 )
             ).order_by("rank", "-created_at")
 
-        else:
-            qs = qs.order_by("-created_at")
+            return qs
 
-        return qs
+        # Unauthenticated users → global feed
+        return qs.order_by("-created_at")
+
 
 
     def create(self, request, *args, **kwargs):

@@ -18,8 +18,8 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (!part) return null;
 
       // Handle internal sabiway links
-      if (part.match(/^https:\/\/sabiway\.vercel\.app/)) {
-        const path = part.replace("https://sabiway.vercel.app", "");
+      if (part.match(/^https:\/\/www\.sabiway\.com/)) {
+        const path = part.replace("https://www.sabiway.com", "");
         return (
           <Link href={path}
             key={i}

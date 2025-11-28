@@ -137,15 +137,23 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
 
 
 
+from rest_framework import generics, permissions
+from django.db.models import Count, F
+from rest_framework.response import Response
+from .models import Profile
+from .serializers import ProfileSerializer
+
+
 class TopContributorsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProfileSerializer
 
     def list(self, request):
         contributors = (
             Profile.objects
             .annotate(
-                comments_count=Count("comments", distinct=True),   # assumes related_name="comments"
-                likes_received=Count("likes", distinct=True),      # assumes related_name="likes"
+                comments_count=Count("comments", distinct=True),
+                likes_received=Count("likes", distinct=True),
             )
             .annotate(
                 score=F("posts_count") + F("comments_count") + F("likes_received")
@@ -153,15 +161,15 @@ class TopContributorsView(generics.ListAPIView):
             .order_by("-score")[:10]
         )
 
-        data = [{
-            "user_id": p.pk,  # profile ID == user ID
-            "username": p.username,
-            "full_name": p.full_name,
-            "profile_picture": str(p.profile_picture) if p.profile_picture else None,
-            "score": p.score,
-        } for p in contributors]
+        serializer = self.get_serializer(contributors, many=True)
+        data = serializer.data
+
+        # ✅ Inject score into each serialized profile
+        for i, profile in enumerate(contributors):
+            data[i]["score"] = profile.score
 
         return Response(data)
+
 
 class MyFollowersView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]

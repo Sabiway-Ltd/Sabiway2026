@@ -91,23 +91,17 @@ export default function Navbar() {
 
                 <button
                   onClick={() => router.push("/login")}
-                  className="px-5 py-1.5 md:hidden bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
+                  className="px-5 py-1.5 md:hidden bg-[#008753] text-white rounded-lg text-sm font-semibold hover:bg-[#006B42] transition"
                 >
                   Login
                 </button>
 
+               
                 <button
                   onClick={() => router.push("/login")}
-                  className="text-gray-700 hidden md:block font-medium hover:text-[#008753] transition"
+                  className="px-6 py-2 hidden md:block bg-[#008753] text-white rounded-lg font-semibold hover:bg-[#006B42] transition"
                 >
                   Login
-                </button>
-
-                <button
-                  onClick={() => router.push("/signup")}
-                  className="px-6 py-2 hidden md:block bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
-                >
-                  Sign Up
                 </button>
               </div>
             )

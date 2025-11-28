@@ -698,19 +698,19 @@ export default function PostCard({
         )}
 
         {/* Actions */}
-        <div className="flex justify-start gap-x-2 md:gap-x-4 text-gray-800 mt-3 w-full">
+        <div className="flex text-xs md:text-sm justify-start gap-x-2 md:gap-x-4 text-gray-800 mt-3 w-full">
           <button onClick={handleToggleLike} className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
-            <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+            <Heart className={`h-3 w-3 md:h-4 md:w-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
             <span>{likesCount}</span>
           </button>
 
           <button onClick={handleToggleComments} className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
-            <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
+            <MessageCircle className="h-3 w-3 md:h-4 md:w-4" />
             <span>{commentCount}</span>
           </button>
 
           <button className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
-            <BarChart2 className="h-4 w-4 md:h-5 md:w-5" />
+            <BarChart2 className="h-3 w-3 md:h-4 md:w-4" />
             <span>{impressionsCount}</span>
           </button>
 
@@ -730,13 +730,13 @@ export default function PostCard({
                   {hasReposted ? (
                     <>
                       <Undo2 className="opacity-95 cursor-pointer text-gray-500
-                      h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]" />
+                      h-[1.2rem] w-[1.2rem] md:h-[1.4rem] md:w-[1.4rem]" />
                       <span>{reposts_count}</span>
                     </>
                   ) : (
                     <>
                       <Repeat2  className="opacity-95 cursor-pointer text-gray-500
-                      h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]" />
+                      h-[1.2rem] w-[1.2rem] md:h-[1.4rem] md:w-[1.4rem]" />
                       <span>{reposts_count}</span>
                     </>
                   )}
@@ -763,7 +763,7 @@ export default function PostCard({
                       <div className="flex gap-x-1 items-center bg-white py-1 px-2 justify-center rounded-2xl">
                         <Undo2
                           className="opacity-95 cursor-pointer text-gray-500
-                          h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]"
+                          h-[1.2rem] w-[1.2rem] md:h-[1.4rem] md:w-[1.4rem]"
                         />
                         <span>{reposts_count}</span>
                       </div>
@@ -790,7 +790,7 @@ export default function PostCard({
                       <div className="flex gap-x-1 items-center bg-white py-1 px-2 justify-center rounded-2xl">
                         <Repeat2
                           className="opacity-95 cursor-pointer text-gray-500
-                          h-[1.35rem] w-[1.35rem] md:h-[1.6rem] md:w-[1.6rem]"
+                          h-[1.2rem] w-[1.2rem] md:h-[1.4rem] md:w-[1.4rem]"
                         />
                         <span>{reposts_count}</span>
                       </div>
@@ -806,8 +806,8 @@ export default function PostCard({
 
           <button onClick={handleBookmarkToggle} className="flex items-center gap-1 bg-white py-1 px-2 justify-center rounded-2xl">
             <Bookmark
-              className={`h-[1.1rem] w-[1.1rem] md:h-[1.35rem] md:w-[1.35rem] ${
-                isBookmarked ? "fill-[#008753] text-[#008753]" : "text-gray-500"
+              className={`h-[1rem] w-[1rem] md:h-[1.2rem] md:w-[1.2rem] ${
+                isBookmarked ? "fill-[#FFAA33] text-[#FFAA33]" : "text-gray-500"
               }`}
             />
           </button>

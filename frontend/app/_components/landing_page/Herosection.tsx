@@ -17,11 +17,11 @@ export default function Herosection({HandleWaitListPopUp}) {
           SabiWay connects you to reliable local services — fast, easy, and secure.
         </p>
 
-        <div className="flex gap-x-2 text-xs sm:text-[0.85rem] md:text-sm">
+        <div className="flex gap-x-2 text-sm flex-col md:flex-row mt-8 gap-y-3">
           <button 
             onClick={HandleWaitListPopUp}
             >
-            <div className="mt-8 w-[9rem] sm:w-[10rem] md:w-[12rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
+            <div className="w-[11rem] md:w-[12rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
               Join App Waitlist
             </div>
           </button>
@@ -29,7 +29,7 @@ export default function Herosection({HandleWaitListPopUp}) {
           <Link 
             href={"/signup"}
             >
-              <div className="mt-8 w-[9rem] sm:w-[10rem] md:w-[12rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
+              <div className=" w-[11rem] md:w-[12rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
                 Join the Community
               </div>
           </Link>
