@@ -10,9 +10,9 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
 
   if (!content) return null;
 
-  const formatText = (text: string) => {
-    // Detect URLs and hashtags
-    const regex = /(\bhttps?:\/\/[^\s]+|www\.[^\s]+)|(#\w+)/g;
+  const formatText = (text) => {
+    // Detect links and hashtags
+    const regex = /(\bhttps?:\/\/[^\s]+)|(#\w+)/g;
 
     return text.split(regex).map((part, i) => {
       if (!part) return null;
@@ -21,12 +21,13 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (part.match(/^https:\/\/www\.sabiway\.com/)) {
         const path = part.replace("https://www.sabiway.com", "");
         return (
-          <Link
-            href={path}
-            onClick={(e)=>{
-              e.stopPropagation();
-            }}
+          <Link href={path}
             key={i}
+            // onClick={(e) => {
+            //   e.preventDefault();
+            //   e.stopPropagation();
+            //   router.push(path);
+            // }}
             className="text-[#008753] hover:underline break-all"
           >
             {part}
@@ -34,26 +35,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
         );
       }
 
-      // Handle all other URLs
-      if (part.match(/^(https?:\/\/|www\.)/)) {
-        const href = part.startsWith("http") ? part : `https://${part}`;
-        return (
-          <a
-            key={i}
-            href={href}
-            onClick={(e)=>{
-              e.stopPropagation();
-            }}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#008753] hover:underline break-all"
-          >
-            {part}
-          </a>
-        );
-      }
-
-      // Handle hashtags
+      // Handle hashtags safely (no <Link> inside <Link>)
       if (part.startsWith("#")) {
         const tag = part.slice(1);
         return (

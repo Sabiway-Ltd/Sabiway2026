@@ -169,3 +169,12 @@ select:focus {
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out;
 }
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

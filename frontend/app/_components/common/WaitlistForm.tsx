@@ -108,7 +108,7 @@ export default function WaitlistForm({ onSuccess, show }) {
             </div>
 
             <h2 className="text-2xl md:text-3xl text-center font-bold text-gray-900">
-              Join App Waitlist ✨
+              Join App Waitlist 
             </h2>
           </div>
 
@@ -156,7 +156,7 @@ export default function WaitlistForm({ onSuccess, show }) {
                 hover:shadow-lg hover:-translate-y-0.5 transition active:scale-[0.98] 
                 disabled:opacity-60 disabled:hover:translate-y-0"
             >
-              {loading ? "Joining..." : "Join Waitlist ✨"}
+              {loading ? "Joining..." : "Join Waitlist "}
             </button>
           </form>
         </div>

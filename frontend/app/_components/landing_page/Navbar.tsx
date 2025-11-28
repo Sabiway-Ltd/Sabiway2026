@@ -43,7 +43,7 @@ export default function Navbar() {
           <img
               src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
               alt="SabiWay Logo"
-              className="w-20 md:w-32 h-auto cursor-pointer hover:opacity-90 transition"
+              className="w-24 md:w-32 h-auto cursor-pointer hover:opacity-90 transition"
             />
         </Link>
 

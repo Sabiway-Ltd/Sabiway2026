@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic"; // ✅ needed for client-only emoji picker
-import { ImageIcon, Smile, Hash, X } from "lucide-react";
+import { ImageIcon, Smile, Loader2, Hash, X } from "lucide-react";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import toast from "react-hot-toast";
 import { EmojiClickData } from "emoji-picker-react";
 import { isRiskyContent } from "@/app/utils/contentValidator";
+
 
 
 // ✅ Dynamically import EmojiPicker (prevents SSR issues)
@@ -27,9 +28,29 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const [emojiLoading, setEmojiLoading] = useState(false);
+
+  const toggleEmoji = () => {
+    if (!showEmojiPicker) {
+      setEmojiLoading(true);
+    }
+    setShowEmojiPicker((prev) => !prev);
+  };
+
+  useEffect(() => {
+  if (showEmojiPicker) {
+    // stop loading after next tick (component mounted)
+    const timeout = setTimeout(() => {
+      setEmojiLoading(false);
+    }, 50); // 50ms is enough for render
+    return () => clearTimeout(timeout);
+  }
+}, [showEmojiPicker]);
+
   const { createPost, getAllPosts, getTrendingHashtags } = usePostStore();
   const { profile, getTopContributors } = useProfileStore();
 
+  
   if (!visible) return null;
 
   const getCloudinaryImage = (path: string | null) => {
@@ -172,18 +193,24 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
             <div className="relative flex items-center justify-center">
               <button
                 type="button"
-                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                onClick={toggleEmoji}
                 className="hover:text-[#008753] transition flex items-center justify-center"
               >
-                <Smile className="h-5 w-5" />
+                {emojiLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Smile className="h-5 w-5" />
+                )}
               </button>
 
               {showEmojiPicker && (
-                <div className="absolute top-8 right-0 z-50 scale-75">
+                <div className="absolute top-8 right-0 z-50 md:scale-75 scale-50">
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}
             </div>
+
+
 
             {/* Hashtag */}
             <button

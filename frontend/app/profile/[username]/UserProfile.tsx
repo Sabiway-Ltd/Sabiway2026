@@ -96,6 +96,7 @@ export default function UserProfile({ username }: ProfileProps) {
     following_count,
     posts_count,
     job,
+    bio,
   } = otherProfile;
 
   const isFollowing = followingStatus[user_id] || false;
@@ -103,7 +104,7 @@ export default function UserProfile({ username }: ProfileProps) {
   return (
     <div className="max-w-3xl mx-auto pb-5 ">
       {/* Profile Header */}
-      <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8 relative bg-[#008753]/5 rounded-lg py-5 px-4.5">
+      <div className="flex flex-col md:flex-row md:items-center gap-4  relative bg-[#008753]/5 rounded-lg py-5 px-4.5">
 
         {/* Row 1: Profile picture + info */}
         <div className="flex items-center gap-4 flex-1">
@@ -138,8 +139,8 @@ export default function UserProfile({ username }: ProfileProps) {
             </h1>
 
             <div className="flex items-center gap-2 mt-1">
-              <p className="text-sm md:text-[0.95rem] text-gray-500 truncate max-w-[200px] sm:max-w-full">
-                {job ? job : username}
+              <p className="text-sm md:text-[0.95rem] font-medium text-gray-500 truncate max-w-[200px] sm:max-w-full">
+                {job ? job : username.replace('%40', '@')}
               </p>
 
               <button
@@ -149,6 +150,9 @@ export default function UserProfile({ username }: ProfileProps) {
                 <BiLinkAlt size={16} />
               </button>
             </div>
+            {bio && (
+              <p className="text-sm md:text-[0.95rem] text-gray-500">{bio}</p>
+            )}
 
 
             {/* Follow for Mobile */}
@@ -223,7 +227,7 @@ export default function UserProfile({ username }: ProfileProps) {
 
 
       {/* Posts Section */}
-      <div className="mt-8">
+      <div className="mt-4">
         <div className="font-semibold text-md mb-3 border-b border-solid">
           <h2 className="border-b-2 border-solid border-[#008753] w-fit pb-2">
             Posts

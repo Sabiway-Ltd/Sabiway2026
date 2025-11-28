@@ -330,23 +330,26 @@ useEffect(() => {
               </div>
 
               <div>
-                <div className="text-center ">
-                  <h1 className="text-xl font-bold text-[#008753]">{profile.full_name}</h1>
+                <div className="">
+                  <h1 className="text-xl text-left font-bold text-[#008753]">{profile.full_name}</h1>
                   <div className="flex items-center  text-sm">
-                    <p className=" text-sm text-gray-500">
+                    <p className=" text-sm font-medium text-gray-500">
                     {
                       profile.job ? 
                       `${profile.job}` : 
                       `${profile.username}`
                     }
                     </p>
-                    <button
+                     <button
                         onClick={() => {handleCopyProfileLink(profile.username)}}
                         className="flex items-center gap-1 text-xs ml-2 h-auto 0 rounded-md"
                       >
                         <BiLinkAlt size={16} />
                       </button>
                     </div>
+                    {profile.bio && (
+                      <p className="text-sm text-left md:text-[0.95rem] text-gray-500">{profile.bio}</p>
+                    )}
                 </div>
 
 
@@ -354,9 +357,9 @@ useEffect(() => {
                 </div> 
             </div>
 
-            <div className="text-[0.8rem] w-full">
+            <div className="text-[0.8rem]  ">
               {/* 🧩 Tabs */}
-              <div className="flex gap-1 border-b mb-3 md:mb-6 w-full ">
+              <div className="w-[21rem] md:w-full flex flex-nowrap gap-1 border-b mb-3 md:mb-6 overflow-x-auto whitespace-nowrap no-scrollbar">
                 <button
                   className={`p-2 text-black font-medium ${activeTab === "about" ? "border-b-2 border-solid border-[#008753]" : ""}`}
                   onClick={() => setActiveTab("about")}
@@ -380,7 +383,7 @@ useEffect(() => {
                   Bookmarks
                 </button>
                 <button
-                    className={`p-2 hidden md:flex gap-x-2 font-medium 
+                    className={`p-2 flex gap-x-1 font-medium 
                     ${activeTab === "followers" ? "border-b-2 border-solid border-[#008753]" : ""}`}
                     onClick={async () => {
                       setActiveTab("followers");
@@ -394,11 +397,11 @@ useEffect(() => {
                       }
                     }}
                     >
-                      <p className="">{profile.followers_count}</p>
+                      <p className="font-normal">{profile.followers_count}</p>
                       <p className="">Followers</p>
                     </button>
                 <button
-                className={`p-2  flex gap-x-2 font-medium 
+                className={`p-2  flex gap-x-1 font-medium 
                     ${activeTab === "following" ? "border-b-2 border-solid border-[#008753]" : ""}`}
                     onClick={async () => {
                       setActiveTab("following");
@@ -412,7 +415,7 @@ useEffect(() => {
                       }
                     }}
                     >
-                      <p className="">{profile.following_count}</p>
+                      <p className="font-normal">{profile.following_count}</p>
                       <p className="">Following</p>
                     </button>
               </div>
@@ -538,31 +541,60 @@ useEffect(() => {
                     </>
                   ) : (
                     <div className="space-y-2">
-                      <p className=""><span className="font-medium">Email:</span> {profile.email}</p>
-                      {profile.bio && (
-                        <p className=""><span className="font-medium">Bio:</span> {profile.bio }</p>
-                      )}
-                      {profile.phone_number && (
-                        <p className=""><span className="font-medium">Phone:</span> {profile.phone_number }</p>
-                      )}
-                      {profile.role &&(
-                        <p className=""><span className="font-medium">Role:</span> {profile.role }</p>
-                      )}
-                      {profile.job && (
-                        <p className=""><span className="font-medium">Job:</span> {profile.job }</p>
-                      )}
-                      {profile.country && (
-                        <p className=""><span className="font-medium">Country:</span> {profile.country }</p>
-                      )}
-                      {profile.state && (
-                        <p className=""><span className="font-medium">State:</span> {profile.state }</p>
-                      )}
-                      {profile.area && (
-                        <p className=""><span className="font-medium">Area:</span> {profile.area }</p>
-                      )}
-                      {profile.street && (
-                        <p className=""><span className="font-medium">Street:</span> {profile.street }</p>
-                      )}
+                      <div className=" divide-gray-400 text-sm">
+                        <p className="py-2">
+                          <span className="font-medium">Email:</span> {profile.email}
+                        </p>
+
+                        {profile.bio && (
+                          <p className="py-2">
+                            <span className="font-medium">Bio:</span> {profile.bio}
+                          </p>
+                        )}
+
+                        {profile.phone_number && (
+                          <p className="py-2">
+                            <span className="font-medium">Phone:</span> {profile.phone_number}
+                          </p>
+                        )}
+
+                        {profile.role && (
+                          <p className="py-2">
+                            <span className="font-medium">Role:</span> {profile.role}
+                          </p>
+                        )}
+
+                        {profile.job && (
+                          <p className="py-2">
+                            <span className="font-medium">Job:</span> {profile.job}
+                          </p>
+                        )}
+
+                        {profile.country && (
+                          <p className="py-2">
+                            <span className="font-medium">Country:</span> {profile.country}
+                          </p>
+                        )}
+
+                        {profile.state && (
+                          <p className="py-2">
+                            <span className="font-medium">State:</span> {profile.state}
+                          </p>
+                        )}
+
+                        {profile.area && (
+                          <p className="py-2">
+                            <span className="font-medium">Area:</span> {profile.area}
+                          </p>
+                        )}
+
+                        {profile.street && (
+                          <p className="py-2">
+                            <span className="font-medium">Street:</span> {profile.street}
+                          </p>
+                        )}
+                      </div>
+
                       <div className="flex gap-x-4">
                         <button
                           onClick={handleEditProfile}
