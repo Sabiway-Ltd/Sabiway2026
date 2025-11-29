@@ -152,21 +152,21 @@ export default function CommunityNavbar({
             {/* Left Section */}
             <div className="flex items-center md:gap-x-4 gap-x-2 h-full">
               {/* Logo */}
-              <Link href="/">
+              <a href="/">
                 <img
                   src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
                   alt="SabiWay Logo"
                   className="w-20 md:w-32 cursor-pointer hover:opacity-90 transition md:block hidden"
                 />
-              </Link>
+              </a>
 
-              <Link href="/">
+              <a href="/">
                 <img
                   src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764248519/sabiway_small_logo_pmddcw.png"
                   alt="SabiWay Logo"
                   className="h-6 w-auto cursor-pointer hover:opacity-90 transition md:hidden"
                 />
-              </Link>
+              </a>
 
               {/* Home Button */}
               <div className="md:p-1 p-0.5 bg-white rounded-full ">
@@ -292,7 +292,7 @@ export default function CommunityNavbar({
                             const link = getNotificationLink(n);
 
                             return (
-                              <Link
+                              <a
                                 key={n.id}
                                 href={link}
                                 onClick={() => {
@@ -334,18 +334,18 @@ export default function CommunityNavbar({
                                 {!n.is_read && (
                                   <Check className="h-4 w-4 text-[#008753] flex-shrink-0" />
                                 )}
-                              </Link>
+                              </a>
                             );
                           })}
 
                           {/* Button to view all notifications */}
-                          <Link
+                          <a
                             href="/notifications"
                             className="block text-center text-sm text-[#008753] font-medium py-2 hover:underline mt-2"
                             onClick={() => setNotifDropdownOpen(false)}
                           >
                             View All Notifications
-                          </Link>
+                          </a>
 
                         </>
                       )}

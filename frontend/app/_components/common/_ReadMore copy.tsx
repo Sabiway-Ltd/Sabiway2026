@@ -21,7 +21,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (part.match(/^https:\/\/www\.sabiway\.com/)) {
         const path = part.replace("https://www.sabiway.com", "");
         return (
-          <Link href={path}
+          <a href={path}
             key={i}
             // onClick={(e) => {
             //   e.preventDefault();
@@ -31,11 +31,11 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
             className="text-[#008753] hover:underline break-all"
           >
             {part}
-          </Link>
+          </a>
         );
       }
 
-      // Handle hashtags safely (no <Link> inside <Link>)
+      // Handle hashtags safely (no <a> inside <a>)
       if (part.startsWith("#")) {
         const tag = part.slice(1);
         return (

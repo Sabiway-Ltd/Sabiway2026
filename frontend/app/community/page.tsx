@@ -225,7 +225,7 @@ useEffect(() => {
                     key={profile.user_id}
                     className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition"
                   >
-                    <Link href={`/profile/${profile.username}`}>
+                    <a href={`/profile/${profile.username}`}>
                       <div className="flex items-center gap-3">
                         <img
                           src={getProfileImage(profile.profile_picture) || DEFAULT_PROFILE_PICTURE}
@@ -237,7 +237,7 @@ useEffect(() => {
                           <p className="text-sm text-gray-500">{profile.username}</p>
                         </div>
                       </div>
-                    </Link>
+                    </a>
 
                     {user?.id !== profile.user_id && (
                       <button

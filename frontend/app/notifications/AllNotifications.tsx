@@ -116,7 +116,7 @@ export default function AllNotifications() {
           const link = getNotificationLink(notif);
 
           return (
-            <Link
+            <a
               key={notif.id}
               href={link}
               onClick={() => handleClick(notif)}
@@ -155,7 +155,7 @@ export default function AllNotifications() {
                   <div className="w-2 h-2 mt-2 bg-[#008753] rounded-full"></div>
                 )}
               </div>
-            </Link>
+            </a>
           );
         })}
       </div>

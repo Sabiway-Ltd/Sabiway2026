@@ -428,7 +428,7 @@ export default function PostCard({
       {/* If it is repost */}
       {original_post_data && (
         <div className="text-sm text-gray-600 border-b border-gray-200 pb-3 mt-1 mb-2 flex gap-x-2 items-center">
-          <Link
+          <a
               href={`/profile/${repost_post_data.author?.username?.replace(/^@/, '')}`}
             >
              <img
@@ -436,14 +436,14 @@ export default function PostCard({
                 alt={repost_post_data.author.full_name}
                 className="w-9 h-9 rounded-full object-cover border border-gray-200 shadow-sm"
               />
-          </Link>
+          </a>
           <p>
-            <Link
+            <a
               href={`/profile/${repost_post_data.author?.username?.replace(/^@/, '')}`}
               className="font-medium  text-gray-800 hover:underline"
             >
               {repost_post_data.author?.full_name}
-            </Link>
+            </a>
             {" "}
             reposted this
           </p>
@@ -453,7 +453,7 @@ export default function PostCard({
       <div>
         {/* Header */}
         <div className="flex  justify-between items-center gap-3">
-          <Link href={`/profile/${author?.username?.replace(/^@/, '')}`}>
+          <a href={`/profile/${author?.username?.replace(/^@/, '')}`}>
             <div className="flex items-center gap-3">
               <img
                 src={getProfileSrc(author.profile_picture)}
@@ -471,7 +471,7 @@ export default function PostCard({
                 <p className="text-[11px] text-gray-400">{formatTimeAgo(created_at)}</p>
               </div>
             </div>
-          </Link>
+          </a>
 
           {author.user_id !== currentUserId ? (
             <div className="flex  justify-end ">
@@ -658,10 +658,10 @@ export default function PostCard({
           </div>
         ) : (
           <>
-            {/* <Link href={`/posts/${id}`} key={id}> */}
+            {/* <a href={`/posts/${id}`} key={id}> */}
             {
               clickable && (
-                <Link href={`/posts/${id}`}>
+                <a href={`/posts/${id}`}>
                   <ReadMoreText content={content} maxLength={150} />
                   {image && (
                     <div className="mt-3 rounded-xl overflow-hidden">
@@ -672,7 +672,7 @@ export default function PostCard({
                       />
                     </div>
                   )}
-                </Link>
+                </a>
               )
             }
 

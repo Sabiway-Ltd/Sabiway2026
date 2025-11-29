@@ -26,13 +26,13 @@ export default function Herosection({HandleWaitListPopUp}) {
             </div>
           </button>
 
-          <Link 
+          <a 
             href={"/signup"}
             >
               <div className=" w-[12rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
                 Join the Community
               </div>
-          </Link>
+          </a>
         </div>
       </div>
 

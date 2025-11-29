@@ -21,7 +21,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
       if (part.match(/^https:\/\/www\.sabiway\.com/)) {
         const path = part.replace("https://www.sabiway.com", "");
         return (
-          <Link
+          <a
             href={path}
             onClick={(e)=>{
               e.stopPropagation();
@@ -30,7 +30,7 @@ const ReadMoreText = ({ content, maxLength = 120 }) => {
             className="text-[#008753] hover:underline break-all"
           >
             {part}
-          </Link>
+          </a>
         );
       }
 

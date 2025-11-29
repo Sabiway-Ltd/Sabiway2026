@@ -74,13 +74,13 @@ export default function Signup() {
           {/* Policy */}
           <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
             By continuing, you agree to our{" "}
-            <Link href="#" className="text-[#008753] font-medium hover:underline">
+            <a href="#" className="text-[#008753] font-medium hover:underline">
               Privacy Policy
-            </Link>{" "}
+            </a>{" "}
             and{" "}
-            <Link href="#" className="text-[#008753] font-medium hover:underline">
+            <a href="#" className="text-[#008753] font-medium hover:underline">
               Terms of Use
-            </Link>
+            </a>
             , and consent to receive emails.
           </p>
 
@@ -164,12 +164,12 @@ export default function Signup() {
           {/* Already have account */}
           <p className="text-center text-gray-600 text-[11px] sm:text-xs mt-5 sm:mt-6">
             Already have an account?{" "}
-            <Link
+            <a
               href="/login"
               className="text-[#008753] font-medium hover:underline"
             >
               Sign in
-            </Link>
+            </a>
           </p>
         </motion.div>
       </div>

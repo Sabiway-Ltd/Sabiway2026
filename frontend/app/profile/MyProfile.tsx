@@ -642,7 +642,7 @@ useEffect(() => {
                         className="flex items-center justify-between gap-3 bg-[#008753]/5 rounded-lg p-4 hover:bg-[#008753]/10"
                       >
                         {/* User Info */}
-                        <Link href={`/profile/${user.username}`}>
+                        <a href={`/profile/${user.username}`}>
                           <div className="flex items-center gap-3">
                             <img
                               src={
@@ -667,7 +667,7 @@ useEffect(() => {
                               </p>
                             </div>
                           </div>
-                        </Link>
+                        </a>
 
                         {/* Follow/Unfollow Button */}
                         <motion.button
@@ -700,7 +700,7 @@ useEffect(() => {
                         key={user.user_id}
                         className="flex items-center justify-between gap-3 bg-[#008753]/5 rounded-lg p-4 hover:bg-[#008753]/10"
                       >
-                        <Link href={`/profile/${user.username}`}>
+                        <a href={`/profile/${user.username}`}>
                           <div className="flex items-center gap-3">
                             <img
                               src={
@@ -725,7 +725,7 @@ useEffect(() => {
                               </p>
                             </div>
                           </div>
-                        </Link>
+                        </a>
 
                         <button
                           onClick={() => handleUnfollow(user)}

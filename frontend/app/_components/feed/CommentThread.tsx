@@ -328,17 +328,17 @@ const handleToggleReplies = async () => {
   return (
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start gap-3 mb-2">
-        <Link href={`/profile/${author.username}`}>
+        <a href={`/profile/${author.username}`}>
           <img
             src={author.avatar}
             alt={author.name}
             className="w-8 h-8 rounded-full object-cover"
           />
-        </Link>
+        </a>
 
         <div className="flex-1">
           <div className="flex gap-3 justify-between">
-            <Link href={`/profile/${author.username}`}>
+            <a href={`/profile/${author.username}`}>
               <div className="font-semibold text-sm flex flex-col md:flex-row md:items-center gap-x-1">
                 <span>{author.name}</span>
                 {author.job && (
@@ -348,7 +348,7 @@ const handleToggleReplies = async () => {
                 )}
               </div>
               <p className="text-[11px] text-gray-400">{formattedDate}</p>
-            </Link>
+            </a>
 
 
             

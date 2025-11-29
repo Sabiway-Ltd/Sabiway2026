@@ -81,7 +81,7 @@ export default function PeopleYouMayKnow() {
               key={profile.user_id}
               className="flex items-center gap-x-2 justify-between bg-white  p-3 rounded-lg transition"
             >
-              <Link href={`/profile/${profile.username}`}>
+              <a href={`/profile/${profile.username}`}>
                 <div className="flex items-center gap-3">
                   {profile.profile_picture ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shrink-0">
@@ -113,7 +113,7 @@ export default function PeopleYouMayKnow() {
                     </p>
                   </div>
                 </div>
-              </Link>
+              </a>
 
               {user?.id !== profile.user_id && (
                 <Button
