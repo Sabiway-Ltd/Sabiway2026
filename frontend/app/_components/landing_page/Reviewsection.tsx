@@ -31,7 +31,7 @@ export default function Reviewsection() {
         What people are saying
       </h3>
       <h2 className="text-xl sm:text-2xl md:text-4xl text-gray-900 mb-10 sm:mb-12">
-        Real stories from customers and service providers
+        We're committed to 5-star service. <br></br>Read real stories from customers who found trusted providers <br></br>and professionals who grew their business on SabiWay. 
       </h2>
 
       {/* First Row - Left to Right */}

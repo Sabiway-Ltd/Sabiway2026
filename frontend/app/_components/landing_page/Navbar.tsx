@@ -4,11 +4,9 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ProfileDropdown from "../profile/ProfileDropdown";
-import { useAuthStore } from "@/app/store/useAuthStore";
 import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -25,166 +23,137 @@ export default function Navbar() {
       router.push(`/#${sectionId}`);
     }
 
-    setMenuOpen(false); // close mobile menu after click
+    setMenuOpen(false);
   };
 
-    
-
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white  ">
-      {/* WHITE BACKGROUND RECTANGLE */}
-      <div className="absolute top-0 left-0 w-full h-full  bg-white"></div>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white">
       
-      {/* ROUNDED LIGHT GREEN NAVBAR */}
-      <div className="relative mx-4 md:mx-8 mt-6 flex items-center justify-between bg-[#008753]/5 rounded-full shadow-sm md:py-3 py-2 px-5 sm:px-8">
-        
-        {/* LOGO */}
-        <a href="/" className="flex-shrink-0 cursor-pointer" >
-          <img
-              src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
-              alt="SabiWay Logo"
-              className="w-24 md:w-32 h-auto cursor-pointer hover:opacity-90 transition"
-            />
-        </a>
+      {/* Background FIX */}
+      <div className="absolute inset-0 bg-white -z-10"></div>
 
-        {/* CENTER NAV LINKS (Desktop Only) */}
+      {/* MAIN NAVBAR */}
+      <div className="relative mx-4 md:mx-8 mt-6 flex items-center justify-between bg-[#008753]/5 rounded-full shadow-sm md:py-3 py-2 px-5 sm:px-8">
+
+        {/* LOGO */}
+        <Link href="/" className="flex-shrink-0 cursor-pointer">
+          <img
+            src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
+            alt="SabiWay Logo"
+            className="w-24 md:w-32 h-auto hover:opacity-90 transition"
+          />
+        </Link>
+
+        {/* DESKTOP NAV LINKS */}
         <div className="hidden md:flex space-x-12 text-gray-800 font-medium">
 
-          <div>
-            <a href="/community" className="hover:text-[#008753] transition">
-              Community
-            </a>
-          </div>
+          <Link href="/community" className="hover:text-[#008753] transition">
+            Community
+          </Link>
 
-          <div>
-            <a href="/#about_us"
-              className="cursor-pointer hover:text-[#008753] transition"
-            >
-              About Us
-            </a>
-          </div>
+          <a
+            href="/#about_us"
+            className="hover:text-[#008753] transition"
+          >
+            About Us
+          </a>
 
-          <div>
-            <a href="/#review_section"
-              onClick={() => goToSection("review_section")}
-              className="cursor-pointer hover:text-[#008753] transition"
-            >
-              Reviews
-            </a>
-          </div>
+          <a
+            href="/#review_section"
+            onClick={() => goToSection("review_section")}
+            className="hover:text-[#008753] transition"
+          >
+            Reviews
+          </a>
 
-          <div>
-            <a href="/#faqs_section"
-              className="cursor-pointer hover:text-[#008753] transition"
-            >
-              FAQs
-            </a>
-          </div>
+          <a
+            href="/#faqs_section"
+            className="hover:text-[#008753] transition"
+          >
+            FAQs
+          </a>
+
         </div>
 
-
-        {/* RIGHT BUTTONS (Desktop) */}
+        {/* RIGHT SIDE (LOGIN / PROFILE) */}
         <div className="flex items-center space-x-4">
-          {
-            !token && (
-              <div className="flex gap-6">
+          {!token && (
+            <div className="flex gap-6">
+              {/* Mobile Login */}
+              <button
+                onClick={() => router.push("/login")}
+                className="px-5 py-1.5 md:hidden bg-[#008753] text-white rounded-lg text-sm font-semibold hover:bg-[#006B42] transition"
+              >
+                Login
+              </button>
 
-                <button
-                  onClick={() => router.push("/login")}
-                  className="px-5 py-1.5 md:hidden bg-[#008753] text-white rounded-lg text-sm font-semibold hover:bg-[#006B42] transition"
-                >
-                  Login
-                </button>
+              {/* Desktop Login */}
+              <button
+                onClick={() => router.push("/login")}
+                className="px-6 py-2 hidden md:block bg-[#008753] text-white rounded-lg font-semibold hover:bg-[#006B42] transition"
+              >
+                Login
+              </button>
+            </div>
+          )}
 
-               
-                <button
-                  onClick={() => router.push("/login")}
-                  className="px-6 py-2 hidden md:block bg-[#008753] text-white rounded-lg font-semibold hover:bg-[#006B42] transition"
-                >
-                  Login
-                </button>
-              </div>
-            )
-          }
-          
+          {token && (
+            <ProfileDropdown />
+          )}
         </div>
 
         {/* MOBILE MENU TOGGLE */}
-        {
-          !token && (
-            <button
-              className="hidden text-gray-800"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
-          )
-        }
-
-        {
-            token && (
-              <div>
-                <ProfileDropdown/>
-              </div>
-            )
-          }
-        
+        {!token && (
+          <button
+            className="md:hidden text-gray-800"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        )}
       </div>
 
-
-      {/* MOBILE DROPDOWN MENU */}
+      {/* MOBILE MENU */}
       {menuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
           <div className="flex flex-col text-gray-800 font-medium text-center py-5 space-y-4">
 
-            {/* Community link */}
-            <div>
-              <a
-                href="/community"
-                onClick={() => setMenuOpen(false)}
-                className="hover:text-[#008753] transition"
-              >
-                Community
-              </a>
-            </div>
+            <Link
+              href="/community"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-[#008753] transition"
+            >
+              Community
+            </Link>
 
-            {/* About Us */}
-            <div>
-              <a
-                href="/#about_us"
-                onClick={() => goToSection("about_us")}
-                className="cursor-pointer hover:text-[#008753] transition"
-              >
-                About Us
-              </a>
-            </div>
+            <a
+              href="/#about_us"
+              onClick={() => goToSection("about_us")}
+              className="hover:text-[#008753] transition"
+            >
+              About Us
+            </a>
 
-            {/* Reviews */}
-            <div>
-              <a
-                href="/#review_section"
-                onClick={() => goToSection("review_section")}
-                className="cursor-pointer hover:text-[#008753] transition"
-              >
-                Reviews
-              </a>
-            </div>
+            <a
+              href="/#review_section"
+              onClick={() => goToSection("review_section")}
+              className="hover:text-[#008753] transition"
+            >
+              Reviews
+            </a>
 
-            {/* FAQs */}
-            <div>
-              <a
-                href="/#faqs_section"
-                onClick={() => goToSection("faqs_section")}
-                className="cursor-pointer hover:text-[#008753] transition"
-              >
-                FAQs
-              </a>
-            </div>
+            <a
+              href="/#faqs_section"
+              onClick={() => goToSection("faqs_section")}
+              className="hover:text-[#008753] transition"
+            >
+              FAQs
+            </a>
 
           </div>
 
-          {/* Buttons */}
+          {/* MOBILE LOGIN/SIGNUP */}
           <div className="flex flex-col items-center space-y-3 pb-6">
             <button
               onClick={() => {
@@ -209,8 +178,7 @@ export default function Navbar() {
         </div>
       )}
 
-
-      {/* Fade animation */}
+      {/* Animations */}
       <style jsx>{`
         @keyframes fadeIn {
           from {

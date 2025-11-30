@@ -10,11 +10,30 @@ export default function Aboutus() {
       </h3>
 
       {/* Description */}
-      <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium text-gray-800 max-w-5xl mx-auto leading-relaxed">
-        SabiWay is a people-powered service platform built for Nigerians — at home and abroad.
-        We believe everyone deserves access to fast, honest, and verified local services —
-        no matter where they are in the world.
-      </p>
+      <h2 className="text-xl sm:text-2xl md:text-4xl text-gray-900 mb-10 sm:mb-12 text-center">
+      SabiWay is a people-powered service platform built for <br /> Nigerians at home and across the diaspora.
+      </h2>
+
+      <div className="space-y-5 text-sm sm:text-base md:text-lg font-normal text-gray-800 max-w-5xl mx-auto leading-relaxed">
+  
+     <p>
+     We believe everyone deserves access to fast, honest, and verified local services, no matter where they are in the world.As a Nigerian-led service marketplace, SabiWay makes it easy to book reliable services and manage your day-to-day tasks without stress.We connect customers with vetted Nigerian service providers across categories like barbers, cleaners, electricians, plumbers, painters, and handypersons.
+    </p>
+
+    <p>
+    Whether you're in Lagos, London, or Los Angeles, SabiWay brings trusted Nigerian service providers closer than ever.
+    No more driving around neighbourhoods, endless calls, or unfiltered lists.
+    </p>
+
+    <p>
+    Every professional on SabiWay is thoroughly verified, so you can book with confidence knowing you're working with skilled, dependable, and trustworthy service providers.
+    </p>
+
+  </div>
+
+
+
+
 
       {/* Trusted Badge */}
       <div className="flex justify-center mt-8">

@@ -12,9 +12,8 @@ export default function Herosection({HandleWaitListPopUp}) {
           Than You <span className="text-[#008753]">Think</span>
         </h1>
 
-        <p className="mt-6 text-sm md:text-lg text-gray-600 font-medium max-w-md mx-auto md:mx-0 leading-relaxed">
-          From anywhere in the world, you can find trusted hands in Nigeria.
-          SabiWay connects you to reliable local services — fast, easy, and secure.
+        <p className="mt-6 text-sm md:text-lg text-gray-600 font-medium max-w-xl mx-auto md:mx-0 leading-relaxed">
+          Wherever you are in the world, SabiWay connects you with trusted Nigerian service providers near you. Fast, easy and secure.
         </p>
 
         <div className="flex gap-x-2 md:text-[0.95rem] text-[0.85rem] flex-row mt-8 gap-y-3">

@@ -1,24 +1,29 @@
-"use client";
+"use client"; 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
     <footer className="bg-[#008753] text-white py-12 px-8 md:px-16 w-full">
       <div className="max-w-[2000px] mx-auto text-left">
+
         {/* Navigation Links */}
         <div className="flex flex-col gap-6">
           <div className="flex flex-col md:flex-row flex-wrap justify-between gap-x-8 gap-y-5 text-sm font-medium">
-            <a href="#">Home</a>
-            <a href="#">About Us</a>
-            <a href="#">FAQ</a>
-            <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
-            <a href="/terms-of-use">Terms of Use</a>
-            <a href="#">Instagram</a>
-            <a href="#">Facebook</a>
-            <a href="#">Report a Problem</a>
-          </div>
 
+            <Link href="/">Home</Link>
+            <Link href="/#about_us">About Us</Link>
+            <Link href="/#faqs_section">FAQ</Link>
+
+            {/* ⭐ Help Center link now works */}
+            <Link href="/helpcenter">Help Center</Link>
+
+            <Link href="/privacy-policy">Privacy Policy</Link>
+            <Link href="/terms-of-use">Terms of Use</Link>
+            <Link href="https://instagram.com" target="_blank">Instagram</Link>
+            <Link href="https://facebook.com" target="_blank">Facebook</Link>
+
+          </div>
         </div>
 
         <div className="border-t border-white/20 my-8"></div>
