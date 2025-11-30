@@ -1,4 +1,4 @@
-// src/app/(main)/components/common/ReaderClient.tsx
+// app/_components/common/ReaderClient.tsx
 
 "use client";
 

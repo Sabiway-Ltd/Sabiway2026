@@ -1,4 +1,4 @@
-// src/app/(main)/reader/page.tsx
+// app/terms-of-use/page.tsx
 
 import ReaderClient from "../_components/common/ReaderClient";
 import Navbar from "../_components/landing_page/Navbar";
