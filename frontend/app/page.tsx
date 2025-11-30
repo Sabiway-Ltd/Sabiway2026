@@ -27,11 +27,11 @@ export default function Home() {
       <Herosection HandleWaitListPopUp={HandleWaitListPopUp} />
 
       {showWaitlist && (
-  <WaitlistForm 
-    show={showWaitlist}
-    onSuccess={() => setShowWaitlist(false)} 
-  />
-)}
+        <WaitlistForm 
+          show={showWaitlist}
+          onSuccess={() => setShowWaitlist(false)} 
+        />
+      )}
 
 
       <Scrollingpath />

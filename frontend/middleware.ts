@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
   "/check-email", 
   "/confirm-signup", 
   "/forgot-password",
+  "/terms-of-use"
 ];
 
 export function middleware(req: NextRequest) {
