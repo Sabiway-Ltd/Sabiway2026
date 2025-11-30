@@ -9,7 +9,8 @@ const PUBLIC_ROUTES = [
   "/confirm-signup", 
   "/forgot-password",
   "/terms-of-use",
-  "/helpcenter"
+  "/helpcenter",
+  "/privacy-policy"
 ];
 
 export function middleware(req: NextRequest) {
@@ -18,7 +19,7 @@ export function middleware(req: NextRequest) {
 
   const isPublic =
     PUBLIC_ROUTES.includes(path) ||
-    path.startsWith("/callback") || // ✅ covers /callback and /callback/google
+    path.startsWith("/callback") || // covers /callback and /callback/google
     path.startsWith("/change-password/");
 
   // ⛔ Not logged in & not visiting a public route
@@ -26,7 +27,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // ✅ Logged in & visiting public route
+  // ✅ Logged in & visiting login/signup pages
   if (token && ["/login", "/signup"].includes(path)) {
     return NextResponse.redirect(new URL("/community", req.url));
   }
@@ -36,16 +37,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    /**
-     * Run middleware on everything EXCEPT:
-     * - API routes
-     * - Next.js internals (_next/static, _next/image)
-     * - favicon.ico
-     * - and any static file like images, fonts, uploads, etc.
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|pdf)$).*)",
   ],
 };
-
-
-

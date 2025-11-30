@@ -1,4 +1,4 @@
-"use client"; 
+"use client";  
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,11 +15,12 @@ export default function Footer() {
             <Link href="/#about_us">About Us</Link>
             <Link href="/#faqs_section">FAQ</Link>
 
-            {/* ⭐ Help Center link now works */}
+            {/* ⭐ Help Center link works */}
             <Link href="/helpcenter">Help Center</Link>
 
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-use">Terms of Use</Link>
+
             <Link href="https://instagram.com" target="_blank">Instagram</Link>
             <Link href="https://facebook.com" target="_blank">Facebook</Link>
 

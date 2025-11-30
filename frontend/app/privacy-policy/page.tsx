@@ -5,7 +5,7 @@ import Navbar from "../_components/landing_page/Navbar";
 
 export default function ReaderPage() {
   // Example PDF in public folder
-  const pdfFile = "/SabiWay_Terms_of_Use.pdf"; 
+  const pdfFile = "/SabiWay_Privacy_Policy.pdf"; 
 
   return (
     <div className="w-full">

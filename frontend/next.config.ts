@@ -1,38 +1,40 @@
-// frontend/next.config.ts
+// next.config.ts
+import type { NextConfig } from "next";
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "i.pravatar.cc", // avatars
-      },
-      {
-        protocol: "https",
-        hostname: "via.placeholder.com", // fallback
-      },
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com", // ✅ Cloudinary
-      },
-      {
-        protocol: "https",
-        hostname: "api.dicebear.com",
-      },
+      { protocol: "https", hostname: "i.pravatar.cc" },
+      { protocol: "https", hostname: "via.placeholder.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "api.dicebear.com" },
     ],
-    dangerouslyAllowSVG: true, // ⚠️ Only if you trust the source
+    dangerouslyAllowSVG: true,
     contentSecurityPolicy:
       "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  // ✅ Allow deployment even if there are TypeScript or ESLint errors
   typescript: {
     ignoreBuildErrors: true,
   },
+
   eslint: {
     ignoreDuringBuilds: true,
   },
+
+  experimental: {
+    turbo: false, // ⬅️ Disable Turbopack globally
+  },
+
+  // ⬇️ This is the REAL fix (works for Turbopack & Webpack)
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      canvas: false, // ⬅️ prevents pdfjs-dist from importing the Node canvas package
+    };
+
+    return config;
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

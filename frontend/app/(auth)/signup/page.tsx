@@ -74,11 +74,11 @@ export default function Signup() {
           {/* Policy */}
           <p className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 sm:mt-3 leading-relaxed">
             By continuing, you agree to our{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <a href="/privacy-policy" className="text-[#008753] font-medium hover:underline">
               Privacy Policy
             </a>{" "}
             and{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <a href="/terms-of-use" className="text-[#008753] font-medium hover:underline">
               Terms of Use
             </a>
             , and consent to receive emails.
