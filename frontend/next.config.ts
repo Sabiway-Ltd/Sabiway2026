@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  experimental: {
+    turbo: false, // ⬅️ Disable Turbopack globally
+  },
+
   // ⬇️ This is the REAL fix (works for Turbopack & Webpack)
   webpack: (config) => {
     config.resolve.alias = {
