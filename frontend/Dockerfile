@@ -5,13 +5,13 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy rest of the project
 COPY . .
 
-# Build Next.js production assets
-RUN npm run build
+# Build Next.js production assets with Webpack (disable Turbopack)
+RUN npm run build --no-turbopack
 
 # Expose port
 EXPOSE 3000
