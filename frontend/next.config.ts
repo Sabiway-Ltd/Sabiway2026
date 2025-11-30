@@ -1,38 +1,37 @@
-// frontend/next.config.ts
+// next.config.ts
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "i.pravatar.cc", // avatars
-      },
-      {
-        protocol: "https",
-        hostname: "via.placeholder.com", // fallback
-      },
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com", // ✅ Cloudinary
-      },
-      {
-        protocol: "https",
-        hostname: "api.dicebear.com",
-      },
+      { protocol: "https", hostname: "i.pravatar.cc" },
+      { protocol: "https", hostname: "via.placeholder.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "api.dicebear.com" },
     ],
-    dangerouslyAllowSVG: true, // ⚠️ Only if you trust the source
+    dangerouslyAllowSVG: true,
     contentSecurityPolicy:
       "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  // ✅ Allow deployment even if there are TypeScript or ESLint errors
+  // Allow deployment even on TypeScript/ESLint warnings
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
+
+  // 🔥 FIX: Prevent Turbopack/Webpack from trying to bundle `canvas`
+  webpack: (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      canvas: false, // ⬅️ KEY FIX
+    };
+    return config;
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
