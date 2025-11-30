@@ -42,7 +42,7 @@ export const config = {
      * - favicon.ico
      * - and any static file like images, fonts, uploads, etc.
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|pdf)$).*)",
   ],
 };
 

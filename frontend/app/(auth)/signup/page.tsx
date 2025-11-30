@@ -78,7 +78,7 @@ export default function Signup() {
               Privacy Policy
             </a>{" "}
             and{" "}
-            <a href="#" className="text-[#008753] font-medium hover:underline">
+            <a href="/terms-of-use" className="text-[#008753] font-medium hover:underline">
               Terms of Use
             </a>
             , and consent to receive emails.
