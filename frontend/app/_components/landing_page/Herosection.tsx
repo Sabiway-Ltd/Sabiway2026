@@ -2,35 +2,34 @@
 
 import Link from "next/link";
 
-export default function Herosection({HandleWaitListPopUp}) {
+export default function Herosection({ HandleWaitListPopUp }) {
   return (
     <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 px-6 sm:px-10 md:px-16 pt-24 md:pt-40 pb-24 md:pb-36 items-center relative overflow-hidden">
+
       {/* LEFT SIDE — TEXT */}
       <div className="text-start md:text-left">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
-          Your <span className="text-[#FAAB2C]">People</span> Are Closer 
+          Your <span className="text-[#FAAB2C]">People</span> Are Closer
           Than You <span className="text-[#008753]">Think</span>
         </h1>
 
-        <p className="mt-6 text-sm md:text-lg text-gray-600 font-medium max-w-xl mx-auto md:mx-0 leading-relaxed">
-          Wherever you are in the world, SabiWay connects you with trusted Nigerian service providers near you. Fast, easy and secure.
+        {/* ⭐ Updated body text size */}
+        <p className="mt-6 text-base sm:text-lg md:text-xl text-gray-600 font-medium max-w-xl mx-auto md:mx-0 leading-relaxed">
+          Wherever you are in the world, SabiWay connects you with trusted 
+          Nigerian service providers near you. Fast, easy and secure.
         </p>
 
         <div className="flex gap-x-2 md:text-[0.95rem] text-[0.85rem] flex-row mt-8 gap-y-3">
-          <button 
-            onClick={HandleWaitListPopUp}
-            >
-            <div className="md:w-[12rem] w-[8.5rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
+          <button onClick={HandleWaitListPopUp}>
+            <div className="md:w-[12rem] w-[8.5rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition">
               Join App Waitlist
             </div>
           </button>
 
-          <a 
-            href={"/signup"}
-            >
-              <div className=" md:w-[12rem] w-[10.5rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition ">
-                Join the Community
-              </div>
+          <a href="/signup">
+            <div className="md:w-[12rem] w-[10.5rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition">
+              Join the Community
+            </div>
           </a>
         </div>
       </div>
@@ -45,6 +44,7 @@ export default function Herosection({HandleWaitListPopUp}) {
           />
         </div>
       </div>
+
     </section>
   );
 }

@@ -10,7 +10,7 @@ export default function Aboutus() {
       </h3>
 
       {/* Description */}
-      <h2 className="text-xl sm:text-2xl md:text-4xl text-gray-900 mb-10 sm:mb-12 text-center">
+    <h2 className="text-xl sm:text-2xl md:text-4xl text-gray-900 mb-10 sm:mb-12 text-center font-medium">
       SabiWay is a people-powered service platform built for <br /> Nigerians at home and across the diaspora.
       </h2>
 

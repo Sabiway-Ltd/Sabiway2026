@@ -30,7 +30,7 @@ export default function Reviewsection() {
       <h3 className="text-gray-500 font-medium text-sm sm:text-base mb-2 sm:mb-3">
         What people are saying
       </h3>
-      <h2 className="text-xl sm:text-2xl md:text-4xl text-gray-900 mb-10 sm:mb-12">
+      <h2 className="text-xl sm:text-2xl md:text-4xl text-gray-900 mb-10 sm:mb-12 font-medium">
         We're committed to 5-star service. <br></br>Read real stories from customers who found trusted providers <br></br>and professionals who grew their business on SabiWay. 
       </h2>
 
