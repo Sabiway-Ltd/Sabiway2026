@@ -12,7 +12,7 @@ export default function Footer() {
             <a href="#">About Us</a>
             <a href="#">FAQ</a>
             <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
+            <a href="/privacy-policy">Privacy Policy</a>
             <a href="/terms-of-use">Terms of Use</a>
             <a href="#">Instagram</a>
             <a href="#">Facebook</a>
