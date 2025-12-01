@@ -1,9 +1,6 @@
 export const PrivacyTOC = [
-  { id: "introduction", label: "INTRODUCTION" },
   { id: "definitions", label: "DEFINITIONS OF TERMS" },
   { id: "information_collected", label: "INFORMATION COLLECTED" },
-  { id: "how_we_collect", label: "HOW WE COLLECT INFORMATION" },
-  { id: "professional_additional", label: "ADDITIONAL INFORMATION FOR SERVICE PROFESSIONALS" },
   { id: "how_we_use", label: "HOW WE USE YOUR INFORMATION" },
   { id: "how_we_disclose", label: "HOW WE DISCLOSE YOUR INFORMATION" },
   { id: "payment_processing", label: "PAYMENT PROCESSING" },
