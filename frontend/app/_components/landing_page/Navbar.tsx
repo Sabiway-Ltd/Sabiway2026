@@ -101,82 +101,8 @@ export default function Navbar() {
             <ProfileDropdown />
           )}
         </div>
-
-        {/* MOBILE MENU TOGGLE */}
-        {!token && (
-          <button
-            className="md:hidden text-gray-800"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? <X size={26} /> : <Menu size={26} />}
-          </button>
-        )}
       </div>
 
-      {/* MOBILE MENU */}
-      {menuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg animate-fadeIn">
-          <div className="flex flex-col text-gray-800 font-medium text-center py-5 space-y-4">
-
-            <Link
-              href="/community"
-              onClick={() => setMenuOpen(false)}
-              className="hover:text-[#008753] transition"
-            >
-              Community
-            </Link>
-
-            <a
-              href="/#about_us"
-              onClick={() => goToSection("about_us")}
-              className="hover:text-[#008753] transition"
-            >
-              About Us
-            </a>
-
-            <a
-              href="/#review_section"
-              onClick={() => goToSection("review_section")}
-              className="hover:text-[#008753] transition"
-            >
-              Reviews
-            </a>
-
-            <a
-              href="/#faqs_section"
-              onClick={() => goToSection("faqs_section")}
-              className="hover:text-[#008753] transition"
-            >
-              FAQs
-            </a>
-
-          </div>
-
-          {/* MOBILE LOGIN/SIGNUP */}
-          <div className="flex flex-col items-center space-y-3 pb-6">
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                router.push("/login");
-              }}
-              className="text-gray-700 font-medium hover:text-[#008753] transition"
-            >
-              Login
-            </button>
-
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                router.push("/signup");
-              }}
-              className="px-6 py-2 bg-[#008753] text-white rounded-full font-semibold hover:bg-[#006B42] transition"
-            >
-              Sign Up
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Animations */}
       <style jsx>{`

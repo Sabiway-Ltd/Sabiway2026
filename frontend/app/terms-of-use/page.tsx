@@ -1,18 +1,22 @@
-// app/terms-of-use/page.tsx
-
-import ReaderClient from "../_components/common/ReaderClient";
+import React from "react";
+import TermsOfUseMain from "./TermsOfUseMain";
 import Navbar from "../_components/landing_page/Navbar";
+import Hero from "./hero";
 
-export default function ReaderPage() {
-  // Example PDF in public folder
-  const pdfFile = "/SabiWay_Terms_of_Use.pdf"; 
 
+export default function Page() {
   return (
-    <div className="w-full">
+    <div className="min-h-screen bg-gray-50 text-gray-800 leading-[1.7]">
+      {/* Navbar */}
       <Navbar/>
-      <div className="mt-20 flex justify-center">
-        <ReaderClient file={pdfFile} />
-      </div>
+
+      {/* HERO */}
+      <Hero/>
+
+
+      {/* Main Content */}
+      <TermsOfUseMain/>
+      
     </div>
   );
 }
