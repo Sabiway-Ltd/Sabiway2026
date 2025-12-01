@@ -24,30 +24,32 @@ export default function TermsOfUseMain(){
               Table of Contents
             </h2>
 
-            <ol className="space-y-3 text-gray-700  list-decimal pl-5">
-              {TableOfContents.map((item) => (
-                <li key={item.id} className="group">
-                  <button
-                    onClick={() => {
-                      const section = document.getElementById(item.id);
-                      section?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      });
-                    }}
-                    className="
-                      hover:text-[#008753] 
-                      group-hover:translate-x-1 
-                      transition-all 
-                      duration-200
-                      text-left
-                    "
-                  >
-                    {item.label}
-                  </button>
-                </li>
-              ))}
-            </ol>
+            <ol className="space-y-3 text-gray-700 pl-5">
+  {TableOfContents.map((item, index) => (
+    <li key={item.id} className="relative pl-6">
+      <span className="absolute left-0 top-0 text-gray-600">
+        {index + 1}.
+      </span>
+
+      <button
+        onClick={() => {
+          const section = document.getElementById(item.id);
+          section?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+        className="
+          hover:text-[#008753] 
+          group-hover:translate-x-1 
+          transition-all 
+          duration-200
+          text-left
+        "
+      >
+        {item.label}
+      </button>
+    </li>
+  ))}
+</ol>
+
 
 
           </div>
