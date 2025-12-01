@@ -1992,8 +1992,6 @@ export default function TermsOfUseMain(){
                 >
               </p>
             </article>
-
-            <div className="border-b border-gray-200 my-5"></div>
           </section>
 
 
