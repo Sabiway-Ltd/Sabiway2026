@@ -83,7 +83,7 @@ const MyBookmarksMain = forwardRef<MyBookmarksMainRef>((props, ref) => {
       {/* First load skeleton */}
       {firstLoad && loadingBookmarks && (
         <div className="space-y-4 pb-6">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(1)].map((_, i) => (
             <PostSkeleton key={i} />
           ))}
         </div>

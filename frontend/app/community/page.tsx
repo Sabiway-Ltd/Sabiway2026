@@ -182,7 +182,7 @@ useEffect(() => {
           {/* First load → show skeleton */}
           {firstLoad && loading && !isFiltering && !pendingSearch && (
             <div className="space-y-4 pb-6">
-              {[...Array(5)].map((_, i) => (
+              {[...Array(1)].map((_, i) => (
                 <PostSkeleton key={i} />
               ))}
             </div>

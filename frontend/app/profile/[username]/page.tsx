@@ -1,3 +1,5 @@
+// app/profile/[username]/page.tsx
+
 "use client";
 
 import UserProfile from "@/app/profile/[username]/UserProfile";
