@@ -25,10 +25,12 @@ export default function CheckEmail() {
 
         <p className="text-center text-gray-500 text-[11px] sm:text-[13px] px-5 mt-2 sm:mt-3 leading-relaxed">
           We've sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.
+          <br/>
+Note: It may take up to 5 minutes for the email to arrive.
         </p>
 
         <div className="my-6 flex justify-center">
-            <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1761427061/Depth_6_Frame_0_thy833.png" 
+            <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564131/Depth_6_Frame_0_thy833_jatk7l.png" 
             alt="Confirm Email" 
             />
 

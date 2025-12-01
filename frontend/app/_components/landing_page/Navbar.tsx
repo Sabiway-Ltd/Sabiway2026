@@ -38,7 +38,7 @@ export default function Navbar() {
         {/* LOGO */}
         <Link href="/" className="flex-shrink-0 cursor-pointer">
           <img
-            src="https://res.cloudinary.com/devqbjptr/image/upload/v1761378056/Group_3_2_1_tg69iu.png"
+            src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png"
             alt="SabiWay Logo"
             className="w-24 md:w-32 h-auto hover:opacity-90 transition"
           />

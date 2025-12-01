@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { isRiskyContent } from "@/app/utils/contentValidator";
-import { getProfileSrc } from "@/app/helper";
+import { CLOUDINARY_CLOUD_NAME, getProfileSrc } from "@/app/helper";
 import Link from "next/link";
 import { MoreHorizontal, Pencil, Trash2, X, Check } from "lucide-react";
 import ReplyDeleteConfirmModal from "../common/ReplyDeleteConfirmModal";
@@ -261,7 +261,7 @@ const handleToggleReplies = async () => {
     if (!path) return null;
     return path.startsWith("http")
       ? path
-      : `https://res.cloudinary.com/devqbjptr/${path}`;
+      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`;
   };
 
 

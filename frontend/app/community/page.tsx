@@ -11,7 +11,7 @@ import PostCard from "../_components/feed/PostCard";
 import Aside from "../_components/feed/Aside";
 import { DEFAULT_PROFILE_PICTURE } from "../helper";
 import { Loader2 } from "lucide-react";
-import { getProfileImage } from "../utils/getProfileImage";
+import { getProfileImage } from "../helper";
 import Link from "next/link";
 import PeopleYouMayKnow from "../_components/profile/PeopleYouMayKnow";
 import { RenderPostList } from "../_components/common/RenderPostList ";

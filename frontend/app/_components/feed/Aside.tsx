@@ -7,6 +7,7 @@ import { useProfileStore } from "@/app/store/useProfileStore";
 import PeopleYouMayKnow from "../profile/PeopleYouMayKnow";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { DEFAULT_PROFILE_PICTURE, CLOUDINARY_CLOUD_NAME } from "@/app/helper";
 
 export default function Aside() {
   const {
@@ -82,8 +83,8 @@ export default function Aside() {
                         c.profile_picture && c.profile_picture.trim() !== ""
                           ? c.profile_picture.startsWith("http")
                             ? c.profile_picture
-                            : `https://res.cloudinary.com/devqbjptr/${c.profile_picture}`
-                          : "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png"
+                            : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${c.profile_picture}`
+                          : DEFAULT_PROFILE_PICTURE
                       }
                       alt={c.full_name || "User"}
                       className="w-10 h-10 rounded-full object-cover"

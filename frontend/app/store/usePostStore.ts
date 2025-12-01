@@ -8,6 +8,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { EXPRESS_URL, DJANGO_URL } from "../utils/MyConstants";
 import { post } from "../services/post";
+import { DEFAULT_PROFILE_PICTURE } from "../helper";
 
 const SOCKET_URL = EXPRESS_URL
 
@@ -570,7 +571,7 @@ export const usePostStore = create<PostState>((set, get) => ({
           ...p.author,
           profile_picture:
             p.author.profile_picture ||
-            "https://res.cloudinary.com/devqbjptr/image/upload/v1759934268/Avatar_2_rl1a6d.png",
+            DEFAULT_PROFILE_PICTURE,
         },
       };
       set({ currentPost: normalized, loading: false });

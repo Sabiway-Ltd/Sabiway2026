@@ -39,7 +39,7 @@ class SignupSerializer(serializers.ModelSerializer):
             
             <!-- Header -->
             <div style="background:#008753; padding:20px; text-align:center;">
-                <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1761435555/Group_3_2_1_buoqkz.png" alt="Sabiway Logo" style="height:50px;" />
+                <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" alt="Sabiway Logo" style="height:50px;" />
                 <h2 style="color:#ffffff; margin:10px 0 0;">Welcome to Sabiway 🎉</h2>
             </div>
 
@@ -119,7 +119,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
             <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
             <!-- Header -->
             <div style="background:#008753; padding:20px; text-align:center;">
-                <img src="https://res.cloudinary.com/devqbjptr/image/upload/v1761435555/Group_3_2_1_buoqkz.png" alt="Sabiway Logo" style="height:50px;" />
+                <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" alt="Sabiway Logo" style="height:50px;" />
                 <h2 style="color:#ffffff; margin:10px 0 0;">Password Reset Request</h2>
             </div>
 

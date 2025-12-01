@@ -42,8 +42,8 @@ ALLOWED_HOSTS = ['*']
 
 
 # Google OAuth
-GOOGLE_CLIENT_ID = "62853499803-r7kkbq52ptk4u2j5mralkbbkquen4chh.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
+GOOGLE_CLIENT_ID = "935346913786-bbafum8k8qk3l42g4ijg007ft31r0p1e.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
 
 # For Resend API
 RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
@@ -160,7 +160,7 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.parse(
-        "postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db",
+        "postgresql://sabiway:wGSMPNQNTE6JQmJr1w565KXORm8frj7b@dpg-d4mh0o4hg0os73br7i1g-a.oregon-postgres.render.com/sabiway_cj9v",
         conn_max_age=600,
         ssl_require=True,  # Render PostgreSQL requires SSL
     )
@@ -216,9 +216,9 @@ REST_FRAMEWORK = {
 # Cloudinary
 # ---------------------------------------------------------------------
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": "devqbjptr",
-    "API_KEY": "233511915335819",
-    "API_SECRET": "ZcbD-lTO22KamDmTWMhp-xPgLxU",
+    "CLOUD_NAME": "dk6ew5ikb",
+    "API_KEY": "753545332897427",
+    "API_SECRET": "ISyZy0BC8N7Lw870veJGhtIjx1A",
 }
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"

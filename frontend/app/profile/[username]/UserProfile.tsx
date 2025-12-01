@@ -8,7 +8,6 @@ import { Button } from "@/src/components/ui/button";
 import ProfileImageModal from "@/app/_components/common/ProfileImageModal";
 import IconTooltipButton from "@/app/_components/common/IconTooltipButton";
 import { RenderPostList } from "../../_components/common/RenderPostList ";
-import { DEFAULT_AVATAR } from "@/app/utils/getProfileImage";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { usePostStore } from "@/app/store/usePostStore";
@@ -122,11 +121,11 @@ export default function UserProfile({ username }: ProfileProps) {
                       ? profile_picture
                       : profile_picture
                       ? `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${profile_picture}`
-                      : DEFAULT_AVATAR
+                      : DEFAULT_PROFILE_PICTURE
                   }
                   alt={full_name}
                   className="w-full h-full rounded-full object-cover transition-transform duration-200 hover:scale-105"
-                  onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
+                  onError={(e) => (e.currentTarget.src = DEFAULT_PROFILE_PICTURE)}
                 />
               </button>
             </div>

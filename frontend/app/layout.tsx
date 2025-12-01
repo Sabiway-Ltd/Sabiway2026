@@ -8,10 +8,33 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
 });
 
+
 export const metadata = {
   title: "SabiWay",
   description: "Find trusted service providers near you in Nigeria",
+  openGraph: {
+    title: "SabiWay",
+    description: "Find trusted service providers near you in Nigeria",
+    url: "https://www.sabiway.com",
+    siteName: "SabiWay",
+    images: [
+      {
+        url: "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png", // MUST be full URL
+        width: 1200,
+        height: 630,
+        alt: "SabiWay Preview Image",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SabiWay",
+    description: "Find trusted service providers near you in Nigeria",
+    images: ["https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png"],
+  },
 };
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

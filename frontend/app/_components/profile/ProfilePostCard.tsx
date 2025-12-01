@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePostStore } from "@/app/store/usePostStore";
 import { useState } from "react";
-import { getProfileImage } from "@/app/utils/getProfileImage";
+import { getProfileImage } from "@/app/helper";
 import toast from "react-hot-toast";
 import ProfileKebab from "./ProfileKebab";
 import { CLOUDINARY_CLOUD_NAME } from "@/app/helper";

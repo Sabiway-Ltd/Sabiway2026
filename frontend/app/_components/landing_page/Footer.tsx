@@ -36,7 +36,7 @@ export default function Footer() {
 
         <div className="w-full flex justify-start mt-6">
           <img
-            src="https://res.cloudinary.com/devqbjptr/image/upload/v1761379748/Group_3_2_wcvmst.svg"
+            src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564449/Group_3_2_wcvmst_ypr9e0.svg"
             alt="SabiWay Footer Logo"
             width={3800}
             height={1200}
