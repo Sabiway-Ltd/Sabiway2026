@@ -25,30 +25,30 @@ export default function TermsOfUseMain(){
             </h2>
 
             <ol className="space-y-3 text-gray-700 pl-5">
-  {TableOfContents.map((item, index) => (
-    <li key={item.id} className="relative pl-6">
-      <span className="absolute left-0 top-0 text-gray-600">
-        {index + 1}.
-      </span>
+              {TableOfContents.map((item, index) => (
+                <li key={item.id} className="relative pl-6">
+                  <span className="absolute left-0 top-0 text-gray-600">
+                    {index + 1}.
+                  </span>
 
-      <button
-        onClick={() => {
-          const section = document.getElementById(item.id);
-          section?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-        className="
-          hover:text-[#008753] 
-          group-hover:translate-x-1 
-          transition-all 
-          duration-200
-          text-left
-        "
-      >
-        {item.label}
-      </button>
-    </li>
-  ))}
-</ol>
+                  <button
+                    onClick={() => {
+                      const section = document.getElementById(item.id);
+                      section?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="
+                      hover:text-[#008753] 
+                      group-hover:translate-x-1 
+                      transition-all 
+                      duration-200
+                      text-left
+                    "
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ol>
 
 
 
@@ -1947,7 +1947,7 @@ export default function TermsOfUseMain(){
               <p>We aim to respond to all inquiries within 2-3 business days.</p>
             </article>
 
-            <div className="border-b border-gray-200 my-5"></div>
+            <div className="border-b border-gray-200 mt-5"></div>
             
             {/* ACKNOWLEDGMENT AND ACCEPTANCE */}
             <article id="acknowledgement">
