@@ -1947,7 +1947,7 @@ export default function TermsOfUseMain(){
               <p>We aim to respond to all inquiries within 2-3 business days.</p>
             </article>
 
-            <div className="border-b border-gray-200 mt-5"></div>
+            <div className="border-b border-gray-200 my-5"></div>
             
             {/* ACKNOWLEDGMENT AND ACCEPTANCE */}
             <article id="acknowledgement">
