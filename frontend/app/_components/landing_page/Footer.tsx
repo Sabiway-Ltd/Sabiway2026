@@ -21,8 +21,9 @@ export default function Footer() {
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-use">Terms of Use</Link>
 
-            <Link href="https://instagram.com" target="_blank">Instagram</Link>
-            <Link href="https://facebook.com" target="_blank">Facebook</Link>
+            <Link href="https://www.instagram.com/sabiway_?igsh=eTJnODVtNTBwdjVx" target="_blank">Instagram</Link>
+            <Link href="https://www.facebook.com/share/1AJYz8k3R7/">Facebook</Link>
+            <Link href="https://www.linkedin.com/company/sabiway/" target="_blank">Linkedin</Link>
 
           </div>
         </div>

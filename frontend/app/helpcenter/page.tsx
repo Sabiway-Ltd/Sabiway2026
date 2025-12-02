@@ -19,7 +19,7 @@ export default function HelpCenterPage() {
 
       {/* ========================= HERO ========================= */}
       <section className="w-full flex justify-center mt-24 px-6">
-        <div className="w-full max-w-[1150px] bg-[#008753] text-white rounded-3xl px-10 py-10 text-center shadow-lg">
+        <div className="w-full max-w-[1150px] bg-[#008753] text-white rounded-3xl px-10 py-10 text-center shadow-[0_4px_20px_rgba(0,135,83,0.2)]">
           <p className="text-sm font-semibold tracking-widest opacity-90">
             HELP CENTER
           </p>
@@ -28,12 +28,13 @@ export default function HelpCenterPage() {
             How can we help you today?
           </h1>
 
-          <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed opacity-95">
+          <p className="mt-6 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed opacity-95">
             Find answers, explore guides, and get support whether you're a client
             booking services or a provider growing your business on SabiWay.
           </p>
         </div>
       </section>
+
 
       {/* ========================= WHAT MAKES US DIFFERENT ========================= */}
       <section className="mt-20 px-6">
@@ -232,11 +233,9 @@ export default function HelpCenterPage() {
 
 function FeatureCard({ icon, title, text }) {
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6">
+    <div className="bg-white rounded-2xl p-6 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <div>{icon}</div>
       <h3 className="text-lg font-semibold mt-4">{title}</h3>
-
-      {/* UPDATED — matches InfoCard body text */}
       <p className="text-gray-700 text-sm sm:text-base md:text-lg mt-2 leading-relaxed">
         {text}
       </p>
@@ -246,7 +245,7 @@ function FeatureCard({ icon, title, text }) {
 
 function InfoCard({ title, text, children }) {
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-sm">
+    <div className="bg-white rounded-2xl p-8 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h3 className="text-xl font-bold mb-3">{title}</h3>
       {text && (
         <p className="text-gray-700 leading-relaxed text-sm sm:text-base md:text-lg">
@@ -263,48 +262,45 @@ function InfoCard({ title, text, children }) {
    ================================================================ */
 
 function FAQList({ faqs }) {
-  const [open, setOpen] = useState(null);
+  const [openFAQ, setOpenFAQ] = useState(null);
 
   return (
-    <div className="mt-10 space-y-4">
+    <div className="mt-10 space-y-5 sm:space-y-6">
       {faqs.map((faq, i) => (
-        <div key={i} className="flex flex-col">
+        <div
+          key={i}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
+        >
           <button
-            onClick={() => setOpen(open === i ? null : i)}
-            className="
-              w-full bg-[#008753] text-white 
-              px-6 py-4 rounded-xl 
-              flex justify-between items-center text-left
-              text-sm sm:text-base md:text-lg
-              font-semibold
-            "
+            onClick={() => setOpenFAQ(openFAQ === i ? null : i)}
+            className="w-full flex justify-between items-center bg-[#008753] text-white font-semibold px-4 sm:px-6 py-4 text-left focus:outline-none"
           >
-            <span>{faq.question}</span>
-
+            <span className="text-sm sm:text-base md:text-lg pr-3">
+              {faq.question}
+            </span>
             <Image
               src="/faqstar.png"
               alt="FAQ Icon"
-              width={22}
-              height={22}
-              className="object-contain"
+              width={20}
+              height={20}
+              className={`transition-transform duration-300 ${
+                openFAQ === i ? "rotate-180" : ""
+              }`}
             />
           </button>
 
           <div
-            className={`overflow-hidden transition-all ${
-              open === i ? "max-h-60 mt-2" : "max-h-0"
+            className={`transition-all duration-500 ease-in-out overflow-hidden ${
+              openFAQ === i
+                ? "max-h-[400px] opacity-100 py-4 sm:py-5"
+                : "max-h-0 opacity-0 py-0"
             }`}
           >
-            <p
-              className="
-                bg-white p-4 rounded-xl shadow 
-                text-gray-700 
-                text-sm sm:text-base md:text-lg
-                leading-relaxed
-              "
-            >
-              {faq.answer}
-            </p>
+            <div className="px-4 sm:px-6">
+              <p className="text-gray-800 text-left leading-relaxed text-sm sm:text-base md:text-lg">
+                {faq.answer}
+              </p>
+            </div>
           </div>
         </div>
       ))}
@@ -314,7 +310,7 @@ function FAQList({ faqs }) {
 
 function ClientOrProviderCard({ title, subtitle, text, extra }) {
   return (
-    <div className="bg-white rounded-3xl shadow-md p-10 text-left">
+    <div className="bg-white rounded-3xl p-10 text-left shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h2 className="text-3xl font-bold">{title}</h2>
       <h3 className="text-xl font-semibold mt-3 text-[#003022]">
         {subtitle}
@@ -363,33 +359,73 @@ function ContactForm() {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-md p-10">
+    <div className="bg-white rounded-[28px] p-10 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h2 className="text-2xl font-bold">Contact Us</h2>
       <p className="mt-2 text-gray-700 text-sm sm:text-base md:text-lg">
         We are always here to help. Send us a message and we will respond within 24 hours.
       </p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        {/* NAME + EMAIL */}
         <div className="grid md:grid-cols-2 gap-4">
-          <input name="name" type="text" placeholder="Enter your name" className="w-full border rounded-xl p-3" required />
-          <input name="email" type="email" placeholder="you@example.com" className="w-full border rounded-xl p-3" required />
+          <input
+            name="name"
+            type="text"
+            placeholder="Enter your name"
+            className="w-full border border-gray-200 rounded-xl p-3 bg-white 
+                       text-black placeholder:text-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-[#008753] focus:border-transparent"
+            required
+          />
+
+          <input
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            className="w-full border border-gray-200 rounded-xl p-3 bg-white 
+                       text-black placeholder:text-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-[#008753] focus:border-transparent"
+            required
+          />
         </div>
 
-        <select name="type" className="w-full border rounded-xl p-3">
-          <option>General support</option>
-          <option>Client question</option>
-          <option>Service provider question</option>
-          <option>Partnership</option>
+        {/* SELECT */}
+        <select
+          name="type"
+          className="w-full border border-gray-200 rounded-xl p-3 bg-white text-black
+                     focus:outline-none focus:ring-2 focus:ring-[#008753] focus:border-transparent"
+        >
+          <option className="text-black">General support</option>
+          <option className="text-black">Client question</option>
+          <option className="text-black">Service provider question</option>
+          <option className="text-black">Partnership</option>
         </select>
 
-        <textarea name="message" rows={4} placeholder="Write your message here..." className="w-full border rounded-xl p-3" required />
+        {/* MESSAGE */}
+        <textarea
+          name="message"
+          rows={4}
+          placeholder="Write your message here..."
+          className="w-full border border-gray-200 rounded-xl p-3 bg-white 
+                     text-black placeholder:text-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-[#008753] focus:border-transparent"
+          required
+        />
 
-        <button className="w-full bg-[#008753] text-white py-3 rounded-xl font-semibold">
+        {/* BUTTON */}
+        <button
+          className="w-full bg-[#008753] text-white py-3 rounded-xl font-semibold
+                     shadow-[0_2px_8px_rgba(0,135,83,0.3)]
+                     hover:shadow-[0_4px_12px_rgba(0,135,83,0.4)]
+                     hover:bg-[#007a48] transition-all duration-300"
+        >
           {loading ? "Sending..." : "Send message"}
         </button>
 
         {success && (
-          <p className="text-green-600 text-center font-semibold mt-2">Message sent successfully!</p>
+          <p className="text-green-600 text-center font-semibold mt-2">
+            Message sent successfully!
+          </p>
         )}
       </form>
     </div>
@@ -398,7 +434,7 @@ function ContactForm() {
 
 function SupportCard() {
   return (
-    <div className="bg-white rounded-3xl shadow-md p-8">
+    <div className="bg-white rounded-3xl p-8 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h3 className="text-xl font-bold">Email Support</h3>
 
       <p className="mt-4 text-gray-700 text-sm sm:text-base md:text-lg">
@@ -416,10 +452,10 @@ function SupportCard() {
 
 function FeedbackCard() {
   return (
-    <div className="bg-white rounded-3xl shadow-md p-8">
+    <div className="bg-white rounded-3xl p-8 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h3 className="text-xl font-bold">Feedback and Suggestions</h3>
       <p className="mt-4 text-gray-700 text-sm sm:text-base md:text-lg">
-        We’re constantly improving, and your voice matters. You can share your
+        We're constantly improving, and your voice matters. You can share your
         feedback and suggestions using the form above.
       </p>
     </div>
