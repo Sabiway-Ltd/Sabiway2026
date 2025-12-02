@@ -137,19 +137,28 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   },
 
   // ✅ Get profile by username (e.g., "adesina_olagunju")
-  getProfileByUsername: async (username: string) => {
-    set({ loading: true, error: null });
-    try {
-      const res = await profile.getByUsername(username);
-      set({ otherProfile: res.data, loading: false });
-    } catch (err: any) {
-      console.error("Profile by username fetch error:", err.response?.data || err.message);
-      set({
-        error: err.response?.data?.detail || "Failed to fetch profile by username",
-        loading: false,
-      });
-    }
-  },
+ getProfileByUsername: async (username: string) => {
+  set({ loading: true, error: null });
+  try {
+    const res = await profile.getByUsername(username);
+
+    set((state) => ({
+      otherProfile: res.data,
+      loading: false,
+      followingStatus: {
+        ...state.followingStatus,
+        [res.data.user_id]: res.data.is_following,
+      },
+    }));
+  } catch (err: any) {
+    console.error("Profile by username fetch error:", err.response?.data || err.message);
+    set({
+      error: err.response?.data?.detail || "Failed to fetch profile by username",
+      loading: false,
+    });
+  }
+},
+
 
   // ✅ Get all profiles the user hasn’t followed
   getNotFollowedProfiles: async () => {
