@@ -6,21 +6,33 @@ services:
     container_name: sabiway_web
     ports:
       - "8000:8000"
+
+    restart: unless-stopped
+
     environment:
-      # Django settings
       DJANGO_SETTINGS_MODULE: sabiway.settings
       PYTHONUNBUFFERED: 1
-
-      # External PostgreSQL database
       DATABASE_URL: "postgresql://sabiway_db_user:OCuy82gn8IBsGMMijEeHjgLjYidGiAug@dpg-d42adk15pdvs73f3oh5g-a.oregon-postgres.render.com/sabiway_db"
-
-      # Django Secret Key
       SECRET_KEY: "replace-this-in-production"
-
-      # Django debug (False in production)
-      DEBUG: "True"
+      DEBUG: "False"  # Always False in production
 
     command: >
       gunicorn sabiway.wsgi:application
       --bind 0.0.0.0:8000
       --workers 3
+      --worker-class gevent
+      --timeout 60
+      --keep-alive 5
+      --worker-connections 1000
+
+    # Healthcheck to auto-restart if Django becomes unresponsive
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          memory: 1G

@@ -18,9 +18,14 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse 
+
+def health(request):
+    return HttpResponse("OK")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("health/", health),
     path("api/auth/", include("accounts.urls")),
     path("docs/", include("docs.urls")),  # 👈 docs app
     path("api/profiles/", include("profiles.urls")),

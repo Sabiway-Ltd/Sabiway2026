@@ -6,14 +6,21 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: nextjs_app
+
+    # Auto-restart if it ever stops
+    restart: unless-stopped
+
     ports:
       - "3000:3000"
-    environment:
-    # For Local Docker
-      # NEXT_PUBLIC_DJANGO_URL: "http://localhost:8000/api"  # Django backend
-      # NEXT_PUBLIC_EXPRESS_URL: "http://localhost:5000"     # Express backend
 
-      # For VPS
-      NEXT_PUBLIC_DJANGO_URL: "https://django.sabiway.com"  # Django backend
-      NEXT_PUBLIC_EXPRESS_URL: "https://express.sabiway.com"     # Express backend
-    restart: unless-stopped
+    environment:
+      # For VPS: public URLs for frontend API calls
+      NEXT_PUBLIC_DJANGO_URL: "https://django.sabiway.com"
+      NEXT_PUBLIC_EXPRESS_URL: "https://express.sabiway.com"
+
+    # Healthcheck to ensure container is working
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -316,7 +316,7 @@ export default function CommunityNavbar({
                                 <div className="flex-1">
                                   <p className="text-sm text-gray-800">
                                     <span className="font-semibold">{n.actor.full_name}</span>{" "}
-                                    {n.message}
+                                    <span className="font-medium">{n.message}</span>
                                   </p>
 
                                   <p className="text-xs text-gray-500">
