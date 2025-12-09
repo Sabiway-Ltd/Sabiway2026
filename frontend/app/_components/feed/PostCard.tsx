@@ -357,10 +357,6 @@ export default function PostCard({
       toast.success("Post updated successfully!");
       setEditingPostId(null);
       setEditedPostImage(null);
-      // const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
-      // getAllPosts(currentPage);
-      onReloadPosts()
-
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to update post.");
     } finally {
@@ -381,8 +377,6 @@ export default function PostCard({
       const { post } = await import("@/app/services/post");
       await post.delete(postId);
       toast.success("Post deleted successfully!");
-      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
-      getAllPosts(currentPage);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to delete post.");
     }
@@ -392,8 +386,6 @@ export default function PostCard({
     try {
       setRepostLoading(true);
       await repostPost(id); // your existing function
-      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
-      getAllPosts(currentPage);
     } finally {
       setRepostLoading(false);
     }
@@ -403,8 +395,6 @@ export default function PostCard({
     try {
       setRepostLoading(true);
       await unrepostPost(id); // your existing function
-      const currentPage = nextPage ? nextPage - 1 : 1; // infer current page
-      getAllPosts(currentPage);
     } finally {
       setRepostLoading(false);
     }

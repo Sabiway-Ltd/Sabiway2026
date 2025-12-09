@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { DEFAULT_PROFILE_PICTURE, CLOUDINARY_CLOUD_NAME } from "../helper";
 import { useAllNotificationsStore, NotificationItem } from "@/app/store/useAllNotificationsStore";
@@ -18,9 +17,8 @@ const getNotificationLink = (n: NotificationItem) => {
       case "post":
         return `/posts/${n.target.slug || n.target.id}`;
 
-      case "comment":
       case "reply":
-        return `/posts/${(n.target as any).post_slug || n.target.post_id}`;
+        return `/posts/${(n.target as any).post_id}`;
 
       default:
         return "#";
@@ -46,11 +44,11 @@ const getCloudinaryImage = (path: string | null) => {
 // ----------------------
 export default function AllNotifications() {
   const {
-    allNotifications,
+    notifications,
     loading,
     hasMore,
     nextPage,
-    fetchAllNotifications,
+    getAllNotifications,
     markNotificationRead,
     markAllNotificationsRead,
   } = useAllNotificationsStore();
@@ -59,22 +57,23 @@ export default function AllNotifications() {
 
   // Initial Fetch
   useEffect(() => {
-    fetchAllNotifications(1);
+    getAllNotifications(1);
   }, []);
 
   // Infinite Scroll
   useEffect(() => {
     if (!observerRef.current) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      const first = entries[0];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
 
-      if (first.isIntersecting && hasMore && !loading && nextPage) {
-        fetchAllNotifications(nextPage);
-      }
-    }, {
-      threshold: 1.0,
-    });
+        if (first.isIntersecting && hasMore && !loading && nextPage) {
+          getAllNotifications(nextPage);
+        }
+      },
+      { threshold: 1.0 }
+    );
 
     const target = observerRef.current;
     observer.observe(target);
@@ -105,14 +104,14 @@ export default function AllNotifications() {
       </div>
 
       {/* List */}
-      {allNotifications.length === 0 && !loading && (
+      {notifications.length === 0 && !loading && (
         <div className="text-center text-gray-500 py-10">
           No notifications yet 🚫
         </div>
       )}
 
       <div className="space-y-3">
-        {allNotifications.map((notif) => {
+        {notifications.map((notif) => {
           const link = getNotificationLink(notif);
 
           return (
@@ -139,9 +138,7 @@ export default function AllNotifications() {
                 {/* Content */}
                 <div className="flex-1">
                   <p className="text-sm text-gray-800">
-                    <span className="font-semibold">
-                      {notif.actor.full_name}
-                    </span>{" "}
+                    <span className="font-semibold">{notif.actor.full_name}</span>{" "}
                     {notif.message}
                   </p>
 

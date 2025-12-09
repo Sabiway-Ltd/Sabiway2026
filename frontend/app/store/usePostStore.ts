@@ -3,14 +3,12 @@
 "use client";
 
 import { create } from "zustand";
-import { io, Socket } from "socket.io-client";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { EXPRESS_URL, DJANGO_URL } from "../utils/MyConstants";
+import { DJANGO_URL } from "../utils/MyConstants";
 import { post } from "../services/post";
 import { DEFAULT_PROFILE_PICTURE } from "../helper";
 
-const SOCKET_URL = EXPRESS_URL
 
 // ---------- Types ----------
 type Author = {
@@ -76,14 +74,12 @@ type PostState = {
   trendingHashtags: Hashtag[];
   filteredPosts: Post[];
   activeHashtag: string | null;
-  socket: Socket | null;
   myReposts: [];
 
   // State setters
   set: (partial: Partial<PostState>) => void;
 
   // Actions
-  initSocket: () => void;
   getAllPosts: (page?: number) => Promise<void>;
   getMyPosts: (page?: number) => Promise<void>;
   createPost: (data: FormData | object) => Promise<void>;
@@ -91,31 +87,9 @@ type PostState = {
 };
 
 // ---------- API ----------
-const API_URL = `${EXPRESS_URL}/api`;
+const API_URL = `${DJANGO_URL}/api`;
 
-// ---------- Singleton Socket ----------
-let socketInstance: Socket | null = null;
-const listenersAttached = new Set<string>();
 
-const getSocket = (token: string) => {
-  if (!socketInstance) {
-    socketInstance = io(EXPRESS_URL, {
-      auth: { token },
-    });
-
-    socketInstance.on("connect", () =>
-      console.log("✅ Socket connected:", socketInstance?.id)
-    );
-  }
-  return socketInstance;
-};
-
-const attachListener = <T = any>(event: string, handler: (data: T) => void) => {
-  if (!listenersAttached.has(event) && socketInstance) {
-    socketInstance.on(event, handler);
-    listenersAttached.add(event);
-  }
-};
 
 // ---------- Store ----------
 export const usePostStore = create<PostState>((set, get) => ({
@@ -129,7 +103,6 @@ export const usePostStore = create<PostState>((set, get) => ({
   trendingHashtags: [],
   filteredPosts: [],
   activeHashtag: null,
-  socket: null,
   nextPage: 1,
   hasMore: true,
   userPosts: [],
@@ -153,246 +126,6 @@ export const usePostStore = create<PostState>((set, get) => ({
 
   set: (partial) => set((state) => ({ ...state, ...partial })),
 
-  // ---------- Initialize Socket ----------
-  initSocket: async () => {
-  if (get().socket) return; // prevent duplicate connections
-
-  const token = localStorage.getItem("access");
-  if (!token) {
-    console.warn("⚠️ No token found — cannot init socket.");
-    return;
-  }
-
-  // ✅ Initialize socket with token (backend reads this)
-  const socket = io(SOCKET_URL, {
-    transports: ["websocket"],
-    withCredentials: true,
-    auth: { token },
-  });
-
-  // ✅ Helper for listeners
-  const attachListener = (event: string, handler: (...args: any[]) => void) => {
-    socket.on(event, handler);
-  };
-
-  // ✅ Save socket in Zustand
-  set({ socket });
-
-  // ------------------ Connection lifecycle ------------------
-  socket.on("connect", () => {
-    console.log("✅ Socket connected:", socket.id);
-  });
-
-  socket.on("disconnect", (reason) => {
-    console.log("🔴 Socket disconnected:", reason);
-  });
-
-  socket.io.on("reconnect", () => {
-    console.log("♻️ Socket reconnected:", socket.id);
-  });
-
-  // ✅ Listen for online users (you can store or log them)
-  socket.on("users:online", (users) => {
-    console.log("🟢 Online users:", users);
-    set({ onlineUsers: users }); // optional if you have this in store
-  });
-
-  /* -------------------------
-      🟢 Post Events
-  --------------------------*/
-  attachListener<Post>("post:created", (post) =>
-    set((state) => ({
-      posts: state.posts.some((p) => p.id === post.id)
-        ? state.posts
-        : [post, ...state.posts],
-    }))
-  );
-
-  attachListener<Post>("post:updated", (updated) =>
-    set((state) => ({
-      posts: state.posts.map((p) => (p.id === updated.id ? updated : p)),
-    }))
-  );
-
-  attachListener<{ id: string }>("post:deleted", ({ id }) =>
-    set((state) => ({
-      posts: state.posts.filter((p) => p.id !== id),
-    }))
-  );
-
-  attachListener<{ postId: string; result: { likes: number } }>(
-    "post:liked",
-    ({ postId, result }) =>
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
-        ),
-      }))
-  );
-
-  attachListener<{ postId: string; result: { likes: number } }>(
-    "post:unliked",
-    ({ postId, result }) =>
-      set((state) => ({
-        posts: state.posts.map((p) =>
-          p.id === postId ? { ...p, likes: result?.likes ?? p.likes } : p
-        ),
-      }))
-  );
-
-  attachListener<{ postId: string }>("post:bookmarked", ({ postId }) =>
-    set((state) => ({
-      posts: state.posts.map((p) =>
-        p.id === postId ? { ...p, is_bookmarked: true } : p
-      ),
-    }))
-  );
-
-  attachListener<{ postId: string }>("post:unbookmarked", ({ postId }) =>
-    set((state) => ({
-      posts: state.posts.map((p) =>
-        p.id === postId ? { ...p, is_bookmarked: false } : p
-      ),
-    }))
-  );
-
-  attachListener<{ postId: string; repost: any }>("post:reposted", ({ postId }) =>
-    set((state) => ({
-      posts: state.posts.map((p) =>
-        p.id === postId ? { ...p, reposts_count: (p.reposts_count || 0) + 1 } : p
-      ),
-    }))
-  );
-
-  attachListener<{ postId: string; repostId: string }>("post:unreposted", ({ postId }) =>
-    set((state) => ({
-      posts: state.posts.map((p) =>
-        p.id === postId
-          ? { ...p, reposts_count: Math.max((p.reposts_count || 1) - 1, 0) }
-          : p
-      ),
-    }))
-  );
-
-  /* -------------------------
-      💬 Comment Events
-  --------------------------*/
-  attachListener<{ postId: string; comment: Comment }>(
-    "comment:created",
-    ({ postId, comment }) =>
-      set((state) => ({
-        commentsByPost: {
-          ...state.commentsByPost,
-          [postId]: [...(state.commentsByPost[postId] || []), comment],
-        },
-      }))
-  );
-
-  attachListener<{ commentId: string; data: any }>(
-    "comment:liked",
-    ({ commentId, data }) =>
-      set((state) => ({
-        commentsByPost: Object.fromEntries(
-          Object.entries(state.commentsByPost).map(([postId, comments]) => [
-            postId,
-            comments.map((c) =>
-              c.id === commentId
-                ? {
-                    ...c,
-                    likes_count: data?.likes || c.likes_count,
-                    is_liked: true,
-                  }
-                : c
-            ),
-          ])
-        ),
-      }))
-  );
-
-  attachListener<{ commentId: string; data: any }>(
-    "comment:unliked",
-    ({ commentId, data }) =>
-      set((state) => ({
-        commentsByPost: Object.fromEntries(
-          Object.entries(state.commentsByPost).map(([postId, comments]) => [
-            postId,
-            comments.map((c) =>
-              c.id === commentId
-                ? {
-                    ...c,
-                    likes_count: data?.likes || c.likes_count,
-                    is_liked: false,
-                  }
-                : c
-            ),
-          ])
-        ),
-      }))
-  );
-
-  /* -------------------------
-      💬 Reply Events
-  --------------------------*/
-  attachListener<{ commentId: string; reply: any }>(
-    "reply:created",
-    ({ commentId, reply }) =>
-      set((state) => ({
-        repliesByComment: {
-          ...state.repliesByComment,
-          [commentId]: [...(state.repliesByComment[commentId] || []), reply],
-        },
-      }))
-  );
-
-  attachListener<{ replyId: string; data: any }>(
-    "reply:liked",
-    ({ replyId, data }) =>
-      set((state) => ({
-        repliesByComment: Object.fromEntries(
-          Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-            commentId,
-            replies.map((r) =>
-              r.id === replyId
-                ? {
-                    ...r,
-                    likes_count: data?.likes || r.likes_count,
-                    is_liked: true,
-                  }
-                : r
-            ),
-          ])
-        ),
-      }))
-  );
-
-  attachListener<{ replyId: string; data: any }>(
-    "reply:unliked",
-    ({ replyId, data }) =>
-      set((state) => ({
-        repliesByComment: Object.fromEntries(
-          Object.entries(state.repliesByComment).map(([commentId, replies]) => [
-            commentId,
-            replies.map((r) =>
-              r.id === replyId
-                ? {
-                    ...r,
-                    likes_count: data?.likes || r.likes_count,
-                    is_liked: false,
-                  }
-                : r
-            ),
-          ])
-        ),
-      }))
-  );
-
-  /* -------------------------
-      🔄 Fetch initial posts
-  --------------------------*/
-  await get().getAllPosts(1);
-
-  console.log("✅ Socket initialized and event listeners attached");
-},
 
   // ---------- Get all posts ----------
   // getAllPosts: async () => {
@@ -600,7 +333,6 @@ export const usePostStore = create<PostState>((set, get) => ({
 
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Server will update likes and broadcast via socket
       await axios.post(`${API_URL}/posts/${id}/like/`, {}, { headers });
 
       // Optional: update your own UI immediately
@@ -636,9 +368,6 @@ unlikePost: async (id: string) => {
       ),
     }));
 
-    // Emit socket event for real-time updates
-    const socket = get().socket;
-    socket?.emit("post:unliked", { postId: id, result: updatedPost });
 
     // toast.success("Post unliked!");
   } catch (err: any) {
@@ -705,7 +434,7 @@ unlikePost: async (id: string) => {
       if (imageFile) formData.append("image", imageFile); // ✅ optional image
 
       const res = await axios.post<Comment>(
-        `${API_URL}/posts/${postId}/comments`,
+        `${API_URL}/posts/${postId}/comments/`,
         formData,
         {
           headers: {
@@ -731,7 +460,7 @@ unlikePost: async (id: string) => {
 
     try {
       const res = await axios.get<Comment[]>(
-        `${API_URL}/posts/${postId}/comments`,
+        `${API_URL}/posts/${postId}/comments/`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -794,7 +523,7 @@ unlikePost: async (id: string) => {
 
     try {
       const res = await axios.get<Reply[]>(
-        `${API_URL}/posts/${postId}/replies`,
+        `${API_URL}/posts/${postId}/replies/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -1159,10 +888,6 @@ unlikePost: async (id: string) => {
         ),
       }));
 
-      // ✅ Emit socket event for real-time updates
-      const socket = get().socket;
-      socket?.emit("post:reposted", { postId: id, repost: repostData });
-
       toast.success("Post reposted!");
     } catch (err: any) {
       console.error("Repost error:", err);
@@ -1192,10 +917,6 @@ unlikePost: async (id: string) => {
             : p
         ),
       }));
-
-      // Emit socket event
-      const socket = get().socket;
-      socket?.emit("post:unreposted", { postId: id, result });
 
       toast.success("Repost removed!");
 

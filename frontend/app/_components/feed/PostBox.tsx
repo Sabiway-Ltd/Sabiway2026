@@ -111,9 +111,9 @@ export default function PostBox({ visible, onClose }: PostBoxProps) {
 
     try {
       await createPost(formData);   // ✅ Create post
-      triggerRefresh();          // ✅ Refresh feed
-      getTrendingHashtags?.();      // ✅ Refresh trending hashtags
-      getTopContributors?.();       // ✅ Refresh top contributors
+      // triggerRefresh();          // ✅ Refresh feed
+      // getTrendingHashtags?.();      // ✅ Refresh trending hashtags
+      // getTopContributors?.();       // ✅ Refresh top contributors
 
       setContent("");
       setImage(null);

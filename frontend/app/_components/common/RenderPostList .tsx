@@ -7,7 +7,11 @@ export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false 
     ) : (
       posts.map((post, index) => (
         <PostCard
-          key={post.id || `${post.original_post_data.id}-repost-${index}`}
+          key={
+            post.original_post_data
+              ? `repost-${post.id}-${post.original_post_data.id}`
+              : `post-${post.id}`
+          }
           id={post.original_post_data ? post.original_post_data.id : post.id}
           author={post.original_post_data ? post.original_post_data.author : post.author}
           original_post_data={post.original_post_data}

@@ -49,7 +49,6 @@ export interface NotificationItem {
   message: string;
   is_read: boolean;
   created_at: string;
-  userId?: string;
 }
 
 // ----------------------
@@ -73,7 +72,7 @@ export interface NotificationStore {
 // ----------------------
 // Zustand Store
 // ----------------------
-export const useAllNotificationsStore = create<NotificationStore>((set, get) => ({
+export const useNotificationStore = create<NotificationStore>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   loading: false,
@@ -100,13 +99,8 @@ export const useAllNotificationsStore = create<NotificationStore>((set, get) => 
       });
 
       const data = res.data;
-
-      // Unwrap notifications and optionally attach userId
       const newNotifications: NotificationItem[] =
-        (data.results?.notifications || data.notifications || []).map((item: any) => ({
-          ...item.notification,
-          userId: item.userId, // optional, useful if you want the profile owner
-        }));
+        data.results?.notifications || data.notifications || [];
 
       set((state) => ({
         notifications:
@@ -126,7 +120,6 @@ export const useAllNotificationsStore = create<NotificationStore>((set, get) => 
       set({ error: "Failed to fetch notifications", loading: false });
     }
   },
-
 
   // Optimistic mark a single notification as read
   markNotificationRead: async (id: number) => {

@@ -22,6 +22,10 @@ from .serializers import (
     HashtagSerializer, BookmarkSerializer
 )
 from .pagination import PostPagination
+from sabiway.settings import EXPRESS_URL
+import requests
+from rest_framework import status
+import uuid
 
 
 # ------------------------
@@ -120,9 +124,27 @@ class PostViewSet(ImpressionTrackingMixin, viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # 1️⃣ Save the post
         post = serializer.save()
+
+        # 2️⃣ Serialize the post fully (optional but recommended)
         full_serializer = PostDetailSerializer(post, context={"request": request})
-        return Response(full_serializer.data, status=status.HTTP_201_CREATED)
+        post_data = full_serializer.data
+
+        # 3️⃣ Notify your Socket.io server ⬇️
+        try:
+            requests.post(
+                f"{EXPRESS_URL}/broadcast",
+                json={"action": "create", "post": post_data},
+                timeout=2
+            )
+            print("Post Creation Real-time done")
+        except Exception as e:
+            print("⚠️ Real-time broadcast failed:", str(e))
+
+        # 4️⃣ Return the response to the client
+        return Response(post_data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
@@ -130,10 +152,25 @@ class PostViewSet(ImpressionTrackingMixin, viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         post = serializer.save()
+
         full_serializer = PostDetailSerializer(post, context={"request": request})
-        return Response(full_serializer.data, status=status.HTTP_200_OK)
+        post_data = full_serializer.data
+
+        # Real-time broadcast
+        try:
+            requests.post(
+                f"{EXPRESS_URL}/broadcast",
+                json={"action": "update", "post": post_data},
+                timeout=2
+            )
+        except Exception as e:
+            print("⚠️ Real-time update broadcast failed:", str(e))
+
+        return Response(post_data, status=status.HTTP_200_OK)
 
     def perform_destroy(self, instance):
+        post_id = str(instance.id)  # keep ID for broadcast
+
         author_profile = instance.author
         author_profile.posts_count = max(0, author_profile.posts_count - 1)
         author_profile.save(update_fields=["posts_count"])
@@ -142,8 +179,19 @@ class PostViewSet(ImpressionTrackingMixin, viewsets.ModelViewSet):
             if tag.use_count > 0:
                 tag.use_count -= 1
                 tag.save(update_fields=["use_count"])
+
         instance.delete()
 
+        # Real-time broadcast
+        try:
+            requests.post(
+                f"{EXPRESS_URL}/broadcast",
+                json={"action": "delete", "post_id": post_id},
+                timeout=2
+            )
+            print("Broadcasting delete:", post_id)
+        except Exception as e:
+            print("⚠️ Real-time delete broadcast failed:", str(e))
     # ----- Likes -----
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, pk=None):
@@ -439,7 +487,7 @@ def repost_post(request, post_id):
     if Post.objects.filter(author=user_profile, original_post=original_post).exists():
         return Response({"error": "Already reposted this post."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Create a new post with copied content and image
+    # Create repost
     repost = Post.objects.create(
         author=user_profile,
         content=original_post.content,
@@ -447,7 +495,6 @@ def repost_post(request, post_id):
         original_post=original_post,
     )
 
-    # Copy hashtags properly
     repost.hashtags.set(original_post.hashtags.all())
 
     # Increment repost count safely
@@ -455,11 +502,46 @@ def repost_post(request, post_id):
         reposts_count=models.F("reposts_count") + 1
     )
 
-    # Return serialized repost
-    # Re-fetch the repost with its original_post data
-    repost = Post.objects.select_related("original_post", "original_post__author__user").get(id=repost.id)
+    # Re-fetch with relations for clean serialization
+    repost = Post.objects.select_related(
+        "author__user",
+        "original_post",
+        "original_post__author__user"
+    ).get(id=repost.id)
+
     serializer = PostDetailSerializer(repost, context={"request": request})
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    repost_data = serializer.data
+
+    # 🔹 Helper function to convert all UUIDs to strings
+    def convert_uuids_to_str(obj):
+        if isinstance(obj, dict):
+            return {k: convert_uuids_to_str(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_uuids_to_str(i) for i in obj]
+        elif isinstance(obj, uuid.UUID):
+            return str(obj)
+        return obj
+
+    repost_data_safe = convert_uuids_to_str(repost_data)
+
+    # ✅ Real-time broadcast
+    try:
+        requests.post(
+            f"{EXPRESS_URL}/broadcast",
+            json={
+                "action": "repost",
+                "post": repost_data_safe,
+                "repost_id": str(repost.id),
+                "original_post_id": str(original_post.id)
+            },
+            timeout=2
+        )
+    except Exception as e:
+        print("⚠️ Real-time repost broadcast failed:", str(e))
+        print("Repost ID:", repost.id)
+        print("Original Post ID:", original_post.id)
+
+    return Response(repost_data, status=status.HTTP_201_CREATED)
 
 
 class MyRepostsView(generics.ListAPIView):
@@ -479,17 +561,32 @@ def unrepost_post(request, post_id):
     """
     user = request.user
     try:
-        # Find the repost made by this user that points to the original post
         repost = Post.objects.get(author=user.profile, original_post__id=post_id)
     except Post.DoesNotExist:
         return Response({"detail": "You haven’t reposted this post."}, status=status.HTTP_404_NOT_FOUND)
 
     original_post = repost.original_post
+    repost_id = str(repost.id)
+
     repost.delete()
 
     # Decrement repost count safely
     if original_post:
         original_post.reposts_count = max(0, original_post.reposts_count - 1)
         original_post.save(update_fields=["reposts_count"])
+
+    # ✅ ✅ ✅ REAL-TIME BROADCAST ✅ ✅ ✅
+    try:
+        requests.post(
+            f"{EXPRESS_URL}/broadcast",
+            json={
+                "action": "unrepost",
+                "repost_id": repost_id,
+                "original_post_id": str(post_id)
+            },
+            timeout=2
+        )
+    except Exception as e:
+        print("⚠️ Real-time unrepost broadcast failed:", str(e))
 
     return Response({"detail": "Repost removed successfully."}, status=status.HTTP_204_NO_CONTENT)

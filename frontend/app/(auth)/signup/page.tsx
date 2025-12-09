@@ -7,20 +7,17 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import { EXPRESS_URL } from "@/app/utils/MyConstants";
+import { DJANGO_URL } from "@/app/utils/MyConstants";
 import Navbar from "@/app/_components/landing_page/Navbar";
 import Link from "next/link";
 
 export default function Signup() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signup, loading, connectSocket } = useAuthStore();
+  const { signup, loading } = useAuthStore();
   const [form, setForm] = useState({ full_name: "", email: "", password: "" });
   const router = useRouter();
 
-  useEffect(() => {
-    connectSocket();
-  }, [connectSocket]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -37,7 +34,7 @@ export default function Signup() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const res = await fetch(`${EXPRESS_URL}/api/auth/generate-google-url`);
+      const res = await fetch(`${DJANGO_URL}/api/auth/generate-google-url/`);
       const data = await res.json();
       if (data?.auth_url) {
         window.location.href = data.auth_url;

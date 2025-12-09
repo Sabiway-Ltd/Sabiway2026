@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Plus, Search, Menu, X, Check } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useProfileStore } from "@/app/store/useProfileStore";
+import { useNotificationStore } from "@/app/store/useNotificationStore";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import Link from "next/link";
@@ -13,7 +14,6 @@ import { usePostStore } from "@/app/store/usePostStore";
 import ProfileDropdown from "../profile/ProfileDropdown";
 import { Home, Smartphone } from "lucide-react";
 import IconTooltipButton from "../common/IconTooltipButton";
-import NotificationDropdown from "../common/NotificationDropdown";
 
 
 // ✅ Include onReset here
@@ -34,6 +34,10 @@ export default function CommunityNavbar({
 
   
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
 
@@ -43,6 +47,44 @@ export default function CommunityNavbar({
   const { logout } = useAuthStore();
 
   const { profile, getMyProfile } = useProfileStore();
+  const { socket } = useAuthStore();
+  const {
+    notifications,
+    loading,
+    getAllNotifications,
+    markNotificationRead,
+  } = useNotificationStore();
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  
+
+  // 🔁 Auto-refresh notifications
+  useEffect(() => {
+    if (!profile) getMyProfile();
+
+    getAllNotifications();
+
+    const interval = setInterval(() => {
+      getAllNotifications(1); // always refresh first page
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+
+  // 🪟 Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifDropdownOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
 
   const getCloudinaryImage = (path: string | null) => {
@@ -74,7 +116,31 @@ export default function CommunityNavbar({
   };
 
 
- 
+  // For Notification
+ const getNotificationLink = (n) => {
+  if (n.target) {
+    switch (n.target.type) {
+      case "profile":
+        return `/profile/${n.target.username.replace("@", "")}`;
+
+      case "post":
+        return `/posts/${n.target.slug || n.target.id}`;
+
+      case "comment":
+      case "reply":
+        return `/posts/${n.target.post_slug || n.target.post_id}`;
+
+      default:
+        return "#";
+    }
+  }
+
+  if (n.type === "follow") {
+    return `/profile/${n.actor.username.replace("@", "")}`;
+  }
+
+  return "#";
+};
 
 
   return (
@@ -156,7 +222,7 @@ export default function CommunityNavbar({
                     <div className="flex items-center justify-center py-1 px-1 rounded-full bg-white/20 text-white font-semibold text-xs">
                       {profile?.initials}
                     </div>
-                    <span>Ask Question</span>
+                    <span>Create Post</span>
                     <Plus className="h-4 w-4" />
                   </button>
 
@@ -184,7 +250,110 @@ export default function CommunityNavbar({
 
 
               {/* Notifications */}
-              <NotificationDropdown/>
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                <div className="md:p-1 p-0.5 bg-white rounded-full relative">
+                  <IconTooltipButton
+                    onClick={() => setNotifDropdownOpen((prev) => !prev)}
+                    icon={Bell}
+                    label="Notification"
+                    size={18}
+                  />
+
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {notifDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className={`absolute md:right-0 
+                        -right-14
+                        space-y-1 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto`}
+                    >
+                      {loading && notifications.length === 0 ? (
+                        <p className="text-sm text-center text-gray-500 py-4">
+                          Loading...
+                        </p>
+                      ) : notifications.length === 0 ? (
+                        <p className="text-sm text-center text-gray-500 py-4">
+                          No notifications
+                        </p>
+                      ) : (
+                        <>
+                          {notifications.map((n, index) => {
+                            const link = getNotificationLink(n);
+
+                            return (
+                              <a
+                                key={n.id}
+                                href={link}
+                                onClick={() => {
+                                  if (!n.is_read) {
+                                    markNotificationRead(n.id);
+                                  }
+                                  setNotifDropdownOpen(false);
+                                }}
+                                className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition ${
+                                  n.is_read
+                                    ? "bg-gray-50 hover:bg-gray-100"
+                                    : "bg-[#008753]/10 hover:bg-[#008753]/20"
+                                }`}
+                              >
+                                <img
+                                  src={getCloudinaryImage(n.actor.profile_picture)}
+                                  alt={n.actor.full_name || "User"}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-800">
+                                    <span className="font-semibold">{n.actor.full_name}</span>{" "}
+                                    <span className="font-medium">{n.message}</span>
+                                  </p>
+
+                                  <p className="text-xs text-gray-500">
+                                    {new Date(n.created_at).toLocaleString("en-GB", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })}
+                                  </p>
+                                </div>
+
+                                {!n.is_read && (
+                                  <Check className="h-4 w-4 text-[#008753] flex-shrink-0" />
+                                )}
+                              </a>
+                            );
+                          })}
+
+                          {/* Button to view all notifications */}
+                          <a
+                            href="/notifications"
+                            className="block text-center text-sm text-[#008753] font-medium py-2 hover:underline mt-2"
+                            onClick={() => setNotifDropdownOpen(false)}
+                          >
+                            View All Notifications
+                          </a>
+
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+              </div>
 
 
               {/* Profile Picture Dropdown */}

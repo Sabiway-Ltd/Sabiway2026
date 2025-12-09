@@ -1,82 +1,81 @@
-const express = require("express");
-const http = require("http");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const { Server } = require("socket.io");
-const { initSocket } = require("./socket/postEvents");
-const { initNotificationSocket } = require("./socket/notificationEvents");
-const { initSocket: initUserSocket } = require("./socket/socket");
-require("dotenv").config();
-
-const reportRoutes = require("./routes/report");
-const accountRoutes = require("./routes/accounts.routes");
-const forwardAuth = require("./middleware/authForward");
-const { FRONTEND_URL } = require("./config");
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+
 const server = http.createServer(app);
 
-// ✅ CORS setup
-const allowedOrigins = [
-  FRONTEND_URL,
-  "http://localhost:3000",
-  "http://frontend:3000",
-  "https://www.sabiway.com",
-  "https://sabiway2025.vercel.app"
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.warn("❌ Blocked by CORS:", origin);
-        return callback(null, false);
-      }
-    },
-    credentials: true,
-  })
-);
-
-app.use(express.json());
-app.use(cookieParser());
-app.use(forwardAuth);
-
-// ✅ Routes
-app.get("/", (req, res) => res.send("Welcome to SabiWay"));
-app.get("/health", (req, res) => res.json({ status: "ok", service: "express" }));
-
-app.use("/api/auth", accountRoutes);
-app.use("/api/profiles", require("./routes/profiles.routes"));
-app.use("/api/posts", require("./routes/posts.routes"));
-app.use("/api/notifications", require("./routes/notifications.routes"));
-app.use("/api/search", require("./routes/search.routes"));
-app.use("/api/report", reportRoutes);
-app.use("/api/test-email", require("./routes/testEmail"));
-
-// ✅ Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: [
-      FRONTEND_URL, 
-      "http://localhost:3000", 
-      "http://frontend:3000", 
-      "https://www.sabiway.com",
-      "https://sabiway2025.vercel.app"
-    ],
-    credentials: true,
-    methods: ["GET", "POST"],
+    origin: "*", // Replace with your frontend domain in production
   },
 });
 
-initUserSocket(io);
-initSocket(io);
-initNotificationSocket(io);
+// Map to store connected users: userId -> Set of socketIds
+const userSockets = {};
 
-// ✅ Start server
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, "0.0.0.0", () =>
-  console.log(`🚀 Express server running on http://0.0.0.0:${PORT}`)
-);
+// ---------------------------
+// Socket.io connection
+// ---------------------------
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // User can join their "room" for personal notifications
+  socket.on("join", (userId) => {
+    if (!userSockets[userId]) userSockets[userId] = new Set();
+    userSockets[userId].add(socket.id);
+    console.log(`User ${userId} joined with socket ${socket.id}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+    // Remove socket from all user sets
+    for (const userId in userSockets) {
+      userSockets[userId].delete(socket.id);
+      if (userSockets[userId].size === 0) delete userSockets[userId];
+    }
+  });
+});
+
+// ---------------------------
+// Broadcast new posts
+// ---------------------------
+app.post("/broadcast", (req, res) => {
+  const data = req.body; // { action: "create"|"update"|"delete", post, post_id? }
+
+  io.emit("new-post", data); // Broadcast to all connected clients
+  console.log("Broadcasted post:", data.action, data.post?.id || data.post_id);
+
+  res.json({ status: "sent" });
+});
+
+// ---------------------------
+// Broadcast notifications
+// ---------------------------
+app.post("/broadcast-notification", (req, res) => {
+  const { notification, userId } = req.body;
+  // notification should match NotificationItem shape
+
+  if (!notification || !userId) {
+    return res.status(400).json({ error: "Missing notification or userId" });
+  }
+
+  // Send notification to the specific user if they are connected
+  const sockets = userSockets[userId];
+  if (sockets) {
+    sockets.forEach((socketId) => {
+      io.to(socketId).emit("new-notification", notification);
+    });
+  }
+
+  console.log(`Notification sent to user ${userId}:`, notification.id);
+  res.json({ status: "sent" });
+});
+
+server.listen(5000, () => {
+  console.log("Socket.io server running on port 5000");
+});
