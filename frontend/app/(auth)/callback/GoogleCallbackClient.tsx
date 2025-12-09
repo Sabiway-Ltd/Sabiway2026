@@ -47,7 +47,7 @@ export default function GoogleCallbackClient() {
         router.push("/community");
       } catch (error) {
         console.error("Profile fetch error:", error);
-        toast.error("Failed to load profile");
+        // toast.error("Failed to load profile");
         router.push("/login");
       }
     };

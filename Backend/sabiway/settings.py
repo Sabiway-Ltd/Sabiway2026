@@ -62,7 +62,7 @@ ADMIN_REPORT_EMAIL = "sabiway1@gmail.com"
 # FOR VPS
 FRONTEND_URL = "https://www.sabiway.com"
 BACKEND_URL = "https://django.sabiway.com"
-EXPRESS_URL = "https://express.sabiway.com"
+EXPRESS_URL = "http://172.17.0.1:5000"
 
 # Half VPS
 # FRONTEND_URL = "https://sabiway2025.vercel.app"
