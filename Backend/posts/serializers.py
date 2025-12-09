@@ -1,7 +1,7 @@
 # posts/serializers.py
 
 from rest_framework import serializers
-from .models import Post, Hashtag, Like, Comment, Reply, Bookmark
+from .models import Post, Hashtag, Like, Comment, Reply, Bookmark, PostReport
 from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
 from .pagination import ReplyPagination
@@ -316,3 +316,14 @@ class RepostSerializer(serializers.ModelSerializer):
         original_post.save(update_fields=["reposts_count"])
 
         return repost
+
+
+class PostReportSerializer(serializers.Serializer):
+    post_id = serializers.UUIDField()
+    reason = serializers.CharField()
+    post_url = serializers.URLField()
+
+    def validate_post_id(self, value):
+        if not Post.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Post does not exist.")
+        return value

@@ -8,8 +8,7 @@ import { CLOUDINARY_CLOUD_NAME, DEFAULT_PROFILE_PICTURE } from "@/app/helper";
 import IconTooltipButton from "./IconTooltipButton";
 import { io, Socket } from "socket.io-client";
 import { useProfileStore } from "@/app/store/useProfileStore";
-
-const SOCKET_URL = "http://localhost:5000"; // Change to your server URL
+import { EXPRESS_URL } from "@/app/utils/MyConstants";
 
 const getCloudinaryImage = (path: string | null) =>
   path ? (path.startsWith("http") ? path : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`) : DEFAULT_PROFILE_PICTURE;
@@ -53,7 +52,7 @@ useEffect(() => {
   const userProfile = useProfileStore.getState().profile;
   if (!token || !userProfile) return;
 
-  const socket = io(SOCKET_URL, { auth: { token } });
+  const socket = io(EXPRESS_URL, { auth: { token } });
   socketRef.current = socket;
 
   // 🔹 Join the user's personal room

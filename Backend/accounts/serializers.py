@@ -10,7 +10,8 @@ from .email_utils import send_resend_email
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-
+from django.contrib.auth.hashers import make_password
+from .models import PendingSignup
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,56 +21,73 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "email"]  # prevent changing email once set
 
 
-class SignupSerializer(serializers.ModelSerializer):
+class SignupSerializer(serializers.Serializer):
+    full_name = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
-    class Meta:
-        model = User
-        fields = ["id", "full_name", "email", "password"]
-
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User.objects.create_user(password=password, **validated_data)
+        # Hash password
+        password_hash = make_password(validated_data["password"])
 
-        # Send Welcome Email
+        # Create pending signup
+        pending = PendingSignup.objects.create(
+            email=validated_data["email"],
+            full_name=validated_data["full_name"],
+            password_hash=password_hash
+        )
+
+        # Generate 6-digit confirmation code
+        pending.generate_code()
+
+        confirm_link = f"{settings.FRONTEND_URL}/confirm-signup/{pending.token}/"
+
+        # Email body
         email_body = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; background-color:#f9fafb; padding:20px;">
-            <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
-            
-            <!-- Header -->
-            <div style="background:#008753; padding:20px; text-align:center;">
-                <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" alt="Sabiway Logo" style="height:50px;" />
-                <h2 style="color:#ffffff; margin:10px 0 0;">Welcome to Sabiway 🎉</h2>
+        <div style="font-family: Arial, sans-serif; background-color: #f4f4f7; padding: 40px 0; text-align: center;">
+        <div style="background-color: #ffffff; width: 90%; max-width: 520px; margin: auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+          
+          <div style="background-color: #008753; padding: 25px 0;">
+            <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" alt="SabiWay Logo" width="140" height="auto" style="display:block; margin:auto;">
+          </div>
+
+          <div style="padding: 30px;">
+            <h2 style="color: #333333; margin-top: 10px;">Welcome, {pending.full_name} 👋</h2>
+            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
+              Please confirm your email address to activate your account.
+            </p>
+
+            <a href="{confirm_link}" style="display: inline-block; margin-top: 20px; background-color: #008753; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: bold; font-size: 16px;">
+              Confirm My Email
+            </a>
+
+            <p style="margin-top: 25px; color: #777777; font-size: 14px;">Or use this code:</p>
+            <div style="font-size: 26px; font-weight: bold; color: #008753; letter-spacing: 4px; margin-top: 8px;">
+              {pending.code}
             </div>
 
-            <!-- Body -->
-            <div style="padding:30px; color:#333333; font-size:16px; line-height:1.5;">
-                <p>Hi <b>{user.full_name}</b>,</p>
-                <p>We’re excited to have you on board! 🎊</p>
-                <p>Sabiway is your trusted platform to simplify your journey. Get started by logging into your account and exploring what we have prepared for you.</p>
+            <p style="font-size: 13px; color: #999999; margin-top: 20px;">
+              This confirmation link and code will expire in <strong>1 hour</strong>.
+            </p>
 
-                <div style="text-align:center; margin:20px;">
-                <a href="{settings.FRONTEND_URL}/login" style="background:#2563eb; color:#ffffff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">
-                    Go to Dashboard
-                </a>
-                </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
 
-                <p>If you have any questions, feel free to reach out to our support team anytime.</p>
-            </div>
+            <p style="font-size: 14px; color: #888888; line-height: 1.5;">
+              Cheers,<br>
+              <strong style="color: #008753;">The SabiWay Team</strong>
+            </p>
 
-            <!-- Footer -->
-            <div style="background:#f3f4f6; padding:15px; text-align:center; font-size:14px; color:#6b7280;">
-                © {timezone.now().year} Sabiway. All rights reserved.
-            </div>
-            </div>
-        </body>
-        </html>
+            <p style="font-size: 12px; color: #bbbbbb; margin-top: 10px;">
+              If you didn’t sign up for SabiWay, you can safely ignore this email.
+            </p>
+          </div>
+        </div>
+      </div>
         """
 
-        send_resend_email(user.email, "Welcome to Sabiway 🎉", email_body)
+        send_resend_email(pending.email, "Confirm your signup", email_body)
 
-        return user
+        return pending
 
 
 

@@ -27,6 +27,10 @@ import requests
 from rest_framework import status
 import uuid
 
+from .models import Post, PostReport
+from .serializers import PostReportSerializer
+from accounts.email_utils import send_resend_email
+from sabiway.settings import ADMIN_REPORT_EMAIL
 
 # ------------------------
 # IMPRESSION TRACKING MIXIN
@@ -590,3 +594,91 @@ def unrepost_post(request, post_id):
         print("⚠️ Real-time unrepost broadcast failed:", str(e))
 
     return Response({"detail": "Repost removed successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class ReportPostView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PostReportSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            # Print debug info for failed validation
+            print("Report POST failed validation!")
+            print("Request data:", request.data)
+            print("Serializer errors:", serializer.errors)
+            return Response(
+                {"errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Serializer is valid
+        post_id = serializer.validated_data["post_id"]
+        reason = serializer.validated_data["reason"]
+        post_url = serializer.validated_data["post_url"]
+
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            print(f"Post with id {post_id} does not exist!")
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Save report
+        report = PostReport.objects.create(
+            post=post,
+            reported_by=request.user,
+            reason=reason,
+            post_url=post_url,
+        )
+
+        # Email admins
+        email_body = f"""
+        <div style="font-family: Arial, sans-serif; background-color: #f4f4f7; padding: 40px 0; text-align: center;">
+        <div style="background-color: #ffffff; width: 90%; max-width: 520px; margin: auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+            
+            <!-- Header with Logo -->
+            <div style="background-color: #008753; padding: 25px 0;">
+            <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" 
+                alt="SabiWay Logo" width="140" height="auto" style="display:block; margin:auto;">
+            </div>
+
+            <!-- Main Content -->
+            <div style="padding: 30px; text-align:left;">
+            <h2 style="color: #333333; margin-top: 0;">🚨 A Post Has Been Reported</h2>
+            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
+                A user has reported a post on the platform. Please review the details below:
+            </p>
+
+            <p><strong>Post ID:</strong> {post.id}</p>
+            <p><strong>Post Author:</strong> {post.author.username}</p>
+            <p><strong>Reported By:</strong> {request.user.email}</p>
+            <p><strong>Reason:</strong></p>
+            <p style="padding: 10px; background:#f9fafb; border-radius:6px; color:#333;">{reason}</p>
+
+            <div style="text-align:center; margin: 20px 0;">
+                <a href="{post_url}" style="display:inline-block; background-color:#d9534f; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:6px; font-weight:bold; font-size:16px;">
+                View Reported Post
+                </a>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+            <!-- Footer -->
+            <p style="font-size: 14px; color: #888888; line-height: 1.5;">
+                Cheers,<br>
+                <strong style="color: #008753;">The SabiWay Team</strong>
+            </p>
+            </div>
+        </div>
+        </div>
+        """
+
+        send_resend_email(ADMIN_REPORT_EMAIL, "🚨 A Post Has Been Reported", email_body)
+
+
+        print(f"Report successfully created: Post ID {post.id} by {request.user.email}")
+
+        return Response(
+            {"message": "Post reported successfully"},
+            status=status.HTTP_201_CREATED,
+        )

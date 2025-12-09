@@ -52,3 +52,22 @@ class PasswordReset(models.Model):
 
     def is_valid(self):
         return not self.is_used and self.created_at >= timezone.now() - timedelta(minutes=15)
+
+
+
+class PendingSignup(models.Model):
+    email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=255)
+    password_hash = models.CharField(max_length=128)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    code = models.CharField(max_length=6, blank=True)  # 6-digit code
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def generate_code(self):
+        self.code = str(random.randint(100000, 999999))
+        self.save()
+
+    def is_valid(self):
+        # Link valid for 1 hour
+        return not self.is_used and self.created_at >= timezone.now() - timedelta(hours=1)

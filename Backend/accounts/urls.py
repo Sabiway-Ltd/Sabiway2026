@@ -4,13 +4,15 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     SignupView, LoginView, GoogleLoginView, ForgotPasswordView, 
     ConfirmCodeView, ResetPasswordView, LogoutView, 
-    GenerateGoogleAuthURLView, UserViewSet, VerifyResetTokenView
+    GenerateGoogleAuthURLView, UserViewSet, VerifyResetTokenView, ConfirmSignupView
 )
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename="user")
 
 urlpatterns = [
+    # accounts/urls.py
+    path("confirm-signup/<uuid:token>/", ConfirmSignupView.as_view(), name="confirm-signup"),
     path("signup/", SignupView.as_view(), name="signup"),
     path("login/", LoginView.as_view(), name="login"),
     path("google-login/", GoogleLoginView.as_view(), name="google-login"),

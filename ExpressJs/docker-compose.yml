@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  sabiwayrealtime:
+    build: .
+    container_name: sabiwayrealtime
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/usr/src/app
+    restart: unless-stopped

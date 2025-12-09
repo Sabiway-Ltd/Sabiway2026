@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { EXPRESS_URL } from "@/app/utils/MyConstants";
+import { DJANGO_URL } from "@/app/utils/MyConstants";
 
 export default function ReportButton({ postId }) {
   const [showDialog, setShowDialog] = useState(false);
@@ -14,34 +14,53 @@ export default function ReportButton({ postId }) {
   const postUrl = `${window.location.origin}/posts/${postId}`;
 
   const handleSendReport = async () => {
-    if (!reason.trim()) {
-      toast.error("Please enter a reason for reporting.");
+  if (!reason.trim()) {
+    toast.error("Please enter a reason for reporting.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // Get token from localStorage
+    const token = localStorage.getItem("access");
+
+    if (!token) {
+      toast.error("You must be logged in to report a post.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    try {
-      // ✅ Option A: send to your backend API (recommended)
-      await fetch(`${EXPRESS_URL}/api/report/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          post_id: postId,
-          reason,
-          post_url: postUrl,
-        }),
-      });
+    const response = await fetch(`${DJANGO_URL}/api/posts/report/`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`  // ✅ attach token
+      },
+      body: JSON.stringify({
+        post_id: postId,
+        reason,
+        post_url: postUrl,
+      }),
+    });
 
-      toast.success("Report sent successfully!");
-      setShowDialog(false);
-      setReason("");
-    } catch (error) {
-      toast.error("Failed to send report.");
-      console.error(error);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.detail || "Failed to send report.");
     }
-  };
+
+    toast.success("Report sent successfully!");
+    setShowDialog(false);
+    setReason("");
+
+  } catch (error: any) {
+    toast.error(error.message);
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <>

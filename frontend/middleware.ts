@@ -20,7 +20,8 @@ export function middleware(req: NextRequest) {
   const isPublic =
     PUBLIC_ROUTES.includes(path) ||
     path.startsWith("/callback") || // covers /callback and /callback/google
-    path.startsWith("/change-password/");
+    path.startsWith("/change-password/") ||
+    path.startsWith("/confirm-signup");
 
   // ⛔ Not logged in & not visiting a public route
   if (!token && !isPublic) {

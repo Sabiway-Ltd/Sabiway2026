@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from django.conf import settings
 import requests
 from .serializers import ForgotPasswordSerializer, ConfirmCodeSerializer, ResetPasswordSerializer
-from .models import PasswordReset, User
+from .models import PasswordReset, User, PendingSignup
 from .serializers import SignupSerializer, LoginSerializer, GoogleAuthSerializer
 from .serializers import LogoutSerializer
 from urllib.parse import urlencode
@@ -17,6 +17,9 @@ from django.utils.crypto import get_random_string
 from rest_framework import viewsets, permissions
 from .serializers import UserSerializer
 from django.contrib.auth.models import BaseUserManager
+from .email_utils import send_resend_email
+from django.utils import timezone
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -31,6 +34,68 @@ class UserViewSet(viewsets.ModelViewSet):
 class SignupView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignupSerializer
+
+
+class ConfirmSignupView(APIView):
+    def get(self, request, token):
+        try:
+            pending = PendingSignup.objects.get(token=token, is_used=False)
+        except PendingSignup.DoesNotExist:
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not pending.is_valid():
+            return Response({"error": "Token expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the real User
+        user = User.objects.create_user(
+            email=pending.email,
+            full_name=pending.full_name,
+            password=None  # we'll assign the hashed password
+        )
+        user.password = pending.password_hash
+        user.save()
+
+        pending.is_used = True
+        pending.save()
+
+        # Send welcome email
+        email_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; background-color:#f9fafb; padding:20px;">
+            <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+            
+            <!-- Header -->
+            <div style="background:#008753; padding:20px; text-align:center;">
+                <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" alt="Sabiway Logo" style="height:50px;" />
+                <h2 style="color:#ffffff; margin:10px 0 0;">Welcome to Sabiway 🎉</h2>
+            </div>
+
+            <!-- Body -->
+            <div style="padding:30px; color:#333333; font-size:16px; line-height:1.5;">
+                <p>Hi <b>{user.full_name}</b>,</p>
+                <p>We’re excited to have you on board! 🎊</p>
+                <p>Sabiway is your trusted platform to simplify your journey. Get started by logging into your account and exploring what we have prepared for you.</p>
+
+                <div style="text-align:center; margin:20px;">
+                <a href="{settings.FRONTEND_URL}/community" style="background:#2563eb; color:#ffffff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">
+                    Go to Dashboard
+                </a>
+                </div>
+
+                <p>If you have any questions, feel free to reach out to our support team anytime.</p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background:#f3f4f6; padding:15px; text-align:center; font-size:14px; color:#6b7280;">
+                © {timezone.now().year} Sabiway. All rights reserved.
+            </div>
+            </div>
+        </body>
+        </html>
+        """
+        send_resend_email(user.email, "Welcome to Sabiway 🎉", email_body)
+
+        return Response({"message": "Signup confirmed. You can now login."}, status=status.HTTP_201_CREATED)
 
 
 class LoginView(generics.GenericAPIView):

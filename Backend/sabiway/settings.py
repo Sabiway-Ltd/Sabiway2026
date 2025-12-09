@@ -48,19 +48,21 @@ GOOGLE_CLIENT_SECRET = "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"
 # For Resend API
 RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
 DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
+ADMIN_REPORT_EMAIL = "sabiway1@gmail.com"
 
 # ---------------------------------------------------------------------
 # URLs
 # ---------------------------------------------------------------------
 # Use Docker environment variables if provided, otherwise fallback to defaults
-FRONTEND_URL = "http://localhost:3000"
-BACKEND_URL = "http://localhost:8000"
-EXPRESS_URL = "http://localhost:5000"
+# FRONTEND_URL = "http://localhost:3000"
+# BACKEND_URL = "http://localhost:8000"
+# EXPRESS_URL = "http://localhost:5000"
 
 
 # FOR VPS
-# FRONTEND_URL = "https://www.sabiway.com"
-# BACKEND_URL = "https://django.sabiway.com"
+FRONTEND_URL = "https://www.sabiway.com"
+BACKEND_URL = "https://django.sabiway.com"
+EXPRESS_URL = "https://express.sabiway.com"
 
 # Half VPS
 # FRONTEND_URL = "https://sabiway2025.vercel.app"

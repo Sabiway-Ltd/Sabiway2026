@@ -7,7 +7,7 @@ from .views import (
     BookmarkPostView, UnbookmarkPostView, MyBookmarksView, LikeViewSet,
     MyRepostsView, repost_post, unrepost_post, TrendingHashtagsView,
     CommentLikeToggleView, CommentUnlikeToggleView, ReplyLikeToggleView,
-    ReplyUnlikeToggleView, MyPostsView,
+    ReplyUnlikeToggleView, MyPostsView, ReportPostView
 )
 
 router = DefaultRouter()
@@ -37,6 +37,7 @@ urlpatterns = [
     # Nested replies (optional, but makes it explicit)
     path("replies/<uuid:parent_reply>/children/", ReplyViewSet.as_view({"get": "list"}), name="reply-children"),
 
+    path("report/", ReportPostView.as_view(), name="report-post"),
 
     path("me/", MyPostsView.as_view(), name="my-posts"),
 
