@@ -13,7 +13,7 @@ export const EXPRESS_URL = "https://realtime.sabiway.com"
 export const DJANGO_URL = "https://backend.sabiway.com"
 
 
-export const WAITLIST_URL = "https://wait.sabiway.com"
+export const WAITLIST_URL = "https://waitlist.sabiway.com"
 
 
 
