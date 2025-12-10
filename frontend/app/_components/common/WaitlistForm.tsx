@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import axios from "axios";
+import { WAITLIST_URL } from "@/app/utils/MyConstants";
 
-const API_URL_BASE = "https://waitlist.sabiway.com";
 
 export default function WaitlistForm({ onSuccess, show }) {
   const [name, setName] = useState("");
@@ -47,7 +47,7 @@ export default function WaitlistForm({ onSuccess, show }) {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL_BASE}/api/waitlist`, { name, email });
+      const res = await axios.post(`${WAITLIST_URL}/api/waitlist`, { name, email });
 
       if (res.data.status === "success" || res.data.success) {
         showPopup(

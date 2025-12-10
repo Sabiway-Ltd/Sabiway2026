@@ -60,9 +60,16 @@ ADMIN_REPORT_EMAIL = "sabiway1@gmail.com"
 
 
 # FOR VPS
+# FRONTEND_URL = "https://www.sabiway.com"
+# BACKEND_URL = "https://django.sabiway.com"
+# EXPRESS_URL = "https://express.sabiway.com"
+
+
+
+# For Render
 FRONTEND_URL = "https://www.sabiway.com"
-BACKEND_URL = "https://django.sabiway.com"
-EXPRESS_URL = "https://express.sabiway.com"
+BACKEND_URL = "https://backend.sabiway.com"
+EXPRESS_URL = "https://realtime.sabiway.com"
 
 # Half VPS
 # FRONTEND_URL = "https://sabiway2025.vercel.app"
@@ -85,7 +92,7 @@ GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 # ---------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_URL,
-    "http://frontent:3000",
+    EXPRESS_URL,
     "http://localhost:3000",  # in case you test locally outside Docker
     "http://127.0.0.1:3000",
     "https://sabiway2025.vercel.app",
