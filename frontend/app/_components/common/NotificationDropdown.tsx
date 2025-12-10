@@ -46,32 +46,35 @@ export default function NotificationDropdown() {
     getAllNotifications(1);
   }, [getAllNotifications]);
 
-  // Connect to Socket.io
+const userProfile = useProfileStore((state) => state.profile);
+const getMyProfile = useProfileStore((state) => state.getMyProfile);
+
+// Fetch profile if missing
+useEffect(() => {
+  if (!userProfile) getMyProfile();
+}, [userProfile, getMyProfile]);
+
+// Connect to socket when profile is ready
 useEffect(() => {
   const token = localStorage.getItem("access");
-  const userProfile = useProfileStore.getState().profile;
   if (!token || !userProfile) return;
 
   const socket = io(EXPRESS_URL, { auth: { token } });
   socketRef.current = socket;
 
-  // 🔹 Join the user's personal room
   socket.emit("join", String(userProfile.user_id));
 
-  // Listen for new notifications
   socket.on("new-notification", (notif: NotificationItem) => {
     useNotificationStore.getState().prependNotification(notif);
   });
 
-  // Listen for unread count updates
   socket.on("update-unread-count", (data: { unread_count: number }) => {
     useNotificationStore.getState().setUnreadCount(data.unread_count);
   });
 
-  return () => {
-    socket.disconnect();
-  };
-}, [useProfileStore.getState().profile]);
+  return () => socket.disconnect();
+}, [userProfile]);   // Only re-run when profile is loaded
+
 
 
 
