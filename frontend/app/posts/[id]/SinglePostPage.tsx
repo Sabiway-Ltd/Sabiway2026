@@ -90,6 +90,7 @@ export default function SinglePostPage() {
             created_at={post.created_at}
             onReloadPosts={handleReloadPost} // reload single post after edit/delete
             alwaysShowComments={true}
+            shouldReload={true}
           />
         </div>
       </div>

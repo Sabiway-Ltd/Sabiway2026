@@ -105,6 +105,7 @@ const MyPostsMain = forwardRef<MyPostsMainRef>((props, ref) => {
             emptyMessage=""
             reloadFn={getMyPosts}
             clickable={true}
+            shouldReload={true}
           />
 
           {loadingMyPosts && (

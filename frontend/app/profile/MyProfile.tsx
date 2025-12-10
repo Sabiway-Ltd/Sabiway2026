@@ -28,6 +28,8 @@ import MyPostsMain, { MyPostsMainRef } from "./MyPostsMain";
 import MyBookmarksMain, {MyBookmarksMainRef} from "./MyBookmarksMain";
 
 
+
+
 export default function MyProfile() {
   const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks" | "followers" | "following">("about");
   const [editing, setEditing] = useState(false);
@@ -247,6 +249,9 @@ useEffect(() => {
       setLocalFollowing(prev => ({ ...prev, [user.user_id]: wasFollowing }));
     }
   };
+
+  
+  
 
 
 

@@ -1,6 +1,6 @@
 import PostCard from "../feed/PostCard";
 
-export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false }) => (
+export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false, shouldReload = false }) => (
   <div className="md:space-y-4 space-y-2 w-full">
     {posts.length === 0 ? (
   <p className="text-gray-600">{emptyMessage}</p>
@@ -58,6 +58,7 @@ export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false 
           // onReloadPosts={() => reloadFn(post.id)}
           onReloadPosts={reloadFn}
           clickable={clickable}
+          shouldReload={shouldReload}
         />
       ))
     )}

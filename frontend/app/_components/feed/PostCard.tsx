@@ -42,7 +42,8 @@ export default function PostCard({
   post,
   onReloadPosts,
   alwaysShowComments = false,
-  clickable = false
+  clickable = false,
+  shouldReload = false
 }: any) {
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likesCount, setLikesCount] = useState(likes_count);
@@ -357,6 +358,10 @@ export default function PostCard({
       toast.success("Post updated successfully!");
       setEditingPostId(null);
       setEditedPostImage(null);
+
+      if (shouldReload){
+        onReloadPosts()
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to update post.");
     } finally {
@@ -377,6 +382,9 @@ export default function PostCard({
       const { post } = await import("@/app/services/post");
       await post.delete(postId);
       toast.success("Post deleted successfully!");
+      if (shouldReload){
+        onReloadPosts()
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to delete post.");
     }
@@ -386,6 +394,9 @@ export default function PostCard({
     try {
       setRepostLoading(true);
       await repostPost(id); // your existing function
+      if (shouldReload){
+        onReloadPosts()
+      }
     } finally {
       setRepostLoading(false);
     }
@@ -395,6 +406,9 @@ export default function PostCard({
     try {
       setRepostLoading(true);
       await unrepostPost(id); // your existing function
+      if (shouldReload){
+        onReloadPosts()
+      }
     } finally {
       setRepostLoading(false);
     }
