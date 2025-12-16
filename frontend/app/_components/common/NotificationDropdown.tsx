@@ -159,7 +159,7 @@ useEffect(() => {
                 >
                   View All Notifications
                 </a>
-              </>
+              </div>
             )}
           </motion.div>
         )}
