@@ -120,7 +120,7 @@ useEffect(() => {
             ) : notifications.length === 0 ? (
               <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
             ) : (
-              <>
+              <div className="space-y-1">
                 {notifications.map((n: NotificationItem) => (
                   <a
                     key={n.id}
