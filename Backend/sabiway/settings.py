@@ -171,7 +171,7 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 
 DATABASES = {
     "default": dj_database_url.parse(
-        "postgresql://sabiway:wGSMPNQNTE6JQmJr1w565KXORm8frj7b@dpg-d4mh0o4hg0os73br7i1g-a.oregon-postgres.render.com/sabiway_cj9v",
+        "postgresql://sabiway:6CAi2T0OgdWVnTDdlW9CDxrpZsDLhZ33@dpg-d5avuru3jp1c73cslgrg-a.oregon-postgres.render.com/sabiway_x54a",
         conn_max_age=600,
         ssl_require=True,  # Render PostgreSQL requires SSL
     )
