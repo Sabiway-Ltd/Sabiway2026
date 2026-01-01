@@ -30,7 +30,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ---------------------------------------------------------------------
 # Core settings
 # ---------------------------------------------------------------------
-DEBUG = env("DEBUG", default="True")
+DEBUG = env("DEBUG", default=False)
 SECRET_KEY = "insecure-secret"
 # ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
 #     "localhost",

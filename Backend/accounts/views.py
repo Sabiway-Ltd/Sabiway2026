@@ -22,6 +22,7 @@ from django.utils import timezone
 
 
 
+
 class UserViewSet(viewsets.ModelViewSet):
     """
     Admin-only endpoint to manage users
@@ -184,14 +185,15 @@ class GoogleLoginView(APIView):
         created = False
 
         if not user:
-            signup_serializer = SignupSerializer(data={
-                "email": email,
-                "full_name": full_name,
-                "password": get_random_string(12)
-            })
-            signup_serializer.is_valid(raise_exception=True)
-            user = signup_serializer.save()
+            user = User.objects.create_user(
+                email=email,
+                full_name=full_name,
+                password=get_random_string(12)  # random, user can reset later
+            )
             created = True
+         # ✅ SAFETY CHECK (PUT IT HERE)
+        if not isinstance(user, User):
+            raise TypeError("JWT can only be issued for User instances")
 
         refresh = RefreshToken.for_user(user)
         access = str(refresh.access_token)
