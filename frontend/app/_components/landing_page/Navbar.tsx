@@ -48,7 +48,7 @@ export default function Navbar() {
         <div className="hidden md:flex space-x-12 text-gray-800 font-medium">
 
           <Link href="/community" className="hover:text-[#008753] transition">
-            Community
+            SabiForum
           </Link>
 
           <a

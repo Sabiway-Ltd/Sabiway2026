@@ -102,7 +102,7 @@ export default function ProfileDropdown() {
                     d="M17 20h5V4H2v16h5m10 0a2 2 0 002-2v-3H7v3a2 2 0 002 2h8z"
                   />
                 </svg>
-                Community
+                SabiForum
               </button>
             )}
 

@@ -133,7 +133,7 @@ export default function CommunityNavbar({
                   <Search className="h-4 w-4 text-gray-600 flex-shrink-0" />
                   <input
                     type="text"
-                    placeholder="Search Community"
+                    placeholder="Search SabiForum"
                     className="flex-1 outline-none focus:ring-0 text-sm placeholder-gray-400"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -176,7 +176,7 @@ export default function CommunityNavbar({
                   <IconTooltipButton
                     onClick={() => setMobileSearchOpen((prev) => !prev)}
                     icon={Search}
-                    label="Search Community"
+                    label="Search SabiForum"
                     size={18}
                   />
                 </div>
@@ -202,7 +202,7 @@ export default function CommunityNavbar({
             <Search className="h-4 w-4 text-gray-600" />
             <input
               type="text"
-              placeholder="Search Community"
+              placeholder="Search SabiForum"
               className="flex-1 outline-none bg-transparent text-sm placeholder-gray-400"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

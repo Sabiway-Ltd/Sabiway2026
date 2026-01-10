@@ -127,14 +127,27 @@ useEffect(() => {
   };
 }, []);
 
+const { filterBySearch, resetFilteredPosts, filteredPosts } = usePostStore();
+
+const handleSearch = (query: string) => {
+  filterBySearch(query, "posts");
+};
+
+const handleReset = () => {
+  resetFilteredPosts();
+  getAllPosts(1);
+};
+
+const displayPosts = filteredPosts?.length ? filteredPosts : posts;
+
   return (
     <div className="min-h-screen md:px-6 px-1 pb-5">
       <CommunityNavbar
         onCreatePost={() => setShowPostBox(true)}
-        onSearch={() => {}}
-        onReset={() => {}}
-        hideSearch
+        onSearch={handleSearch}
+        onReset={handleReset}
       />
+
 
       <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10 mx-auto">
         <div className="md:w-[22rem] hidden lg:block mt-4">
@@ -163,7 +176,12 @@ useEffect(() => {
 
           {posts.length > 0 && (
             <div className="md:space-y-4 space-y-1">
-              <RenderPostList posts={posts} emptyMessage="" reloadFn={getAllPosts} clickable />
+              <RenderPostList
+                posts={displayPosts}
+                emptyMessage=""
+                reloadFn={getAllPosts}
+                clickable
+              />
 
               {loading && (
                 <div className="flex justify-center items-center gap-2 py-4">

@@ -5,11 +5,11 @@ export default function Serviceprovider() {
   const providers = [
     { name: "Tayo Omotola", role: "Contractor", img: "/1.png", exp: "2 yrs Exp.", location: "Calabar, Lagos" },
     { name: "Chidi Amadi", role: "Writer", img: "/2.png", exp: "2 yrs Exp.", location: "Lagos, Nigeria" },
-    { name: "Hally Akpan", role: "House Keeper", img: "/3.png", exp: "2 yrs Exp.", location: "Rivers, Nigeria" },
+    { name: "Hally Akpan", role: "House Keeper", img: "/3.png", exp: "2 yrs Exp.", location: "London, UK" },
     { name: "Lola Makinde", role: "Fashion Model", img: "/4.png", exp: "2 yrs Exp.", location: "Rivers, Nigeria" },
-    { name: "Chiamaka Amadi", role: "Chef", img: "/5.png", exp: "2 yrs Exp.", location: "Ekiti, Nigeria" },
+    { name: "Chiamaka Amadi", role: "Chef", img: "/5.png", exp: "2 yrs Exp.", location: "Toronto, Canada" },
     { name: "Tayo Omotola", role: "Dispatcher", img: "/6.png", exp: "2 yrs Exp.", location: "Abia, Nigeria" },
-    { name: "Tayo Omotola", role: "Errand Boy", img: "/7.png", exp: "2 yrs Exp.", location: "Osun, Nigeria" },
+    { name: "Tayo Omotola", role: "Errand Boy", img: "/7.png", exp: "2 yrs Exp.", location: "New York, USA" },
     { name: "Tayo Omotola", role: "Freelancer", img: "/8.png", exp: "2 yrs Exp.", location: "Lagos, Nigeria" },
   ];
 

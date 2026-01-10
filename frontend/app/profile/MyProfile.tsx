@@ -26,6 +26,8 @@ import Aside from "../_components/feed/Aside";
 import MyPostsTab from "../_components/feed/MyPostsTab";
 import MyPostsMain, { MyPostsMainRef } from "./MyPostsMain";
 import MyBookmarksMain, {MyBookmarksMainRef} from "./MyBookmarksMain";
+import { FaEdit } from "react-icons/fa";
+
 
 
 
@@ -601,21 +603,28 @@ useEffect(() => {
                       </div>
 
                       <div className="flex gap-x-4">
-                        <button
+                        {/* <button
                           onClick={handleEditProfile}
                           className="mt-4 bg-[#008753] text-white px-4 py-2 rounded-md "
                         >
                           Edit Profile
+                        </button> */}
+
+                        <button 
+                        onClick={handleEditProfile}
+                        className="flex items-center gap-1 text-[#008753] hover:text-[#008753]/90">
+                          <FaEdit size={18} />
+                          Edit
                         </button>
 
-                        <button
+                        {/* <button
                           onClick={async () => {
                             await logout();
                           }}
                           className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md "
                         >
                           Log Out
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   )}

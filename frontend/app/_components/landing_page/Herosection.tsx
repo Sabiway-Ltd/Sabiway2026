@@ -21,14 +21,14 @@ export default function Herosection({ HandleWaitListPopUp }) {
 
         <div className="flex gap-x-2 md:text-[0.95rem] text-[0.85rem] flex-row mt-8 gap-y-3">
           <button onClick={HandleWaitListPopUp}>
-            <div className="md:w-[12rem] w-[8.5rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition">
+            <div className="md:w-[12rem] w-[9rem] py-4 text-center bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition">
               Join App Waitlist
             </div>
           </button>
 
           <a href="/signup">
-            <div className="md:w-[12rem] w-[10.5rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition">
-              Join the Community
+            <div className="md:w-[12rem] w-[9rem] text-center py-4 bg-[#008753] md:mb-14 text-white rounded-lg font-semibold shadow hover:bg-[#006B42] transition">
+              Join SabiForum
             </div>
           </a>
         </div>
