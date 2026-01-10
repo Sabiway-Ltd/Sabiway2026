@@ -8,19 +8,19 @@ export default function Reviewsection() {
       location: "Abuja",
     },
     {
+      text: "Thanks to SabiWay, I got a fitness trainer near me the same day. Amazing platform!",
+      name: "Fatima K.",
+      location: "Canada",
+    },
+    {
       text: "I booked a cleaner through SabiWay and the service was excellent. Highly recommended!",
       name: "Chinedu O.",
       location: "Lagos",
     },
     {
-      text: "Thanks to SabiWay, I got a fitness trainer near me the same day. Amazing platform!",
-      name: "Fatima K.",
-      location: "Kano",
-    },
-    {
       text: "I love how quick and reliable this platform is. Will definitely keep using it.",
       name: "Emeka I.",
-      location: "Port Harcourt",
+      location: "USA",
     },
   ];
 

@@ -30,7 +30,7 @@ export default function AboutUsPage() {
 
 
       {/* Main Content */}
-      <main className="flex-1 mt-6 px-6 md:px-16 max-w-6xl mx-auto">
+      <main className="flex-1 md:text-lg mt-6 px-6 md:px-16 max-w-6xl mx-auto">
         <section className="mb-16">
           <p className=" text-gray-800 mb-4">
             SabiWay is a people-powered service platform built for Nigerians at home and across the diaspora. We believe everyone deserves access to fast, honest and verified local services, no matter where they are in the world.
