@@ -66,9 +66,6 @@ export interface NotificationStore {
   getAllNotifications: (page?: number) => Promise<void>;
   resetNotifications: () => void;
 
-  prependNotification: (notif: NotificationItem) => void;
-  setUnreadCount: (count: number) => void;
-
   markNotificationRead: (id: number) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
 }
@@ -76,7 +73,7 @@ export interface NotificationStore {
 // ----------------------
 // Zustand Store
 // ----------------------
-export const useNotificationStore = create<NotificationStore>((set, get) => ({
+export const useAllNotificationsStore = create<NotificationStore>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   loading: false,
@@ -129,32 +126,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       set({ error: "Failed to fetch notifications", loading: false });
     }
   },
-
-  // Prepend new notification
-// prependNotification: (notif: NotificationItem) =>
-//   set((state) => ({
-//     notifications: [notif, ...state.notifications],
-//     unreadCount: state.unreadCount + 1
-//   })),
-
-prependNotification: (notif) =>
-  set((state) => {
-    if (!notif.actor) return state;
-
-    if (state.notifications.some(n => n.id === notif.id)) {
-      return state;
-    }
-
-    return {
-      notifications: [notif, ...state.notifications],
-      unreadCount: state.unreadCount + 1,
-    };
-  }),
-
-
-// Set unread count
-setUnreadCount: (count: number) =>
-  set(() => ({ unreadCount: count })),
 
 
   // Optimistic mark a single notification as read

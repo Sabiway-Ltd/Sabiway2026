@@ -148,7 +148,7 @@ useEffect(() => {
 
           {firstLoad && loading && (
             <div className="space-y-4 pb-6">
-              {[...Array(1)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <PostSkeleton key={i} />
               ))}
             </div>

@@ -4,9 +4,6 @@ import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { DEFAULT_PROFILE_PICTURE, CLOUDINARY_CLOUD_NAME } from "../helper";
 import { useAllNotificationsStore, NotificationItem } from "@/app/store/useAllNotificationsStore";
-import { useNotificationStore } from "@/app/store/useNotificationStore";
-
-
 
 // ----------------------
 // Link Builder
@@ -92,17 +89,6 @@ export default function AllNotifications() {
     }
   };
 
-
-  const setUnreadCount = useNotificationStore(
-    (state) => state.setUnreadCount
-  );
-
-  const handleMarkAll = async () => {
-    await markAllNotificationsRead();
-    setUnreadCount(0); // 🔥 keep dropdown in sync
-  };
-
-
   return (
     <div className="max-w-2xl mx-auto px-4 pb-6">
       {/* Header */}
@@ -110,12 +96,11 @@ export default function AllNotifications() {
         <h1 className="text-xl font-bold">Notifications</h1>
 
         <button
-          onClick={handleMarkAll}
+          onClick={markAllNotificationsRead}
           className="text-sm text-[#008753] hover:underline"
         >
           Mark all as read
         </button>
-
       </div>
 
       {/* List */}

@@ -55,33 +55,32 @@ export interface NotificationItem {
 // ----------------------
 // Zustand Store Type
 // ----------------------
-export interface NotificationStore {
+export interface AllNotificationsStore {
   notifications: NotificationItem[];
-  unreadCount: number;
   loading: boolean;
   error: string | null;
   nextPage: number | null;
   hasMore: boolean;
 
   getAllNotifications: (page?: number) => Promise<void>;
-  resetNotifications: () => void;
-
   markNotificationRead: (id: number) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  resetNotifications: () => void;
 }
 
 // ----------------------
 // Zustand Store
 // ----------------------
-export const useAllNotificationsStore = create<NotificationStore>((set, get) => ({
+export const useAllNotificationsStore = create<AllNotificationsStore>((set, get) => ({
   notifications: [],
-  unreadCount: 0,
   loading: false,
   error: null,
   nextPage: 1,
   hasMore: true,
 
-  // Fetch notifications
+  // ----------------------
+  // Fetch notifications (pagination only)
+  // ----------------------
   getAllNotifications: async (page = 1) => {
     const { loading, nextPage } = get();
     if (loading || (page !== nextPage && page !== 1)) return;
@@ -95,28 +94,28 @@ export const useAllNotificationsStore = create<NotificationStore>((set, get) => 
     }
 
     try {
-      const res = await axios.get(`${DJANGO_URL}/api/notifications/?page=${page}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `${DJANGO_URL}/api/notifications/?page=${page}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const data = res.data;
 
-      // Unwrap notifications and optionally attach userId
       const newNotifications: NotificationItem[] =
-        (data.results?.notifications || data.notifications || []).map((item: any) => ({
-          ...item.notification,
-          userId: item.userId, // optional, useful if you want the profile owner
-        }));
+        (data.results?.notifications || data.notifications || []).map(
+          (item: any) => ({
+            ...item.notification,
+            userId: item.userId,
+          })
+        );
 
       set((state) => ({
         notifications:
           page === 1
             ? newNotifications
             : [...state.notifications, ...newNotifications],
-        unreadCount:
-          page === 1
-            ? data.results?.unread_count ?? data.unread_count ?? state.unreadCount
-            : state.unreadCount,
         nextPage: data.next ? page + 1 : null,
         hasMore: Boolean(data.next),
         loading: false,
@@ -127,62 +126,69 @@ export const useAllNotificationsStore = create<NotificationStore>((set, get) => 
     }
   },
 
-
-  // Optimistic mark a single notification as read
+  // ----------------------
+  // Mark single notification as read (NO unreadCount logic here)
+  // ----------------------
   markNotificationRead: async (id: number) => {
     const token = localStorage.getItem("access");
     if (!token) return;
 
-    // Optimistically update state first
+    // Optimistic UI
     set((state) => ({
       notifications: state.notifications.map((n) =>
         n.id === id ? { ...n, is_read: true } : n
       ),
-      unreadCount: Math.max(state.unreadCount - 1, 0),
     }));
 
     try {
-      await axios.patch(`${DJANGO_URL}/api/notifications/${id}/read/`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.patch(
+        `${DJANGO_URL}/api/notifications/${id}/read/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
-      // Rollback if API fails
+      // Rollback
       set((state) => ({
         notifications: state.notifications.map((n) =>
           n.id === id ? { ...n, is_read: false } : n
         ),
-        unreadCount: state.unreadCount + 1,
       }));
     }
   },
 
-  // Optimistic mark all notifications as read
+  // ----------------------
+  // Mark all notifications as read
+  // ----------------------
   markAllNotificationsRead: async () => {
     const token = localStorage.getItem("access");
     if (!token) return;
 
-    // Optimistically mark all as read
+    // Optimistic UI
     set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, is_read: true })),
-      unreadCount: 0,
+      notifications: state.notifications.map((n) => ({
+        ...n,
+        is_read: true,
+      })),
     }));
 
     try {
-      await axios.patch(`${DJANGO_URL}/api/notifications/read/all/`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.patch(
+        `${DJANGO_URL}/api/notifications/read/all/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
     } catch (err) {
-      console.error("Failed to mark all as read:", err);
-      // Optional: refetch notifications if needed
+      console.error("Failed to mark all notifications as read:", err);
     }
   },
 
+  // ----------------------
   // Reset store
+  // ----------------------
   resetNotifications: () =>
     set({
       notifications: [],
-      unreadCount: 0,
       nextPage: 1,
       hasMore: true,
       error: null,
