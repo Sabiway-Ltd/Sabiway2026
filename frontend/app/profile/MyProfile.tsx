@@ -435,7 +435,7 @@ useEffect(() => {
                     <>
                       {/* Full Name */}
                       <div className="">
-                        <label className="block  font-medium text-gray-700">Full Name</label>
+                        <label className="block  font-medium pl-2 text-gray-700">Full Name</label>
                         <input
                           value={editedData.full_name || ""}
                           onChange={(e) =>
@@ -447,7 +447,7 @@ useEffect(() => {
 
                       {/* Bio */}
                       <div>
-                        <label className="block  font-medium text-gray-700">Bio</label>
+                        <label className="block  font-medium pl-2 text-gray-700">Bio</label>
                         <textarea
                           value={editedData.bio || ""}
                           onChange={(e) =>
@@ -459,7 +459,7 @@ useEffect(() => {
 
                       {/* Phone Number */}
                       <div>
-                        <label className="block  font-medium text-gray-700">Phone Number</label>
+                        <label className="block  font-medium pl-2 text-gray-700">Phone Number</label>
                         <input
                           value={editedData.phone_number || ""}
                           onChange={(e) =>
@@ -471,7 +471,7 @@ useEffect(() => {
 
                       {/* Job */}
                       <div>
-                        <label className="block  font-medium text-gray-700">Job</label>
+                        <label className="block  font-medium pl-2 text-gray-700">Job</label>
                         <input
                           value={editedData.job || ""}
                           onChange={(e) =>
@@ -484,7 +484,7 @@ useEffect(() => {
                       {/* Address group */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block  font-medium text-gray-700">Country</label>
+                          <label className="block  font-medium pl-2 text-gray-700">Country</label>
                           <input
                             value={editedData.country || ""}
                             onChange={(e) =>
@@ -495,7 +495,7 @@ useEffect(() => {
                         </div>
 
                         <div>
-                          <label className="block  font-medium text-gray-700">State</label>
+                          <label className="block  font-medium pl-2 text-gray-700">State</label>
                           <input
                             value={editedData.state || ""}
                             onChange={(e) =>
@@ -506,7 +506,7 @@ useEffect(() => {
                         </div>
 
                         <div>
-                          <label className="block  font-medium text-gray-700">Area</label>
+                          <label className="block  font-medium pl-2 text-gray-700">Area</label>
                           <input
                             value={editedData.area || ""}
                             onChange={(e) =>
@@ -517,7 +517,7 @@ useEffect(() => {
                         </div>
 
                         <div>
-                          <label className="block  font-medium text-gray-700">Street</label>
+                          <label className="block  font-medium pl-2 text-gray-700">Street</label>
                           <input
                             value={editedData.street || ""}
                             onChange={(e) =>
@@ -529,7 +529,7 @@ useEffect(() => {
                       </div>
 
                       {/* Buttons */}
-                      <div className="flex justify-center">
+                      <div className="flex justify-center mt-8 md:mt-12">
                         <div className=" space-x-4 ">
                           <button
                             onClick={handleSaveProfile}
