@@ -529,7 +529,7 @@ useEffect(() => {
                       </div>
 
                       {/* Buttons */}
-                      <div className="flex justify-center mt-8 md:mt-12">
+                      <div className="flex justify-center mt-8 md:mt-12 mb-2">
                         <div className=" space-x-4 ">
                           <button
                             onClick={handleSaveProfile}
