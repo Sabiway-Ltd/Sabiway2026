@@ -441,7 +441,7 @@ useEffect(() => {
                           onChange={(e) =>
                             setEditedData({ ...editedData, full_name: e.target.value })
                           }
-                          className="w-full border rounded-lg p-2"
+                          className="w-full border rounded-lg bg-white p-2"
                         />
                       </div>
 
@@ -453,7 +453,7 @@ useEffect(() => {
                           onChange={(e) =>
                             setEditedData({ ...editedData, bio: e.target.value })
                           }
-                          className="w-full border rounded-lg p-2"
+                          className="w-full border rounded-lg bg-white p-2"
                         />
                       </div>
 
@@ -465,7 +465,7 @@ useEffect(() => {
                           onChange={(e) =>
                             setEditedData({ ...editedData, phone_number: e.target.value })
                           }
-                          className="w-full border rounded-lg p-2"
+                          className="w-full border rounded-lg bg-white p-2"
                         />
                       </div>
 
@@ -477,7 +477,7 @@ useEffect(() => {
                           onChange={(e) =>
                             setEditedData({ ...editedData, job: e.target.value })
                           }
-                          className="w-full border rounded-lg p-2"
+                          className="w-full border rounded-lg bg-white p-2"
                         />
                       </div>
 
@@ -490,7 +490,7 @@ useEffect(() => {
                             onChange={(e) =>
                               setEditedData({ ...editedData, country: e.target.value })
                             }
-                            className="w-full border rounded-lg p-2"
+                            className="w-full border rounded-lg bg-white p-2"
                           />
                         </div>
 
@@ -501,7 +501,7 @@ useEffect(() => {
                             onChange={(e) =>
                               setEditedData({ ...editedData, state: e.target.value })
                             }
-                            className="w-full border rounded-lg p-2"
+                            className="w-full border rounded-lg bg-white p-2"
                           />
                         </div>
 
@@ -512,7 +512,7 @@ useEffect(() => {
                             onChange={(e) =>
                               setEditedData({ ...editedData, area: e.target.value })
                             }
-                            className="w-full border rounded-lg p-2"
+                            className="w-full border rounded-lg bg-white p-2"
                           />
                         </div>
 
@@ -523,7 +523,7 @@ useEffect(() => {
                             onChange={(e) =>
                               setEditedData({ ...editedData, street: e.target.value })
                             }
-                            className="w-full border rounded-lg p-2"
+                            className="w-full border rounded-lg bg-white p-2"
                           />
                         </div>
                       </div>
