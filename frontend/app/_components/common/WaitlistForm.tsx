@@ -125,7 +125,7 @@ export default function WaitlistForm({ onSuccess, show }) {
               </label>
               <input
                 type="text"
-                placeholder=""
+                placeholder="Enter your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 
@@ -140,7 +140,7 @@ export default function WaitlistForm({ onSuccess, show }) {
               </label>
               <input
                 type="email"
-                placeholder=""
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 
