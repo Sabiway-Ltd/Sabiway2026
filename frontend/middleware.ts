@@ -10,7 +10,8 @@ const PUBLIC_ROUTES = [
   "/forgot-password",
   "/terms-of-use",
   "/helpcenter",
-  "/privacy-policy"
+  "/privacy-policy",
+  "/about-us"
 ];
 
 export function middleware(req: NextRequest) {

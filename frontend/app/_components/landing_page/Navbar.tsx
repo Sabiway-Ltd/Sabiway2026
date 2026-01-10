@@ -1,3 +1,5 @@
+// app/_components/landing_page/Navbar.tsx
+
 "use client";
 import Image from "next/image";
 import { useState } from "react";
@@ -52,7 +54,7 @@ export default function Navbar() {
           </Link>
 
           <a
-            href="/#about_us"
+            href="/about-us"
             className="hover:text-[#008753] transition"
           >
             About Us

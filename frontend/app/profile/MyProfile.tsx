@@ -539,7 +539,7 @@ useEffect(() => {
                           </button>
                           <button
                             onClick={() => setEditing(false)}
-                            className="bg-gray-400 text-white w-28 py-2 rounded-md text-sm"
+                            className="bg-red-500 text-white w-28 py-2 rounded-md text-sm"
                           >
                             Cancel
                           </button>
@@ -809,7 +809,7 @@ useEffect(() => {
                   setSelectedImagePreview(null);
                   setSelectedImageFile(null);
                 }}
-                className="bg-gray-400 text-white px-4 py-2 rounded-full text-sm"
+                className="bg-red-500 text-white px-4 py-2 rounded-full text-sm"
               >
                 Cancel
               </button>

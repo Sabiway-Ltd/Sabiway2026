@@ -1,3 +1,5 @@
+// app/_components/landing_page/Footer.tsx
+
 "use client";  
 import Image from "next/image";
 import Link from "next/link";
@@ -12,7 +14,7 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row flex-wrap justify-between gap-x-8 gap-y-5 text-sm font-medium">
 
             <Link href="/">Home</Link>
-            <Link href="/#about_us">About Us</Link>
+            <Link href="/about-us">About Us</Link>
             <Link href="/#faqs_section">FAQ</Link>
 
             {/* ⭐ Help Center link works */}
