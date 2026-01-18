@@ -63,7 +63,9 @@ export default function PostCard({
   const [loading, setLoading] = useState(false);
 
   const { profile } = useProfileStore();
-    const currentUserId = profile?.user_id;
+  const currentUserId = profile?.user_id;
+  const [removePostImage, setRemovePostImage] = useState(false);
+
 
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editedPostContent, setEditedPostContent] = useState(content);
@@ -337,6 +339,11 @@ export default function PostCard({
   };
 
   const handleSavePost = async (postId: string) => {
+    if (!editedPostContent.trim() && !editedPostImage && !removePostImage) {
+      toast.error("Post cannot be empty.");
+      return;
+    }
+
     try {
       setUploadingPostImage(true);
       const { post } = await import("@/app/services/post");
@@ -344,7 +351,7 @@ export default function PostCard({
       const fd = new FormData();
       fd.append("content", editedPostContent || "");
 
-      // Validate risky contact info
+      // Handle risky content
       const forbiddenPatterns = [
         /\b\d{7,15}\b/g, // phone numbers
         /\+?\d{1,4}[\s-]?\(?\d+\)?[\s-]?\d+[\s-]?\d+/g, // intl phone
@@ -363,23 +370,52 @@ export default function PostCard({
         return;
       }
 
-      if (editedPostImage) fd.append("image", editedPostImage);
+      // ✅ Image handling
+      if (editedPostImage) {
+        fd.append("image", editedPostImage); // Upload new image
+      } else if (removePostImage) {
+        fd.append("remove_image", "true"); // Remove existing image
+      }
 
       await post.update(postId, fd);
-
       toast.success("Post updated successfully!");
-      setEditingPostId(null);
-      setEditedPostImage(null);
 
-      if (shouldReload){
-        onReloadPosts()
+      // Reset editing states
+      setEditingPostId(null);
+      setEditedPostContent("");
+      setEditedPostImage(null);
+      setRemovePostImage(false);
+
+      // ✅ Update local post state
+      if (setMyPosts) {
+        setMyPosts((prevPosts: any[]) =>
+          prevPosts.map((p) => {
+            if (p.id !== postId) return p;
+
+            // Determine new image value
+            const newImage = removePostImage
+              ? null
+              : editedPostImage
+              ? URL.createObjectURL(editedPostImage) // temporary preview
+              : p.image; // keep existing
+
+            return { ...p, content: editedPostContent, image: newImage };
+          })
+        );
+      }
+
+      // Optional: reload from server if needed
+      if (shouldReload) {
+        onReloadPosts();
       }
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Failed to update post.");
+      console.error(error);
     } finally {
       setUploadingPostImage(false);
     }
   };
+
 
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -641,16 +677,19 @@ export default function PostCard({
               className="w-full border bg-white rounded-lg p-2"
             />
 
-            {(editedPostImage || image) && (
+            {(editedPostImage || (image && !removePostImage)) && (
               <div className="relative w-40 h-40 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
                 <img
                   src={
                     editedPostImage
                       ? URL.createObjectURL(editedPostImage)
-                      : image!.startsWith("http")
-                        ? image!
-                        : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
+                      : image && !removePostImage
+                        ? image.startsWith("http")
+                          ? image
+                          : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
+                        : ""
                   }
+
                   alt="Post preview"
                   className="w-full h-full object-contain"
                 />
@@ -658,7 +697,15 @@ export default function PostCard({
                 {/* ❌ Remove image */}
                 <button
                   type="button"
-                  onClick={() => setEditedPostImage(null)}
+                  onClick={() => {
+                    setEditedPostImage(null);
+                    setRemovePostImage(true);
+
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+
                   className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-1 hover:bg-red-600 transition"
                 >
                   <X className="w-4 h-4" />
