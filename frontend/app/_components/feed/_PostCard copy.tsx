@@ -38,7 +38,6 @@ export default function PostCard({
   is_liked = false,
   is_bookmarked = false,
   created_at,
-  updated_at,
   myPosts,
   setMyPosts,
   post,
@@ -99,12 +98,6 @@ export default function PostCard({
   const [repostLoading, setRepostLoading] = useState(false);
   const comments = commentsByPost[id] || [];
   const isFollowing = followingStatus[author.user_id] ?? author.is_following ?? false;
-
-  const created = new Date(created_at).getTime()
-  const updated = new Date(updated_at).getTime()
-
-  const isEdited = Math.abs(updated - created) > 1000
-
 
   const getProfileSrc = (url?: string | null) => {
     if (!url) return DEFAULT_PROFILE_PICTURE;
@@ -481,14 +474,10 @@ export default function PostCard({
                 
                 {
                   author.job && (
-                    <p className="text-gray-600 text-[13px]">{author.job}</p>
+                    <p className="text-gray-500 text-[13px]">{author.job}</p>
                   )
                 }
-                <div className="flex gap-1 text-[11px] text-gray-500">
-                  <p className="">{formatTimeAgo(created_at)}</p>
-                  {isEdited && <p>| Edited</p>}
-                </div>
-
+                <p className="text-[11px] text-gray-400">{formatTimeAgo(created_at)}</p>
               </div>
             </div>
           </a>
@@ -641,31 +630,23 @@ export default function PostCard({
               className="w-full border bg-white rounded-lg p-2"
             />
 
-            {(editedPostImage || image) && (
-              <div className="relative w-40 h-40 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
-                <img
-                  src={
-                    editedPostImage
-                      ? URL.createObjectURL(editedPostImage)
-                      : image!.startsWith("http")
-                        ? image!
-                        : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
-                  }
-                  alt="Post preview"
-                  className="w-full h-full object-contain"
-                />
-
-                {/* ❌ Remove image */}
-                <button
-                  type="button"
-                  onClick={() => setEditedPostImage(null)}
-                  className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-1 hover:bg-red-600 transition"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
+            {editedPostImage ? (
+              <img
+                src={URL.createObjectURL(editedPostImage)}
+                alt="Preview"
+                className="w-full max-h-48 object-cover rounded-md"
+              />
+            ) : image ? (
+              <img
+                src={
+                  image.startsWith("http")
+                    ? image
+                    : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${image}`
+                }
+                alt="Post image"
+                className="rounded-md mb-2 w-full h-auto"
+              />
+            ) : null}
 
             {/* Hidden file input */}
             <input

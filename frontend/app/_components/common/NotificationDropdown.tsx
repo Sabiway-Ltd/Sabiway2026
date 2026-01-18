@@ -130,7 +130,7 @@ useEffect(() => {
                       setOpen(false);
                     }}
                     className={`flex items-start gap-3 p-2 rounded-lg transition ${
-                      n.is_read ? "bg-gray-50 hover:bg-gray-100" : "bg-[#008753]/10 hover:bg-[#008753]/20"
+                      n.is_read ? "bg-gray-50 hover:bg-gray-100" : "bg-[#008753]/5 hover:bg-[#008753]/10"
                     }`}
                   >
                     <img
@@ -141,7 +141,8 @@ useEffect(() => {
 
                     <div className="flex-1">
                       <p className="text-sm">
-                        <span className="font-semibold">{n.actor.full_name}</span> {n.message}
+                        <span className="font-semibold">{n.actor.full_name}</span>{" "}
+{n.message.replace(/^@\w+\s*/, "")}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(n.created_at).toLocaleString("en-GB")}

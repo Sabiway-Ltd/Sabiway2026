@@ -49,7 +49,7 @@ export default function Aside() {
               return (
                 <a href={`/hashtag/${encodeURIComponent(tag.tag)}`}
                   key={idx}
-                  className={`px-4 py-2 border rounded-md text-sm font-medium shadow-sm transition
+                  className={`px-4 py-2 border rounded-md text-sm font-medium shadow transition
                     ${isActive ? "bg-[#008753] text-white border-[#008753]" : "bg-white text-gray-700 hover:bg-gray-100"}
                     ${loadingHashtag && !isActive ? "opacity-60 cursor-wait" : ""}`}
                 >

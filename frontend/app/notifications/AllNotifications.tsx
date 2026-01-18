@@ -154,7 +154,7 @@ export default function AllNotifications() {
                 <div className="flex-1">
                   <p className="text-sm text-gray-800">
                     <span className="font-semibold">{notif.actor.full_name}</span>{" "}
-                    {notif.message}
+{notif.message.replace(/^@\w+\s*/, "")}
                   </p>
 
                   <p className="text-xs text-gray-500 mt-1">

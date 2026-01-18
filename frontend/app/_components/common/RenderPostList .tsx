@@ -55,6 +55,12 @@ export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false,
               ? post.original_post_data.created_at
               : post.created_at
           }
+          updated_at={
+            post.original_post_data
+              ? post.original_post_data.updated_at
+              : post.updated_at
+          }
+          
           // onReloadPosts={() => reloadFn(post.id)}
           onReloadPosts={reloadFn}
           clickable={clickable}

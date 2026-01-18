@@ -79,7 +79,7 @@ export default function PeopleYouMayKnow() {
           return (
             <div
               key={profile.user_id}
-              className="flex items-center gap-x-2 justify-between bg-white  p-3 rounded-lg transition"
+              className="flex items-center gap-x-2 justify-between bg-white shadow  p-3 rounded-lg transition"
             >
               <a href={`/profile/${profile.username}`}>
                 <div className="flex items-center gap-3">
