@@ -1,4 +1,5 @@
 // app/layout.tsx
+import type { Metadata } from "next";
 import "./globals.css";
 import { Montserrat } from "next/font/google";
 import { Toaster } from "react-hot-toast";
@@ -6,40 +7,92 @@ import { Toaster } from "react-hot-toast";
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  variable: "--font-montserrat",
 });
 
-
-export const metadata = {
-  title: "SabiWay",
-  description: "Find trusted service providers near you in Nigeria",
+export const metadata: Metadata = {
+  title: {
+    default: "SabiWay – Trusted Local Services in Nigeria",
+    template: "%s | SabiWay",
+  },
+  description:
+    "SabiWay is a people-powered service marketplace helping Nigerians at home and in the diaspora book verified local professionals with confidence.",
+  keywords: [
+    "SabiWay",
+    "Nigerian service marketplace",
+    "trusted artisans in Nigeria",
+    "book services in Nigeria",
+    "Nigerian plumbers",
+    "electricians in Nigeria",
+    "cleaners in Nigeria",
+    "handyman Nigeria",
+    "local services Nigeria",
+    "diaspora services Nigeria",
+  ],
   openGraph: {
-    title: "SabiWay",
-    description: "Find trusted service providers near you in Nigeria",
+    title: "SabiWay – Trusted Local Services in Nigeria",
+    description:
+      "Book verified Nigerian service providers with confidence. From barbers to plumbers, SabiWay connects you to trusted local professionals—wherever you are.",
     url: "https://www.sabiway.com",
     siteName: "SabiWay",
     images: [
       {
-        url: "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png", // MUST be full URL
+        url: "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png",
         width: 1200,
         height: 630,
-        alt: "SabiWay Preview Image",
+        alt: "SabiWay – Trusted Nigerian Service Providers",
       },
     ],
+    locale: "en_NG",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SabiWay",
-    description: "Find trusted service providers near you in Nigeria",
-    images: ["https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png"],
+    title: "SabiWay – Trusted Local Services in Nigeria",
+    description:
+      "Find and book verified Nigerian service providers with confidence. Built for Nigerians at home and abroad.",
+    images: [
+      "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png",
+    ],
+    creator: "@sabiway",
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={montserrat.className}>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "SabiWay",
+            url: "https://www.sabiway.com",
+            logo:
+              "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png",
+            description:
+              "SabiWay is a Nigerian-led service marketplace connecting customers with verified local professionals across Nigeria.",
+            sameAs: [
+              "https://x.com/sabiway",
+              "https://www.instagram.com/sabiway",
+              "https://www.linkedin.com/company/sabiway",
+            ],
+          }),
+        }}
+      />
+
+      <body className={`${montserrat.variable} antialiased`}>
         {children}
 
         <Toaster
