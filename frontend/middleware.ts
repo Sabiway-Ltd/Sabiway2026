@@ -14,9 +14,26 @@ const PUBLIC_ROUTES = [
   "/about-us"
 ];
 
+const PUBLIC_ASSETS = [
+  "/favicon.ico",
+  "/favicon-16x16.png",
+  "/favicon-32x32.png",
+  "/apple-touch-icon.png",
+  "/android-chrome-192x192.png",
+  "/android-chrome-512x512.png",
+  "/site.webmanifest",
+];
+
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("access")?.value;
+  
   const path = req.nextUrl.pathname;
+
+
+  if (PUBLIC_ASSETS.includes(path)) {
+    return NextResponse.next();
+  }
+
+  const token = req.cookies.get("access")?.value;
 
   const isPublic =
     PUBLIC_ROUTES.includes(path) ||
@@ -39,6 +56,7 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|pdf)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|site.webmanifest|apple-touch-icon.png|android-chrome-192x192.png|android-chrome-512x512.png|favicon-16x16.png|favicon-32x32.png|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|pdf)$).*)",
   ],
 };
+
