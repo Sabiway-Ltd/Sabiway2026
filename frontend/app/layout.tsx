@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     siteName: "SabiWay",
     images: [
       {
-        url: "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png",
+        url: "https://www.sabiway.com/android-chrome-512x512.png",
         width: 1200,
         height: 630,
         alt: "SabiWay – Trusted Nigerian Service Providers",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     description:
       "Find and book verified Nigerian service providers with confidence. Built for Nigerians at home and abroad.",
     images: [
-      "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png",
+      "https://www.sabiway.com/android-chrome-512x512.png",
     ],
     creator: "@sabiway",
   },
@@ -88,7 +88,7 @@ export default function RootLayout({
             name: "SabiWay",
             url: "https://www.sabiway.com",
             logo:
-              "https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564358/Group_3_2_1_tg69iu_rj7pko.png",
+              "https://www.sabiway.com/android-chrome-512x512.png",
             description:
               "SabiWay is a Nigerian-led service marketplace connecting customers with verified local professionals across Nigeria.",
             sameAs: [
