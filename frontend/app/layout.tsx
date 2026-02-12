@@ -27,6 +27,7 @@ export const metadata: Metadata = {
     "SabiWay is a people-powered service marketplace helping Nigerians at home and in the diaspora book verified local professionals with confidence.",
   keywords: [
     "SabiWay",
+    "SabiForum",
     "Nigerian service marketplace",
     "trusted artisans in Nigeria",
     "book services in Nigeria",
