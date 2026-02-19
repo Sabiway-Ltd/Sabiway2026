@@ -25,7 +25,7 @@ def health(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("health/", health),
+    path("api/health/", include("health.urls")),
     path("api/auth/", include("accounts.urls")),
     path("docs/", include("docs.urls")),  # 👈 docs app
     path("api/profiles/", include("profiles.urls")),

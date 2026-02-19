@@ -119,6 +119,7 @@ INSTALLED_APPS = [
     "posts",
     "search",
     "notifications",
+    "health",
 
     # Third-party apps
     "rest_framework",
@@ -169,13 +170,23 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 # ---------------------------------------------------------------------
 # Use DATABASE_URL from .env if available, otherwise SQLite
 
+# DATABASES = {
+#     "default": dj_database_url.parse(
+#         "postgresql://sabiway_db_xvbl_user:Gzf1hCVwPZDJg1uSiACNO986CB4VYeLF@dpg-d61reqkhg0os73d8il00-a.oregon-postgres.render.com/sabiway_db_xvbl",
+#         conn_max_age=600,
+#         ssl_require=True,  # Render PostgreSQL requires SSL
+#     )
+# }
+
+
 DATABASES = {
     "default": dj_database_url.parse(
-        "postgresql://sabiway_db_xvbl_user:Gzf1hCVwPZDJg1uSiACNO986CB4VYeLF@dpg-d61reqkhg0os73d8il00-a.oregon-postgres.render.com/sabiway_db_xvbl",
+        "postgresql://postgres.wnnjsbdzbavxfezdyues:sabiwaypassw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres",
         conn_max_age=600,
-        ssl_require=True,  # Render PostgreSQL requires SSL
+        ssl_require=True,  # Supabase PostgreSQL requires SSL
     )
 }
+
 
 
 
