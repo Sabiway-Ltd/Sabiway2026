@@ -38,7 +38,7 @@ export default function Herosection({ HandleWaitListPopUp }) {
       <div className="flex justify-center md:justify-end relative z-20 md:mt-0">
         <div className="relative">
           <img
-            src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1761610791/Hero-phone-mockup_bdhz4b.png"
+            src="/Hero-phone-mockup_bdhz4b.png"
             alt="SabiWay App Mockup"
             className="w-full h-auto rounded-xl z-20 drop-shadow-lg"
           />
