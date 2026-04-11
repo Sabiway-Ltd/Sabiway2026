@@ -282,7 +282,7 @@ useEffect(() => {
         <main className="mx-auto md:pb-8 pb-2 flex justify-center w-full flex-1 ">
           <div className=" w-full px-2 ">
             {/* 🧩 Profile Header */}
-            <div className="flex flex-row  items-center  gap-4 mb-3 relative bg-[#008753]/5 rounded-lg pb-5 pt-3 md:pb-7 md:pt-6 md:px-4 px-3">
+            <div className="flex flex-row  items-start  gap-4 mb-3 relative bg-[#008753]/5 rounded-lg pb-5 pt-3 md:pb-7 md:pt-6 md:px-4 px-3">
               <div className="relative w-[75px] h-[75px]">
                 <div className="relative w-20 h-20 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
                   <button
@@ -339,7 +339,7 @@ useEffect(() => {
               <div>
                 <div className="">
                   <h1 className="text-xl text-left font-bold text-[#008753]">{profile.full_name}</h1>
-                  <div className="flex items-center  text-sm">
+                  <div className="flex items-start  text-sm">
                     <p className=" text-sm font-medium text-gray-500">
                     {
                       profile.job ? 

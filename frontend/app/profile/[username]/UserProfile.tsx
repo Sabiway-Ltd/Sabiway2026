@@ -76,7 +76,7 @@ export default function UserProfile({ username }: ProfileProps) {
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 relative bg-[#008753]/5 rounded-lg py-5 px-4.5">
         {/* Row 1: Profile picture + info */}
-        <div className="flex items-start lg:gap-4 md:gap-1 lg:w-[75%] md:w-[60%] w-full">
+        <div className="flex items-start lg:gap-4 gap-2 lg:w-[75%] md:w-[60%] w-full">
           {/* Profile Picture */}
           <div className="relative w-[80px] h-[80px] md:w-[100px] md:h-[100px]">
             <div className="relative w-20 h-20 md:w-24 md:h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
