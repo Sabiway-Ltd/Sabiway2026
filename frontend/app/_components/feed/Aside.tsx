@@ -75,7 +75,7 @@ export default function Aside() {
               <a href={`/profile/${c.username}`} key={c.user_id}>
                 <div
                   
-                  className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm"
+                  className="flex items-start gap-3 bg-white p-3 rounded-lg shadow-sm"
                 >
                   <div className="w-10 h-10">
                     <img
@@ -90,7 +90,7 @@ export default function Aside() {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   </div>
-                  <div>
+                  <div className="w-[70%]">
                     <p className="text-[13.5px] font-semibold">{c.full_name}</p>
                               
                     <p className=" text-xs text-gray-500">

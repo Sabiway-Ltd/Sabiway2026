@@ -76,7 +76,7 @@ export default function UserProfile({ username }: ProfileProps) {
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 relative bg-[#008753]/5 rounded-lg py-5 px-4.5">
         {/* Row 1: Profile picture + info */}
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-start lg:gap-4 md:gap-1 lg:w-[75%] md:w-[60%] w-full">
           {/* Profile Picture */}
           <div className="relative w-[80px] h-[80px] md:w-[100px] md:h-[100px]">
             <div className="relative w-20 h-20 md:w-24 md:h-24 py-1 px-1 rounded-full overflow-hidden shadow-sm bg-[#0087530D]/50">
@@ -101,10 +101,10 @@ export default function UserProfile({ username }: ProfileProps) {
           </div>
 
           {/* Profile Info */}
-          <div className="flex-1">
+          <div className=" w-[75%] md:w-[60%]">
             <h1 className="text-base md:text-xl font-bold text-[#008753]">{full_name}</h1>
 
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 ">
               <p className="text-sm md:text-[0.95rem] font-medium text-gray-500 truncate max-w-[200px] sm:max-w-full">
                 {job ? job : username.replace('%40', '@')}
               </p>

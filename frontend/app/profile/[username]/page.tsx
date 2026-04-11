@@ -26,7 +26,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 mt-4">
+        <main className="flex-[1_1_0%] min-w-0 mt-4">
           <UserProfile username={username as string} currentUserId={user?.user_id} />
         </main>
 

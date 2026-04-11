@@ -82,7 +82,7 @@ export default function PeopleYouMayKnow() {
               className="flex items-center gap-x-2 justify-between bg-white shadow  p-3 rounded-lg transition"
             >
               <a href={`/profile/${profile.username}`}>
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   {profile.profile_picture ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shrink-0">
                       <img
@@ -101,7 +101,7 @@ export default function PeopleYouMayKnow() {
                     </div>
                   )}
 
-                  <div>
+                  <div className="w-[80%]">
                     <p className="text-[13.5px] font-semibold">{profile.full_name}</p>
                               
                     <p className=" text-xs text-gray-500">

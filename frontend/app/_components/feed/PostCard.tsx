@@ -504,15 +504,15 @@ export default function PostCard({
 
       <div>
         {/* Header */}
-        <div className="flex  justify-between items-center gap-3">
+        <div className="flex  justify-between items-start gap-2 ">
           <a href={`/profile/${author?.username?.replace(/^@/, '')}`}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <img
                 src={getProfileSrc(author.profile_picture)}
                 alt={author.full_name}
                 className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm"
               />
-              <div>
+              <div className="w-[70%]">
                 <p className="font-semibold text-[13.5px]">{author.full_name}</p>
                 
                 {
@@ -536,7 +536,7 @@ export default function PostCard({
                   onClick={handleFollowToggle}
                   disabled={followingLoading}
                   className={`ml-auto md:px-3 py-1  rounded-sm text-sm font-medium flex 
-                    text-[#008753] hover:bg-[#008753]/30 
+                    text-[#008753] hover:bg-[#008753]/30  md:w-[5rem] w-[3rem]
                     items-center justify-center gap-2 transition-all duration-200 
                     ${followingLoading ? "opacity-70 cursor-not-allowed hidden" : ""}`}
                 >
