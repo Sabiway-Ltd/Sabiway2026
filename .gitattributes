@@ -1,0 +1,57 @@
+# Line-ending normalization.
+#
+# This repository's working tree had a pre-existing mix of CRLF and LF line
+# endings (inherited from how it was originally checked out), which made
+# `git status` and `git diff` report nearly every file as changed even when
+# nothing meaningful had changed. This file fixes that going forward.
+#
+# `text=auto` tells Git to detect text files automatically and normalize
+# their line endings to LF inside the repository (the blob Git actually
+# stores and diffs), while `eol=lf` also checks them out as LF in the
+# working tree, so the same file looks identical whether you're on Windows,
+# macOS, or Linux, and `git diff` only ever shows real content changes.
+#
+# This file changes how *future* commits are normalized. It does not, by
+# itself, retroactively rewrite files already on disk. See the root
+# README's Known Issues for the one-time cleanup step if you want to fully
+# resolve the existing mismatch (git add --renormalize .), which should be
+# done as its own commit, separate from any real code change, so the diff
+# is easy to review and doesn't get mixed up with actual work.
+
+* text=auto eol=lf
+
+# Common source and config files: explicit for clarity, even though the
+# `text=auto` rule above already covers them.
+*.py text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
+
+# Windows batch/PowerShell scripts, if any get added later, should stay CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files: never touch these, no line-ending conversion, no text diff.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

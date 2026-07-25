@@ -10,12 +10,15 @@ This project provides a complete waitlist system for **SabiWay**, including:
 
 ## 📅 Project Information
 
+* **Founder & Product Owner:** Johnson Taiwo
 * **Date Completed:** September 24, 2025
 * **Developed By:** ChiAde Tech
 * **Authors:**
 
   * Chiamaka Nwankwu
   * Adesina Olagunju
+
+See [../Documentation/Waitlist_Documentation.md](../Documentation/Waitlist_Documentation.md) for the full technical documentation of this system, including its API surface and known issues.
 
 ---
 
