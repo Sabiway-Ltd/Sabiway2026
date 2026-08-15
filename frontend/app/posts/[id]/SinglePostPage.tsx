@@ -34,7 +34,7 @@ export default function SinglePostPage() {
       return
     };
     console.log("Reloading single post:", currentPost.id);
-    await getPostById(currentPost.id);
+    await getPostById(String(currentPost.id));
   };
 
 

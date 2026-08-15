@@ -43,6 +43,7 @@ export type Post = {
   updated_at?: string;
   original_post?: Post | null;
   original_post_data?: Post | null;
+  post?: Post;
 };
 
 export type Comment = {
@@ -134,9 +135,9 @@ export type PostState = {
   filterBySearch: (query: string, type?: "posts" | "profiles" | "hashtags") => Promise<unknown>;
   resetFilteredResults: () => void;
   updateComment: (commentId: string, content: string, postId: string, imageFile?: File) => Promise<unknown>;
-  deleteComment: (commentId: string, postId: string) => Promise<unknown>;
+  deleteComment: (commentId: string) => Promise<unknown>;
   updateReply: (replyId: string, content: string, commentId: string, imageFile?: File) => Promise<unknown>;
-  deleteReply: (replyId: string, commentId: string) => Promise<unknown>;
+  deleteReply: (replyId: string) => Promise<unknown>;
   repostPost: (id: string) => Promise<unknown>;
   unrepostPost: (id: string) => Promise<unknown>;
   getMyReposts: () => Promise<Post[]>;

@@ -6,7 +6,7 @@ import { Smile, Image as ImageIcon, Heart, MessageCircle } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { EmojiClickData } from "emoji-picker-react";
 import { toast } from "react-hot-toast";
-import { usePostStore } from "@/app/store/usePostStore";
+import { usePostStore, type Reply } from "@/app/store/usePostStore";
 import { useProfileStore } from "@/app/store/useProfileStore";
 import { isRiskyContent } from "@/app/utils/contentValidator";
 import { CLOUDINARY_CLOUD_NAME, getProfileSrc } from "@/app/helper";
@@ -35,7 +35,7 @@ interface Comment {
   likes: number;
   is_liked?: boolean;
   reply_count?: number;
-  replies?: Comment[];
+  replies?: Reply[];
   onReplySubmit?: (
     parentId: string | number,
     content: string,
@@ -200,12 +200,12 @@ export default function CommentThread({
   try {
     if (parentType === "reply") {
       // 🪄 Add nested reply under a reply
-      await addNestedReply(String(id), replyText, replyImage);
+      await addNestedReply(String(id), replyText, replyImage || undefined);
       // ✅ Refresh the replies for the parent comment
       await getRepliesByComment(String(comment));
     } else {
       // 🪄 Add reply under a main comment
-      await addReply(String(id), replyText, replyImage);
+      await addReply(String(id), replyText, replyImage || undefined);
       // ✅ Refresh replies for this comment
       await getRepliesByComment(String(id));
     }
@@ -304,7 +304,7 @@ const handleToggleReplies = async () => {
 
         // ✅ Refresh replies after deleting a reply
         if (comment) {
-          await getRepliesByComment(comment);
+          await getRepliesByComment(String(comment));
         }
 
       } else {
@@ -726,8 +726,8 @@ const handleToggleReplies = async () => {
               created_at={reply.created_at}
               image={reply.image}
               replies={reply.nested_replies || []} // ✅ pass nested replies explicitly
-              onLike={() => usePostStore.getState().likeReply(String(reply.id))}
-              onUnlike={() => usePostStore.getState().unlikeReply(String(reply.id))}
+              onLike={async () => { await usePostStore.getState().likeReply(String(reply.id)); }}
+              onUnlike={async () => { await usePostStore.getState().unlikeReply(String(reply.id)); }}
               reply_count={reply.nested_replies?.length || 0}
               comment={reply.comment}
               isReply

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import Navbar from "../_components/landing_page/Navbar";
 import Footer from "../_components/landing_page/Footer";
@@ -231,7 +231,7 @@ export default function HelpCenterPage() {
    ================= COMPONENTS BELOW ===============================
    ================================================================ */
 
-function FeatureCard({ icon, title, text }) {
+function FeatureCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <div className="flex justify-center sm:justify-start">{icon}</div>
@@ -243,7 +243,7 @@ function FeatureCard({ icon, title, text }) {
   );
 }
 
-function InfoCard({ title, text, children }) {
+function InfoCard({ title, text, children }: { title: string; text?: string; children?: ReactNode }) {
   return (
     <div className="bg-white rounded-2xl p-6 md:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h3 className="text-lg md:text-xl font-bold mb-3">{title}</h3>
@@ -261,8 +261,10 @@ function InfoCard({ title, text, children }) {
    ===================== UPDATED FAQ LIST ==========================
    ================================================================ */
 
-function FAQList({ faqs }) {
-  const [openFAQ, setOpenFAQ] = useState(null);
+type FAQ = { question: string; answer: string };
+
+function FAQList({ faqs }: { faqs: FAQ[] }) {
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
   return (
     <div className="mt-8 md:mt-10 space-y-4 sm:space-y-5 md:space-y-6">
@@ -308,7 +310,7 @@ function FAQList({ faqs }) {
   );
 }
 
-function ClientOrProviderCard({ title, subtitle, text, extra }) {
+function ClientOrProviderCard({ title, subtitle, text, extra }: { title: string; subtitle: string; text: string; extra?: ReactNode }) {
   return (
     <div className="bg-white rounded-3xl p-6 md:p-8 lg:p-10 text-left shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-300">
       <h2 className="text-2xl md:text-3xl font-bold">{title}</h2>
@@ -331,15 +333,16 @@ function ContactForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     setLoading(true);
 
     const formData = {
-      name: e.target.name.value,
-      email: e.target.email.value,
-      type: e.target.type.value,
-      message: e.target.message.value,
+      name: (form.elements.namedItem("name") as HTMLInputElement).value,
+      email: (form.elements.namedItem("email") as HTMLInputElement).value,
+      type: (form.elements.namedItem("type") as HTMLSelectElement).value,
+      message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
     };
 
     const response = await fetch("/api/contact", {

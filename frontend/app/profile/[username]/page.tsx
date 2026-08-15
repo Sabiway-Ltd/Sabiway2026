@@ -5,13 +5,11 @@
 import UserProfile from "@/app/profile/[username]/UserProfile";
 import CommunityNavbar from "@/app/_components/feed/CommunityNavbar";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/app/store/useAuthStore";
 import Aside from "@/app/_components/feed/Aside";
 import PeopleYouMayKnow from "@/app/_components/profile/PeopleYouMayKnow";
 
 export default function ProfilePage() {
   const { username } = useParams();
-  const { user } = useAuthStore();
 
   return (
     <div className="px-1">
@@ -27,7 +25,7 @@ export default function ProfilePage() {
 
         {/* Main Content */}
         <main className="flex-[1_1_0%] min-w-0 mt-4">
-          <UserProfile username={username as string} currentUserId={user?.user_id} />
+          <UserProfile username={username as string} />
         </main>
 
         {/* Right Sidebar */}

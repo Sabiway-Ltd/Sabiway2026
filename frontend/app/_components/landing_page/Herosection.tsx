@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-
-export default function Herosection({ HandleWaitListPopUp }) {
+export default function Herosection({ HandleWaitListPopUp }: { HandleWaitListPopUp: () => void }) {
   return (
     <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 px-6 sm:px-10 md:px-16 pt-24 md:pt-40 pb-24 md:pb-36 items-center relative overflow-hidden">
 

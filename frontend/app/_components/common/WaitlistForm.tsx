@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import axios from "axios";
 import { WAITLIST_URL } from "@/app/utils/MyConstants";
 
 
-export default function WaitlistForm({ onSuccess, show }) {
+type WaitlistFormProps = {
+  onSuccess?: () => void;
+  show: boolean;
+};
+
+export default function WaitlistForm({ onSuccess, show }: WaitlistFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +22,7 @@ export default function WaitlistForm({ onSuccess, show }) {
     success: true,
   });
 
-  const popupRef = useRef(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   if (!show) return null; // Don't render if show is false
 
@@ -32,11 +37,11 @@ export default function WaitlistForm({ onSuccess, show }) {
   };
 
   // Show the success/error popup
-  const showPopup = (title, message, success = true) => {
+  const showPopup = (title: string, message: string, success = true) => {
     setPopup({ show: true, title, message, success });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!name.trim() || !email.trim()) {
@@ -65,11 +70,11 @@ export default function WaitlistForm({ onSuccess, show }) {
           false
         );
       }
-    } catch (error) {
-      if (error.response) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
         showPopup(
           "Error ❌",
-          error.response.data.message || `Request failed (${error.response.status})`,
+          error.response.data?.message || `Request failed (${error.response.status})`,
           false
         );
       } else {
@@ -86,7 +91,7 @@ export default function WaitlistForm({ onSuccess, show }) {
       <div
         className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/20 backdrop-blur-sm"
         onClick={(e) => {
-          if (popupRef.current && !popupRef.current.contains(e.target)) {
+          if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
             onSuccess && onSuccess(); // Click outside closes main modal
           }
         }}
