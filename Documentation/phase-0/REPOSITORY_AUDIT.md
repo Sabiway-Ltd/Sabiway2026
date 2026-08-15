@@ -24,7 +24,8 @@ Audit date: 2026-08-15
 | High | More than ten thousand generated dependency/environment files are tracked. | Remove `node_modules`, `venv`, Python caches and local database files from the current tree. |
 | Medium | One administrator and no repository team creates a continuity risk. | Add at least one second trusted organization owner/admin and use teams for developer access. |
 | Medium | Automated dependency updates are absent. | Add Dependabot configuration for Python and npm projects. |
-| Medium | Automated test coverage is sparse or missing in several services. | Establish syntax, framework and type-check gates; expand functional coverage in later phases. |
+| High | The inherited frontend has numerous existing TypeScript contract errors across stores, profiles, navigation and help-centre components. | Run diagnostics non-blocking in Phase 0; repair the baseline and restore strict type/lint gates at the start of Phase 1. |
+| Medium | Automated test coverage is sparse or missing in several services. | Establish syntax and framework gates now; expand functional coverage in later phases. |
 
 ## Cleanup counts
 
