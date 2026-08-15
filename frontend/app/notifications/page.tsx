@@ -7,7 +7,7 @@ import Aside from "../_components/feed/Aside";
 import { useState } from "react";
 import AllNotifications from "./AllNotifications";
 
-export default function page() {
+export default function Page() {
     const [showPostBox, setShowPostBox] = useState(false);
 
 

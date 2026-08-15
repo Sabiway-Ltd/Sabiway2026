@@ -92,7 +92,7 @@ export default function WaitlistForm({ onSuccess, show }: WaitlistFormProps) {
         className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/20 backdrop-blur-sm"
         onClick={(e) => {
           if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-            onSuccess && onSuccess(); // Click outside closes main modal
+            onSuccess?.(); // Click outside closes main modal
           }
         }}
       >
@@ -105,7 +105,7 @@ export default function WaitlistForm({ onSuccess, show }: WaitlistFormProps) {
           <div className=" items-center mb-4">
             <div className="flex justify-end">
                 <button
-                onClick={() => onSuccess && onSuccess()}
+                onClick={() => onSuccess?.()}
                 className="text-gray-400 hover:text-gray-600 transition text-2xl leading-none"
                 >
                 ×

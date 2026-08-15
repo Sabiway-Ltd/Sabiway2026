@@ -75,11 +75,9 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - name: TypeScript baseline
-        continue-on-error: true
+      - name: TypeScript
         run: npm run type-check
-      - name: Lint baseline
-        continue-on-error: true
+      - name: Lint
         run: npm run lint
 
   waitlist-syntax:

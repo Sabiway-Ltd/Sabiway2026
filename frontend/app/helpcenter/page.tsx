@@ -79,26 +79,23 @@ export default function HelpCenterPage() {
 
       {/* ========================= THREE INFORMATION CARDS ========================= */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 mt-12 md:mt-20 space-y-6 md:space-y-10">
-        <InfoCard
-          title="What We Are Building"
-          children={
-            <ul className="list-disc pl-5 md:pl-6 space-y-2 text-gray-700 text-sm md:text-base lg:text-lg leading-relaxed">
-              <li>
-                We are creating more than just a platform. We are building a
-                community where people can find and hire vetted and highly skilled
-                local service providers with ease.
-              </li>
-              <li>
-                Local service providers can showcase their expertise, build their
-                reputation and get access to users.
-              </li>
-              <li>
-                People from various backgrounds can connect, share ideas and get
-                answers to their questions.
-              </li>
-            </ul>
-          }
-        />
+        <InfoCard title="What We Are Building">
+          <ul className="list-disc pl-5 md:pl-6 space-y-2 text-gray-700 text-sm md:text-base lg:text-lg leading-relaxed">
+            <li>
+              We are creating more than just a platform. We are building a
+              community where people can find and hire vetted and highly skilled
+              local service providers with ease.
+            </li>
+            <li>
+              Local service providers can showcase their expertise, build their
+              reputation and get access to users.
+            </li>
+            <li>
+              People from various backgrounds can connect, share ideas and get
+              answers to their questions.
+            </li>
+          </ul>
+        </InfoCard>
 
         <InfoCard
           title="Where We Are Going"

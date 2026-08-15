@@ -68,9 +68,10 @@ export default function CommentThread({
   image, // ✅ destructure
   replies: childReplies = [],
 }: Comment) {
-  let { repliesByComment, getRepliesByComment, addNestedReply, addReply, nestedReplies } = usePostStore();
-  repliesByComment = repliesByComment || {};
-  nestedReplies = nestedReplies || {};
+  const postStore = usePostStore();
+  const { getRepliesByComment, addNestedReply, addReply } = postStore;
+  const repliesByComment = postStore.repliesByComment || {};
+  const nestedReplies = postStore.nestedReplies || {};
 
   const [showReplies, setShowReplies] = useState(false);
   const [localLikes, setLocalLikes] = useState(likes);

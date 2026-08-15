@@ -9,7 +9,7 @@ import MyPostsMain from "./MyPostsMain";
 import MyBookmarksMain from "./MyBookmarksMain";
 import MyProfile from "./MyProfile";
 
-export default function page() {
+export default function Page() {
     const [showPostBox, setShowPostBox] = useState(false);
 
 
