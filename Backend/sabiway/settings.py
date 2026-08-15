@@ -39,6 +39,64 @@ SECRET_KEY = env("SECRET_KEY")
 # ])
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+
+
+# Google OAuth
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
+
+# For Resend API
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="SabiWay <no-reply@sabiway.com>")
+ADMIN_REPORT_EMAIL = env("ADMIN_REPORT_EMAIL", default="admin@sabiway.com")
+
+# ---------------------------------------------------------------------
+# URLs
+# ---------------------------------------------------------------------
+# Use Docker environment variables if provided, otherwise fallback to defaults
+# FRONTEND_URL = "http://localhost:3000"
+# BACKEND_URL = "http://localhost:8000"
+# EXPRESS_URL = "http://localhost:5000"
+
+
+# FOR VPS
+# FRONTEND_URL = "https://www.sabiway.com"
+# BACKEND_URL = "https://django.sabiway.com"
+# EXPRESS_URL = "https://express.sabiway.com"
+
+
+
+# For Render
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+BACKEND_URL = env("BACKEND_URL", default="http://localhost:8000")
+EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
+
+# Half VPS
+# FRONTEND_URL = "https://sabiway2025.vercel.app"
+# BACKEND_URL = "https://django.sabiway.com"
+
+
+
+# FRONTEND_URL = "https://sabiway2025.vercel.app"
+# BACKEND_URL = "https://sabiway-9wq4.onrender.com"
+
+
+
+
+
+GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
+
+
+# ---------------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_URL,
+    EXPRESS_URL,
+    "http://localhost:3000",  # in case you test locally outside Docker
+    "http://127.0.0.1:3000",
+    "https://sabiway2025.vercel.app",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 
