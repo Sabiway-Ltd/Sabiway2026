@@ -6,6 +6,7 @@ import { profile } from "../services/profile";
 
 export type Profile = {
   user_id: number;
+  initials?: string;
   username: string;
   full_name: string;
   email: string;

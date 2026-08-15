@@ -11,7 +11,7 @@ const API_URL = `${DJANGO_URL}/api`;
 
 
 export interface User {
-  id?: string;
+  id?: string | number;
   user_id?: number;
   full_name?: string;
   email?: string;

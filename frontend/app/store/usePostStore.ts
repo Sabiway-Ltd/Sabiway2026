@@ -11,8 +11,9 @@ import { DEFAULT_PROFILE_PICTURE } from "../helper";
 
 
 // ---------- Types ----------
-type Author = {
+export type Author = {
   user_id: number;
+  initials?: string;
   username: string;
   full_name: string;
   profile_picture?: string | null;
@@ -21,13 +22,13 @@ type Author = {
   job?: string;
 };
 
-type Hashtag = {
+export type Hashtag = {
   tag: string;
   use_count: number;
 };
 
-type Post = {
-  id: string;
+export type Post = {
+  id: string | number;
   author: Author;
   content: string;
   image: string | null;
@@ -40,12 +41,16 @@ type Post = {
   is_bookmarked?: boolean;
   created_at: string;
   updated_at?: string;
+  original_post?: Post | null;
+  original_post_data?: Post | null;
 };
 
-type Comment = {
-  id: string;
+export type Comment = {
+  id: string | number;
   user: Author;
-  post: string;
+  post: string | number;
+  comment?: string | number;
+  image?: string | null;
   content: string;
   likes_count: number;
   created_at: string;
@@ -53,10 +58,13 @@ type Comment = {
   reply_count?: number;
 };
 
-type Reply = {
-  id: string;
+export type Reply = {
+  id: string | number;
   user: Author;
-  comment: string;
+  comment: string | number;
+  parent_reply_id?: string | number | null;
+  image?: string | null;
+  nested_replies?: Reply[];
   content: string;
   likes_count: number;
   created_at: string;
@@ -104,12 +112,12 @@ export type PostState = {
   consumeRefresh: () => void;
   triggerBookmarksRefresh: () => void;
   consumeBookmarksRefresh: () => void;
-  getAllPosts: (page?: number) => Promise<unknown>;
-  getPostsByUsername: (username: string, page?: number) => Promise<unknown>;
+  getAllPosts: (page?: number | null) => Promise<unknown>;
+  getPostsByUsername: (username: string, page?: number | null) => Promise<unknown>;
   resetUserPosts: () => void;
-  getMyPosts: (page?: number) => Promise<unknown>;
+  getMyPosts: (page?: number | null) => Promise<unknown>;
   resetMyPosts: () => void;
-  getBookmarks: (page?: number) => Promise<unknown>;
+  getBookmarks: (page?: number | null) => Promise<unknown>;
   createPost: (data: FormData | object) => Promise<unknown>;
   getPostById: (id: string) => Promise<Post | null>;
   likePost: (id: string) => Promise<unknown>;
@@ -127,7 +135,7 @@ export type PostState = {
   resetFilteredResults: () => void;
   updateComment: (commentId: string, content: string, postId: string, imageFile?: File) => Promise<unknown>;
   deleteComment: (commentId: string, postId: string) => Promise<unknown>;
-  updateReply: (replyId: string, content: string, imageFile?: File) => Promise<unknown>;
+  updateReply: (replyId: string, content: string, commentId: string, imageFile?: File) => Promise<unknown>;
   deleteReply: (replyId: string, commentId: string) => Promise<unknown>;
   repostPost: (id: string) => Promise<unknown>;
   unrepostPost: (id: string) => Promise<unknown>;
@@ -196,7 +204,8 @@ export const usePostStore = create<PostState>((set, get) => ({
   //   set({ loading: true });
   //   const token = localStorage.getItem("access");
   //   if (!token) return set({ error: "Not logged in", loading: false });
- getAllPosts: async (page = 1) => {
+ getAllPosts: async (requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loading, nextPage } = get(); // ✅ Access current state first
     if (loading || (page !== nextPage && page !== 1)) return; // ✅ Prevent duplicate fetch
 
@@ -226,7 +235,8 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  getPostsByUsername: async (username: string, page = 1) => {
+  getPostsByUsername: async (username: string, requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loading, userNextPage } = get();
     if (loading || (page !== 1 && page !== userNextPage)) return;
 
@@ -255,7 +265,8 @@ export const usePostStore = create<PostState>((set, get) => ({
 
 
 
-  getMyPosts: async (page = 1) => {
+  getMyPosts: async (requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loadingMyPosts, nextMyPostsPage } = get();
 
     // Prevent double fetch
@@ -288,7 +299,8 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
 
-  getBookmarks: async (page = 1) => {
+  getBookmarks: async (requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loadingBookmarks, nextBookmarksPage } = get();
 
     // Prevent duplicate loads

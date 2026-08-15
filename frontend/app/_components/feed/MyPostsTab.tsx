@@ -5,21 +5,21 @@ import PostCard from "@/app/_components/feed/PostCard";
 export default function MyPostsTab() {
   const {
     myPosts,
-    fetchMyPosts,
-    myPostsHasMore,
+    getMyPosts,
+    hasMoreMyPosts,
     loadingMyPosts,
   } = usePostStore();
 
   const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchMyPosts();
-  }, []);
+    getMyPosts();
+  }, [getMyPosts]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && myPostsHasMore) {
-        fetchMyPosts();
+      if (entries[0].isIntersecting && hasMoreMyPosts) {
+        getMyPosts();
       }
     });
 
@@ -28,7 +28,7 @@ export default function MyPostsTab() {
     }
 
     return () => observer.disconnect();
-  }, [myPostsHasMore]);
+  }, [getMyPosts, hasMoreMyPosts]);
 
   return (
     <div>
