@@ -1,0 +1,26 @@
+# SabiWay repository hygiene
+.env
+.env.*
+!.env.example
+
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+*.sqlite
+*.sqlite3
+*.db
+
+.next/
+dist/
+build/
+coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+*.log
+.DS_Store

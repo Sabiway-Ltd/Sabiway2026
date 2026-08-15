@@ -31,24 +31,24 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # Core settings
 # ---------------------------------------------------------------------
 DEBUG = env("DEBUG", default=False)
-SECRET_KEY = "insecure-secret"
+SECRET_KEY = env("SECRET_KEY")
 # ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
 #     "localhost",
 #     "127.0.0.1",
 #     "sabiway-9wq4.onrender.com",
 # ])
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 
 # Google OAuth
-GOOGLE_CLIENT_ID = "935346913786-bbafum8k8qk3l42g4ijg007ft31r0p1e.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
 
 # For Resend API
-RESEND_API_KEY = "re_cV9BwHsi_GDtS6kPGHrTnJGpwD5Vf6HNQ"
-DEFAULT_FROM_EMAIL = "SabiWay <info@sabiway.com>"
-ADMIN_REPORT_EMAIL = "sabiway1@gmail.com"
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="SabiWay <no-reply@sabiway.com>")
+ADMIN_REPORT_EMAIL = env("ADMIN_REPORT_EMAIL", default="admin@sabiway.com")
 
 # ---------------------------------------------------------------------
 # URLs
@@ -67,9 +67,9 @@ ADMIN_REPORT_EMAIL = "sabiway1@gmail.com"
 
 
 # For Render
-FRONTEND_URL = "https://www.sabiway.com"
-BACKEND_URL = "https://backend.sabiway.com"
-EXPRESS_URL = "https://realtime.sabiway.com"
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+BACKEND_URL = env("BACKEND_URL", default="http://localhost:8000")
+EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
 
 # Half VPS
 # FRONTEND_URL = "https://sabiway2025.vercel.app"
@@ -172,24 +172,21 @@ WSGI_APPLICATION = "sabiway.wsgi.application"
 
 # DATABASES = {
 #     "default": dj_database_url.parse(
-#         "postgresql://sabiway_db_xvbl_user:Gzf1hCVwPZDJg1uSiACNO986CB4VYeLF@dpg-d61reqkhg0os73d8il00-a.oregon-postgres.render.com/sabiway_db_xvbl",
+# Production database credentials are supplied through DATABASE_URL.
 #         conn_max_age=600,
 #         ssl_require=True,  # Render PostgreSQL requires SSL
 #     )
 # }
 
 
+DATABASE_SSL_REQUIRE = env.bool("DATABASE_SSL_REQUIRE", default=False)
 DATABASES = {
-    "default": dj_database_url.parse(
-        "postgresql://postgres.wnnjsbdzbavxfezdyues:sabiwaypassw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres",
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=True,  # Supabase PostgreSQL requires SSL
+        ssl_require=DATABASE_SSL_REQUIRE,
     )
 }
-
-
-
-
 # ---------------------------------------------------------------------
 # Password validation
 # ---------------------------------------------------------------------
@@ -238,11 +235,10 @@ REST_FRAMEWORK = {
 # Cloudinary
 # ---------------------------------------------------------------------
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": "dk6ew5ikb",
-    "API_KEY": "753545332897427",
-    "API_SECRET": "ISyZy0BC8N7Lw870veJGhtIjx1A",
+    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default=""),
+    "API_KEY": env("CLOUDINARY_API_KEY", default=""),
+    "API_SECRET": env("CLOUDINARY_API_SECRET", default=""),
 }
-
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 import cloudinary

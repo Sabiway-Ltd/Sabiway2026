@@ -5,20 +5,20 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "check": "node --check server.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aicecommunity/aicerealtime.git"
+    "url": "https://github.com/Sabiway-Ltd/Sabiway2026.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/aicecommunity/aicerealtime/issues"
+    "url": "https://github.com/Sabiway-Ltd/Sabiway2026/issues"
   },
-  "homepage": "https://github.com/aicecommunity/aicerealtime#readme",
+  "homepage": "https://github.com/Sabiway-Ltd/Sabiway2026#readme",
   "dependencies": {
     "axios": "^1.13.2",
     "cors": "^2.8.5",

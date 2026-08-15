@@ -1,0 +1,40 @@
+# Phase 0 repository and security audit
+
+Audit date: 2026-08-15
+
+## Control baseline
+
+- Organization repository: `Sabiway-Ltd/Sabiway2026`
+- Visibility: private (verified after branch-protection creation)
+- Default branch: `main`
+- Connected account: `OlaoluwajohnsonT` with administrator permission
+- Direct collaborators found: one administrator
+- Repository teams found: none
+- Branch rulesets found before remediation: none
+- GitHub Actions workflows found before remediation: none
+
+## Findings
+
+| Priority | Finding | Phase 0 action |
+|---|---|---|
+| Critical | A tracked `ExpressJs/.env` exists in a public repository. | Remove from the current tree, add ignore rules and require credential rotation. |
+| Critical | Django configuration contains hard-coded secret, OAuth, email, database and media-service values. | Replace active values with environment lookups and publish placeholder templates. |
+| High | Realtime broadcast endpoints accept requests without service authentication. | Record as a release blocker; design a backend-to-realtime service credential before production. |
+| High | `main` had no protection rules. | A classic rule now exists, but GitHub marks it **Not enforced** while the repository is private on the organization free plan. Make the repository public or upgrade the organization plan. |
+| High | More than ten thousand generated dependency/environment files are tracked. | Remove `node_modules`, `venv`, Python caches and local database files from the current tree. |
+| Medium | One administrator and no repository team creates a continuity risk. | Add at least one second trusted organization owner/admin and use teams for developer access. |
+| Medium | Automated dependency updates are absent. | Add Dependabot configuration for Python and npm projects. |
+| High | The inherited frontend has numerous existing TypeScript contract errors across stores, profiles, navigation and help-centre components. | Run diagnostics non-blocking in Phase 0; repair the baseline and restore strict type/lint gates at the start of Phase 1. |
+| Medium | Automated test coverage is sparse or missing in several services. | Establish syntax and framework gates now; expand functional coverage in later phases. |
+
+## Cleanup counts
+
+The pre-remediation tree contained 10,803 files: 10,437 under committed dependency or virtual-environment directories and 3,535 Python cache/bytecode entries (some categories overlap). It also contained a local waitlist database.
+
+## Mandatory manual security action
+
+Rotate every credential that appeared in the copied repository or its history, including Django, database, Google OAuth, Resend and Cloudinary credentials. Deleting or replacing the current file does not invalidate credentials and does not purge Git history.
+
+## Branch-protection enforcement status
+
+A classic protection rule for `main` was created with one approval, resolved conversations, no administrator bypass, and required backend, hygiene, realtime and waitlist checks. GitHub currently displays the rule as **Not enforced** because the repository is private and Sabiway Ltd is not on GitHub Team or Enterprise.
