@@ -9,3 +9,4 @@
 | Realtime service authentication | Use a dedicated backend-to-realtime token or signed request scheme | Technical owner |
 | Staging ownership | Create separate staging credentials/data and name the release approver | Product/technical owner |
 | Frontend strict CI gate | Repair inherited TypeScript/lint debt and make both checks blocking before Phase 1 feature work proceeds | Technical owner |
+| Protection enforcement | Make the repository public as originally requested, or upgrade Sabiway Ltd to GitHub Team/Enterprise | Organization owner |
