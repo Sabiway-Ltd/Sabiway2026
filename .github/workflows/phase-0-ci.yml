@@ -1,0 +1,88 @@
+name: Phase 0 CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-0-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject generated files, local databases and secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          prohibited='(^|/)(node_modules|venv|\.venv|__pycache__)/|\.pyc$|(^|/)\.env$|\.(sqlite|sqlite3|db)$'
+          if git ls-files | grep -E "$prohibited"; then
+            echo "Prohibited generated, secret, or local data files are tracked."
+            exit 1
+          fi
+
+  backend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend
+    env:
+      SECRET_KEY: phase-0-ci-only-not-for-production
+      DEBUG: "False"
+      DATABASE_SSL_REQUIRE: "False"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Backend/requirements.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: python manage.py check
+
+  realtime-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ExpressJs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ExpressJs/package-lock.json
+      - run: npm ci
+      - run: npm run check
+
+  frontend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run type-check
+      - run: npm run lint
+
+  waitlist-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m compileall -q WaitList

@@ -4,14 +4,20 @@ import { Server } from "socket.io";
 import cors from "cors";
 
 const app = express();
-app.use(cors());
+const port = Number(process.env.PORT ?? 5000);
+const corsOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({ origin: corsOrigins }));
 app.use(express.json());
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Replace with your frontend domain in production
+    origin: corsOrigins
   },
 });
 
@@ -76,6 +82,6 @@ app.post("/broadcast-notification", (req, res) => {
   res.json({ status: "sent" });
 });
 
-server.listen(5000, () => {
-  console.log("Socket.io server running on port 5000");
+server.listen(port, () => {
+  console.log(`Socket.io server running on port ${port}`);
 });
