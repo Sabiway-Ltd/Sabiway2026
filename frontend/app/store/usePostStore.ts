@@ -638,7 +638,7 @@ unlikePost: async (id: string) => {
       if (!res.ok) throw new Error(`Failed to fetch replies: ${res.statusText}`);
       const data = await res.json();
 
-      const topLevelReplies = data.filter((reply) => reply.parent_reply_id === null);
+      const topLevelReplies = data.filter((reply: Reply) => reply.parent_reply_id === null);
 
       // ✅ Replace instead of merge
       set((state) => ({

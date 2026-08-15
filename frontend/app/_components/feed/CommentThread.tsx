@@ -20,7 +20,7 @@ const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 // ✅ Updated Comment interface
 interface Comment {
   id: string | number;
-  parentId?: string | number; // ✅ the parent comment or reply ID
+  parentId?: string | number | null; // ✅ the parent comment or reply ID
   postId?: string | number;
   parentType?: "comment" | "reply"; // ✅ to distinguish
   author: {
@@ -312,7 +312,7 @@ const handleToggleReplies = async () => {
 
         // ✅ Refresh replies for the parent comment after deleting a comment reply thread
         if (comment) {
-          await getRepliesByComment(comment);
+          await getRepliesByComment(String(comment));
         }
       }
 
@@ -517,7 +517,7 @@ const handleToggleReplies = async () => {
           {image && (
             <div className="mt-2">
               <img
-                src={getImageUrl(image)}
+                src={getImageUrl(image) ?? undefined}
                 alt="comment image"
                 className="max-h-48 rounded-md object-cover"
               />

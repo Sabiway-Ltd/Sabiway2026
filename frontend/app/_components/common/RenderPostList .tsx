@@ -4,7 +4,7 @@ import type { Post } from "@/app/store/usePostStore";
 type RenderPostListProps = {
   posts: Post[];
   emptyMessage: string;
-  reloadFn?: () => void | Promise<void>;
+  reloadFn?: (() => unknown) | ((page?: number | null) => unknown);
   clickable?: boolean;
   shouldReload?: boolean;
 };

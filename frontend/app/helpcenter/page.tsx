@@ -355,7 +355,7 @@ function ContactForm() {
 
     if (response.ok) {
       setSuccess(true);
-      e.target.reset();
+      form.reset();
     } else {
       alert("There was an error sending your message.");
     }

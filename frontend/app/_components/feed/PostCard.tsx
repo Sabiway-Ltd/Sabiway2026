@@ -116,27 +116,23 @@ export default function PostCard({
 
 
   const handleReplySubmit = async (
-    parentId: string, 
-    content: string, 
-    image?: File, 
-    isNested = false, 
-    commentId?: string
+    parentId: string | number,
+    content: string,
+    image?: File | null,
+    parentType: "comment" | "reply" = "comment"
   ) => {
     if (!content.trim() && !image) return;
-    
-    // Optional: risky content validation
+
     if (isRiskyContent(content)) {
       toast.error("Sharing contact info outside SabiWay is not allowed ❌");
       return;
     }
 
     try {
-      if (isNested && commentId) {
-        // Nested reply to a reply
-        await addNestedReply(parentId, content, image);
+      if (parentType === "reply") {
+        await addNestedReply(String(parentId), content, image || undefined);
       } else {
-        // Top-level reply to comment
-        await addReply(parentId, content, image);
+        await addReply(String(parentId), content, image || undefined);
       }
 
       // Optionally refresh comments after submitting

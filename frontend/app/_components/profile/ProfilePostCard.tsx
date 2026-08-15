@@ -26,10 +26,10 @@ export default function ProfilePostCard({ post }: { post: Post }) {
     setLoading(true);
     try {
       if (isBookmarked) {
-        await unbookmarkPost(post.id);
+        await unbookmarkPost(String(post.id));
         toast.success("Post unbookmarked");
       } else {
-        await bookmarkPost(post.id);
+        await bookmarkPost(String(post.id));
         toast.success("Post bookmarked");
       }
       setIsBookmarked(!isBookmarked);
@@ -69,7 +69,7 @@ export default function ProfilePostCard({ post }: { post: Post }) {
         <ProfileKebab
           handleCopyPostLink={handleCopyPostLink}
           handleBookmarkToggle={handleBookmarkToggle}
-          isBookmarked={isBookmarked}
+          isBookmarked={Boolean(isBookmarked)}
           loading={loading}
         />
       </div>
