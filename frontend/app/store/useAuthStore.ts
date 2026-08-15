@@ -10,8 +10,9 @@ const API_URL = `${DJANGO_URL}/api`;
 
 
 
-interface User {
+export interface User {
   id?: string;
+  user_id?: number;
   full_name?: string;
   email?: string;
   username?: string;
@@ -22,18 +23,23 @@ interface AuthState {
   user: User | null;
   onlineUsers: User[];
   loading: boolean;
+  access: string | null;
+  refresh: string | null;
 
   signup: (form: { full_name: string; email: string; password: string }) => Promise<boolean>;
   login: (form: { email: string; password: string }) => Promise<boolean>;
 
   logout: () => Promise<void>;
-  google_logged_in: (user: User) => void; 
+  google_logged_in: (user: User) => void;
+  loadUserFromStorage: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   onlineUsers: [],
   loading: false,
+  access: null,
+  refresh: null,
 
   // ✅ Signup
   signup: async (form) => {

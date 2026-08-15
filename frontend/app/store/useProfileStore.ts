@@ -13,7 +13,15 @@ export type Profile = {
   following_count: number;
   posts_count: number;
   phone_number?: string;
-  profile_picture?: string; 
+  profile_picture?: string;
+  bio?: string;
+  role?: string;
+  job?: string;
+  country?: string;
+  state?: string;
+  area?: string;
+  street?: string;
+  is_following?: boolean;
 };
 
 type ProfileState = {
@@ -23,6 +31,7 @@ type ProfileState = {
   otherProfile: Profile | null;
   error: string | null;
   topContributors: Profile[];
+  notFollowedProfiles: Profile[];
 
   followingStatus: Record<number, boolean>;
   setFollowingStatus: (userId: number, status: boolean) => void;
@@ -34,6 +43,9 @@ type ProfileState = {
   fetchMyFollowing: () => Promise<void>;
 
   getMyProfile: () => Promise<void>;
+  getProfileById: (userId: number) => Promise<void>;
+  getProfileByUsername: (username: string) => Promise<void>;
+  getNotFollowedProfiles: () => Promise<void>;
   updateProfile: (userId: number, data: Partial<Profile> | FormData) => Promise<Profile>; // ✅ fixed
   getAllProfiles: () => Promise<void>;
   getTopContributors: () => Promise<void>;
@@ -48,6 +60,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   otherProfile: null,
   error: null,
   topContributors: [],
+  notFollowedProfiles: [],
   followingStatus: {},
   myFollowers: [],
   myFollowing: [],
@@ -78,7 +91,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       set({ myFollowing: updatedFollowing });
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Follow toggle error:", err);
       console.error("Follow error:", err.response?.data || err.message);
       throw err;
