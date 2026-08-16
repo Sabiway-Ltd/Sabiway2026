@@ -1,14 +1,17 @@
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import mixins, permissions, status, viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import VerificationDocument, VerificationSubmission
 from .permissions import IsVerificationReviewer
 from .serializers import (
     VerificationDecisionSerializer,
+    VerificationDocumentSerializer,
     VerificationResubmitSerializer,
     VerificationSubmissionSerializer,
     VerificationSubmitSerializer,
@@ -17,6 +20,7 @@ from .services import audit, decrypt_document
 
 
 class VerificationSubmissionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -107,7 +111,9 @@ class VerificationSubmissionViewSet(mixins.ListModelMixin, mixins.RetrieveModelM
 
 
 class VerificationDocumentViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = VerificationDocumentSerializer
     queryset = VerificationDocument.objects.select_related("submission__professional__user")
 
     def _can_access(self, request, document):
