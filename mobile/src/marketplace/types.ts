@@ -1,35 +1,64 @@
+export type MarketplaceCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  icon?: string;
+  subcategories?: Array<{ id: number; name: string; slug: string }>;
+};
+
 export type MarketplaceListing = {
   id: string;
   title: string;
   description: string;
   price_from: string;
   currency: string;
+  pricing_note?: string;
   delivery_mode: "in_person" | "remote" | "both";
+  country?: string;
   state: string;
+  city?: string;
   area: string;
+  availability_text?: string;
+  available_now?: boolean;
+  moderation_status?: string;
   provider: {
     user_id: number;
     full_name: string;
     username: string;
     job?: string | null;
   };
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  };
+  category: MarketplaceCategory;
+  subcategory?: { id: number; name: string; slug: string } | null;
 };
 
-export type BookingRequest = {
+export type MarketplaceJob = {
   id: string;
-  listing_summary: {
-    id: string;
-    title: string;
-    provider: string;
-    price_from: string;
-    currency: string;
+  title: string;
+  description: string;
+  budget_min?: string | null;
+  budget_max?: string | null;
+  currency: string;
+  delivery_mode: "in_person" | "remote" | "both";
+  country?: string;
+  state?: string;
+  city?: string;
+  area?: string;
+  needed_by?: string | null;
+  response_count: number;
+  client: {
+    user_id: number;
+    full_name: string;
+    username: string;
   };
-  requested_for: string | null;
+  category: MarketplaceCategory;
+};
+
+export type JobResponse = {
+  id: string;
+  job_title: string;
   message: string;
-  status: "pending" | "accepted" | "declined" | "cancelled" | "completed";
+  proposed_price?: string | null;
+  currency: string;
+  status: "sent" | "shortlisted" | "declined" | "withdrawn";
 };
