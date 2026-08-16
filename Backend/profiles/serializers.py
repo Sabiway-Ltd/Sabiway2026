@@ -12,6 +12,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     posts_count = serializers.IntegerField(read_only=True)
     user_id = serializers.IntegerField(source="pk", read_only=True)
     is_following = serializers.SerializerMethodField()
+    is_verified = serializers.SerializerMethodField()
+    verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
@@ -21,11 +23,33 @@ class ProfileSerializer(serializers.ModelSerializer):
             "phone_number", "gender", "date_of_birth",
             "country", "state", "area", "street",
             "role", "job", "bio", "is_following", "address",
+            "is_verified", "verification_status",
         ]
         read_only_fields = (
             "email", "initials", "followers_count", "following_count",
-            "posts_count", "is_following", "address",
+            "posts_count", "is_following", "address", "is_verified", "verification_status",
         )
+
+    def _verification_state(self, instance):
+        if instance.role != "professional":
+            return "not_applicable"
+        try:
+            return instance.verification_submission.status
+        except Exception:
+            return "not_submitted"
+
+    def get_is_verified(self, obj):
+        return self._verification_state(obj) == "approved"
+
+    def get_verification_status(self, obj):
+        status = self._verification_state(obj)
+        request = self.context.get("request")
+        request_user = getattr(request, "user", None)
+        is_owner = bool(request_user and request_user.is_authenticated and obj.user_id == request_user.id)
+        is_staff = bool(request_user and request_user.is_authenticated and request_user.is_staff)
+        if is_owner or is_staff:
+            return status
+        return "approved" if status == "approved" else "unverified"
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
