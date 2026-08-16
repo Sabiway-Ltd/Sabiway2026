@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
-import { BriefcaseBusiness, CheckCircle2, Clock3, MapPin, Search, SlidersHorizontal, Sparkles, Users } from "lucide-react";
+import { BriefcaseBusiness, CheckCircle2, Clock3, MapPin, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 
 import { environment } from "@/app/config/environment";
 
@@ -215,7 +215,7 @@ export default function MarketplaceClient({ initialListings, initialJobs, catego
               <button onClick={() => setTab("services")} className={`rounded-lg px-4 py-2 text-sm font-extrabold ${tab === "services" ? "bg-white text-[#008753] shadow-sm" : "text-[#53645a]"}`}>Find services</button>
               <button onClick={() => setTab("jobs")} className={`rounded-lg px-4 py-2 text-sm font-extrabold ${tab === "jobs" ? "bg-white text-[#008753] shadow-sm" : "text-[#53645a]"}`}>Open jobs</button>
             </div>
-            <div className="flex flex-wrap gap-2"><button onClick={() => setShowPostJob((v) => !v)} className="rounded-xl border border-[#008753] px-4 py-2 text-sm font-extrabold text-[#008753]">Post a job</button><button onClick={() => setShowOfferService((v) => !v)} className="rounded-xl bg-[#008753] px-4 py-2 text-sm font-extrabold text-white">Offer a service</button></div>
+            <div className="flex flex-wrap gap-2"><button onClick={() => { setShowPostJob((v) => !v); setShowOfferService(false); }} className="rounded-xl border border-[#008753] px-4 py-2 text-sm font-extrabold text-[#008753]">Post a job</button><button onClick={() => { setShowOfferService((v) => !v); setShowPostJob(false); }} className="rounded-xl bg-[#008753] px-4 py-2 text-sm font-extrabold text-white">Offer a service</button></div>
           </div>
 
           {(showPostJob || showOfferService) && <div className="my-6 rounded-2xl border border-[#dce7e1] bg-white p-5 shadow-sm"><h3 className="text-xl font-black">{showPostJob ? "Tell professionals what you need" : "Create your service listing"}</h3><p className="mt-1 text-sm text-[#66756d]">{showPostJob ? "Your job will be reviewed before it is shown to relevant professionals." : "Professional listings are reviewed before they appear publicly."}</p>
