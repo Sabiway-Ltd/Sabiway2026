@@ -8,9 +8,10 @@ import { CommunityScreen } from "./src/community/CommunityScreen";
 import { colors } from "./src/design/tokens";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
+import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
 import { VerificationScreen } from "./src/verification/VerificationScreen";
 
-type AppSection = "community" | "marketplace" | "messages" | "verification";
+type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "verification";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -31,10 +32,13 @@ export default function App() {
               <Text style={[styles.navText, section === "community" && styles.navTextActive]}>SabiForum</Text>
             </Pressable>
             <Pressable onPress={() => setSection("marketplace")} style={[styles.navItem, section === "marketplace" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "marketplace" && styles.navTextActive]}>Marketplace</Text>
+              <Text style={[styles.navText, section === "marketplace" && styles.navTextActive]}>Market</Text>
             </Pressable>
             <Pressable onPress={() => setSection("messages")} style={[styles.navItem, section === "messages" && styles.navItemActive]}>
               <Text style={[styles.navText, section === "messages" && styles.navTextActive]}>Messages</Text>
+            </Pressable>
+            <Pressable onPress={() => setSection("sabipay")} style={[styles.navItem, section === "sabipay" && styles.navItemActive]}>
+              <Text style={[styles.navText, section === "sabipay" && styles.navTextActive]}>SabiPay</Text>
             </Pressable>
             {session.user.role === "professional" ? <Pressable onPress={() => setSection("verification")} style={[styles.navItem, section === "verification" && styles.navItemActive]}>
               <Text style={[styles.navText, section === "verification" && styles.navTextActive]}>Verify</Text>
@@ -45,6 +49,8 @@ export default function App() {
               <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
             ) : section === "messages" ? (
               <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
+            ) : section === "sabipay" ? (
+              <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
             ) : section === "verification" ? (
               <VerificationScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
             ) : (
@@ -62,10 +68,10 @@ export default function App() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   authenticated: { flex: 1 },
-  navigation: { flexDirection: "row", gap: 5, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
-  navItem: { flex: 1, minHeight: 40, justifyContent: "center", alignItems: "center", borderRadius: 12, paddingHorizontal: 5, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  navigation: { flexDirection: "row", gap: 4, paddingHorizontal: 6, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
+  navItem: { flex: 1, minHeight: 40, justifyContent: "center", alignItems: "center", borderRadius: 10, paddingHorizontal: 3, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   navItemActive: { backgroundColor: colors.brand, borderColor: colors.brand },
-  navText: { color: colors.text, fontWeight: "700", fontSize: 11 },
+  navText: { color: colors.text, fontWeight: "700", fontSize: 10 },
   navTextActive: { color: "#FFFFFF" },
   content: { flex: 1 },
 });
