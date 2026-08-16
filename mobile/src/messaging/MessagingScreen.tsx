@@ -129,6 +129,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
     });
     if (result.canceled) return;
     const asset = result.assets[0];
+    if (!asset) return;
     if (asset.size && asset.size > MAX_ATTACHMENT_SIZE) {
       Alert.alert("File too large", "Attachments must be 10 MB or smaller.");
       return;
@@ -145,6 +146,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (result.canceled) return;
     const asset = result.assets[0];
+    if (!asset) return;
     if (asset.fileSize && asset.fileSize > MAX_ATTACHMENT_SIZE) {
       Alert.alert("Photo too large", "Attachments must be 10 MB or smaller.");
       return;
@@ -328,14 +330,67 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: "center", backgroundColor: "#F7FAF8" }, center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#F7FAF8" },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.brand, borderRadius: 18, padding: 13, marginTop: 8 }, headerButton: { backgroundColor: "#FFB800", borderRadius: 9, paddingHorizontal: 9, paddingVertical: 7 }, headerButtonText: { color: "#173126", fontSize: 11, fontWeight: "900" }, eyebrow: { color: "#D7F6E7", fontSize: 10, fontWeight: "900", letterSpacing: 1.2 }, title: { color: "#FFFFFF", fontSize: 21, fontWeight: "900" },
-  body: { flex: 1, gap: 10, paddingVertical: 10 }, threadPane: { flex: 1, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16, overflow: "hidden" }, conversationPane: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16, overflow: "hidden" }, bookingPane: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16 }, bookingContent: { padding: 14, gap: 10 }, hidden: { display: "none" },
-  paneHeader: { borderBottomWidth: 1, borderBottomColor: "#EDF2EF", padding: 13, gap: 5 }, paneTitle: { color: "#173126", fontWeight: "900", fontSize: 18 }, muted: { color: "#718078", fontSize: 11, lineHeight: 16 }, empty: { color: "#718078", padding: 20, textAlign: "center", lineHeight: 20 }, threadRow: { padding: 13, borderBottomWidth: 1, borderBottomColor: "#EDF2EF" }, threadRowActive: { backgroundColor: "#EEF8F3" }, threadName: { color: "#173126", fontWeight: "900", flex: 1 }, unread: { backgroundColor: colors.brand, color: "#FFFFFF", borderRadius: 999, minWidth: 22, textAlign: "center", paddingHorizontal: 6, paddingVertical: 2, fontSize: 10, fontWeight: "900" }, rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  safetyButton: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 }, safetyText: { color: "#58675F", fontSize: 10, fontWeight: "800" }, dangerText: { color: "#A51D25", fontSize: 10, fontWeight: "900" }, link: { color: colors.brand, fontWeight: "900", fontSize: 11 },
-  messageList: { flexGrow: 1, padding: 12, gap: 8, backgroundColor: "#F9FBFA" }, messageBubble: { maxWidth: "84%", borderRadius: 15, padding: 10, borderWidth: 1 }, mine: { alignSelf: "flex-end", backgroundColor: "#E8F7F0", borderColor: "#CBE8D9" }, theirs: { alignSelf: "flex-start", backgroundColor: "#FFFFFF", borderColor: "#DDE7E1" }, sender: { color: colors.brand, fontSize: 10, fontWeight: "900" }, messageText: { color: "#263B31", lineHeight: 19, marginTop: 2 }, timestamp: { color: "#819087", fontSize: 9, marginTop: 5 }, attachmentText: { color: colors.brand, fontWeight: "800", fontSize: 11, marginTop: 5 },
-  composer: { padding: 10, borderTopWidth: 1, borderTopColor: "#EDF2EF", gap: 7 }, input: { minHeight: 44, borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 11, paddingHorizontal: 11, backgroundColor: "#FFFFFF", color: "#173126" }, messageInput: { minHeight: 70, textAlignVertical: "top", paddingTop: 10 }, composerActions: { flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "flex-end" }, attachmentChip: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderRadius: 10, backgroundColor: "#EEF8F3", padding: 8 }, attachmentChipText: { color: "#40544A", fontSize: 11, flex: 1 },
-  primaryButton: { backgroundColor: colors.brand, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, alignItems: "center" }, primaryText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 }, secondaryButton: { borderWidth: 1, borderColor: "#CAD8D0", backgroundColor: "#FFFFFF", borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, alignItems: "center" }, secondaryText: { color: "#173126", fontWeight: "900", fontSize: 11 }, amberButton: { backgroundColor: "#FFB800", borderRadius: 10, padding: 12, alignItems: "center" }, amberText: { color: "#173126", fontWeight: "900" },
-  eyebrowDark: { color: colors.brand, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 }, summaryCard: { backgroundColor: "#F3F8F5", borderRadius: 12, padding: 11, gap: 4 }, label: { color: "#65756C", fontSize: 10, fontWeight: "900", marginTop: 4 }, summaryText: { color: "#263B31", fontSize: 12, fontWeight: "700", lineHeight: 18 }, price: { color: "#173126", fontWeight: "900", fontSize: 17 }, status: { color: "#5D6E64", fontSize: 11, marginTop: 3 }, sectionTitle: { color: "#173126", fontWeight: "900", marginTop: 5 }, proposal: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 11, padding: 10, gap: 6 }, help: { color: "#68776F", fontSize: 12, lineHeight: 18 }, scopeInput: { minHeight: 85, textAlignVertical: "top", paddingTop: 9 }, row: { flexDirection: "row", gap: 7 }, flex: { flex: 1 },
-  mobileTabs: { flexDirection: "row", backgroundColor: "#EAF4EF", borderRadius: 11, padding: 3, marginTop: 8 }, mobileTab: { flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 8 }, mobileTabActive: { backgroundColor: "#FFFFFF" }, mobileTabText: { color: "#607168", fontSize: 11, fontWeight: "900" }, mobileTabTextActive: { color: colors.brand },
+  screen: { flex: 1, alignItems: "center", backgroundColor: "#F7FAF8" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#F7FAF8" },
+  header: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.brand, borderRadius: 18, padding: 13, marginTop: 8 },
+  headerButton: { backgroundColor: "#FFB800", borderRadius: 9, paddingHorizontal: 9, paddingVertical: 7 },
+  headerButtonText: { color: "#173126", fontSize: 11, fontWeight: "900" },
+  eyebrow: { color: "#D7F6E7", fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
+  title: { color: "#FFFFFF", fontSize: 21, fontWeight: "900" },
+  body: { flex: 1, gap: 10, paddingVertical: 10 },
+  threadPane: { flex: 1, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16, overflow: "hidden" },
+  conversationPane: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16, overflow: "hidden" },
+  bookingPane: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16 },
+  bookingContent: { padding: 14, gap: 10 },
+  hidden: { display: "none" },
+  paneHeader: { borderBottomWidth: 1, borderBottomColor: "#EDF2EF", padding: 13, gap: 5 },
+  paneTitle: { color: "#173126", fontWeight: "900", fontSize: 18 },
+  muted: { color: "#718078", fontSize: 11, lineHeight: 16 },
+  empty: { color: "#718078", padding: 20, textAlign: "center", lineHeight: 20 },
+  threadRow: { padding: 13, borderBottomWidth: 1, borderBottomColor: "#EDF2EF" },
+  threadRowActive: { backgroundColor: "#EEF8F3" },
+  threadName: { color: "#173126", fontWeight: "900", flex: 1 },
+  unread: { backgroundColor: colors.brand, color: "#FFFFFF", borderRadius: 999, minWidth: 22, textAlign: "center", paddingHorizontal: 6, paddingVertical: 2, fontSize: 10, fontWeight: "900" },
+  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
+  safetyButton: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
+  safetyText: { color: "#58675F", fontSize: 10, fontWeight: "800" },
+  dangerText: { color: "#A51D25", fontSize: 10, fontWeight: "900" },
+  link: { color: colors.brand, fontWeight: "900", fontSize: 11 },
+  messageList: { flexGrow: 1, padding: 12, gap: 8, backgroundColor: "#F9FBFA" },
+  messageBubble: { maxWidth: "84%", borderRadius: 15, padding: 10, borderWidth: 1 },
+  mine: { alignSelf: "flex-end", backgroundColor: "#E8F7F0", borderColor: "#CBE8D9" },
+  theirs: { alignSelf: "flex-start", backgroundColor: "#FFFFFF", borderColor: "#DDE7E1" },
+  sender: { color: colors.brand, fontSize: 10, fontWeight: "900" },
+  messageText: { color: "#263B31", lineHeight: 19, marginTop: 2 },
+  timestamp: { color: "#819087", fontSize: 9, marginTop: 5 },
+  attachmentText: { color: colors.brand, fontWeight: "800", fontSize: 11, marginTop: 5 },
+  composer: { padding: 10, borderTopWidth: 1, borderTopColor: "#EDF2EF", gap: 7 },
+  input: { minHeight: 44, borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 11, paddingHorizontal: 11, backgroundColor: "#FFFFFF", color: "#173126" },
+  messageInput: { minHeight: 70, textAlignVertical: "top", paddingTop: 10 },
+  composerActions: { flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "flex-end" },
+  attachmentChip: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderRadius: 10, backgroundColor: "#EEF8F3", padding: 8 },
+  attachmentChipText: { color: "#40544A", fontSize: 11, flex: 1 },
+  primaryButton: { backgroundColor: colors.brand, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, alignItems: "center" },
+  primaryText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
+  secondaryButton: { borderWidth: 1, borderColor: "#CAD8D0", backgroundColor: "#FFFFFF", borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, alignItems: "center" },
+  secondaryText: { color: "#173126", fontWeight: "900", fontSize: 11 },
+  amberButton: { backgroundColor: "#FFB800", borderRadius: 10, padding: 12, alignItems: "center" },
+  amberText: { color: "#173126", fontWeight: "900" },
+  eyebrowDark: { color: colors.brand, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
+  summaryCard: { backgroundColor: "#F3F8F5", borderRadius: 12, padding: 11, gap: 4 },
+  label: { color: "#65756C", fontSize: 10, fontWeight: "900", marginTop: 4 },
+  summaryText: { color: "#263B31", fontSize: 12, fontWeight: "700", lineHeight: 18 },
+  price: { color: "#173126", fontWeight: "900", fontSize: 17 },
+  status: { color: "#5D6E64", fontSize: 11, marginTop: 3 },
+  sectionTitle: { color: "#173126", fontWeight: "900", marginTop: 5 },
+  proposal: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 11, padding: 10, gap: 6 },
+  help: { color: "#68776F", fontSize: 12, lineHeight: 18 },
+  scopeInput: { minHeight: 85, textAlignVertical: "top", paddingTop: 9 },
+  row: { flexDirection: "row", gap: 7 },
+  flex: { flex: 1 },
+  mobileTabs: { flexDirection: "row", backgroundColor: "#EAF4EF", borderRadius: 11, padding: 3, marginTop: 8 },
+  mobileTab: { flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 8 },
+  mobileTabActive: { backgroundColor: "#FFFFFF" },
+  mobileTabText: { color: "#607168", fontSize: 11, fontWeight: "900" },
+  mobileTabTextActive: { color: colors.brand },
 });
