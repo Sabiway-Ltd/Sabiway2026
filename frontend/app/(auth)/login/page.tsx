@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
@@ -16,7 +15,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const { login, loading } = useAuthStore();
-  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
