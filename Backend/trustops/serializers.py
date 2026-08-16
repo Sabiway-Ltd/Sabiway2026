@@ -6,9 +6,15 @@ from sabipay.models import Dispute, Transaction
 from .models import DisputeCase, DisputeEvidence, DisputeNote, FraudSignal, Review, ReviewReport, SupportAudit, SupportCase, SupportNote
 
 
+class BlankablePrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def to_internal_value(self, data):
+        if data in ("", None):
+            return None
+        return super().to_internal_value(data)
+
+
 class DisputeEvidenceSerializer(serializers.ModelSerializer):
     uploader_email = serializers.EmailField(source="uploader.email", read_only=True)
-
     class Meta:
         model = DisputeEvidence
         fields = ["id", "filename", "content_type", "size", "uploader_email", "created_at"]
@@ -16,7 +22,6 @@ class DisputeEvidenceSerializer(serializers.ModelSerializer):
 
 class DisputeNoteSerializer(serializers.ModelSerializer):
     author_email = serializers.EmailField(source="author.email", read_only=True)
-
     class Meta:
         model = DisputeNote
         fields = ["id", "author_email", "body", "internal", "created_at"]
@@ -31,21 +36,13 @@ class DisputeCaseSerializer(serializers.ModelSerializer):
     opened_by_email = serializers.EmailField(source="dispute.opened_by.email", read_only=True)
     evidence_items = DisputeEvidenceSerializer(source="dispute.evidence_items", many=True, read_only=True)
     notes = serializers.SerializerMethodField()
-
     class Meta:
         model = DisputeCase
-        fields = [
-            "id", "transaction_id", "receipt_number", "dispute_status", "reason", "details", "opened_by_email",
-            "priority", "response_due_at", "decision", "decision_reason", "provider_release_amount", "client_refund_amount",
-            "resolved_at", "evidence_items", "notes", "created_at", "updated_at",
-        ]
-
+        fields = ["id", "transaction_id", "receipt_number", "dispute_status", "reason", "details", "opened_by_email", "priority", "response_due_at", "decision", "decision_reason", "provider_release_amount", "client_refund_amount", "resolved_at", "evidence_items", "notes", "created_at", "updated_at"]
     def get_notes(self, obj):
-        request = self.context.get("request")
-        is_staff = bool(request and request.user.is_authenticated and request.user.is_staff)
+        request = self.context.get("request"); is_staff = bool(request and request.user.is_authenticated and request.user.is_staff)
         qs = obj.dispute.case_notes.all()
-        if not is_staff:
-            qs = qs.filter(internal=False)
+        if not is_staff: qs = qs.filter(internal=False)
         return DisputeNoteSerializer(qs, many=True).data
 
 
@@ -54,8 +51,7 @@ class DisputeCreateSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=80)
     details = serializers.CharField(required=False, allow_blank=True)
     evidence = serializers.FileField(required=False, allow_null=True)
-
-    def validate_transaction(self, tx):
+    def validate_transaction_id(self, tx):
         user = self.context["request"].user
         if user.id not in {tx.client.user_id, tx.professional.user_id}:
             raise serializers.ValidationError("You are not a participant in this transaction.")
@@ -76,7 +72,6 @@ class ReviewSerializer(serializers.ModelSerializer):
     client = ProfileSerializer(read_only=True)
     professional = ProfileSerializer(read_only=True)
     report_count = serializers.IntegerField(source="reports.count", read_only=True)
-
     class Meta:
         model = Review
         fields = ["id", "booking", "transaction", "client", "professional", "rating", "title", "body", "moderation_status", "moderation_reason", "report_count", "created_at", "updated_at"]
@@ -109,7 +104,6 @@ class ReviewModerationSerializer(serializers.Serializer):
 
 class SupportNoteSerializer(serializers.ModelSerializer):
     author_email = serializers.EmailField(source="author.email", read_only=True)
-
     class Meta:
         model = SupportNote
         fields = ["id", "author_email", "body", "internal", "created_at"]
@@ -117,7 +111,6 @@ class SupportNoteSerializer(serializers.ModelSerializer):
 
 class SupportAuditSerializer(serializers.ModelSerializer):
     actor_email = serializers.EmailField(source="actor.email", read_only=True, allow_null=True)
-
     class Meta:
         model = SupportAudit
         fields = ["id", "actor_email", "event", "from_status", "to_status", "reason", "metadata", "created_at"]
@@ -127,20 +120,13 @@ class SupportCaseSerializer(serializers.ModelSerializer):
     opened_by = ProfileSerializer(read_only=True)
     notes = serializers.SerializerMethodField()
     audit_events = SupportAuditSerializer(many=True, read_only=True)
-
     class Meta:
         model = SupportCase
-        fields = [
-            "id", "opened_by", "transaction", "dispute", "review", "category", "summary", "details",
-            "status", "priority", "response_due_at", "escalated_at", "resolved_at", "notes", "audit_events", "created_at", "updated_at",
-        ]
-
+        fields = ["id", "opened_by", "transaction", "dispute", "review", "category", "summary", "details", "status", "priority", "response_due_at", "escalated_at", "resolved_at", "notes", "audit_events", "created_at", "updated_at"]
     def get_notes(self, obj):
-        request = self.context.get("request")
-        is_staff = bool(request and request.user.is_authenticated and request.user.is_staff)
+        request = self.context.get("request"); is_staff = bool(request and request.user.is_authenticated and request.user.is_staff)
         qs = obj.notes.all()
-        if not is_staff:
-            qs = qs.filter(internal=False)
+        if not is_staff: qs = qs.filter(internal=False)
         return SupportNoteSerializer(qs, many=True).data
 
 
@@ -148,21 +134,14 @@ class SupportCaseCreateSerializer(serializers.Serializer):
     category = serializers.CharField(max_length=80)
     summary = serializers.CharField(max_length=180)
     details = serializers.CharField(required=False, allow_blank=True)
-    transaction_id = serializers.PrimaryKeyRelatedField(source="transaction", queryset=Transaction.objects.all(), required=False, allow_null=True)
-    dispute_id = serializers.PrimaryKeyRelatedField(source="dispute", queryset=Dispute.objects.all(), required=False, allow_null=True)
-    review_id = serializers.PrimaryKeyRelatedField(source="review", queryset=Review.objects.all(), required=False, allow_null=True)
-
+    transaction_id = BlankablePrimaryKeyRelatedField(source="transaction", queryset=Transaction.objects.all(), required=False, allow_null=True)
+    dispute_id = BlankablePrimaryKeyRelatedField(source="dispute", queryset=Dispute.objects.all(), required=False, allow_null=True)
+    review_id = BlankablePrimaryKeyRelatedField(source="review", queryset=Review.objects.all(), required=False, allow_null=True)
     def validate(self, attrs):
-        user = self.context["request"].user
-        tx = attrs.get("transaction")
-        dispute = attrs.get("dispute")
-        review = attrs.get("review")
-        if tx and user.id not in {tx.client.user_id, tx.professional.user_id}:
-            raise serializers.ValidationError("You are not a participant in this transaction.")
-        if dispute and user.id not in {dispute.transaction.client.user_id, dispute.transaction.professional.user_id}:
-            raise serializers.ValidationError("You are not a participant in this dispute.")
-        if review and user.id not in {review.client.user_id, review.professional.user_id}:
-            raise serializers.ValidationError("You are not part of this review journey.")
+        user = self.context["request"].user; tx = attrs.get("transaction"); dispute = attrs.get("dispute"); review = attrs.get("review")
+        if tx and user.id not in {tx.client.user_id, tx.professional.user_id}: raise serializers.ValidationError("You are not a participant in this transaction.")
+        if dispute and user.id not in {dispute.transaction.client.user_id, dispute.transaction.professional.user_id}: raise serializers.ValidationError("You are not a participant in this dispute.")
+        if review and user.id not in {review.client.user_id, review.professional.user_id}: raise serializers.ValidationError("You are not part of this review journey.")
         return attrs
 
 
