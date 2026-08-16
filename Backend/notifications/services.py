@@ -23,10 +23,7 @@ def _broadcast_in_app(notification):
     try:
         requests.post(
             f"{settings.EXPRESS_URL}/broadcast-notification",
-            json={
-                "userId": str(notification.user.user_id),
-                "notification": NotificationSerializer(notification).data,
-            },
+            json={"userId": str(notification.user.user_id), "notification": NotificationSerializer(notification).data},
             headers=_realtime_headers(),
             timeout=2,
         )
@@ -34,35 +31,30 @@ def _broadcast_in_app(notification):
         pass
 
 
-def _send_push(notification, delivery, preference):
-    if not preference.push_enabled:
-        delivery.status = NotificationDelivery.Status.SKIPPED
-        delivery.error = "Push disabled by user preference."
-        delivery.attempted_at = timezone.now()
-        delivery.save(update_fields=["status", "error", "attempted_at"])
-        return
+def _skip(delivery, reason):
+    delivery.status = NotificationDelivery.Status.SKIPPED
+    delivery.error = reason
+    delivery.attempted_at = timezone.now()
+    delivery.save(update_fields=["status", "error", "attempted_at"])
 
-    tokens = list(
-        PushDevice.objects.filter(profile=notification.user, is_active=True).values_list("token", flat=True)
-    )
+
+def _send_push(notification, delivery, preference):
+    if not getattr(settings, "NOTIFICATION_PUSH_DELIVERY_ENABLED", True):
+        return _skip(delivery, "Push delivery is disabled operationally.")
+    if not preference.push_enabled:
+        return _skip(delivery, "Push disabled by user preference.")
+    tokens = list(PushDevice.objects.filter(profile=notification.user, is_active=True).values_list("token", flat=True))
     if not tokens:
-        delivery.status = NotificationDelivery.Status.SKIPPED
-        delivery.error = "No active push device."
-        delivery.attempted_at = timezone.now()
-        delivery.save(update_fields=["status", "error", "attempted_at"])
-        return
+        return _skip(delivery, "No active push device.")
 
     endpoint = getattr(settings, "EXPO_PUSH_ENDPOINT", "https://exp.host/--/api/v2/push/send")
-    payload = [
-        {
-            "to": token,
-            "title": "SabiWay",
-            "body": notification.message or "You have a new SabiWay update.",
-            "data": {"deep_link": notification.deep_link, "notification_id": notification.id},
-            "sound": "default",
-        }
-        for token in tokens
-    ]
+    payload = [{
+        "to": token,
+        "title": "SabiWay",
+        "body": notification.message or "You have a new SabiWay update.",
+        "data": {"deep_link": notification.deep_link, "notification_id": notification.id},
+        "sound": "default",
+    } for token in tokens]
     try:
         response = requests.post(endpoint, json=payload, timeout=getattr(settings, "NOTIFICATION_DELIVERY_TIMEOUT_SECONDS", 6))
         response.raise_for_status()
@@ -78,57 +70,39 @@ def _send_push(notification, delivery, preference):
 
 
 def _send_email(notification, delivery, preference):
+    if not getattr(settings, "NOTIFICATION_EMAIL_DELIVERY_ENABLED", False):
+        return _skip(delivery, "Email delivery is disabled operationally.")
     if not preference.email_enabled:
-        delivery.status = NotificationDelivery.Status.SKIPPED
-        delivery.error = "Email disabled by user preference."
-    elif notification.type == "payment" and not preference.payment_email_enabled:
-        delivery.status = NotificationDelivery.Status.SKIPPED
-        delivery.error = "Payment emails disabled by user preference."
-    elif notification.type == "dispute" and not preference.dispute_email_enabled:
-        delivery.status = NotificationDelivery.Status.SKIPPED
-        delivery.error = "Dispute emails disabled by user preference."
-    elif not notification.user.user.email:
-        delivery.status = NotificationDelivery.Status.SKIPPED
-        delivery.error = "No email address available."
-    else:
-        try:
-            send_mail(
-                subject=f"SabiWay — {notification.type.replace('_', ' ').title()} update",
-                message=(notification.message or "You have a new SabiWay update.") + (
-                    f"\n\nOpen: {notification.deep_link}" if notification.deep_link else ""
-                ),
-                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-                recipient_list=[notification.user.user.email],
-                fail_silently=False,
-            )
-            delivery.status = NotificationDelivery.Status.SENT
-            delivery.sent_at = timezone.now()
-            delivery.error = ""
-        except Exception as exc:
-            delivery.status = NotificationDelivery.Status.FAILED
-            delivery.error = str(exc)[:1000]
+        return _skip(delivery, "Email disabled by user preference.")
+    if notification.type == "payment" and not preference.payment_email_enabled:
+        return _skip(delivery, "Payment emails disabled by user preference.")
+    if notification.type == "dispute" and not preference.dispute_email_enabled:
+        return _skip(delivery, "Dispute emails disabled by user preference.")
+    if not notification.user.user.email:
+        return _skip(delivery, "No email address available.")
+    try:
+        send_mail(
+            subject=f"SabiWay — {notification.type.replace('_', ' ').title()} update",
+            message=(notification.message or "You have a new SabiWay update.") + (f"\n\nOpen: {notification.deep_link}" if notification.deep_link else ""),
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            recipient_list=[notification.user.user.email],
+            fail_silently=False,
+        )
+        delivery.status = NotificationDelivery.Status.SENT
+        delivery.sent_at = timezone.now()
+        delivery.error = ""
+    except Exception as exc:
+        delivery.status = NotificationDelivery.Status.FAILED
+        delivery.error = str(exc)[:1000]
     delivery.attempted_at = timezone.now()
     delivery.save(update_fields=["status", "sent_at", "error", "attempted_at"])
 
 
-def notify(
-    *,
-    user: Profile,
-    notif_type: str,
-    message: str,
-    actor: Optional[Profile] = None,
-    target=None,
-    deep_link: str = "",
-    metadata=None,
-    event_key: Optional[str] = None,
-    push: bool = True,
-    email: bool = True,
-):
+def notify(*, user: Profile, notif_type: str, message: str, actor: Optional[Profile] = None, target=None, deep_link: str = "", metadata=None, event_key: Optional[str] = None, push: bool = True, email: bool = True):
     if not user:
         return None
     if actor and actor.pk == user.pk:
         return None
-
     target_ct = ContentType.objects.get_for_model(target) if target else None
     target_id = str(target.pk) if target else None
     try:
@@ -148,7 +122,7 @@ def notify(
             return Notification.objects.filter(event_key=event_key).first()
         raise
 
-    in_app = NotificationDelivery.objects.create(
+    NotificationDelivery.objects.create(
         notification=notification,
         channel=NotificationDelivery.Channel.IN_APP,
         status=NotificationDelivery.Status.SENT,
@@ -156,20 +130,13 @@ def notify(
         sent_at=timezone.now(),
     )
     _broadcast_in_app(notification)
-
     preference, _ = NotificationPreference.objects.get_or_create(profile=user)
     if push:
-        push_delivery = NotificationDelivery.objects.create(
-            notification=notification,
-            channel=NotificationDelivery.Channel.PUSH,
-        )
-        _send_push(notification, push_delivery, preference)
+        delivery = NotificationDelivery.objects.create(notification=notification, channel=NotificationDelivery.Channel.PUSH)
+        _send_push(notification, delivery, preference)
     if email:
-        email_delivery = NotificationDelivery.objects.create(
-            notification=notification,
-            channel=NotificationDelivery.Channel.EMAIL,
-        )
-        _send_email(notification, email_delivery, preference)
+        delivery = NotificationDelivery.objects.create(notification=notification, channel=NotificationDelivery.Channel.EMAIL)
+        _send_email(notification, delivery, preference)
     return notification
 
 
