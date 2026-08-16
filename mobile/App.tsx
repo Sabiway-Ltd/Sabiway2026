@@ -7,8 +7,9 @@ import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
 import { colors } from "./src/design/tokens";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
+import { MessagingScreen } from "./src/messaging/MessagingScreen";
 
-type AppSection = "community" | "marketplace";
+type AppSection = "community" | "marketplace" | "messages";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -31,10 +32,15 @@ export default function App() {
             <Pressable onPress={() => setSection("marketplace")} style={[styles.navItem, section === "marketplace" && styles.navItemActive]}>
               <Text style={[styles.navText, section === "marketplace" && styles.navTextActive]}>Marketplace</Text>
             </Pressable>
+            <Pressable onPress={() => setSection("messages")} style={[styles.navItem, section === "messages" && styles.navItemActive]}>
+              <Text style={[styles.navText, section === "messages" && styles.navTextActive]}>Messages</Text>
+            </Pressable>
           </View>
           <View style={styles.content}>
             {section === "marketplace" ? (
               <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
+            ) : section === "messages" ? (
+              <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
             ) : (
               <CommunityScreen session={session} onSignOut={signOut} />
             )}
@@ -50,10 +56,10 @@ export default function App() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   authenticated: { flex: 1 },
-  navigation: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
-  navItem: { minHeight: 40, justifyContent: "center", borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  navigation: { flexDirection: "row", gap: 6, paddingHorizontal: 10, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
+  navItem: { flex: 1, minHeight: 40, justifyContent: "center", alignItems: "center", borderRadius: 12, paddingHorizontal: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   navItemActive: { backgroundColor: colors.brand, borderColor: colors.brand },
-  navText: { color: colors.text, fontWeight: "700" },
+  navText: { color: colors.text, fontWeight: "700", fontSize: 12 },
   navTextActive: { color: "#FFFFFF" },
   content: { flex: 1 },
 });
