@@ -15,4 +15,5 @@ urlpatterns = [
     path("api/marketplace/", include("marketplace.urls")),
     path("api/verification/", include("verification.urls")),
     path("api/sabipay/", include("sabipay.urls")),
+    path("api/trust/", include("trustops.urls")),
 ]
