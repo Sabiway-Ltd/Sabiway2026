@@ -1,15 +1,30 @@
+import re
+
+from django.conf import settings
+from django.utils import timezone
 from rest_framework import serializers
 
+from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
 
 from .models import (
+    BookingAudit,
     BookingRequest,
+    ConversationBlock,
+    ConversationReport,
     JobPosting,
     JobResponse,
+    Message,
+    MessageThread,
+    ScheduleProposal,
     ServiceCategory,
     ServiceListing,
     ServiceSubcategory,
 )
+
+CONTACT_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)|(?:[\w.+-]+@[\w.-]+\.[A-Za-z]{2,})", re.I)
+ALLOWED_ATTACHMENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"}
+MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
 
 class ServiceSubcategorySerializer(serializers.ModelSerializer):
@@ -20,7 +35,6 @@ class ServiceSubcategorySerializer(serializers.ModelSerializer):
 
 class ServiceCategorySerializer(serializers.ModelSerializer):
     subcategories = ServiceSubcategorySerializer(many=True, read_only=True)
-
     class Meta:
         model = ServiceCategory
         fields = ["id", "name", "slug", "description", "icon", "subcategories"]
@@ -30,33 +44,16 @@ class ServiceListingSerializer(serializers.ModelSerializer):
     provider = ProfileSerializer(read_only=True)
     category = ServiceCategorySerializer(read_only=True)
     subcategory = ServiceSubcategorySerializer(read_only=True)
-    category_id = serializers.PrimaryKeyRelatedField(
-        source="category",
-        queryset=ServiceCategory.objects.filter(is_active=True),
-        write_only=True,
-    )
-    subcategory_id = serializers.PrimaryKeyRelatedField(
-        source="subcategory",
-        queryset=ServiceSubcategory.objects.filter(is_active=True),
-        write_only=True,
-        required=False,
-        allow_null=True,
-    )
+    category_id = serializers.PrimaryKeyRelatedField(source="category", queryset=ServiceCategory.objects.filter(is_active=True), write_only=True)
+    subcategory_id = serializers.PrimaryKeyRelatedField(source="subcategory", queryset=ServiceSubcategory.objects.filter(is_active=True), write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = ServiceListing
-        fields = [
-            "id", "provider", "category", "category_id", "subcategory", "subcategory_id",
-            "title", "description", "price_from", "currency", "pricing_note",
-            "delivery_mode", "country", "state", "city", "area",
-            "availability_text", "available_now", "moderation_status", "is_featured",
-            "is_active", "created_at", "updated_at",
-        ]
+        fields = ["id", "provider", "category", "category_id", "subcategory", "subcategory_id", "title", "description", "price_from", "currency", "pricing_note", "delivery_mode", "country", "state", "city", "area", "availability_text", "available_now", "moderation_status", "is_featured", "is_active", "created_at", "updated_at"]
         read_only_fields = ["id", "provider", "moderation_status", "is_featured", "created_at", "updated_at"]
 
     def validate_price_from(self, value):
-        if value < 0:
-            raise serializers.ValidationError("Price cannot be negative.")
+        if value < 0: raise serializers.ValidationError("Price cannot be negative.")
         return value
 
     def validate(self, attrs):
@@ -77,17 +74,11 @@ class JobPostingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobPosting
-        fields = [
-            "id", "client", "category", "category_id", "subcategory", "subcategory_id",
-            "title", "description", "budget_min", "budget_max", "currency", "delivery_mode",
-            "country", "state", "city", "area", "needed_by", "status", "moderation_status",
-            "response_count", "created_at", "updated_at",
-        ]
+        fields = ["id", "client", "category", "category_id", "subcategory", "subcategory_id", "title", "description", "budget_min", "budget_max", "currency", "delivery_mode", "country", "state", "city", "area", "needed_by", "status", "moderation_status", "response_count", "created_at", "updated_at"]
         read_only_fields = ["id", "client", "moderation_status", "response_count", "created_at", "updated_at"]
 
     def validate(self, attrs):
-        minimum = attrs.get("budget_min")
-        maximum = attrs.get("budget_max")
+        minimum, maximum = attrs.get("budget_min"), attrs.get("budget_max")
         if minimum is not None and maximum is not None and minimum > maximum:
             raise serializers.ValidationError({"budget_max": "Maximum budget must be greater than or equal to minimum budget."})
         category = attrs.get("category") or getattr(self.instance, "category", None)
@@ -101,23 +92,18 @@ class JobResponseSerializer(serializers.ModelSerializer):
     professional = ProfileSerializer(read_only=True)
     job_title = serializers.CharField(source="job.title", read_only=True)
     job_id = serializers.PrimaryKeyRelatedField(source="job", queryset=JobPosting.objects.filter(status=JobPosting.Status.OPEN, moderation_status=JobPosting.ModerationStatus.APPROVED), write_only=True)
-
     class Meta:
         model = JobResponse
         fields = ["id", "job_id", "job_title", "professional", "message", "proposed_price", "currency", "status", "created_at", "updated_at"]
         read_only_fields = ["id", "professional", "status", "created_at", "updated_at"]
 
     def validate(self, attrs):
-        request = self.context.get("request")
-        job = attrs.get("job")
+        request, job = self.context.get("request"), attrs.get("job")
         if request and request.user.is_authenticated:
             profile = request.user.profile
-            if profile.role != "professional":
-                raise serializers.ValidationError("Only professional profiles can respond to jobs.")
-            if job and job.client_id == profile.pk:
-                raise serializers.ValidationError("You cannot respond to your own job.")
-            if job and JobResponse.objects.filter(job=job, professional=profile).exists():
-                raise serializers.ValidationError("You have already responded to this job.")
+            if profile.role != "professional": raise serializers.ValidationError("Only professional profiles can respond to jobs.")
+            if job and job.client_id == profile.pk: raise serializers.ValidationError("You cannot respond to your own job.")
+            if job and JobResponse.objects.filter(job=job, professional=profile).exists(): raise serializers.ValidationError("You have already responded to this job.")
         return attrs
 
 
@@ -125,43 +111,143 @@ class JobResponseStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=[JobResponse.Status.SHORTLISTED, JobResponse.Status.DECLINED])
 
 
-class BookingRequestSerializer(serializers.ModelSerializer):
-    listing_summary = serializers.SerializerMethodField()
+class ThreadSerializer(serializers.ModelSerializer):
     client = ProfileSerializer(read_only=True)
-    listing_id = serializers.PrimaryKeyRelatedField(source="listing", queryset=ServiceListing.objects.filter(is_active=True), write_only=True)
+    professional = ProfileSerializer(read_only=True)
+    professional_id = serializers.PrimaryKeyRelatedField(source="professional", queryset=Profile.objects.filter(role="professional"), write_only=True, required=False)
+    listing_id = serializers.PrimaryKeyRelatedField(source="listing", queryset=ServiceListing.objects.filter(is_active=True, moderation_status=ServiceListing.ModerationStatus.APPROVED), write_only=True, required=False, allow_null=True)
+    job_response_id = serializers.PrimaryKeyRelatedField(source="job_response", queryset=JobResponse.objects.all(), write_only=True, required=False, allow_null=True)
+    unread_count = serializers.SerializerMethodField()
+    booking_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MessageThread
+        fields = ["id", "client", "professional", "professional_id", "listing_id", "job", "job_response_id", "status", "last_message_at", "unread_count", "booking_id", "created_at", "updated_at"]
+        read_only_fields = ["id", "client", "job", "status", "last_message_at", "created_at", "updated_at"]
+
+    def get_unread_count(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated: return 0
+        return obj.messages.filter(is_read=False).exclude(sender=request.user.profile).count()
+
+    def get_booking_id(self, obj):
+        try: return str(obj.booking.id)
+        except BookingRequest.DoesNotExist: return None
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        me = request.user.profile
+        listing = attrs.get("listing")
+        professional = attrs.get("professional")
+        job_response = attrs.get("job_response")
+        if me.role == "client":
+            target = listing.provider if listing else professional
+            if not target or target.role != "professional": raise serializers.ValidationError("Choose a professional or approved service listing.")
+            if target.pk == me.pk: raise serializers.ValidationError("You cannot message yourself.")
+            if job_response: raise serializers.ValidationError("Clients cannot initiate from a professional job response.")
+        elif me.role == "professional":
+            if not job_response or job_response.professional_id != me.pk:
+                raise serializers.ValidationError("Professionals start job conversations from their own job response.")
+        else:
+            raise serializers.ValidationError("A marketplace role is required.")
+        return attrs
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = ProfileSerializer(read_only=True)
+    thread_id = serializers.PrimaryKeyRelatedField(source="thread", queryset=MessageThread.objects.all(), write_only=True)
+
+    class Meta:
+        model = Message
+        fields = ["id", "thread_id", "thread", "sender", "body", "attachment", "attachment_name", "attachment_content_type", "attachment_size", "is_read", "read_at", "is_system", "created_at"]
+        read_only_fields = ["id", "thread", "sender", "attachment_name", "attachment_content_type", "attachment_size", "is_read", "read_at", "is_system", "created_at"]
+
+    def validate_attachment(self, value):
+        if not value: return value
+        if value.size > MAX_ATTACHMENT_SIZE: raise serializers.ValidationError("Attachment must be 10 MB or smaller.")
+        content_type = getattr(value, "content_type", "")
+        if content_type not in ALLOWED_ATTACHMENT_TYPES: raise serializers.ValidationError("Unsupported attachment type.")
+        return value
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        me, thread = request.user.profile, attrs.get("thread")
+        if me.pk not in thread.participant_ids(): raise serializers.ValidationError("You are not a participant in this conversation.")
+        if thread.status != MessageThread.Status.OPEN: raise serializers.ValidationError("This conversation is closed.")
+        other = thread.professional if me.pk == thread.client_id else thread.client
+        if ConversationBlock.objects.filter(is_active=True).filter(serializers.models.Q(blocker=me, blocked=other) | serializers.models.Q(blocker=other, blocked=me)).exists():
+            raise serializers.ValidationError("Messaging is restricted because one participant has blocked the other.")
+        body = (attrs.get("body") or "").strip()
+        if not body and not attrs.get("attachment"): raise serializers.ValidationError("Add a message or attachment.")
+        if getattr(settings, "PREBOOKING_CONTACT_BLOCK_ENABLED", True) and body and CONTACT_RE.search(body):
+            booking = BookingRequest.objects.filter(thread=thread, status__in=[BookingRequest.Status.ACCEPTED, BookingRequest.Status.IN_PROGRESS, BookingRequest.Status.COMPLETED]).exists()
+            if not booking: raise serializers.ValidationError("Contact details cannot be shared before a booking is accepted.")
+        return attrs
+
+    def create(self, validated_data):
+        attachment = validated_data.get("attachment")
+        if attachment:
+            validated_data["attachment_name"] = attachment.name
+            validated_data["attachment_content_type"] = getattr(attachment, "content_type", "")
+            validated_data["attachment_size"] = attachment.size
+        return super().create(validated_data)
+
+
+class ConversationReportSerializer(serializers.ModelSerializer):
+    message_id = serializers.PrimaryKeyRelatedField(source="message", queryset=Message.objects.all(), write_only=True, required=False, allow_null=True)
+    class Meta:
+        model = ConversationReport
+        fields = ["id", "thread", "reporter", "reported_user", "message_id", "reason", "details", "status", "created_at"]
+        read_only_fields = ["id", "thread", "reporter", "reported_user", "status", "created_at"]
+
+
+class BookingRequestSerializer(serializers.ModelSerializer):
+    client = ProfileSerializer(read_only=True)
+    professional = ProfileSerializer(read_only=True)
+    thread_id = serializers.PrimaryKeyRelatedField(source="thread", queryset=MessageThread.objects.all(), write_only=True)
+    schedule_proposals = serializers.SerializerMethodField()
+    audit_events = serializers.SerializerMethodField()
 
     class Meta:
         model = BookingRequest
-        fields = ["id", "listing_id", "listing_summary", "client", "requested_for", "message", "status", "created_at", "updated_at"]
-        read_only_fields = ["id", "client", "status", "created_at", "updated_at"]
+        fields = ["id", "thread_id", "thread", "listing", "job", "job_response", "client", "professional", "scope_summary", "agreed_price", "currency", "requested_for", "timezone", "schedule_status", "message", "status", "accepted_at", "schedule_proposals", "audit_events", "created_at", "updated_at"]
+        read_only_fields = ["id", "thread", "listing", "job", "job_response", "client", "professional", "status", "accepted_at", "schedule_proposals", "audit_events", "created_at", "updated_at"]
 
-    def get_listing_summary(self, obj):
-        return {"id": str(obj.listing_id), "title": obj.listing.title, "provider": obj.listing.provider.username, "price_from": str(obj.listing.price_from), "currency": obj.listing.currency}
+    def get_schedule_proposals(self, obj): return ScheduleProposalSerializer(obj.schedule_proposals.all(), many=True).data
+    def get_audit_events(self, obj): return BookingAuditSerializer(obj.audit_events.all(), many=True).data
 
     def validate(self, attrs):
-        request = self.context.get("request")
-        listing = attrs.get("listing")
-        if request and listing and request.user.is_authenticated and listing.provider_id == request.user.profile.pk:
-            raise serializers.ValidationError("You cannot book your own service listing.")
+        request, thread = self.context["request"], attrs.get("thread")
+        if request.user.profile.pk != thread.client_id: raise serializers.ValidationError("Only the client can create the booking agreement.")
+        if hasattr(thread, "booking"): raise serializers.ValidationError("This conversation already has a booking agreement.")
+        if attrs.get("agreed_price") is not None and attrs["agreed_price"] < 0: raise serializers.ValidationError("Agreed price cannot be negative.")
         return attrs
 
 
 class BookingStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=BookingRequest.Status.choices)
 
-    def validate_status(self, value):
-        booking = self.context["booking"]
-        profile = self.context["request"].user.profile
-        if profile.pk == booking.client_id:
-            if value != BookingRequest.Status.CANCELLED:
-                raise serializers.ValidationError("Clients can only cancel their own booking request.")
-            return value
-        if profile.pk == booking.listing.provider_id:
-            allowed = {
-                BookingRequest.Status.PENDING: {BookingRequest.Status.ACCEPTED, BookingRequest.Status.DECLINED},
-                BookingRequest.Status.ACCEPTED: {BookingRequest.Status.COMPLETED},
-            }
-            if value not in allowed.get(booking.status, set()):
-                raise serializers.ValidationError("Invalid provider status transition.")
-            return value
-        raise serializers.ValidationError("You cannot update this booking request.")
+
+class ScheduleProposalSerializer(serializers.ModelSerializer):
+    proposer = ProfileSerializer(read_only=True)
+    booking_id = serializers.PrimaryKeyRelatedField(source="booking", queryset=BookingRequest.objects.all(), write_only=True)
+    class Meta:
+        model = ScheduleProposal
+        fields = ["id", "booking_id", "booking", "proposer", "proposed_for", "timezone", "note", "status", "responded_at", "created_at"]
+        read_only_fields = ["id", "booking", "proposer", "status", "responded_at", "created_at"]
+
+    def validate(self, attrs):
+        me, booking = self.context["request"].user.profile, attrs["booking"]
+        if me.pk not in {booking.client_id, booking.professional_id}: raise serializers.ValidationError("You are not part of this booking.")
+        return attrs
+
+
+class ScheduleDecisionSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=[ScheduleProposal.Status.ACCEPTED, ScheduleProposal.Status.DECLINED])
+
+
+class BookingAuditSerializer(serializers.ModelSerializer):
+    actor = ProfileSerializer(read_only=True)
+    class Meta:
+        model = BookingAudit
+        fields = ["id", "actor", "event", "from_status", "to_status", "metadata", "created_at"]
