@@ -29,7 +29,7 @@ class MarketplaceJourneyTests(TestCase):
         self.other_client.save()
 
         self.category = ServiceCategory.objects.get(name="Electricians")
-        self.subcategory = ServiceSubcategory.objects.create(category=self.category, name="Home Electrical Repairs")
+        self.subcategory = ServiceSubcategory.objects.get(category=self.category, slug="home-electrical-repairs")
         self.listing = ServiceListing.objects.create(
             provider=self.provider,
             category=self.category,
