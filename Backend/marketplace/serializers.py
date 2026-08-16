@@ -1,7 +1,7 @@
 import re
 
 from django.conf import settings
-from django.utils import timezone
+from django.db.models import Q
 from rest_framework import serializers
 
 from profiles.models import Profile
@@ -175,7 +175,7 @@ class MessageSerializer(serializers.ModelSerializer):
         if me.pk not in thread.participant_ids(): raise serializers.ValidationError("You are not a participant in this conversation.")
         if thread.status != MessageThread.Status.OPEN: raise serializers.ValidationError("This conversation is closed.")
         other = thread.professional if me.pk == thread.client_id else thread.client
-        if ConversationBlock.objects.filter(is_active=True).filter(serializers.models.Q(blocker=me, blocked=other) | serializers.models.Q(blocker=other, blocked=me)).exists():
+        if ConversationBlock.objects.filter(Q(blocker=me, blocked=other) | Q(blocker=other, blocked=me), is_active=True).exists():
             raise serializers.ValidationError("Messaging is restricted because one participant has blocked the other.")
         body = (attrs.get("body") or "").strip()
         if not body and not attrs.get("attachment"): raise serializers.ValidationError("Add a message or attachment.")
@@ -200,6 +200,9 @@ class ConversationReportSerializer(serializers.ModelSerializer):
         fields = ["id", "thread", "reporter", "reported_user", "message_id", "reason", "details", "status", "created_at"]
         read_only_fields = ["id", "thread", "reporter", "reported_user", "status", "created_at"]
 
+    def validate_message_id(self, value):
+        return value
+
 
 class BookingRequestSerializer(serializers.ModelSerializer):
     client = ProfileSerializer(read_only=True)
@@ -219,7 +222,7 @@ class BookingRequestSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request, thread = self.context["request"], attrs.get("thread")
         if request.user.profile.pk != thread.client_id: raise serializers.ValidationError("Only the client can create the booking agreement.")
-        if hasattr(thread, "booking"): raise serializers.ValidationError("This conversation already has a booking agreement.")
+        if BookingRequest.objects.filter(thread=thread).exists(): raise serializers.ValidationError("This conversation already has a booking agreement.")
         if attrs.get("agreed_price") is not None and attrs["agreed_price"] < 0: raise serializers.ValidationError("Agreed price cannot be negative.")
         return attrs
 
