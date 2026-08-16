@@ -1,0 +1,163 @@
+import uuid
+from decimal import Decimal
+
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+    initial = True
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ("marketplace", "0005_phase5_messaging_booking"),
+        ("profiles", "0004_profile_address"),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="Transaction",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=12)),
+                ("currency", models.CharField(default="NGN", max_length=3)),
+                ("commission_rate", models.DecimalField(decimal_places=4, default=Decimal("0.1000"), max_digits=5)),
+                ("commission_amount", models.DecimalField(decimal_places=2, max_digits=12)),
+                ("provider_amount", models.DecimalField(decimal_places=2, max_digits=12)),
+                ("state", models.CharField(choices=[("pending_payment", "Pending payment"), ("funded", "Funded"), ("in_progress", "In progress"), ("delivered", "Delivered"), ("released", "Released"), ("disputed", "Disputed"), ("refunded", "Refunded"), ("cancelled", "Cancelled")], default="pending_payment", max_length=24)),
+                ("gateway", models.CharField(default="paystack", max_length=24)),
+                ("funding_reference", models.CharField(blank=True, db_index=True, max_length=120)),
+                ("gateway_transaction_id", models.CharField(blank=True, max_length=80)),
+                ("receipt_number", models.CharField(max_length=64, unique=True)),
+                ("funded_at", models.DateTimeField(blank=True, null=True)),
+                ("service_started_at", models.DateTimeField(blank=True, null=True)),
+                ("delivered_at", models.DateTimeField(blank=True, null=True)),
+                ("release_eligible_at", models.DateTimeField(blank=True, db_index=True, null=True)),
+                ("client_confirmed_at", models.DateTimeField(blank=True, null=True)),
+                ("released_at", models.DateTimeField(blank=True, null=True)),
+                ("cancelled_at", models.DateTimeField(blank=True, null=True)),
+                ("refunded_at", models.DateTimeField(blank=True, null=True)),
+                ("refund_status", models.CharField(choices=[("none", "None"), ("pending", "Pending"), ("processed", "Processed"), ("failed", "Failed")], default="none", max_length=16)),
+                ("refund_gateway_id", models.CharField(blank=True, db_index=True, max_length=80)),
+                ("refund_reason", models.TextField(blank=True)),
+                ("reconciliation_status", models.CharField(choices=[("pending", "Pending"), ("matched", "Matched"), ("mismatch", "Mismatch")], default="pending", max_length=16)),
+                ("reconciliation_note", models.TextField(blank=True)),
+                ("reconciled_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("booking", models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, related_name="sabipay_transaction", to="marketplace.bookingrequest")),
+                ("client", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="sabipay_client_transactions", to="profiles.profile")),
+                ("professional", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="sabipay_provider_transactions", to="profiles.profile")),
+            ],
+            options={
+                "ordering": ["-created_at"],
+                "permissions": [("manage_sabipay", "Can manage SabiPay transactions and payouts")],
+            },
+        ),
+        migrations.CreateModel(
+            name="PayoutDestination",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("gateway", models.CharField(default="paystack", max_length=24)),
+                ("recipient_code", models.CharField(max_length=120, unique=True)),
+                ("account_name", models.CharField(max_length=180)),
+                ("bank_code", models.CharField(max_length=32)),
+                ("bank_name", models.CharField(blank=True, max_length=120)),
+                ("account_last4", models.CharField(max_length=4)),
+                ("is_active", models.BooleanField(default=True)),
+                ("verified_at", models.DateTimeField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("professional", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="sabipay_payout_destination", to="profiles.profile")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="GatewayWebhookEvent",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("digest", models.CharField(max_length=64, unique=True)),
+                ("event_name", models.CharField(max_length=80)),
+                ("reference", models.CharField(blank=True, max_length=120)),
+                ("processed", models.BooleanField(default=False)),
+                ("processing_note", models.TextField(blank=True)),
+                ("received_at", models.DateTimeField(auto_now_add=True)),
+                ("processed_at", models.DateTimeField(blank=True, null=True)),
+            ],
+            options={"ordering": ["-received_at"]},
+        ),
+        migrations.CreateModel(
+            name="PaymentAttempt",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("reference", models.CharField(max_length=120, unique=True)),
+                ("idempotency_key", models.CharField(blank=True, max_length=120, null=True, unique=True)),
+                ("authorization_url", models.URLField(blank=True, max_length=500)),
+                ("access_code", models.CharField(blank=True, max_length=120)),
+                ("gateway_transaction_id", models.CharField(blank=True, max_length=80)),
+                ("status", models.CharField(choices=[("initialized", "Initialized"), ("success", "Success"), ("failed", "Failed"), ("abandoned", "Abandoned")], default="initialized", max_length=16)),
+                ("failure_reason", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("transaction", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="payment_attempts", to="sabipay.transaction")),
+            ],
+            options={"ordering": ["-created_at"]},
+        ),
+        migrations.CreateModel(
+            name="PayoutRecord",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=12)),
+                ("currency", models.CharField(default="NGN", max_length=3)),
+                ("reference", models.CharField(max_length=120, unique=True)),
+                ("transfer_code", models.CharField(blank=True, max_length=120)),
+                ("status", models.CharField(choices=[("pending", "Pending"), ("processing", "Processing"), ("paid", "Paid"), ("failed", "Failed"), ("reversed", "Reversed"), ("manual_review", "Manual review")], default="pending", max_length=24)),
+                ("initiated_at", models.DateTimeField(blank=True, null=True)),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("failure_reason", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("destination", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="payouts", to="sabipay.payoutdestination")),
+                ("transaction", models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, related_name="payout", to="sabipay.transaction")),
+            ],
+            options={"ordering": ["-created_at"]},
+        ),
+        migrations.CreateModel(
+            name="Dispute",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("reason", models.CharField(max_length=80)),
+                ("details", models.TextField(blank=True)),
+                ("status", models.CharField(choices=[("open", "Open"), ("under_review", "Under review"), ("resolved", "Resolved"), ("closed", "Closed")], default="open", max_length=24)),
+                ("resolution", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("resolved_at", models.DateTimeField(blank=True, null=True)),
+                ("opened_by", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="sabipay_disputes_opened", to=settings.AUTH_USER_MODEL)),
+                ("transaction", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="disputes", to="sabipay.transaction")),
+            ],
+            options={"ordering": ["-created_at"]},
+        ),
+        migrations.CreateModel(
+            name="TransactionAudit",
+            fields=[
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("source", models.CharField(max_length=24)),
+                ("event", models.CharField(max_length=80)),
+                ("from_state", models.CharField(blank=True, max_length=24)),
+                ("to_state", models.CharField(blank=True, max_length=24)),
+                ("reason", models.TextField(blank=True)),
+                ("metadata", models.JSONField(blank=True, default=dict)),
+                ("event_key", models.CharField(blank=True, max_length=160, null=True, unique=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("actor", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="sabipay_audit_events", to=settings.AUTH_USER_MODEL)),
+                ("transaction", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="audit_events", to="sabipay.transaction")),
+            ],
+            options={"ordering": ["created_at"]},
+        ),
+        migrations.AddIndex(model_name="transaction", index=models.Index(fields=["state", "release_eligible_at"], name="sabipay_release_due_idx")),
+        migrations.AddIndex(model_name="transaction", index=models.Index(fields=["client", "state"], name="sabipay_client_state_idx")),
+        migrations.AddIndex(model_name="transaction", index=models.Index(fields=["professional", "state"], name="sabipay_prof_state_idx")),
+        migrations.AddIndex(model_name="paymentattempt", index=models.Index(fields=["transaction", "status"], name="sabipay_attempt_status_idx")),
+        migrations.AddIndex(model_name="dispute", index=models.Index(fields=["transaction", "status"], name="sabipay_dispute_state_idx")),
+        migrations.AddIndex(model_name="transactionaudit", index=models.Index(fields=["transaction", "created_at"], name="sabipay_audit_time_idx")),
+    ]
