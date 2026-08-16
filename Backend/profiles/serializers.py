@@ -10,6 +10,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
+    rating_average = serializers.DecimalField(max_digits=3, decimal_places=2, read_only=True)
+    rating_count = serializers.IntegerField(read_only=True)
     user_id = serializers.IntegerField(source="pk", read_only=True)
     is_following = serializers.SerializerMethodField()
     is_verified = serializers.SerializerMethodField()
@@ -19,15 +21,13 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             "user_id", "full_name", "initials", "email", "username", "profile_picture",
-            "followers_count", "following_count", "posts_count",
-            "phone_number", "gender", "date_of_birth",
-            "country", "state", "area", "street",
-            "role", "job", "bio", "is_following", "address",
-            "is_verified", "verification_status",
+            "followers_count", "following_count", "posts_count", "rating_average", "rating_count",
+            "phone_number", "gender", "date_of_birth", "country", "state", "area", "street",
+            "role", "job", "bio", "is_following", "address", "is_verified", "verification_status",
         ]
         read_only_fields = (
-            "email", "initials", "followers_count", "following_count",
-            "posts_count", "is_following", "address", "is_verified", "verification_status",
+            "email", "initials", "followers_count", "following_count", "posts_count",
+            "rating_average", "rating_count", "is_following", "address", "is_verified", "verification_status",
         )
 
     def _verification_state(self, instance):
@@ -57,7 +57,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         request_user = getattr(request, "user", None)
         is_owner = bool(request_user and request_user.is_authenticated and instance.user_id == request_user.id)
         is_staff = bool(request_user and request_user.is_authenticated and request_user.is_staff)
-
         if not (is_owner or is_staff):
             for field in ("email", "phone_number", "gender", "date_of_birth", "area", "street", "address"):
                 data.pop(field, None)
