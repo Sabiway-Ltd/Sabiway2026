@@ -11,13 +11,14 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
 from .models import PendingSignup
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "full_name", "email", "is_active", "is_staff", "is_superuser"]
+        fields = ["id", "full_name", "email", "role", "is_active", "is_staff", "is_superuser"]
         read_only_fields = ["id", "email"]  # prevent changing email once set
 
 
@@ -25,6 +26,17 @@ class SignupSerializer(serializers.Serializer):
     full_name = serializers.CharField()
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+    role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.CLIENT)
+
+    def validate_email(self, value):
+        normalized = value.strip().lower()
+        if User.objects.filter(email=normalized).exists() or PendingSignup.objects.filter(email=normalized).exists():
+            raise serializers.ValidationError("An account or pending signup already exists for this email.")
+        return normalized
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
 
     def create(self, validated_data):
         # Hash password
@@ -34,6 +46,7 @@ class SignupSerializer(serializers.Serializer):
         pending = PendingSignup.objects.create(
             email=validated_data["email"],
             full_name=validated_data["full_name"],
+            role=validated_data["role"],
             password_hash=password_hash
         )
 
@@ -116,15 +129,13 @@ class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        try:
-            user = User.objects.get(email=value)
-        except User.DoesNotExist:
-            raise serializers.ValidationError("No account with this email")
-        self.context["user"] = user
-        return value
+        self.context["user"] = User.objects.filter(email=value.strip().lower()).first()
+        return value.strip().lower()
 
     def save(self):
         user = self.context["user"]
+        if user is None:
+            return None
         reset_obj = PasswordReset.objects.create(user=user)
         reset_obj.generate_code()
 
@@ -201,6 +212,7 @@ class ResetPasswordSerializer(serializers.Serializer):
     def validate(self, data):
         if data["new_password"] != data["confirm_password"]:
             raise serializers.ValidationError("Passwords do not match")
+        validate_password(data["new_password"], user=self.context.get("user"))
         return data
 
     def save(self, reset_obj):

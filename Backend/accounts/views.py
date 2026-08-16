@@ -51,6 +51,7 @@ class ConfirmSignupView(APIView):
         user = User.objects.create_user(
             email=pending.email,
             full_name=pending.full_name,
+            role=pending.role,
             password=None  # we'll assign the hashed password
         )
         user.password = pending.password_hash
@@ -122,6 +123,7 @@ class LoginView(generics.GenericAPIView):
                 "id": user.id,
                 "full_name": user.full_name,
                 "email": user.email,
+                "role": user.role,
                 "is_active": user.is_active,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
@@ -216,6 +218,7 @@ class GoogleLoginView(APIView):
                 "id": user.id,
                 "full_name": user.full_name,
                 "email": user.email,
+                "role": user.role,
                 "is_active": user.is_active,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
@@ -252,8 +255,8 @@ class ForgotPasswordView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        reset_obj = serializer.save()
-        return Response({"message": "Password reset instructions sent to email"})
+        serializer.save()
+        return Response({"message": "If an account exists for this email, password reset instructions have been sent."})
 
 
 class ConfirmCodeView(generics.GenericAPIView):
@@ -275,7 +278,7 @@ class ResetPasswordView(generics.GenericAPIView):
         except PasswordReset.DoesNotExist:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={"user": reset_obj.user})
         serializer.is_valid(raise_exception=True)
         serializer.save(reset_obj)
         return Response({"message": "Password has been reset successfully"})

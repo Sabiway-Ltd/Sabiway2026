@@ -25,8 +25,13 @@ class UserManager(BaseUserManager):
         return self.create_user(email, full_name, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+    class Role(models.TextChoices):
+        CLIENT = "client", "Client"
+        PROFESSIONAL = "professional", "Professional"
+
     full_name = models.CharField(max_length=255, blank=False, null=False)  # new field
     email = models.EmailField(unique=True)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.CLIENT)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -58,6 +63,7 @@ class PasswordReset(models.Model):
 class PendingSignup(models.Model):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=20, choices=User.Role.choices, default=User.Role.CLIENT)
     password_hash = models.CharField(max_length=128)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     code = models.CharField(max_length=6, blank=True)  # 6-digit code

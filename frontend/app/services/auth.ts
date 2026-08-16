@@ -3,7 +3,7 @@
 import { api } from "./api";
 
 export const auth = {
-  signup: (data: { full_name: string; email: string; password: string }) =>
+  signup: (data: { full_name: string; email: string; password: string; role?: "client" | "professional" }) =>
     api.post("/auth/signup/", data),
 
   login: (data: { email: string; password: string }) =>
