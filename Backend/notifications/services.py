@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Optional
 
@@ -7,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.utils import timezone
+from rest_framework.renderers import JSONRenderer
 
 from profiles.models import Profile
 
@@ -19,13 +21,18 @@ def _realtime_headers():
     return {"x-sabiway-internal-token": token} if token else {}
 
 
+def _json_safe_notification(notification):
+    rendered = JSONRenderer().render(NotificationSerializer(notification).data)
+    return json.loads(rendered.decode("utf-8"))
+
+
 def _broadcast_in_app(notification):
     if not getattr(settings, "NOTIFICATION_REALTIME_DELIVERY_ENABLED", True):
         return
     try:
         requests.post(
             f"{settings.EXPRESS_URL}/broadcast-notification",
-            json={"userId": str(notification.user.user_id), "notification": NotificationSerializer(notification).data},
+            json={"userId": str(notification.user.user_id), "notification": _json_safe_notification(notification)},
             headers=_realtime_headers(),
             timeout=2,
         )
