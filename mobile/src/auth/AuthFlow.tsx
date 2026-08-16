@@ -30,6 +30,11 @@ export function AuthFlow({ onAuthenticated }: AuthFlowProps) {
   const [selectedRole, setSelectedRole] = useState<AccountRole>("client");
   const [signIn, setSignIn] = useState(emptySignIn);
   const [signUp, setSignUp] = useState(emptySignUp);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestError, setRequestError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,6 +78,59 @@ export function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     try {
       await authApi.signUp(payload);
       navigate("check-email");
+    } catch (error) {
+      setRequestError(authErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitForgotPassword() {
+    if (!/^\S+@\S+\.\S+$/.test(recoveryEmail.trim())) {
+      setErrors({ email: "Enter a valid email address." });
+      return;
+    }
+    setLoading(true);
+    setRequestError("");
+    try {
+      await authApi.forgotPassword(recoveryEmail);
+      navigate("reset-code");
+    } catch (error) {
+      setRequestError(authErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitResetCode() {
+    if (!/^\d{4}$/.test(resetCode.trim())) {
+      setErrors({ code: "Enter the 4-digit code from your email." });
+      return;
+    }
+    setLoading(true);
+    setRequestError("");
+    try {
+      const response = await authApi.confirmResetCode(recoveryEmail, resetCode);
+      setResetToken(response.reset_token);
+      navigate("new-password");
+    } catch (error) {
+      setRequestError(authErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitNewPassword() {
+    const nextErrors: Record<string, string> = {};
+    if (newPassword.length < 8) nextErrors.newPassword = "Use at least 8 characters.";
+    if (newPassword !== confirmPassword) nextErrors.confirmPassword = "Passwords do not match.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+    setLoading(true);
+    setRequestError("");
+    try {
+      await authApi.resetPassword(resetToken, newPassword, confirmPassword);
+      navigate("password-reset");
     } catch (error) {
       setRequestError(authErrorMessage(error));
     } finally {
@@ -155,7 +213,7 @@ export function AuthFlow({ onAuthenticated }: AuthFlowProps) {
               />
               <RequestError message={requestError} />
               <PrimaryButton label="Sign in" loading={loading} onPress={submitSignIn} />
-              <TextButton label="Forgot password?" onPress={() => setRequestError("Password recovery will be added in the next Phase 2 slice.")} />
+              <TextButton label="Forgot password?" onPress={() => navigate("forgot-password")} />
               <TextButton label="Create an account" onPress={() => navigate("role")} />
             </>
           )}
@@ -205,6 +263,47 @@ export function AuthFlow({ onAuthenticated }: AuthFlowProps) {
               <PrimaryButton label="Go to sign in" onPress={() => navigate("sign-in")} />
             </>
           )}
+        {screen === "forgot-password" && (
+          <>
+            <BackButton onPress={() => navigate("sign-in")} />
+            <Text accessibilityRole="header" style={styles.title}>Reset your password</Text>
+            <Text style={styles.copy}>Enter your account email. We will send instructions if an account exists.</Text>
+            <Field autoComplete="email" error={errors.email} keyboardType="email-address" label="Email address" onChangeText={setRecoveryEmail} value={recoveryEmail} />
+            <RequestError message={requestError} />
+            <PrimaryButton label="Send reset instructions" loading={loading} onPress={submitForgotPassword} />
+          </>
+        )}
+
+        {screen === "reset-code" && (
+          <>
+            <BackButton onPress={() => navigate("forgot-password")} />
+            <Text accessibilityRole="header" style={styles.title}>Enter your reset code</Text>
+            <Text style={styles.copy}>Use the 4-digit code sent to {recoveryEmail.trim().toLowerCase()}.</Text>
+            <Field error={errors.code} keyboardType="number-pad" label="Reset code" onChangeText={setResetCode} value={resetCode} />
+            <RequestError message={requestError} />
+            <PrimaryButton label="Confirm code" loading={loading} onPress={submitResetCode} />
+          </>
+        )}
+
+        {screen === "new-password" && (
+          <>
+            <BackButton onPress={() => navigate("reset-code")} />
+            <Text accessibilityRole="header" style={styles.title}>Choose a new password</Text>
+            <Text style={styles.copy}>Use a strong password you do not use elsewhere.</Text>
+            <Field autoComplete="new-password" error={errors.newPassword} label="New password" onChangeText={setNewPassword} secureTextEntry value={newPassword} />
+            <Field autoComplete="new-password" error={errors.confirmPassword} label="Confirm password" onChangeText={setConfirmPassword} secureTextEntry value={confirmPassword} />
+            <RequestError message={requestError} />
+            <PrimaryButton label="Reset password" loading={loading} onPress={submitNewPassword} />
+          </>
+        )}
+
+        {screen === "password-reset" && (
+          <>
+            <Text accessibilityRole="header" style={styles.title}>Password updated</Text>
+            <Text style={styles.copy}>Your new password is ready. Sign in to continue.</Text>
+            <PrimaryButton label="Go to sign in" onPress={() => navigate("sign-in")} />
+          </>
+        )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -222,7 +321,7 @@ function authErrorMessage(error: unknown) {
 type FieldProps = {
   autoComplete?: "email" | "name" | "current-password" | "new-password";
   error?: string;
-  keyboardType?: "default" | "email-address";
+  keyboardType?: "default" | "email-address" | "number-pad";
   label: string;
   onChangeText: (value: string) => void;
   secureTextEntry?: boolean;
