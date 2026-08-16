@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Home, Menu, Plus, Search, ShoppingBag, X } from "lucide-react";
+import { Home, Menu, MessageCircle, Plus, Search, ShieldCheck, ShoppingBag, WalletCards, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -36,6 +36,8 @@ export default function CommunityNavbar({ onCreatePost, onSearch, onReset, hideS
     window.location.href = "/community";
   };
 
+  const navClass = (active: boolean) => `inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-extrabold ${active ? "bg-[#e8f7f0] text-[#008753]" : "text-[#55685d] hover:bg-[#f1f6f3]"}`;
+
   return (
     <header className="sticky top-0 z-40 border-b border-[#dce8e1] bg-white/95 backdrop-blur">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-3 px-3 sm:px-5 lg:px-8">
@@ -44,9 +46,12 @@ export default function CommunityNavbar({ onCreatePost, onSearch, onReset, hideS
           <span className="hidden text-xl sm:block">SabiWay</span>
         </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
-          <button onClick={goCommunity} className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-extrabold ${pathname === "/community" ? "bg-[#e8f7f0] text-[#008753]" : "text-[#55685d] hover:bg-[#f1f6f3]"}`}><Home size={17}/> SabiForum</button>
-          <Link href="/marketplace" className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-extrabold ${pathname?.startsWith("/marketplace") ? "bg-[#e8f7f0] text-[#008753]" : "text-[#55685d] hover:bg-[#f1f6f3]"}`}><ShoppingBag size={17}/> Marketplace</Link>
+        <div className="hidden items-center gap-1 xl:flex">
+          <button onClick={goCommunity} className={navClass(pathname === "/community")}><Home size={17}/> SabiForum</button>
+          <Link href="/marketplace" className={navClass(Boolean(pathname?.startsWith("/marketplace")))}><ShoppingBag size={17}/> Marketplace</Link>
+          <Link href="/messages" className={navClass(Boolean(pathname?.startsWith("/messages")))}><MessageCircle size={17}/> Messages</Link>
+          <Link href="/sabipay" className={navClass(Boolean(pathname?.startsWith("/sabipay")))}><WalletCards size={17}/> SabiPay</Link>
+          <Link href="/trust" className={navClass(Boolean(pathname?.startsWith("/trust")))}><ShieldCheck size={17}/> Trust</Link>
         </div>
 
         {showSearch ? (
@@ -56,22 +61,23 @@ export default function CommunityNavbar({ onCreatePost, onSearch, onReset, hideS
         ) : <div className="flex-1"/>}
 
         <div className="ml-auto flex items-center gap-2">
-          {pathname === "/community" ? (
-            <button onClick={onCreatePost} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#008753] px-3 text-sm font-black text-white shadow-sm sm:px-4"><span className="hidden sm:inline">Ask question</span><Plus size={17}/></button>
-          ) : null}
+          {pathname === "/community" ? <button onClick={onCreatePost} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#008753] px-3 text-sm font-black text-white shadow-sm sm:px-4"><span className="hidden sm:inline">Ask question</span><Plus size={17}/></button> : null}
           <div className="rounded-xl border border-[#e0eae4] bg-white p-0.5"><NotificationDropdown /></div>
           <div className="rounded-xl border border-[#e0eae4] bg-white p-0.5"><ProfileDropdown /></div>
-          <button onClick={() => setMobileOpen((value) => !value)} className="rounded-xl border border-[#dce8e1] p-2 text-[#173126] md:hidden" aria-label="Open product navigation">{mobileOpen ? <X size={20}/> : <Menu size={20}/>}</button>
+          <button onClick={() => setMobileOpen((value) => !value)} className="rounded-xl border border-[#dce8e1] p-2 text-[#173126] xl:hidden" aria-label="Open product navigation">{mobileOpen ? <X size={20}/> : <Menu size={20}/>}</button>
         </div>
       </div>
 
       {mobileOpen ? (
-        <div className="border-t border-[#e6eee9] bg-white px-3 py-3 md:hidden">
-          <div className="mx-auto grid max-w-7xl gap-2">
+        <div className="border-t border-[#e6eee9] bg-white px-3 py-3 xl:hidden">
+          <div className="mx-auto grid max-w-7xl gap-2 sm:grid-cols-2 lg:grid-cols-5">
             <button onClick={goCommunity} className="flex items-center gap-2 rounded-xl bg-[#f4f8f6] px-4 py-3 text-left font-extrabold text-[#173126]"><Home size={18}/> SabiForum</button>
             <Link href="/marketplace" className="flex items-center gap-2 rounded-xl bg-[#f4f8f6] px-4 py-3 font-extrabold text-[#173126]"><ShoppingBag size={18}/> Marketplace</Link>
-            {showSearch ? <div className="relative mt-1"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7b8981]" size={17}/><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && submitSearch()} placeholder="Search SabiForum" className="min-h-11 w-full rounded-xl border border-[#dce8e1] bg-[#f7faf8] pl-11 pr-4 text-sm outline-none"/></div> : null}
-            {profile ? <p className="px-1 pt-1 text-xs font-semibold text-[#748179]">Signed in as {profile.full_name}</p> : null}
+            <Link href="/messages" className="flex items-center gap-2 rounded-xl bg-[#f4f8f6] px-4 py-3 font-extrabold text-[#173126]"><MessageCircle size={18}/> Messages</Link>
+            <Link href="/sabipay" className="flex items-center gap-2 rounded-xl bg-[#f4f8f6] px-4 py-3 font-extrabold text-[#173126]"><WalletCards size={18}/> SabiPay</Link>
+            <Link href="/trust" className="flex items-center gap-2 rounded-xl bg-[#f4f8f6] px-4 py-3 font-extrabold text-[#173126]"><ShieldCheck size={18}/> Trust Centre</Link>
+            {showSearch ? <div className="relative mt-1 sm:col-span-2"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7b8981]" size={17}/><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && submitSearch()} placeholder="Search SabiForum" className="min-h-11 w-full rounded-xl border border-[#dce8e1] bg-[#f7faf8] pl-11 pr-4 text-sm outline-none"/></div> : null}
+            {profile ? <p className="px-1 pt-1 text-xs font-semibold text-[#748179] sm:col-span-2">Signed in as {profile.full_name}</p> : null}
           </div>
         </div>
       ) : null}
