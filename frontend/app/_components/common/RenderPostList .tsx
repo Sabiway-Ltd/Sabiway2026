@@ -1,11 +1,20 @@
 import PostCard from "../feed/PostCard";
+import type { Post } from "@/app/store/usePostStore";
 
-export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false, shouldReload = false }) => (
+type RenderPostListProps = {
+  posts: Post[];
+  emptyMessage: string;
+  reloadFn?: (() => unknown) | ((page?: number | null) => unknown);
+  clickable?: boolean;
+  shouldReload?: boolean;
+};
+
+export const RenderPostList = ({ posts, emptyMessage, reloadFn, clickable=false, shouldReload = false }: RenderPostListProps) => (
   <div className="md:space-y-4 space-y-2 w-full">
     {posts.length === 0 ? (
   <p className="text-gray-600">{emptyMessage}</p>
     ) : (
-      posts.map((post, index) => (
+      posts.map((post) => (
         <PostCard
           key={
             post.original_post_data

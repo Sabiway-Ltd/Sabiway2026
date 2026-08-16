@@ -7,7 +7,7 @@ import Aside from "@/app/_components/feed/Aside";
 import { useState } from "react";
 import SinglePostPage from "./SinglePostPage";
 
-export default function page() {
+export default function Page() {
     const [showPostBox, setShowPostBox] = useState(false);
 
 

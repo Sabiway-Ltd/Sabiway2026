@@ -19,7 +19,8 @@ import NotificationDropdown from "../common/NotificationDropdown";
 // ✅ Include onReset here
 interface CommunityNavbarProps {
   onCreatePost: () => void;
-  onSearch: (searchTerm: string) => void;
+  onSearch?: (searchTerm: string) => void;
+  hideSearch?: boolean;
   onReset?: () => void;
 }
 
@@ -27,6 +28,7 @@ export default function CommunityNavbar({
   onCreatePost,
   onSearch,
   onReset, // ✅ added
+  hideSearch = false,
 }: CommunityNavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -55,7 +57,7 @@ export default function CommunityNavbar({
   // 🔍 Handle search
   const handleSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim() !== "") {
-      onSearch(searchQuery.trim());
+      onSearch?.(searchQuery.trim());
       setMenuOpen(false); // ✅ close only on Enter
     } 
     else if (e.key === "Escape") {

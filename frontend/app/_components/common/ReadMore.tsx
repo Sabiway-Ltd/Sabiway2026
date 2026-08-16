@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const ReadMoreText = ({ content, maxLength = 120 }) => {
+type ReadMoreTextProps = { content: string; maxLength?: number };
+
+const ReadMoreText = ({ content, maxLength = 120 }: ReadMoreTextProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
 

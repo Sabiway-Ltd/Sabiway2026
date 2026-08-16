@@ -1,14 +1,14 @@
 // app/_components/profile/ProfilePostCard.tsx
 
 import Link from "next/link";
-import { usePostStore } from "@/app/store/usePostStore";
+import { usePostStore, type Post } from "@/app/store/usePostStore";
 import { useState } from "react";
 import { getProfileImage } from "@/app/helper";
 import toast from "react-hot-toast";
 import ProfileKebab from "./ProfileKebab";
 import { CLOUDINARY_CLOUD_NAME } from "@/app/helper";
 
-export default function ProfilePostCard({ post }) {
+export default function ProfilePostCard({ post }: { post: Post }) {
   const { bookmarkPost, unbookmarkPost } = usePostStore();
   const [isBookmarked, setIsBookmarked] = useState(post.is_bookmarked);
   const [loading, setLoading] = useState(false);
@@ -26,10 +26,10 @@ export default function ProfilePostCard({ post }) {
     setLoading(true);
     try {
       if (isBookmarked) {
-        await unbookmarkPost(post.id);
+        await unbookmarkPost(String(post.id));
         toast.success("Post unbookmarked");
       } else {
-        await bookmarkPost(post.id);
+        await bookmarkPost(String(post.id));
         toast.success("Post bookmarked");
       }
       setIsBookmarked(!isBookmarked);
@@ -69,7 +69,7 @@ export default function ProfilePostCard({ post }) {
         <ProfileKebab
           handleCopyPostLink={handleCopyPostLink}
           handleBookmarkToggle={handleBookmarkToggle}
-          isBookmarked={isBookmarked}
+          isBookmarked={Boolean(isBookmarked)}
           loading={loading}
         />
       </div>

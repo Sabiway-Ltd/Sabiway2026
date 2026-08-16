@@ -11,8 +11,9 @@ import { DEFAULT_PROFILE_PICTURE } from "../helper";
 
 
 // ---------- Types ----------
-type Author = {
+export type Author = {
   user_id: number;
+  initials?: string;
   username: string;
   full_name: string;
   profile_picture?: string | null;
@@ -21,13 +22,13 @@ type Author = {
   job?: string;
 };
 
-type Hashtag = {
+export type Hashtag = {
   tag: string;
   use_count: number;
 };
 
-type Post = {
-  id: string;
+export type Post = {
+  id: string | number;
   author: Author;
   content: string;
   image: string | null;
@@ -40,12 +41,17 @@ type Post = {
   is_bookmarked?: boolean;
   created_at: string;
   updated_at?: string;
+  original_post?: Post | null;
+  original_post_data?: Post | null;
+  post?: Post;
 };
 
-type Comment = {
-  id: string;
+export type Comment = {
+  id: string | number;
   user: Author;
-  post: string;
+  post: string | number;
+  comment?: string | number;
+  image?: string | null;
   content: string;
   likes_count: number;
   created_at: string;
@@ -53,37 +59,95 @@ type Comment = {
   reply_count?: number;
 };
 
-type Reply = {
-  id: string;
+export type Reply = {
+  id: string | number;
   user: Author;
-  comment: string;
+  comment: string | number;
+  parent_reply_id?: string | number | null;
+  image?: string | null;
+  nested_replies?: Reply[];
   content: string;
   likes_count: number;
   created_at: string;
   is_liked?: boolean;
 };
 
-type PostState = {
+export type PostState = {
   posts: Post[];
   currentPost: Post | null;
   commentsByPost: Record<string, Comment[]>;
   repliesByComment: Record<string, Reply[]>;
+  nestedReplies: Record<string, Reply[]>;
   loading: boolean;
   loadingHashtag: boolean;
   error: string | null;
   trendingHashtags: Hashtag[];
-  filteredPosts: Post[];
+  filteredPosts: Post[] | null;
+  filteredProfiles: Author[] | null;
+  filteredHashtags: Hashtag[] | null;
   activeHashtag: string | null;
-  myReposts: [];
+  activeSearch: string | null;
 
-  // State setters
+  nextPage: number | null;
+  hasMore: boolean;
+  userPosts: Post[];
+  userNextPage: number | null;
+  userHasMore: boolean;
+  myPosts: Post[];
+  loadingMyPosts: boolean;
+  myPostsError: string | null;
+  nextMyPostsPage: number | null;
+  hasMoreMyPosts: boolean;
+  myReposts: Post[];
+
+  bookmarks: Post[];
+  loadingBookmarks: boolean;
+  bookmarksError: string | null;
+  nextBookmarksPage: number | null;
+  hasMoreBookmarks: boolean;
+  refreshFeed: boolean;
+  refreshBookmarks: boolean;
+
   set: (partial: Partial<PostState>) => void;
-
-  // Actions
-  getAllPosts: (page?: number) => Promise<void>;
-  getMyPosts: (page?: number) => Promise<void>;
-  createPost: (data: FormData | object) => Promise<void>;
-  // ... Add other actions like likePost, addComment, repost, etc.
+  triggerRefresh: () => void;
+  consumeRefresh: () => void;
+  triggerBookmarksRefresh: () => void;
+  consumeBookmarksRefresh: () => void;
+  getAllPosts: (page?: number | null) => Promise<unknown>;
+  getPostsByUsername: (username: string, page?: number | null) => Promise<unknown>;
+  resetUserPosts: () => void;
+  getMyPosts: (page?: number | null) => Promise<unknown>;
+  resetMyPosts: () => void;
+  getBookmarks: (page?: number | null) => Promise<unknown>;
+  createPost: (data: FormData | object) => Promise<unknown>;
+  getPostById: (id: string) => Promise<Post | null>;
+  likePost: (id: string) => Promise<unknown>;
+  unlikePost: (id: string) => Promise<unknown>;
+  bookmarkPost: (id: string) => Promise<unknown>;
+  unbookmarkPost: (id: string) => Promise<unknown>;
+  addComment: (postId: string, content: string, imageFile?: File) => Promise<unknown>;
+  getComments: (postId: string) => Promise<unknown>;
+  addReply: (commentId: string, content: string, imageFile?: File) => Promise<unknown>;
+  getReplies: (postId: string) => Promise<unknown>;
+  getRepliesByComment: (commentId: string) => Promise<unknown>;
+  getNestedReplies: (parentReplyId: string) => Promise<unknown>;
+  addNestedReply: (parentReplyId: string, content: string, imageFile?: File) => Promise<unknown>;
+  filterBySearch: (query: string, type?: "posts" | "profiles" | "hashtags") => Promise<unknown>;
+  resetFilteredResults: () => void;
+  updateComment: (commentId: string, content: string, postId: string, imageFile?: File) => Promise<unknown>;
+  deleteComment: (commentId: string) => Promise<unknown>;
+  updateReply: (replyId: string, content: string, commentId: string, imageFile?: File) => Promise<unknown>;
+  deleteReply: (replyId: string) => Promise<unknown>;
+  repostPost: (id: string) => Promise<unknown>;
+  unrepostPost: (id: string) => Promise<unknown>;
+  getMyReposts: () => Promise<Post[]>;
+  likeComment: (commentId: string) => Promise<unknown>;
+  unlikeComment: (commentId: string) => Promise<unknown>;
+  likeReply: (replyId: string) => Promise<unknown>;
+  unlikeReply: (replyId: string) => Promise<unknown>;
+  getTrendingHashtags: () => Promise<unknown>;
+  filterPostsByHashtag: (tag: string) => Promise<unknown>;
+  resetFilteredPosts: () => void;
 };
 
 // ---------- API ----------
@@ -97,20 +161,26 @@ export const usePostStore = create<PostState>((set, get) => ({
   currentPost: null,
   commentsByPost: {},
   repliesByComment: {},
+  nestedReplies: {},
   loading: false,
   loadingHashtag: false,
   error: null,
   trendingHashtags: [],
   filteredPosts: [],
+  filteredProfiles: [],
+  filteredHashtags: [],
   activeHashtag: null,
+  activeSearch: null,
   nextPage: 1,
   hasMore: true,
   userPosts: [],
   userNextPage: 1,
   userHasMore: true,
   myPosts: [],
-  myNextPage: 1,
-  myHasMore: true,
+  loadingMyPosts: false,
+  myPostsError: null,
+  nextMyPostsPage: 1,
+  hasMoreMyPosts: true,
   myReposts: [],
 
   bookmarks: [],
@@ -121,8 +191,11 @@ export const usePostStore = create<PostState>((set, get) => ({
     
 
   refreshFeed: false,
+  refreshBookmarks: false,
   triggerRefresh: () => set({ refreshFeed: true }),
   consumeRefresh: () => set({ refreshFeed: false }),
+  triggerBookmarksRefresh: () => set({ refreshBookmarks: true }),
+  consumeBookmarksRefresh: () => set({ refreshBookmarks: false }),
 
   set: (partial) => set((state) => ({ ...state, ...partial })),
 
@@ -132,7 +205,8 @@ export const usePostStore = create<PostState>((set, get) => ({
   //   set({ loading: true });
   //   const token = localStorage.getItem("access");
   //   if (!token) return set({ error: "Not logged in", loading: false });
- getAllPosts: async (page = 1) => {
+ getAllPosts: async (requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loading, nextPage } = get(); // ✅ Access current state first
     if (loading || (page !== nextPage && page !== 1)) return; // ✅ Prevent duplicate fetch
 
@@ -162,7 +236,8 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  getPostsByUsername: async (username: string, page = 1) => {
+  getPostsByUsername: async (username: string, requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loading, userNextPage } = get();
     if (loading || (page !== 1 && page !== userNextPage)) return;
 
@@ -191,7 +266,8 @@ export const usePostStore = create<PostState>((set, get) => ({
 
 
 
-  getMyPosts: async (page = 1) => {
+  getMyPosts: async (requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loadingMyPosts, nextMyPostsPage } = get();
 
     // Prevent double fetch
@@ -224,7 +300,8 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
 
-  getBookmarks: async (page = 1) => {
+  getBookmarks: async (requestedPage = 1) => {
+    const page = requestedPage ?? 1;
     const { loadingBookmarks, nextBookmarksPage } = get();
 
     // Prevent duplicate loads
@@ -260,7 +337,7 @@ export const usePostStore = create<PostState>((set, get) => ({
 
 
   // ✅ --- Optional: Reset my posts (for profile refresh) ---
-  resetMyPosts: () => set({ myPosts: [], myNextPage: 1, myHasMore: true }),
+  resetMyPosts: () => set({ myPosts: [], nextMyPostsPage: 1, hasMoreMyPosts: true }),
 
 
   createPost: async (data: FormData | object) => {
@@ -561,7 +638,7 @@ unlikePost: async (id: string) => {
       if (!res.ok) throw new Error(`Failed to fetch replies: ${res.statusText}`);
       const data = await res.json();
 
-      const topLevelReplies = data.filter((reply) => reply.parent_reply_id === null);
+      const topLevelReplies = data.filter((reply: Reply) => reply.parent_reply_id === null);
 
       // ✅ Replace instead of merge
       set((state) => ({

@@ -72,7 +72,9 @@ useEffect(() => {
     useNotificationStore.getState().setUnreadCount(data.unread_count);
   });
 
-  return () => socket.disconnect();
+  return () => {
+    socket.disconnect();
+  };
 }, [userProfile]);   // Only re-run when profile is loaded
 
 

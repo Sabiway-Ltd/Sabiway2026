@@ -1,7 +1,6 @@
 // app/_components/landing_page/Navbar.tsx
 
 "use client";
-import Image from "next/image";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -17,7 +16,7 @@ export default function Navbar() {
 
   const pathname = usePathname();
 
-  const goToSection = async (sectionId) => {
+  const goToSection = async (sectionId: string) => {
     if (pathname === "/") {
       const el = document.getElementById(sectionId);
       if (el) el.scrollIntoView({ behavior: "smooth" });

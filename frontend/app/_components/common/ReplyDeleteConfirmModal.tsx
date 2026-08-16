@@ -2,7 +2,14 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ReplyDeleteConfirmModal({ isOpen, onClose, onConfirm, updating }) {
+type ReplyDeleteConfirmModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void | Promise<void>;
+  updating: boolean;
+};
+
+export default function ReplyDeleteConfirmModal({ isOpen, onClose, onConfirm, updating }: ReplyDeleteConfirmModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (

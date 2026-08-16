@@ -6,7 +6,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
 
-export default function ReportButton({ postId }) {
+export default function ReportButton({ postId }: { postId: string | number }) {
   const [showDialog, setShowDialog] = useState(false);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,8 +52,8 @@ export default function ReportButton({ postId }) {
     setShowDialog(false);
     setReason("");
 
-  } catch (error: any) {
-    toast.error(error.message);
+  } catch (error: unknown) {
+    toast.error(error instanceof Error ? error.message : "Failed to send report.");
     console.error(error);
   } finally {
     setLoading(false);

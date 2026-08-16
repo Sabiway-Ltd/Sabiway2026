@@ -1,22 +1,5 @@
-// frontend/app/utils/MyConstants.ts
+import { environment } from "../config/environment";
 
-// For Local Testing and VPS
-// export const EXPRESS_URL = "https://express.sabiway.com"
-
-// export const DJANGO_URL = "https://django.sabiway.com"
-
-// export const DJANGO_URL = "http://localhost:8000"
-// export const EXPRESS_URL = "http://localhost:5000"
-
-// FOR RENDER
-export const EXPRESS_URL = "https://realtime.sabiway.com"
-export const DJANGO_URL = "https://backend.sabiway.com"
-
-
-export const WAITLIST_URL = "https://waitlist.sabiway.com"
-
-
-
-
-
-
+export const EXPRESS_URL = environment.realtimeUrl;
+export const DJANGO_URL = environment.djangoUrl;
+export const WAITLIST_URL = environment.waitlistUrl;

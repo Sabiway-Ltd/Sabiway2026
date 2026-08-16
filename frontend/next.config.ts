@@ -14,18 +14,6 @@ const nextConfig: NextConfig = {
       "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  experimental: {
-    turbo: false, // ⬅️ Disable Turbopack globally
-  },
-
   // ⬇️ This is the REAL fix (works for Turbopack & Webpack)
   webpack: (config) => {
     config.resolve.alias = {

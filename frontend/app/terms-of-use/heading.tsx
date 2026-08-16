@@ -1,4 +1,4 @@
-export default function Heading ({text}){
+export default function Heading ({ text }: { text: string }) {
     return(
             <h2
               className="

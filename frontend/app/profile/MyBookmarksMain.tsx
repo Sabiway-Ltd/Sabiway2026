@@ -101,7 +101,7 @@ const MyBookmarksMain = forwardRef<MyBookmarksMainRef>((props, ref) => {
       {bookmarks.length > 0 && (
         <div className="md:space-y-4 space-y-1">
           <RenderPostList
-            posts={bookmarks.map((b) => b.post)}
+            posts={bookmarks.map((bookmark) => bookmark.post ?? bookmark)}
             emptyMessage=""
             reloadFn={getBookmarks}
             clickable={true}

@@ -47,10 +47,10 @@ export default function PostCard({
   clickable = false,
   shouldReload = false
 }: any) {
-  const [isLiked, setIsLiked] = useState(is_liked);
-  const [likesCount, setLikesCount] = useState(likes_count);
-  const [commentCount, setCommentCount] = useState(comments_count);
-  const [isBookmarked, setIsBookmarked] = useState(is_bookmarked);
+  const [isLiked, setIsLiked] = useState<boolean>(Boolean(is_liked));
+  const [likesCount, setLikesCount] = useState<number>(Number(likes_count ?? 0));
+  const [commentCount, setCommentCount] = useState<number>(Number(comments_count ?? 0));
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(Boolean(is_bookmarked));
   const [comment, setComment] = useState("");
   const [commentImage, setCommentImage] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
@@ -77,7 +77,7 @@ export default function PostCard({
 
   
 
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     getAllPosts,
@@ -116,27 +116,23 @@ export default function PostCard({
 
 
   const handleReplySubmit = async (
-    parentId: string, 
-    content: string, 
-    image?: File, 
-    isNested = false, 
-    commentId?: string
+    parentId: string | number,
+    content: string,
+    image?: File | null,
+    parentType: "comment" | "reply" = "comment"
   ) => {
     if (!content.trim() && !image) return;
-    
-    // Optional: risky content validation
+
     if (isRiskyContent(content)) {
       toast.error("Sharing contact info outside SabiWay is not allowed ❌");
       return;
     }
 
     try {
-      if (isNested && commentId) {
-        // Nested reply to a reply
-        await addNestedReply(parentId, commentId, content, image);
+      if (parentType === "reply") {
+        await addNestedReply(String(parentId), content, image || undefined);
       } else {
-        // Top-level reply to comment
-        await addReply(parentId, content, image);
+        await addReply(String(parentId), content, image || undefined);
       }
 
       // Optionally refresh comments after submitting
@@ -322,10 +318,10 @@ export default function PostCard({
 
   // ——— Post editing and delete handlers are unchanged ———
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
     };
@@ -725,7 +721,7 @@ export default function PostCard({
             {/* Custom button */}
             <button
               type="button"
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
               className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
             >
               Choose Image
@@ -1047,8 +1043,8 @@ export default function PostCard({
                     image={c.image}
                     created_at={c.created_at}
                     onReplySubmit={handleReplySubmit}
-                    onLike={(id) => likeComment(String(id))}
-                    onUnlike={(id) => unlikeComment(String(id))}
+                    onLike={async (id) => { await likeComment(String(id)); }}
+                    onUnlike={async (id) => { await unlikeComment(String(id)); }}
                     comment={c.comment}
                   />
                 ))

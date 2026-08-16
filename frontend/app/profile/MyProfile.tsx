@@ -35,7 +35,7 @@ import { FaEdit } from "react-icons/fa";
 export default function MyProfile() {
   const [activeTab, setActiveTab] = useState<"about" | "posts" | "bookmarks" | "followers" | "following">("about");
   const [editing, setEditing] = useState(false);
-  const [editedData, setEditedData] = useState({ full_name: "", bio: "" });
+  const [editedData, setEditedData] = useState<Partial<Profile>>({ full_name: "", bio: "" });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [myPosts, setMyPosts] = useState<any[]>([]);
@@ -108,7 +108,7 @@ const [loadingId, setLoadingId] = useState<number | null>(null);
 
 
 
-  const handleCopyProfileLink = async (userUsername) => {
+  const handleCopyProfileLink = async (userUsername: string) => {
     const profileUrl = `${window.location.origin}/profile/${userUsername.replace("@", "")}`;
     await navigator.clipboard.writeText(profileUrl);
     toast.success("Profile link copied");

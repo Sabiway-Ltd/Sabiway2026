@@ -1,4 +1,4 @@
-name: Phase 0 CI
+name: Platform CI
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: phase-0-${{ github.ref }}
+  group: platform-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
       - run: npm ci
       - run: npm run check
 
-  frontend-baseline:
+  frontend-check:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,14 +75,10 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - name: Record inherited TypeScript baseline
-        continue-on-error: true
+      - name: TypeScript
         run: npm run type-check
-      - name: Record inherited lint baseline
-        continue-on-error: true
+      - name: Lint
         run: npm run lint
-      - name: Explain Phase 0 gate
-        run: echo "Frontend diagnostics are non-blocking in Phase 0; Phase 1 must restore strict type and lint gates."
 
   waitlist-syntax:
     runs-on: ubuntu-latest
@@ -92,3 +88,16 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m compileall -q WaitList
+
+  mobile-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
