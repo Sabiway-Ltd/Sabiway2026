@@ -20,6 +20,8 @@ def _realtime_headers():
 
 
 def _broadcast_in_app(notification):
+    if not getattr(settings, "NOTIFICATION_REALTIME_DELIVERY_ENABLED", True):
+        return
     try:
         requests.post(
             f"{settings.EXPRESS_URL}/broadcast-notification",
@@ -46,15 +48,8 @@ def _send_push(notification, delivery, preference):
     tokens = list(PushDevice.objects.filter(profile=notification.user, is_active=True).values_list("token", flat=True))
     if not tokens:
         return _skip(delivery, "No active push device.")
-
     endpoint = getattr(settings, "EXPO_PUSH_ENDPOINT", "https://exp.host/--/api/v2/push/send")
-    payload = [{
-        "to": token,
-        "title": "SabiWay",
-        "body": notification.message or "You have a new SabiWay update.",
-        "data": {"deep_link": notification.deep_link, "notification_id": notification.id},
-        "sound": "default",
-    } for token in tokens]
+    payload = [{"to": token, "title": "SabiWay", "body": notification.message or "You have a new SabiWay update.", "data": {"deep_link": notification.deep_link, "notification_id": notification.id}, "sound": "default"} for token in tokens]
     try:
         response = requests.post(endpoint, json=payload, timeout=getattr(settings, "NOTIFICATION_DELIVERY_TIMEOUT_SECONDS", 6))
         response.raise_for_status()
@@ -107,28 +102,15 @@ def notify(*, user: Profile, notif_type: str, message: str, actor: Optional[Prof
     target_id = str(target.pk) if target else None
     try:
         notification = Notification.objects.create(
-            user=user,
-            actor=actor,
-            type=notif_type,
-            target_content_type=target_ct,
-            target_object_id=target_id,
-            message=message,
-            deep_link=deep_link,
-            metadata=metadata or {},
-            event_key=event_key,
+            user=user, actor=actor, type=notif_type, target_content_type=target_ct,
+            target_object_id=target_id, message=message, deep_link=deep_link,
+            metadata=metadata or {}, event_key=event_key,
         )
     except IntegrityError:
         if event_key:
             return Notification.objects.filter(event_key=event_key).first()
         raise
-
-    NotificationDelivery.objects.create(
-        notification=notification,
-        channel=NotificationDelivery.Channel.IN_APP,
-        status=NotificationDelivery.Status.SENT,
-        attempted_at=timezone.now(),
-        sent_at=timezone.now(),
-    )
+    NotificationDelivery.objects.create(notification=notification, channel=NotificationDelivery.Channel.IN_APP, status=NotificationDelivery.Status.SENT, attempted_at=timezone.now(), sent_at=timezone.now())
     _broadcast_in_app(notification)
     preference, _ = NotificationPreference.objects.get_or_create(profile=user)
     if push:
