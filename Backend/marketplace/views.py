@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from .models import (
@@ -45,7 +45,18 @@ def _apply_location_filters(queryset, params):
 
 
 def _booking_audit(booking, actor, event, old="", new="", metadata=None):
-    return BookingAudit.objects.create(booking=booking, actor=actor, event=event, from_status=old, to_status=new, metadata=metadata or {})
+    return BookingAudit.objects.create(
+        booking=booking,
+        actor=actor,
+        event=event,
+        from_status=old,
+        to_status=new,
+        metadata=metadata or {},
+    )
+
+
+def _other_participant(booking, actor):
+    return booking.professional if actor.pk == booking.client_id else booking.client
 
 
 class ServiceCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -62,28 +73,47 @@ class ServiceListingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = ServiceListing.objects.select_related("provider__user", "category", "subcategory")
         mine = self.request.user.is_authenticated and self.request.query_params.get("mine") == "1"
-        if mine: queryset = queryset.filter(provider=self.request.user.profile)
-        else: queryset = queryset.filter(is_active=True, moderation_status=ServiceListing.ModerationStatus.APPROVED, category__is_active=True)
+        if mine:
+            queryset = queryset.filter(provider=self.request.user.profile)
+        else:
+            queryset = queryset.filter(
+                is_active=True,
+                moderation_status=ServiceListing.ModerationStatus.APPROVED,
+                category__is_active=True,
+            )
         q = self.request.query_params.get("q", "").strip()
         category = self.request.query_params.get("category", "").strip()
         subcategory = self.request.query_params.get("subcategory", "").strip()
         delivery_mode = self.request.query_params.get("delivery_mode", "").strip()
         available_now = self.request.query_params.get("available_now", "").strip().lower()
         if q:
-            queryset = queryset.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(category__name__icontains=q) | Q(subcategory__name__icontains=q) | Q(provider__full_name__icontains=q) | Q(provider__job__icontains=q))
-        if category: queryset = queryset.filter(category__slug=category)
-        if subcategory: queryset = queryset.filter(subcategory__slug=subcategory)
-        if delivery_mode: queryset = queryset.filter(delivery_mode=delivery_mode)
-        if available_now in {"1", "true", "yes"}: queryset = queryset.filter(available_now=True)
+            queryset = queryset.filter(
+                Q(title__icontains=q)
+                | Q(description__icontains=q)
+                | Q(category__name__icontains=q)
+                | Q(subcategory__name__icontains=q)
+                | Q(provider__full_name__icontains=q)
+                | Q(provider__job__icontains=q)
+            )
+        if category:
+            queryset = queryset.filter(category__slug=category)
+        if subcategory:
+            queryset = queryset.filter(subcategory__slug=subcategory)
+        if delivery_mode:
+            queryset = queryset.filter(delivery_mode=delivery_mode)
+        if available_now in {"1", "true", "yes"}:
+            queryset = queryset.filter(available_now=True)
         return _apply_location_filters(queryset, self.request.query_params)
 
     def perform_create(self, serializer):
         profile = self.request.user.profile
-        if profile.role != "professional": raise PermissionDenied("Only professional profiles can publish service listings.")
+        if profile.role != "professional":
+            raise PermissionDenied("Only professional profiles can publish service listings.")
         serializer.save(provider=profile, moderation_status=ServiceListing.ModerationStatus.PENDING)
 
     def perform_update(self, serializer):
-        if serializer.instance.provider_id != self.request.user.profile.pk: raise PermissionDenied("You cannot update another professional's listing.")
+        if serializer.instance.provider_id != self.request.user.profile.pk:
+            raise PermissionDenied("You cannot update another professional's listing.")
         serializer.save(moderation_status=ServiceListing.ModerationStatus.PENDING)
 
 
@@ -94,27 +124,44 @@ class JobPostingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = JobPosting.objects.select_related("client__user", "category", "subcategory")
         mine = self.request.user.is_authenticated and self.request.query_params.get("mine") == "1"
-        if mine: queryset = queryset.filter(client=self.request.user.profile)
-        else: queryset = queryset.filter(status=JobPosting.Status.OPEN, moderation_status=JobPosting.ModerationStatus.APPROVED, category__is_active=True)
+        if mine:
+            queryset = queryset.filter(client=self.request.user.profile)
+        else:
+            queryset = queryset.filter(
+                status=JobPosting.Status.OPEN,
+                moderation_status=JobPosting.ModerationStatus.APPROVED,
+                category__is_active=True,
+            )
         q = self.request.query_params.get("q", "").strip()
         category = self.request.query_params.get("category", "").strip()
         delivery_mode = self.request.query_params.get("delivery_mode", "").strip()
-        if q: queryset = queryset.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(category__name__icontains=q) | Q(subcategory__name__icontains=q))
-        if category: queryset = queryset.filter(category__slug=category)
-        if delivery_mode: queryset = queryset.filter(delivery_mode=delivery_mode)
+        if q:
+            queryset = queryset.filter(
+                Q(title__icontains=q)
+                | Q(description__icontains=q)
+                | Q(category__name__icontains=q)
+                | Q(subcategory__name__icontains=q)
+            )
+        if category:
+            queryset = queryset.filter(category__slug=category)
+        if delivery_mode:
+            queryset = queryset.filter(delivery_mode=delivery_mode)
         return _apply_location_filters(queryset, self.request.query_params)
 
     def perform_create(self, serializer):
         profile = self.request.user.profile
-        if profile.role != "client": raise PermissionDenied("Only client profiles can create jobs.")
+        if profile.role != "client":
+            raise PermissionDenied("Only client profiles can create jobs.")
         serializer.save(client=profile, moderation_status=JobPosting.ModerationStatus.PENDING)
 
     def perform_update(self, serializer):
-        if serializer.instance.client_id != self.request.user.profile.pk: raise PermissionDenied("You cannot update another client's job.")
+        if serializer.instance.client_id != self.request.user.profile.pk:
+            raise PermissionDenied("You cannot update another client's job.")
         serializer.save(moderation_status=JobPosting.ModerationStatus.PENDING)
 
     def perform_destroy(self, instance):
-        if instance.client_id != self.request.user.profile.pk: raise PermissionDenied("You cannot delete another client's job.")
+        if instance.client_id != self.request.user.profile.pk:
+            raise PermissionDenied("You cannot delete another client's job.")
         instance.delete()
 
 
@@ -125,16 +172,22 @@ class JobResponseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         profile = self.request.user.profile
-        return JobResponse.objects.select_related("professional__user", "job__client__user", "job__category").filter(Q(professional=profile) | Q(job__client=profile)).distinct()
+        return JobResponse.objects.select_related(
+            "professional__user", "job__client__user", "job__category"
+        ).filter(Q(professional=profile) | Q(job__client=profile)).distinct()
 
-    def perform_create(self, serializer): serializer.save(professional=self.request.user.profile)
+    def perform_create(self, serializer):
+        serializer.save(professional=self.request.user.profile)
 
     @action(detail=True, methods=["post"], url_path="decision")
     def decision(self, request, pk=None):
         response = self.get_object()
-        if response.job.client_id != request.user.profile.pk: raise PermissionDenied("Only the job owner can shortlist or decline responses.")
-        decision = JobResponseStatusSerializer(data=request.data); decision.is_valid(raise_exception=True)
-        response.status = decision.validated_data["status"]; response.save(update_fields=["status", "updated_at"])
+        if response.job.client_id != request.user.profile.pk:
+            raise PermissionDenied("Only the job owner can shortlist or decline responses.")
+        decision = JobResponseStatusSerializer(data=request.data)
+        decision.is_valid(raise_exception=True)
+        response.status = decision.validated_data["status"]
+        response.save(update_fields=["status", "updated_at"])
         return Response(JobResponseSerializer(response, context={"request": request}).data)
 
 
@@ -145,7 +198,30 @@ class MessageThreadViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         me = self.request.user.profile
-        return MessageThread.objects.select_related("client__user", "professional__user", "listing", "job", "job_response").filter(Q(client=me) | Q(professional=me)).distinct()
+        return MessageThread.objects.select_related(
+            "client__user", "professional__user", "listing", "job", "job_response"
+        ).filter(Q(client=me) | Q(professional=me)).distinct()
+
+    def create(self, request, *args, **kwargs):
+        me = request.user.profile
+        listing_id = request.data.get("listing_id")
+        response_id = request.data.get("job_response_id")
+        existing = None
+        if me.role == "client" and listing_id:
+            existing = MessageThread.objects.filter(
+                client=me,
+                listing_id=listing_id,
+                status=MessageThread.Status.OPEN,
+            ).first()
+        elif me.role == "professional" and response_id:
+            existing = MessageThread.objects.filter(
+                professional=me,
+                job_response_id=response_id,
+                status=MessageThread.Status.OPEN,
+            ).first()
+        if existing:
+            return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         me = self.request.user.profile
@@ -162,29 +238,42 @@ class MessageThreadViewSet(viewsets.ModelViewSet):
     def mark_read(self, request, pk=None):
         thread = self.get_object()
         now = timezone.now()
-        count = thread.messages.filter(is_read=False).exclude(sender=request.user.profile).update(is_read=True, read_at=now)
+        count = thread.messages.filter(is_read=False).exclude(sender=request.user.profile).update(
+            is_read=True,
+            read_at=now,
+        )
         return Response({"marked_read": count})
 
     @action(detail=True, methods=["post"])
     def block(self, request, pk=None):
-        thread = self.get_object(); me = request.user.profile
+        thread = self.get_object()
+        me = request.user.profile
         other = thread.professional if me.pk == thread.client_id else thread.client
-        block, _ = ConversationBlock.objects.update_or_create(blocker=me, blocked=other, defaults={"thread": thread, "is_active": True})
+        block, _ = ConversationBlock.objects.update_or_create(
+            blocker=me,
+            blocked=other,
+            defaults={"thread": thread, "is_active": True},
+        )
         return Response({"blocked": True, "id": block.pk})
 
     @action(detail=True, methods=["post"])
     def unblock(self, request, pk=None):
-        thread = self.get_object(); me = request.user.profile
+        thread = self.get_object()
+        me = request.user.profile
         other = thread.professional if me.pk == thread.client_id else thread.client
         ConversationBlock.objects.filter(blocker=me, blocked=other).update(is_active=False)
         return Response({"blocked": False})
 
     @action(detail=True, methods=["post"])
     def report(self, request, pk=None):
-        thread = self.get_object(); me = request.user.profile
+        thread = self.get_object()
+        me = request.user.profile
         other = thread.professional if me.pk == thread.client_id else thread.client
         serializer = ConversationReportSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
+        reported_message = serializer.validated_data.get("message")
+        if reported_message and reported_message.thread_id != thread.id:
+            raise ValidationError({"message_id": "Reported message must belong to this conversation."})
         report = serializer.save(thread=thread, reporter=me, reported_user=other)
         return Response(ConversationReportSerializer(report).data, status=status.HTTP_201_CREATED)
 
@@ -196,16 +285,23 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         me = self.request.user.profile
-        qs = Message.objects.select_related("thread__client__user", "thread__professional__user", "sender__user").filter(Q(thread__client=me) | Q(thread__professional=me))
+        qs = Message.objects.select_related(
+            "thread__client__user", "thread__professional__user", "sender__user"
+        ).filter(Q(thread__client=me) | Q(thread__professional=me))
         thread_id = self.request.query_params.get("thread")
         return qs.filter(thread_id=thread_id) if thread_id else qs.none()
 
     def perform_create(self, serializer):
         message = serializer.save(sender=self.request.user.profile)
         thread = message.thread
-        thread.last_message_at = message.created_at; thread.save(update_fields=["last_message_at", "updated_at"])
+        thread.last_message_at = message.created_at
+        thread.save(update_fields=["last_message_at", "updated_at"])
         recipient = thread.professional if message.sender_id == thread.client_id else thread.client
-        broadcast_marketplace_event([recipient.user_id], "new-message", MessageSerializer(message, context={"request": self.request}).data)
+        broadcast_marketplace_event(
+            [recipient.user_id],
+            "new-message",
+            MessageSerializer(message, context={"request": self.request}).data,
+        )
 
 
 class BookingRequestViewSet(viewsets.ModelViewSet):
@@ -215,31 +311,72 @@ class BookingRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         me = self.request.user.profile
-        return BookingRequest.objects.select_related("client__user", "professional__user", "listing", "job", "job_response", "thread").filter(Q(client=me) | Q(professional=me)).distinct()
+        return BookingRequest.objects.select_related(
+            "client__user", "professional__user", "listing", "job", "job_response", "thread"
+        ).filter(Q(client=me) | Q(professional=me)).distinct()
 
     def perform_create(self, serializer):
         thread = serializer.validated_data["thread"]
-        booking = serializer.save(client=thread.client, professional=thread.professional, listing=thread.listing, job=thread.job, job_response=thread.job_response)
-        _booking_audit(booking, self.request.user.profile, "booking_created", "", booking.status, {"scope": booking.scope_summary, "price": str(booking.agreed_price) if booking.agreed_price is not None else None, "currency": booking.currency})
-        broadcast_marketplace_event([thread.professional.user_id], "booking-updated", BookingRequestSerializer(booking, context={"request": self.request}).data)
+        booking = serializer.save(
+            client=thread.client,
+            professional=thread.professional,
+            listing=thread.listing,
+            job=thread.job,
+            job_response=thread.job_response,
+        )
+        _booking_audit(
+            booking,
+            self.request.user.profile,
+            "booking_created",
+            "",
+            booking.status,
+            {
+                "scope": booking.scope_summary,
+                "price": str(booking.agreed_price),
+                "currency": booking.currency,
+            },
+        )
+        broadcast_marketplace_event(
+            [thread.professional.user_id],
+            "booking-updated",
+            BookingRequestSerializer(booking, context={"request": self.request}).data,
+        )
 
     @action(detail=True, methods=["post"], url_path="status")
     def update_status(self, request, pk=None):
-        booking = self.get_object(); me = request.user.profile
-        serializer = BookingStatusSerializer(data=request.data); serializer.is_valid(raise_exception=True)
-        target = serializer.validated_data["status"]; old = booking.status
+        booking = self.get_object()
+        me = request.user.profile
+        serializer = BookingStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        target = serializer.validated_data["status"]
+        old = booking.status
         if me.pk == booking.client_id:
-            allowed = {BookingRequest.Status.PENDING: {BookingRequest.Status.CANCELLED}, BookingRequest.Status.ACCEPTED: {BookingRequest.Status.CANCELLED, BookingRequest.Status.IN_PROGRESS}, BookingRequest.Status.IN_PROGRESS: {BookingRequest.Status.COMPLETED}}
+            allowed = {
+                BookingRequest.Status.PENDING: {BookingRequest.Status.CANCELLED},
+                BookingRequest.Status.ACCEPTED: {BookingRequest.Status.CANCELLED, BookingRequest.Status.IN_PROGRESS},
+                BookingRequest.Status.IN_PROGRESS: {BookingRequest.Status.COMPLETED},
+            }
         elif me.pk == booking.professional_id:
-            allowed = {BookingRequest.Status.PENDING: {BookingRequest.Status.ACCEPTED, BookingRequest.Status.DECLINED}, BookingRequest.Status.ACCEPTED: {BookingRequest.Status.IN_PROGRESS}, BookingRequest.Status.IN_PROGRESS: {BookingRequest.Status.COMPLETED}}
-        else: raise PermissionDenied("You are not part of this booking.")
-        if target not in allowed.get(old, set()): raise PermissionDenied("Invalid booking status transition.")
+            allowed = {
+                BookingRequest.Status.PENDING: {BookingRequest.Status.ACCEPTED, BookingRequest.Status.DECLINED},
+                BookingRequest.Status.ACCEPTED: {BookingRequest.Status.CANCELLED, BookingRequest.Status.IN_PROGRESS},
+                BookingRequest.Status.IN_PROGRESS: {BookingRequest.Status.COMPLETED},
+            }
+        else:
+            raise PermissionDenied("You are not part of this booking.")
+        if target not in allowed.get(old, set()):
+            raise PermissionDenied("Invalid booking status transition.")
         booking.status = target
-        if target == BookingRequest.Status.ACCEPTED: booking.accepted_at = timezone.now()
+        if target == BookingRequest.Status.ACCEPTED:
+            booking.accepted_at = timezone.now()
         booking.save(update_fields=["status", "accepted_at", "updated_at"])
         _booking_audit(booking, me, "status_changed", old, target)
-        other = booking.professional if me.pk == booking.client_id else booking.client
-        broadcast_marketplace_event([other.user_id], "booking-updated", BookingRequestSerializer(booking, context={"request": request}).data)
+        other = _other_participant(booking, me)
+        broadcast_marketplace_event(
+            [other.user_id],
+            "booking-updated",
+            BookingRequestSerializer(booking, context={"request": request}).data,
+        )
         return Response(BookingRequestSerializer(booking, context={"request": request}).data)
 
 
@@ -250,26 +387,69 @@ class ScheduleProposalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         me = self.request.user.profile
-        return ScheduleProposal.objects.select_related("booking__client", "booking__professional", "proposer").filter(Q(booking__client=me) | Q(booking__professional=me)).distinct()
+        return ScheduleProposal.objects.select_related(
+            "booking__client", "booking__professional", "proposer"
+        ).filter(Q(booking__client=me) | Q(booking__professional=me)).distinct()
 
     def perform_create(self, serializer):
-        booking = serializer.validated_data["booking"]; me = self.request.user.profile
-        ScheduleProposal.objects.filter(booking=booking, status=ScheduleProposal.Status.PROPOSED).update(status=ScheduleProposal.Status.SUPERSEDED)
+        booking = serializer.validated_data["booking"]
+        me = self.request.user.profile
+        ScheduleProposal.objects.filter(
+            booking=booking,
+            status=ScheduleProposal.Status.PROPOSED,
+        ).update(status=ScheduleProposal.Status.SUPERSEDED)
         proposal = serializer.save(proposer=me)
-        booking.schedule_status = BookingRequest.ScheduleStatus.PROPOSED; booking.save(update_fields=["schedule_status", "updated_at"])
-        _booking_audit(booking, me, "schedule_proposed", metadata={"proposal_id": str(proposal.id), "proposed_for": proposal.proposed_for.isoformat(), "timezone": proposal.timezone})
+        booking.schedule_status = BookingRequest.ScheduleStatus.PROPOSED
+        booking.save(update_fields=["schedule_status", "updated_at"])
+        _booking_audit(
+            booking,
+            me,
+            "schedule_proposed",
+            metadata={
+                "proposal_id": str(proposal.id),
+                "proposed_for": proposal.proposed_for.isoformat(),
+                "timezone": proposal.timezone,
+            },
+        )
+        other = _other_participant(booking, me)
+        broadcast_marketplace_event(
+            [other.user_id],
+            "schedule-updated",
+            ScheduleProposalSerializer(proposal, context={"request": self.request}).data,
+        )
 
     @action(detail=True, methods=["post"])
     def decision(self, request, pk=None):
-        proposal = self.get_object(); me = request.user.profile; booking = proposal.booking
-        if me.pk == proposal.proposer_id: raise PermissionDenied("The other participant must respond to this proposal.")
-        serializer = ScheduleDecisionSerializer(data=request.data); serializer.is_valid(raise_exception=True)
+        proposal = self.get_object()
+        me = request.user.profile
+        booking = proposal.booking
+        if me.pk == proposal.proposer_id:
+            raise PermissionDenied("The other participant must respond to this proposal.")
+        serializer = ScheduleDecisionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         target = serializer.validated_data["status"]
-        if proposal.status != ScheduleProposal.Status.PROPOSED: raise PermissionDenied("This proposal is no longer active.")
-        proposal.status = target; proposal.responded_at = timezone.now(); proposal.save(update_fields=["status", "responded_at"])
+        if proposal.status != ScheduleProposal.Status.PROPOSED:
+            raise PermissionDenied("This proposal is no longer active.")
+        proposal.status = target
+        proposal.responded_at = timezone.now()
+        proposal.save(update_fields=["status", "responded_at"])
         if target == ScheduleProposal.Status.ACCEPTED:
-            booking.requested_for = proposal.proposed_for; booking.timezone = proposal.timezone; booking.schedule_status = BookingRequest.ScheduleStatus.ACCEPTED
-        else: booking.schedule_status = BookingRequest.ScheduleStatus.CHANGE_REQUESTED
+            booking.requested_for = proposal.proposed_for
+            booking.timezone = proposal.timezone
+            booking.schedule_status = BookingRequest.ScheduleStatus.ACCEPTED
+        else:
+            booking.schedule_status = BookingRequest.ScheduleStatus.CHANGE_REQUESTED
         booking.save(update_fields=["requested_for", "timezone", "schedule_status", "updated_at"])
-        _booking_audit(booking, me, "schedule_decision", metadata={"proposal_id": str(proposal.id), "decision": target})
+        _booking_audit(
+            booking,
+            me,
+            "schedule_decision",
+            metadata={"proposal_id": str(proposal.id), "decision": target},
+        )
+        other = _other_participant(booking, me)
+        broadcast_marketplace_event(
+            [other.user_id],
+            "schedule-updated",
+            ScheduleProposalSerializer(proposal, context={"request": request}).data,
+        )
         return Response(ScheduleProposalSerializer(proposal, context={"request": request}).data)
