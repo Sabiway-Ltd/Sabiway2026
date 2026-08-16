@@ -5,10 +5,10 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient, APIRequestFactory
 
 from accounts.models import User
-from profiles.models import Profile
+from profiles.models import Follow, Profile
 from profiles.serializers import ProfileSerializer
 
-from .models import Bookmark, Comment, ModerationAudit, Post, PostReport, Reply
+from .models import Bookmark, Comment, Hashtag, ModerationAudit, Post, PostReport, Reply
 from .realtime import broadcast_forum_event
 
 
@@ -17,10 +17,27 @@ class ForumFixture(TestCase):
         self.owner_user = User.objects.create_user(email="owner@example.com", full_name="Owner User", password="StrongPassword123!")
         self.other_user = User.objects.create_user(email="other@example.com", full_name="Other User", password="StrongPassword123!")
         self.staff_user = User.objects.create_user(email="staff@example.com", full_name="Staff User", password="StrongPassword123!", is_staff=True)
-        self.owner = Profile.objects.create(user=self.owner_user, full_name="Owner User", username="@owner", phone_number="07123456789", street="Private Street")
-        self.other = Profile.objects.create(user=self.other_user, full_name="Other User", username="@other")
-        self.staff = Profile.objects.create(user=self.staff_user, full_name="Staff User", username="@staff")
+
+        # User creation already provisions a Profile through the accounts/profile signals.
+        self.owner = Profile.objects.get(user=self.owner_user)
+        self.owner.full_name = "Owner User"
+        self.owner.username = "@owner"
+        self.owner.phone_number = "07123456789"
+        self.owner.street = "Private Street"
+        self.owner.save()
+
+        self.other = Profile.objects.get(user=self.other_user)
+        self.other.full_name = "Other User"
+        self.other.username = "@other"
+        self.other.save()
+
+        self.staff = Profile.objects.get(user=self.staff_user)
+        self.staff.full_name = "Staff User"
+        self.staff.username = "@staff"
+        self.staff.save()
+
         self.post = Post.objects.create(author=self.owner, content="Original post #SabiWay")
+        self.post.parse_and_attach_hashtags()
         self.comment = Comment.objects.create(user=self.owner, post=self.post, content="Owner comment")
         self.reply = Reply.objects.create(user=self.owner, comment=self.comment, content="Owner reply")
         self.client = APIClient()
@@ -43,6 +60,7 @@ class ForumOwnershipTests(ForumFixture):
         self.assertEqual(response.status_code, 200)
         self.post.refresh_from_db()
         self.assertEqual(self.post.content, "Updated by owner #Data")
+        self.assertTrue(Hashtag.objects.filter(tag="data", posts=self.post).exists())
         broadcast.assert_called_once()
         self.assertEqual(broadcast.call_args.args[0]["action"], "update")
 
@@ -58,6 +76,28 @@ class ForumOwnershipTests(ForumFixture):
 
 
 class ForumJourneyTests(ForumFixture):
+    @patch("posts.views.broadcast_forum_event")
+    def test_create_post_extracts_hashtag(self, _broadcast):
+        self.client.force_authenticate(self.other_user)
+        response = self.client.post("/api/posts/", {"content": "Learning #Analytics with SabiWay"}, format="json")
+        self.assertEqual(response.status_code, 201)
+        created = Post.objects.get(id=response.data["id"])
+        self.assertTrue(Hashtag.objects.filter(tag="analytics", posts=created).exists())
+
+    def test_follow_and_unfollow_journey_updates_relationship(self):
+        self.client.force_authenticate(self.other_user)
+        follow = self.client.post(f"/api/profiles/{self.owner_user.id}/follow/")
+        self.assertEqual(follow.status_code, 201)
+        self.assertTrue(Follow.objects.filter(follower=self.other, following=self.owner).exists())
+        self.owner.refresh_from_db()
+        self.other.refresh_from_db()
+        self.assertEqual(self.owner.followers_count, 1)
+        self.assertEqual(self.other.following_count, 1)
+
+        unfollow = self.client.post(f"/api/profiles/{self.owner_user.id}/unfollow/")
+        self.assertEqual(unfollow.status_code, 200)
+        self.assertFalse(Follow.objects.filter(follower=self.other, following=self.owner).exists())
+
     def test_bookmark_repost_and_unrepost_journey(self):
         self.client.force_authenticate(self.other_user)
         bookmark = self.client.post(f"/api/posts/{self.post.id}/bookmark/")
