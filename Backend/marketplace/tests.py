@@ -40,7 +40,7 @@ class MarketplaceJourneyTests(TestCase):
     def test_public_can_discover_and_filter_active_listings(self):
         response = self.client.get("/api/marketplace/listings/?category=electricians&state=Lagos&q=electrical")
         self.assertEqual(response.status_code, 200)
-        data = response.data.get("results", response.data)
+        data = response.data["results"] if isinstance(response.data, dict) and "results" in response.data else response.data
         self.assertEqual(len(data), 1)
         self.assertEqual(str(data[0]["id"]), str(self.listing.id))
         self.assertNotIn("email", data[0]["provider"])
