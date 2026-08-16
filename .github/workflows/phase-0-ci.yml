@@ -42,6 +42,11 @@ jobs:
       VERIFICATION_DOCUMENT_KEY: "snaP0PH4qqXmhRi8cERh7mBG76PxuoM623onWZfPAmM="
       VERIFICATION_REVIEW_SLA_HOURS: "48"
       VERIFICATION_RETENTION_DAYS: "365"
+      SABIPAY_ENABLED: "True"
+      SABIPAY_COMMISSION_RATE: "0.10"
+      SABIPAY_FREEZE_DAYS: "7"
+      PAYSTACK_SECRET_KEY: "sk_test_phase7_ci_only"
+      PAYSTACK_PUBLIC_KEY: "pk_test_phase7_ci_only"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -54,8 +59,8 @@ jobs:
       - run: python manage.py check --deploy
       - name: Migration drift
         run: python manage.py makemigrations --check --dry-run
-      - name: Phase 6 backend journeys
-        run: python manage.py test accounts posts notifications marketplace verification
+      - name: Phase 7 backend journeys
+        run: python manage.py test accounts posts notifications marketplace verification sabipay
 
   realtime-check:
     runs-on: ubuntu-latest

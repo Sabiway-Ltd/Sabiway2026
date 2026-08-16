@@ -2,6 +2,7 @@
   "expo": {
     "name": "SabiWay",
     "slug": "sabiway",
+    "scheme": "sabiway",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
