@@ -45,8 +45,12 @@ jobs:
       SABIPAY_ENABLED: "True"
       SABIPAY_COMMISSION_RATE: "0.10"
       SABIPAY_FREEZE_DAYS: "7"
-      PAYSTACK_SECRET_KEY: "sk_test_phase7_ci_only"
-      PAYSTACK_PUBLIC_KEY: "pk_test_phase7_ci_only"
+      PAYSTACK_SECRET_KEY: "sk_test_phase8_ci_only"
+      PAYSTACK_PUBLIC_KEY: "pk_test_phase8_ci_only"
+      TRUST_EVIDENCE_KEY: "snaP0PH4qqXmhRi8cERh7mBG76PxuoM623onWZfPAmM="
+      SABIPAY_PARTIAL_DISPUTE_POLICY_ENABLED: "False"
+      NOTIFICATION_PUSH_DELIVERY_ENABLED: "False"
+      NOTIFICATION_EMAIL_DELIVERY_ENABLED: "False"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -59,8 +63,8 @@ jobs:
       - run: python manage.py check --deploy
       - name: Migration drift
         run: python manage.py makemigrations --check --dry-run
-      - name: Phase 7 backend journeys
-        run: python manage.py test accounts posts notifications marketplace verification sabipay
+      - name: Phase 8 backend journeys
+        run: python manage.py test accounts posts notifications marketplace verification sabipay trustops
 
   realtime-check:
     runs-on: ubuntu-latest
