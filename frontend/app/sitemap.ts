@@ -1,13 +1,17 @@
-// app/sitemap.ts
 export default function sitemap() {
-  return [
-    {
-      url: "https://www.sabiway.com/",
-      lastModified: new Date(),
-    },
-    {
-      url: "https://www.sabiway.com/community",
-      lastModified: new Date(),
-    },
+  const lastModified = new Date();
+  const routes = [
+    "",
+    "/marketplace",
+    "/community",
+    "/about-us",
+    "/helpcenter",
+    "/privacy-policy",
+    "/terms-of-use",
   ];
+
+  return routes.map((route) => ({
+    url: `https://www.sabiway.com${route}`,
+    lastModified,
+  }));
 }
