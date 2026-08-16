@@ -25,7 +25,7 @@ class MarketplaceJourneyTests(TestCase):
         self.client_profile.role = "client"
         self.client_profile.save()
         self.other = self.other_user.profile
-        self.category = ServiceCategory.objects.create(name="Electricians", description="Electrical services")
+        self.category = ServiceCategory.objects.get(name="Electricians")
         self.listing = ServiceListing.objects.create(
             provider=self.provider,
             category=self.category,
