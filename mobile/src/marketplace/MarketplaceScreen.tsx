@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   secondaryText: { color: colors.text, fontWeight: "700" },
   primaryButton: { borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: colors.brand },
   primaryText: { color: "#FFFFFF", fontWeight: "800" },
-  sheetWrap: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(23,33,27,0.32)", alignItems: "center", justifyContent: "flex-end", paddingBottom: 12 },
+  sheetWrap: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(23,33,27,0.32)", alignItems: "center", justifyContent: "flex-end", paddingBottom: 12 },
   sheet: { backgroundColor: colors.surface, borderRadius: 24, padding: 18, gap: 12, borderWidth: 1, borderColor: colors.border },
   message: { minHeight: 100, textAlignVertical: "top", paddingTop: 12 },
   sheetActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
