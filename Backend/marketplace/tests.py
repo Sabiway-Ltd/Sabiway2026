@@ -7,6 +7,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from accounts.models import User
+from verification.models import VerificationSubmission
 
 from .models import (
     BookingAudit,
@@ -34,6 +35,9 @@ class MarketplaceJourneyTests(TestCase):
         self.provider_two = self.provider_two_user.profile; self.provider_two.role = "professional"; self.provider_two.save()
         self.client_profile = self.client_user.profile; self.client_profile.role = "client"; self.client_profile.save()
         self.other_client = self.other_client_user.profile; self.other_client.role = "client"; self.other_client.save()
+        now = timezone.now()
+        VerificationSubmission.objects.create(professional=self.provider, status=VerificationSubmission.Status.APPROVED, identity_type=VerificationSubmission.IdentityType.NATIONAL_ID, submitted_at=now, decision_at=now)
+        VerificationSubmission.objects.create(professional=self.provider_two, status=VerificationSubmission.Status.APPROVED, identity_type=VerificationSubmission.IdentityType.NATIONAL_ID, submitted_at=now, decision_at=now)
         self.category = ServiceCategory.objects.get(name="Electricians")
         self.subcategory = ServiceSubcategory.objects.get(category=self.category, slug="home-electrical-repairs")
         self.listing = ServiceListing.objects.create(provider=self.provider, category=self.category, subcategory=self.subcategory, title="Home electrical repairs", description="Fault finding and domestic electrical repairs.", price_from="15000.00", country="Nigeria", state="Lagos", city="Ikeja", area="Allen", available_now=True, moderation_status=ServiceListing.ModerationStatus.APPROVED)
