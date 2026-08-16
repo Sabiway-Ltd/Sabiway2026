@@ -12,98 +12,35 @@ import os
 from datetime import timedelta
 import dj_database_url
 
-# ---------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ---------------------------------------------------------------------
-# Environment variables
-# ---------------------------------------------------------------------
-env = environ.Env(
-    DEBUG=(bool, False)  # set casting and default
-)
-
-# Read .env file (create one in project root)
+env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-# ---------------------------------------------------------------------
-# Core settings
-# ---------------------------------------------------------------------
 DEBUG = env("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY")
-# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
-#     "localhost",
-#     "127.0.0.1",
-#     "sabiway-9wq4.onrender.com",
-# ])
-
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
-
-# Google OAuth
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
-
-# For Resend API
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="SabiWay <no-reply@sabiway.com>")
 ADMIN_REPORT_EMAIL = env("ADMIN_REPORT_EMAIL", default="admin@sabiway.com")
 
-# ---------------------------------------------------------------------
-# URLs
-# ---------------------------------------------------------------------
-# Use Docker environment variables if provided, otherwise fallback to defaults
-# FRONTEND_URL = "http://localhost:3000"
-# BACKEND_URL = "http://localhost:8000"
-# EXPRESS_URL = "http://localhost:5000"
-
-
-# FOR VPS
-# FRONTEND_URL = "https://www.sabiway.com"
-# BACKEND_URL = "https://django.sabiway.com"
-# EXPRESS_URL = "https://express.sabiway.com"
-
-
-
-# For Render
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 BACKEND_URL = env("BACKEND_URL", default="http://localhost:8000")
 EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
-
-# Half VPS
-# FRONTEND_URL = "https://sabiway2025.vercel.app"
-# BACKEND_URL = "https://django.sabiway.com"
-
-
-
-# FRONTEND_URL = "https://sabiway2025.vercel.app"
-# BACKEND_URL = "https://sabiway-9wq4.onrender.com"
-
-
-
-
-
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
-
-# ---------------------------------------------------------------------
-# CORS
-# ---------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_URL,
     EXPRESS_URL,
-    "http://localhost:3000",  # in case you test locally outside Docker
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://sabiway2025.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-
-
-# ---------------------------------------------------------------------
-# Applications
-# ---------------------------------------------------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -111,8 +48,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    # Local apps
     "accounts",
     "docs",
     "profiles",
@@ -120,10 +55,9 @@ INSTALLED_APPS = [
     "search",
     "notifications",
     "health",
-
-    # Third-party apps
+    "marketplace",
     "rest_framework",
-    'drf_yasg',
+    "drf_yasg",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "cloudinary",
@@ -132,7 +66,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # 👈 must be high up!
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -141,9 +75,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
-
-
 
 ROOT_URLCONF = "sabiway.urls"
 
@@ -165,20 +96,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "sabiway.wsgi.application"
 
-# ---------------------------------------------------------------------
-# Database
-# ---------------------------------------------------------------------
-# Use DATABASE_URL from .env if available, otherwise SQLite
-
-# DATABASES = {
-#     "default": dj_database_url.parse(
-# Production database credentials are supplied through DATABASE_URL.
-#         conn_max_age=600,
-#         ssl_require=True,  # Render PostgreSQL requires SSL
-#     )
-# }
-
-
 DATABASE_SSL_REQUIRE = env.bool("DATABASE_SSL_REQUIRE", default=False)
 DATABASES = {
     "default": dj_database_url.config(
@@ -187,9 +104,7 @@ DATABASES = {
         ssl_require=DATABASE_SSL_REQUIRE,
     )
 }
-# ---------------------------------------------------------------------
-# Password validation
-# ---------------------------------------------------------------------
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -197,43 +112,22 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# ---------------------------------------------------------------------
-# Internationalization
-# ---------------------------------------------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# ---------------------------------------------------------------------
-# Static files
-# ---------------------------------------------------------------------
 STATIC_URL = "/static/"
-
-# ---------------------------------------------------------------------
-# Default primary key field type
-# ---------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ---------------------------------------------------------------------
-# Custom user model
-# ---------------------------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
 
-# ---------------------------------------------------------------------
-# Django REST Framework
-# ---------------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
 
-
-# ---------------------------------------------------------------------
-# Cloudinary
-# ---------------------------------------------------------------------
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default=""),
     "API_KEY": env("CLOUDINARY_API_KEY", default=""),
@@ -246,16 +140,14 @@ import cloudinary
 cloudinary.config(
     cloud_name=CLOUDINARY_STORAGE["CLOUD_NAME"],
     api_key=CLOUDINARY_STORAGE["API_KEY"],
-    api_secret=CLOUDINARY_STORAGE["API_SECRET"]
+    api_secret=CLOUDINARY_STORAGE["API_SECRET"],
 )
 
-
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),   # 3 days
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),      # 90 days
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
