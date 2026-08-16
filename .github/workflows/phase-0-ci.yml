@@ -47,8 +47,10 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
       - run: python manage.py check
-      - name: Phase 3 backend journeys
-        run: python manage.py test accounts posts notifications
+      - name: Migration drift
+        run: python manage.py makemigrations --check --dry-run
+      - name: Phase 4 backend journeys
+        run: python manage.py test accounts posts notifications marketplace
 
   realtime-check:
     runs-on: ubuntu-latest
