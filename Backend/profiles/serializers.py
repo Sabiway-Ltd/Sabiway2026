@@ -1,48 +1,54 @@
-# profiles/serializers.py
-
-from rest_framework import serializers
-from .models import Profile
 from django.utils.text import slugify
+from rest_framework import serializers
+
+from .models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    # Pull email from related User
-    email = serializers.EmailField(source='user.email', read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
     initials = serializers.CharField(read_only=True)
     followers_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
-    user_id = serializers.IntegerField(source='pk', read_only=True)
+    user_id = serializers.IntegerField(source="pk", read_only=True)
     is_following = serializers.SerializerMethodField()
-
 
     class Meta:
         model = Profile
         fields = [
-            'user_id', 'full_name', 'initials', 'email', 'username', 'profile_picture',
-            'followers_count', 'following_count', 'posts_count',
-            'phone_number', 'gender', 'date_of_birth',
-            'country', 'state', 'area', 'street',
-            'role', 'job', 'bio',
-            'is_following', 'address',
+            "user_id", "full_name", "initials", "email", "username", "profile_picture",
+            "followers_count", "following_count", "posts_count",
+            "phone_number", "gender", "date_of_birth",
+            "country", "state", "area", "street",
+            "role", "job", "bio", "is_following", "address",
         ]
-
         read_only_fields = (
-            'email', 'initials', 'followers_count', 'following_count',
-            'posts_count', 'is_following', 'address',
+            "email", "initials", "followers_count", "following_count",
+            "posts_count", "is_following", "address",
         )
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        request_user = getattr(request, "user", None)
+        is_owner = bool(request_user and request_user.is_authenticated and instance.user_id == request_user.id)
+        is_staff = bool(request_user and request_user.is_authenticated and request_user.is_staff)
+
+        if not (is_owner or is_staff):
+            for field in ("email", "phone_number", "gender", "date_of_birth", "area", "street", "address"):
+                data.pop(field, None)
+        return data
+
     def validate_username(self, value):
-        v = value.strip()
-        if v.startswith('@'):
-            v = v[1:]
-        v = slugify(v)
-        candidate = f"@{v}"
-        qs = Profile.objects.filter(username=candidate)
+        value = value.strip()
+        if value.startswith("@"):
+            value = value[1:]
+        candidate = f"@{slugify(value)}"
+        queryset = Profile.objects.filter(username=candidate)
         if self.instance:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise serializers.ValidationError('This username is taken.')
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError("This username is taken.")
         return candidate
 
     def update(self, instance, validated_data):
@@ -51,14 +57,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    
     def get_is_following(self, obj):
-        """Check if logged-in user is following this profile"""
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request and request.user.is_authenticated:
-            user_profile = getattr(request.user, 'profile', None)
+            user_profile = getattr(request.user, "profile", None)
             if user_profile:
                 return obj.followers_rel.filter(follower=user_profile).exists()
         return False
-    
-    
