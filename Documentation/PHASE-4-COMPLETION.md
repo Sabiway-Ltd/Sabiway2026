@@ -1,97 +1,110 @@
-# Phase 4 — Marketplace Foundation
+# Phase 4 — Marketplace foundation, services, jobs and discovery
 
-## Outcome
+## Correction note
 
-Phase 4 introduces the first marketplace transaction-preparation layer on top of SabiForum. It deliberately stops before money movement: SabiPay, escrow and payment processing remain deferred.
+The original Phase 4 merge delivered only part of the approved scope. This correction aligns Phase 4 to the AI Development Playbook and V2 design direction rather than treating a generic marketplace page and early booking request as completion.
 
-## Delivered
+## Phase outcome
+
+Create the shared marketplace data model and allow demand and supply to meet safely across web and mobile.
+
+## Delivered in the corrected Phase 4
 
 ### Marketplace domain
-- `ServiceCategory` for governed service taxonomy.
-- `ServiceListing` for professional service offers, location, delivery mode and starting price.
-- `BookingRequest` for client-to-provider service requests and controlled lifecycle states.
-- Seeded starter service categories covering electricians, plumbing, tailoring, hair & beauty, tutors, event services, cleaning, tech support, photography and catering.
+- governed service categories and subcategories
+- professional service listings
+- starting price, pricing note, delivery mode and availability indicators
+- country/state/city/area discovery fields
+- listing moderation lifecycle: draft, pending, approved, rejected and suspended
+- featured and active visibility controls
+- client `JobPosting` flow with budget, delivery mode, location and needed-by date
+- professional `JobResponse` flow with proposed price and response lifecycle
+- existing pre-moderation listings preserved as approved during migration
 
-### API and permission boundaries
-- Public category and active-listing discovery.
-- Query filters for text, category, state, area and delivery mode.
-- Professional-only listing creation.
-- Listing edits/deactivation restricted to the listing owner.
-- Booking creation restricted to authenticated users and blocked for a provider's own listing.
-- Booking visibility restricted to the client and the listing provider.
-- Client status control limited to cancellation.
-- Provider status control limited to valid accept/decline/complete transitions.
-- Public listing responses reuse the privacy-aware profile serializer, so contact and personal fields are not exposed to anonymous/public marketplace discovery.
+### Discovery and permissions
+- public discovery exposes only active, approved service listings
+- public job discovery exposes only open, approved jobs
+- search supports service/problem text, category/subcategory, delivery mode and city-level location filtering
+- professional profiles can create and update only their own listings; edits return to review
+- client profiles can create and update only their own jobs; jobs return to review after edits
+- only professionals can respond to approved open jobs
+- duplicate professional responses to the same job are rejected
+- only the job owner can shortlist or decline responses
+- public profile serialization retains existing privacy controls
 
-### Web
-- Responsive `/marketplace` discovery page.
-- Client-side search by service, provider, category and state.
-- Booking request dialog using the existing JWT session token.
-- Professional service-publishing form with server-side permission enforcement.
-- Empty and error states suitable for a marketplace that may initially have limited supply.
+### Web marketplace
+- rebuilt `/marketplace` around the approved SabiWay visual language: Inter, Nigerian green `#008753`, amber `#FFB800`, warm white surfaces and trust-led cards
+- service/problem search plus city/state/country filtering
+- category-led browsing
+- Find Services / Open Jobs modes
+- service listing submission for professionals
+- job posting for clients
+- professional job response flow
+- provider/service detail sheet
+- clear Phase 5 boundary: messaging, negotiation and booking are not misrepresented as Phase 4 features
 
-### Mobile
-- Marketplace added alongside SabiForum in the authenticated app navigation.
-- Responsive service discovery/search.
-- Listing cards show category, provider, location, delivery mode and starting price.
-- Authenticated booking request flow.
-- API client types for listings and bookings.
+### Mobile marketplace
+- service/problem and location discovery
+- services/jobs switch inside the authenticated mobile application
+- responsive service and job cards using the shared visual language
+- provider detail state
+- professional job response flow
+- shared API contracts with web
 
-### Operations and quality
-- Django admin controls for categories, listings and booking requests.
-- Initial marketplace migrations plus deterministic starter-category data migration.
-- Automated marketplace user-journey tests.
-- CI migration-drift check added so model changes cannot silently diverge from migrations.
+### Administration
+- category/subcategory management
+- listing moderation, visibility and feature controls
+- job moderation/status controls
+- job-response inspection
+- existing booking-request admin retained only for backward compatibility until Phase 5 replaces the early booking model
 
 ## Automated journey coverage
 
-The Phase 4 test suite verifies:
-1. Anonymous/public discovery can filter active listings.
-2. Public provider serialization does not leak email, phone or street details.
-3. Non-professional profiles cannot publish services.
-4. Professionals can publish services.
-5. Non-owners cannot modify another provider's listing.
-6. Clients can create booking requests.
-7. Providers can accept pending requests.
-8. Clients can cancel eligible requests.
-9. Providers cannot book their own listings.
-10. Unrelated users cannot inspect another user's booking.
+The corrected Phase 4 tests cover:
+1. direct service/problem discovery by category and city
+2. public privacy boundaries
+3. pending listings excluded from public discovery
+4. professional listing submission and re-review after edit
+5. client job creation and moderation gate
+6. approved job discovery
+7. professional job response
+8. duplicate-response prevention
+9. client shortlist decision
+10. client/professional role boundaries
+11. job ownership boundaries
 
-## Responsive/device review target
+## Design authority
 
-The implementation is designed around the same responsive baseline used in Phase 3:
+Implementation uses the SabiWay Website & Mobile App Design Report as the available visual evidence: green and amber brand colours, Inter typography, warm/trust-led cards, service discovery, provider visibility, reviews/verification direction and Nigerian visual identity.
 
-| Surface | Compact phone | Standard phone | Tablet | Desktop/web |
-| --- | --- | --- | --- | --- |
-| Marketplace discovery | single-column cards | single-column cards | constrained feed | 2–3 column grid |
-| Search/filter controls | stacked | stacked | stacked/expanded | 3-column controls |
-| Booking request | bottom modal/sheet | bottom modal/sheet | centred/constrained | centred dialog |
-| Provider publish form | stacked | stacked | two-column where space allows | two-column |
+The report states that only selected key screens are included and that the full client/provider/community flows live in the Figma file. The repository/library does not currently contain the actual Figma URL/file key, so exact frame-by-frame visual comparison remains an evidence gap rather than being falsely marked complete.
 
-No device-specific business rules exist; all surfaces use the same API permission model.
+## Phase boundary
 
-## Explicitly deferred
+Phase 4 stops at safe discovery, listings, jobs and professional responses.
 
-The following are **not** Phase 4 scope:
-- SabiPay, escrow, card/bank payment collection or payout logic.
-- Identity/KYC/provider verification.
-- Reviews and ratings.
-- Dispute resolution and refund workflows.
-- Production deployment, Vercel plan changes or Supabase migration.
+Phase 5 owns:
+- private messaging
+- negotiation
+- booking agreement
+- scheduling
+- scope/price/currency agreement
+- linked job-to-booking conversion
 
-These require dedicated product/security decisions rather than being silently coupled to the marketplace foundation.
+Phase 6 owns provider verification and the full shared verification admin workflow.
+
+Phase 7 owns SabiPay escrow.
+
+Phase 8 owns disputes, reviews, notifications and post-service operational controls.
 
 ## Release gate
 
-Phase 4 is ready to merge only when all repository CI jobs pass:
-- repository hygiene
-- Django system check
-- migration drift
-- accounts/posts/notifications/marketplace tests
-- realtime check
-- frontend TypeScript
-- frontend lint
-- mobile TypeScript
-- waitlist syntax
+The correction is ready to merge only when:
+- Django check passes
+- migration drift passes
+- corrected marketplace journeys pass
+- frontend TypeScript and lint pass
+- mobile TypeScript passes
+- realtime, repository hygiene and waitlist checks remain green
 
-The external Vercel build-rate quota remains separate from repository-code verification and does not alter the Phase 4 code scope.
+Full Phase 4 sign-off additionally requires the playbook's device evidence and the missing full Figma reference for exact UI comparison. Until those are available, code completion and CI can pass while visual-evidence status remains explicitly conditional.
