@@ -4,6 +4,9 @@ from .views import (
     BookingRequestViewSet,
     JobPostingViewSet,
     JobResponseViewSet,
+    MessageThreadViewSet,
+    MessageViewSet,
+    ScheduleProposalViewSet,
     ServiceCategoryViewSet,
     ServiceListingViewSet,
 )
@@ -13,6 +16,9 @@ router.register(r"categories", ServiceCategoryViewSet, basename="service-categor
 router.register(r"listings", ServiceListingViewSet, basename="service-listing")
 router.register(r"jobs", JobPostingViewSet, basename="job-posting")
 router.register(r"job-responses", JobResponseViewSet, basename="job-response")
+router.register(r"threads", MessageThreadViewSet, basename="message-thread")
+router.register(r"messages", MessageViewSet, basename="message")
 router.register(r"bookings", BookingRequestViewSet, basename="booking-request")
+router.register(r"schedule-proposals", ScheduleProposalViewSet, basename="schedule-proposal")
 
 urlpatterns = router.urls

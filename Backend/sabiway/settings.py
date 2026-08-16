@@ -30,6 +30,7 @@ ADMIN_REPORT_EMAIL = env("ADMIN_REPORT_EMAIL", default="admin@sabiway.com")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 BACKEND_URL = env("BACKEND_URL", default="http://localhost:8000")
 EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
+PREBOOKING_CONTACT_BLOCK_ENABLED = env.bool("PREBOOKING_CONTACT_BLOCK_ENABLED", default=True)
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
 CORS_ALLOWED_ORIGINS = [
