@@ -1,22 +1,47 @@
 import { useState } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import { AuthFlow } from "./src/auth/AuthFlow";
 import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
 import { colors } from "./src/design/tokens";
+import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
+
+type AppSection = "community" | "marketplace";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [section, setSection] = useState<AppSection>("community");
+
+  const signOut = () => {
+    setSession(null);
+    setSection("community");
+  };
 
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
       {session ? (
-        <CommunityScreen session={session} onSignOut={() => setSession(null)} />
+        <View style={styles.authenticated}>
+          <View style={styles.navigation}>
+            <Pressable onPress={() => setSection("community")} style={[styles.navItem, section === "community" && styles.navItemActive]}>
+              <Text style={[styles.navText, section === "community" && styles.navTextActive]}>SabiForum</Text>
+            </Pressable>
+            <Pressable onPress={() => setSection("marketplace")} style={[styles.navItem, section === "marketplace" && styles.navItemActive]}>
+              <Text style={[styles.navText, section === "marketplace" && styles.navTextActive]}>Marketplace</Text>
+            </Pressable>
+          </View>
+          <View style={styles.content}>
+            {section === "marketplace" ? (
+              <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
+            ) : (
+              <CommunityScreen session={session} onSignOut={signOut} />
+            )}
+          </View>
+        </View>
       ) : (
-        <AuthFlow onAuthenticated={setSession} />
+        <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("community"); }} />
       )}
     </SafeAreaView>
   );
@@ -24,4 +49,11 @@ export default function App() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  authenticated: { flex: 1 },
+  navigation: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
+  navItem: { minHeight: 40, justifyContent: "center", borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  navItemActive: { backgroundColor: colors.brand, borderColor: colors.brand },
+  navText: { color: colors.text, fontWeight: "700" },
+  navTextActive: { color: "#FFFFFF" },
+  content: { flex: 1 },
 });
