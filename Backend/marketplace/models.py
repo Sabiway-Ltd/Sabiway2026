@@ -48,9 +48,9 @@ class ServiceListing(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["category", "is_active"], name="marketplace__categor_84f1e5_idx"),
-            models.Index(fields=["state", "area"], name="marketplace__state_93f56d_idx"),
-            models.Index(fields=["provider", "is_active"], name="marketplace__provide_aa16fe_idx"),
+            models.Index(fields=["category", "is_active"], name="mkt_list_cat_active_idx"),
+            models.Index(fields=["state", "area"], name="mkt_list_state_area_idx"),
+            models.Index(fields=["provider", "is_active"], name="mkt_list_provider_idx"),
         ]
 
     def __str__(self):
@@ -77,8 +77,8 @@ class BookingRequest(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["client", "status"], name="marketplace__client__f67f23_idx"),
-            models.Index(fields=["listing", "status"], name="marketplace__listing_3e41bd_idx"),
+            models.Index(fields=["client", "status"], name="mkt_book_client_status_idx"),
+            models.Index(fields=["listing", "status"], name="mkt_book_list_status_idx"),
         ]
 
     def __str__(self):
