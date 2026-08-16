@@ -1,52 +1,24 @@
 "use client";
 
-import Navbar from "@/app/_components/landing_page/Navbar";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { PublicHeader } from "@/app/_components/v2/PublicShell";
 
 export default function CheckEmail() {
-  
-
- 
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Navbar />
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-md bg-white rounded-3xl p-8 shadow-md border border-gray-100"
-      >
-        <h1 className="text-lg sm:text-xl font-semibold text-center text-gray-900">
-          Check your email
-        </h1>
-
-        <p className="text-center text-gray-500 text-[11px] sm:text-[13px] px-5 mt-2 sm:mt-3 leading-relaxed">
-          We've sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.
-          <br/>
-Note: It may take up to 5 minutes for the email to arrive.
-        </p>
-
-        <div className="my-6 flex justify-center">
-            <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564131/Depth_6_Frame_0_thy833_jatk7l.png" 
-            alt="Confirm Email" 
-            />
-
-        </div>
-        
-
-        <a href="/login">
-            <button
-                type="submit"
-                className="w-full bg-[#008753] text-white py-2 rounded-lg text-sm font-medium hover:bg-[#007047] transition disabled:opacity-60"
-            >
-                Back to Login
-            </button>
-        </a>
-
-      </motion.div>
+    <div className="min-h-screen bg-[#f7faf8] flex flex-col text-[#173126]">
+      <PublicHeader />
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }} className="w-full max-w-md bg-white rounded-3xl p-8 shadow-sm border border-[#dce8e1]">
+          <p className="text-xs font-black uppercase tracking-[.16em] text-[#008753] text-center">Check your inbox</p>
+          <h1 className="mt-2 text-2xl font-black text-center">Password reset email sent</h1>
+          <p className="text-center text-[#68776f] text-sm mt-3 leading-relaxed">We’ve sent a password reset link to your email address. Follow the instructions in the email to continue. It may take up to 5 minutes to arrive.</p>
+          <div className="my-6 flex justify-center">
+            <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764564131/Depth_6_Frame_0_thy833_jatk7l.png" alt="Confirm email" className="max-h-48 object-contain" />
+          </div>
+          <Link href="/login" className="block w-full bg-[#008753] text-white py-3 rounded-xl text-center text-sm font-black hover:bg-[#007047] transition">Back to Login</Link>
+        </motion.div>
+      </div>
     </div>
   );
 }
