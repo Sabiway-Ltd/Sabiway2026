@@ -1,0 +1,11 @@
+{
+  "name": "sabiway2026-workspace",
+  "private": true,
+  "scripts": {
+    "setup:frontend": "npm --prefix frontend ci",
+    "preview": "npm --prefix frontend run dev -- --hostname 0.0.0.0 --port 3000",
+    "frontend:build": "npm --prefix frontend run build",
+    "frontend:type-check": "npm --prefix frontend run type-check",
+    "frontend:lint": "npm --prefix frontend run lint"
+  }
+}

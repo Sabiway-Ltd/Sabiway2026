@@ -1,0 +1,12 @@
+{
+  "name": "SabiWay 2026",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "postCreateCommand": "npm --prefix frontend ci",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "SabiWay Frontend",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}
