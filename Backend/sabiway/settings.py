@@ -36,6 +36,16 @@ VERIFICATION_DOCUMENT_KEY = env("VERIFICATION_DOCUMENT_KEY", default="")
 # Operational defaults only. Product/privacy owners can change these without code changes.
 VERIFICATION_REVIEW_SLA_HOURS = env.int("VERIFICATION_REVIEW_SLA_HOURS", default=48)
 VERIFICATION_RETENTION_DAYS = env.int("VERIFICATION_RETENTION_DAYS", default=365)
+
+# Phase 7 Nigeria-pilot SabiPay controls. Cross-border/Stripe remains Phase 9.
+SABIPAY_ENABLED = env.bool("SABIPAY_ENABLED", default=True)
+SABIPAY_COMMISSION_RATE = env.float("SABIPAY_COMMISSION_RATE", default=0.10)
+SABIPAY_FREEZE_DAYS = env.int("SABIPAY_FREEZE_DAYS", default=7)
+PAYSTACK_SECRET_KEY = env("PAYSTACK_SECRET_KEY", default="")
+PAYSTACK_PUBLIC_KEY = env("PAYSTACK_PUBLIC_KEY", default="")
+PAYSTACK_BASE_URL = env("PAYSTACK_BASE_URL", default="https://api.paystack.co")
+PAYSTACK_TIMEOUT_SECONDS = env.int("PAYSTACK_TIMEOUT_SECONDS", default=12)
+
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
 CORS_ALLOWED_ORIGINS = [
@@ -63,6 +73,7 @@ INSTALLED_APPS = [
     "health",
     "marketplace",
     "verification.apps.VerificationConfig",
+    "sabipay.apps.SabiPayConfig",
     "rest_framework",
     "drf_yasg",
     "rest_framework_simplejwt",
@@ -93,9 +104,9 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
-                "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.request",
             ],
         },
     },
