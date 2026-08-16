@@ -14,8 +14,9 @@ import {
 
 import type { AuthSession } from "../auth/types";
 import { colors } from "../design/tokens";
-import { getMarketplaceJobs, getMarketplaceListings, respondToMarketplaceJob } from "./api";
-import type { MarketplaceJob, MarketplaceListing } from "./types";
+import { getMarketplaceCategories, getMarketplaceJobs, getMarketplaceListings, respondToMarketplaceJob } from "./api";
+import { MarketplaceCreateSheet } from "./MarketplaceCreateSheet";
+import type { MarketplaceCategory, MarketplaceJob, MarketplaceListing } from "./types";
 
 type Props = {
   session: AuthSession;
@@ -34,6 +35,7 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
   const [tab, setTab] = useState<Tab>("services");
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [jobs, setJobs] = useState<MarketplaceJob[]>([]);
+  const [categories, setCategories] = useState<MarketplaceCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
@@ -42,13 +44,19 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
   const [selectedJob, setSelectedJob] = useState<MarketplaceJob | null>(null);
   const [responseMessage, setResponseMessage] = useState("");
   const [proposedPrice, setProposedPrice] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
   const contentWidth = Math.min(width - 24, 760);
 
   const load = useCallback(async () => {
     try {
-      const [nextListings, nextJobs] = await Promise.all([getMarketplaceListings(), getMarketplaceJobs()]);
+      const [nextListings, nextJobs, nextCategories] = await Promise.all([
+        getMarketplaceListings(),
+        getMarketplaceJobs(),
+        getMarketplaceCategories(),
+      ]);
       setListings(nextListings);
       setJobs(nextJobs);
+      setCategories(nextCategories);
     } catch (error) {
       Alert.alert("Could not load marketplace", error instanceof Error ? error.message : "Please try again.");
     } finally {
@@ -101,6 +109,8 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
     return <View style={styles.center}><ActivityIndicator color={colors.brand} /></View>;
   }
 
+  const roleAction = session.user.role === "professional" ? "Offer a service" : "Post a job";
+
   return (
     <View style={styles.screen}>
       <View style={[styles.hero, { width: contentWidth }]}>
@@ -120,6 +130,11 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
         <Pressable onPress={() => setTab("services")} style={[styles.tab, tab === "services" && styles.tabActive]}><Text style={[styles.tabText, tab === "services" && styles.tabTextActive]}>Find services</Text></Pressable>
         <Pressable onPress={() => setTab("jobs")} style={[styles.tab, tab === "jobs" && styles.tabActive]}><Text style={[styles.tabText, tab === "jobs" && styles.tabTextActive]}>Open jobs</Text></Pressable>
       </View>
+
+      <Pressable onPress={() => setShowCreate(true)} style={[styles.createButton, { width: contentWidth }]}>
+        <Text style={styles.createButtonText}>{roleAction}</Text>
+        <Text style={styles.createButtonHint}>{session.user.role === "professional" ? "Publish your expertise for clients to discover" : "Describe the work and receive professional responses"}</Text>
+      </Pressable>
 
       <FlatList
         data={feed}
@@ -144,7 +159,10 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
             </View>
           </Pressable>
         ) : (
-          <Pressable onPress={() => setSelectedJob(item.data)} style={styles.card}>
+          <Pressable
+            onPress={() => session.user.role === "professional" ? setSelectedJob(item.data) : Alert.alert("Open job", "Professional profiles can respond to this job.")}
+            style={styles.card}
+          >
             <View style={styles.rowBetween}>
               <Text style={styles.badge}>{item.data.category.name}</Text>
               <Text style={styles.muted}>{item.data.response_count} responses</Text>
@@ -154,7 +172,7 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
             <Text style={styles.locationText}>{[item.data.city, item.data.state, item.data.country].filter(Boolean).join(", ") || "Location flexible"}</Text>
             <View style={styles.rowBetween}>
               <Text style={styles.price}>{item.data.budget_min || item.data.budget_max ? `${item.data.currency} ${Number(item.data.budget_min || 0).toLocaleString()}–${Number(item.data.budget_max || item.data.budget_min || 0).toLocaleString()}` : "Open to quote"}</Text>
-              <Text style={styles.actionText}>Respond</Text>
+              <Text style={styles.actionText}>{session.user.role === "professional" ? "Respond" : "View job"}</Text>
             </View>
           </Pressable>
         )}
@@ -191,6 +209,18 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
           </View>
         </View>
       ) : null}
+
+      {showCreate ? (
+        <MarketplaceCreateSheet
+          access={session.access}
+          role={session.user.role}
+          categories={categories}
+          width={contentWidth}
+          onClose={() => setShowCreate(false)}
+          onServiceCreated={(listing) => setListings((current) => [listing, ...current])}
+          onJobCreated={(job) => setJobs((current) => [job, ...current])}
+        />
+      ) : null}
     </View>
   );
 }
@@ -211,6 +241,9 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: "#FFFFFF" },
   tabText: { color: "#607168", fontWeight: "800" },
   tabTextActive: { color: colors.brand },
+  createButton: { borderRadius: 14, backgroundColor: "#FFB800", paddingHorizontal: 15, paddingVertical: 11, marginTop: 10 },
+  createButtonText: { color: "#173126", fontWeight: "900", fontSize: 15 },
+  createButtonHint: { color: "#604D0C", fontSize: 11, marginTop: 2 },
   list: { alignSelf: "center", paddingVertical: 12, gap: 12 },
   card: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 18, padding: 16, gap: 7 },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
