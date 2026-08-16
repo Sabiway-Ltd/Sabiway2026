@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from profiles.serializers import PublicProfileSerializer
+from profiles.serializers import ProfileSerializer
 
 from .models import BookingRequest, ServiceCategory, ServiceListing
 
@@ -12,7 +12,7 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
 
 
 class ServiceListingSerializer(serializers.ModelSerializer):
-    provider = PublicProfileSerializer(read_only=True)
+    provider = ProfileSerializer(read_only=True)
     category = ServiceCategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
         source="category",
@@ -37,7 +37,7 @@ class ServiceListingSerializer(serializers.ModelSerializer):
 
 class BookingRequestSerializer(serializers.ModelSerializer):
     listing_summary = serializers.SerializerMethodField()
-    client = PublicProfileSerializer(read_only=True)
+    client = ProfileSerializer(read_only=True)
     listing_id = serializers.PrimaryKeyRelatedField(
         source="listing",
         queryset=ServiceListing.objects.filter(is_active=True),
