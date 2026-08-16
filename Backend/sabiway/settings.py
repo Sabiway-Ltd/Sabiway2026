@@ -33,7 +33,6 @@ EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
 PREBOOKING_CONTACT_BLOCK_ENABLED = env.bool("PREBOOKING_CONTACT_BLOCK_ENABLED", default=True)
 VERIFICATION_GATE_ENABLED = env.bool("VERIFICATION_GATE_ENABLED", default=True)
 VERIFICATION_DOCUMENT_KEY = env("VERIFICATION_DOCUMENT_KEY", default="")
-# Operational defaults only. Product/privacy owners can change these without code changes.
 VERIFICATION_REVIEW_SLA_HOURS = env.int("VERIFICATION_REVIEW_SLA_HOURS", default=48)
 VERIFICATION_RETENTION_DAYS = env.int("VERIFICATION_RETENTION_DAYS", default=365)
 
@@ -45,6 +44,20 @@ PAYSTACK_SECRET_KEY = env("PAYSTACK_SECRET_KEY", default="")
 PAYSTACK_PUBLIC_KEY = env("PAYSTACK_PUBLIC_KEY", default="")
 PAYSTACK_BASE_URL = env("PAYSTACK_BASE_URL", default="https://api.paystack.co")
 PAYSTACK_TIMEOUT_SECONDS = env.int("PAYSTACK_TIMEOUT_SECONDS", default=12)
+
+# Phase 8 trust/operations controls. Exact response times and fraud thresholds are operational defaults,
+# not product-policy promises, and may be changed without code changes.
+TRUST_EVIDENCE_KEY = env("TRUST_EVIDENCE_KEY", default="")
+TRUST_DISPUTE_RESPONSE_HOURS = env.int("TRUST_DISPUTE_RESPONSE_HOURS", default=24)
+TRUST_SUPPORT_RESPONSE_HOURS = env.int("TRUST_SUPPORT_RESPONSE_HOURS", default=24)
+TRUST_HIGH_VALUE_NGN = env.int("TRUST_HIGH_VALUE_NGN", default=500000)
+TRUST_REPEAT_DISPUTE_THRESHOLD = env.int("TRUST_REPEAT_DISPUTE_THRESHOLD", default=3)
+TRUST_REVIEW_HIDE_REPORT_THRESHOLD = env.int("TRUST_REVIEW_HIDE_REPORT_THRESHOLD", default=3)
+SABIPAY_PARTIAL_DISPUTE_POLICY_ENABLED = env.bool("SABIPAY_PARTIAL_DISPUTE_POLICY_ENABLED", default=False)
+EXPO_PUSH_ENDPOINT = env("EXPO_PUSH_ENDPOINT", default="https://exp.host/--/api/v2/push/send")
+NOTIFICATION_DELIVERY_TIMEOUT_SECONDS = env.int("NOTIFICATION_DELIVERY_TIMEOUT_SECONDS", default=6)
+NOTIFICATION_PUSH_DELIVERY_ENABLED = env.bool("NOTIFICATION_PUSH_DELIVERY_ENABLED", default=True)
+NOTIFICATION_EMAIL_DELIVERY_ENABLED = env.bool("NOTIFICATION_EMAIL_DELIVERY_ENABLED", default=False)
 
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
@@ -74,6 +87,7 @@ INSTALLED_APPS = [
     "marketplace",
     "verification.apps.VerificationConfig",
     "sabipay.apps.SabiPayConfig",
+    "trustops.apps.TrustOpsConfig",
     "rest_framework",
     "drf_yasg",
     "rest_framework_simplejwt",
@@ -144,6 +158,11 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_THROTTLE_RATES": {
+        "trust_dispute": "5/day",
+        "trust_review": "10/day",
+        "trust_support": "10/day",
+    },
 }
 
 CLOUDINARY_STORAGE = {
