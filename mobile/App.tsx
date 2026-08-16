@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import { AuthFlow } from "./src/auth/AuthFlow";
@@ -9,9 +9,10 @@ import { colors } from "./src/design/tokens";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
 import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
+import { TrustScreen } from "./src/trust/TrustScreen";
 import { VerificationScreen } from "./src/verification/VerificationScreen";
 
-type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "verification";
+type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "trust" | "verification";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -22,28 +23,19 @@ export default function App() {
     setSection("community");
   };
 
+  const nav = [
+    ["community", "Forum"], ["marketplace", "Market"], ["messages", "Messages"], ["sabipay", "SabiPay"], ["trust", "Trust"],
+  ] as [AppSection, string][];
+  if (session?.user.role === "professional") nav.push(["verification", "Verify"]);
+
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
       {session ? (
         <View style={styles.authenticated}>
-          <View style={styles.navigation}>
-            <Pressable onPress={() => setSection("community")} style={[styles.navItem, section === "community" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "community" && styles.navTextActive]}>SabiForum</Text>
-            </Pressable>
-            <Pressable onPress={() => setSection("marketplace")} style={[styles.navItem, section === "marketplace" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "marketplace" && styles.navTextActive]}>Market</Text>
-            </Pressable>
-            <Pressable onPress={() => setSection("messages")} style={[styles.navItem, section === "messages" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "messages" && styles.navTextActive]}>Messages</Text>
-            </Pressable>
-            <Pressable onPress={() => setSection("sabipay")} style={[styles.navItem, section === "sabipay" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "sabipay" && styles.navTextActive]}>SabiPay</Text>
-            </Pressable>
-            {session.user.role === "professional" ? <Pressable onPress={() => setSection("verification")} style={[styles.navItem, section === "verification" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "verification" && styles.navTextActive]}>Verify</Text>
-            </Pressable> : null}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navigation}>
+            {nav.map(([value, title]) => <Pressable key={value} onPress={() => setSection(value)} style={[styles.navItem, section === value && styles.navItemActive]}><Text style={[styles.navText, section === value && styles.navTextActive]}>{title}</Text></Pressable>)}
+          </ScrollView>
           <View style={styles.content}>
             {section === "marketplace" ? (
               <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
@@ -51,6 +43,8 @@ export default function App() {
               <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
             ) : section === "sabipay" ? (
               <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
+            ) : section === "trust" ? (
+              <TrustScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onOpenSabiPay={() => setSection("sabipay")} />
             ) : section === "verification" ? (
               <VerificationScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
             ) : (
@@ -68,8 +62,8 @@ export default function App() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   authenticated: { flex: 1 },
-  navigation: { flexDirection: "row", gap: 4, paddingHorizontal: 6, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
-  navItem: { flex: 1, minHeight: 40, justifyContent: "center", alignItems: "center", borderRadius: 10, paddingHorizontal: 3, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  navigation: { gap: 4, paddingHorizontal: 6, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
+  navItem: { minWidth: 74, minHeight: 40, justifyContent: "center", alignItems: "center", borderRadius: 10, paddingHorizontal: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   navItemActive: { backgroundColor: colors.brand, borderColor: colors.brand },
   navText: { color: colors.text, fontWeight: "700", fontSize: 10 },
   navTextActive: { color: "#FFFFFF" },
