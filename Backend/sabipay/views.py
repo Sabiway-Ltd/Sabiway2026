@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from verification.services import is_professional_verified
 
 from . import gateway
-from .models import PaymentAttempt, PayoutDestination, Transaction
+from .models import PayoutDestination, Transaction
 from .permissions import IsSabiPayOperator
 from .serializers import (
     AdminRefundSerializer,
@@ -24,13 +24,13 @@ from .services import (
     create_payout_destination,
     initialize_checkout,
     mark_delivered,
-    process_webhook,
     reconcile_transaction,
     release_transaction,
     request_refund,
     start_service,
     verify_attempt,
 )
+from .webhook_services import process_paystack_webhook
 
 
 class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -76,10 +76,7 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
         serializer = VerifyPaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         reference = serializer.validated_data.get("reference") or ""
-        if reference:
-            attempt = tx.payment_attempts.filter(reference=reference).first()
-        else:
-            attempt = tx.payment_attempts.first()
+        attempt = tx.payment_attempts.filter(reference=reference).first() if reference else tx.payment_attempts.first()
         if not attempt:
             raise ValidationError("No SabiPay payment attempt exists for this booking.")
         tx = verify_attempt(attempt, source="client")
@@ -136,11 +133,7 @@ class PayoutDestinationViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, v
             raise PermissionDenied("Provider verification approval is required before payout setup.")
         serializer = PayoutDestinationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        destination = create_payout_destination(
-            professional=profile,
-            actor=request.user,
-            **serializer.validated_data,
-        )
+        destination = create_payout_destination(professional=profile, actor=request.user, **serializer.validated_data)
         return Response(PayoutDestinationSerializer(destination).data, status=status.HTTP_200_OK)
 
 
@@ -174,5 +167,8 @@ class PaystackWebhookView(APIView):
             payload = json.loads(raw_body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             return Response({"detail": "Invalid webhook payload."}, status=status.HTTP_400_BAD_REQUEST)
-        process_webhook(raw_body, payload)
+        try:
+            process_paystack_webhook(raw_body, payload)
+        except gateway.PaystackError:
+            return Response({"detail": "Retry later."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         return Response({"received": True})
