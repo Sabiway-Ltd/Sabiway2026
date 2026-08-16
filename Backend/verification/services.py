@@ -22,10 +22,10 @@ def is_professional_verified(profile):
         return profile.role == "professional"
     if profile.role != "professional":
         return False
-    try:
-        return profile.verification_submission.status == VerificationSubmission.Status.APPROVED
-    except VerificationSubmission.DoesNotExist:
-        return False
+    return VerificationSubmission.objects.filter(
+        professional_id=profile.pk,
+        status=VerificationSubmission.Status.APPROVED,
+    ).exists()
 
 
 def _fernet():
