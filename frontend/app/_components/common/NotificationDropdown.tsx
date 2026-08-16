@@ -41,46 +41,43 @@ export default function NotificationDropdown() {
     markNotificationRead,
   } = useNotificationStore();
 
-  // Fetch notifications on mount
   useEffect(() => {
     getAllNotifications(1);
   }, [getAllNotifications]);
 
-const userProfile = useProfileStore((state) => state.profile);
-const getMyProfile = useProfileStore((state) => state.getMyProfile);
+  const userProfile = useProfileStore((state) => state.profile);
+  const getMyProfile = useProfileStore((state) => state.getMyProfile);
 
-// Fetch profile if missing
-useEffect(() => {
-  if (!userProfile) getMyProfile();
-}, [userProfile, getMyProfile]);
+  useEffect(() => {
+    if (!userProfile) getMyProfile();
+  }, [userProfile, getMyProfile]);
 
-// Connect to socket when profile is ready
-useEffect(() => {
-  const token = localStorage.getItem("access");
-  if (!token || !userProfile) return;
+  useEffect(() => {
+    const token = localStorage.getItem("access");
+    if (!token || !userProfile) return;
 
-  const socket = io(EXPRESS_URL, { auth: { token } });
-  socketRef.current = socket;
+    const socket = io(EXPRESS_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+    });
+    socketRef.current = socket;
 
-  socket.emit("join", String(userProfile.user_id));
+    socket.on("new-notification", (notif: NotificationItem) => {
+      useNotificationStore.getState().prependNotification(notif);
+    });
 
-  socket.on("new-notification", (notif: NotificationItem) => {
-    useNotificationStore.getState().prependNotification(notif);
-  });
+    socket.on("update-unread-count", (data: { unread_count: number }) => {
+      useNotificationStore.getState().setUnreadCount(data.unread_count);
+    });
 
-  socket.on("update-unread-count", (data: { unread_count: number }) => {
-    useNotificationStore.getState().setUnreadCount(data.unread_count);
-  });
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [userProfile]);
 
-  return () => {
-    socket.disconnect();
-  };
-}, [userProfile]);   // Only re-run when profile is loaded
-
-
-
-
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -144,7 +141,7 @@ useEffect(() => {
                     <div className="flex-1">
                       <p className="text-sm">
                         <span className="font-semibold">{n.actor.full_name}</span>{" "}
-{n.message.replace(/^@\w+\s*/, "")}
+                        {n.message.replace(/^@\w+\s*/, "")}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(n.created_at).toLocaleString("en-GB")}
