@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/search/", include("search.urls")),
     path("api/notifications/", include("notifications.urls")),
     path("api/marketplace/", include("marketplace.urls")),
+    path("api/verification/", include("verification.urls")),
 ]

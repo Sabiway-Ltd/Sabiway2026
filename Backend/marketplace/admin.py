@@ -1,4 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+
+from verification.services import is_professional_verified
 
 from .models import (
     BookingAudit,
@@ -39,11 +41,22 @@ class ServiceSubcategoryAdmin(admin.ModelAdmin):
 
 @admin.register(ServiceListing)
 class ServiceListingAdmin(admin.ModelAdmin):
-    list_display = ("title", "provider", "category", "city", "state", "price_from", "currency", "available_now", "moderation_status", "is_featured", "is_active")
+    list_display = ("title", "provider", "provider_verified", "category", "city", "state", "price_from", "currency", "available_now", "moderation_status", "is_featured", "is_active")
     list_filter = ("moderation_status", "is_featured", "is_active", "available_now", "delivery_mode", "category", "country", "state")
-    list_editable = ("moderation_status", "is_featured", "is_active")
+    list_editable = ("is_featured", "is_active")
     search_fields = ("title", "description", "provider__full_name", "provider__username", "city", "state")
     readonly_fields = ("id", "created_at", "updated_at")
+
+    @admin.display(boolean=True, description="Verified")
+    def provider_verified(self, obj):
+        return is_professional_verified(obj.provider)
+
+    def save_model(self, request, obj, form, change):
+        if obj.moderation_status == ServiceListing.ModerationStatus.APPROVED and not is_professional_verified(obj.provider):
+            obj.moderation_status = ServiceListing.ModerationStatus.PENDING
+            obj.is_featured = False
+            self.message_user(request, "Provider verification must be approved before this listing can go live.", level=messages.ERROR)
+        super().save_model(request, obj, form, change)
 
 
 class JobResponseInline(admin.TabularInline):

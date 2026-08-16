@@ -31,6 +31,11 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 BACKEND_URL = env("BACKEND_URL", default="http://localhost:8000")
 EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
 PREBOOKING_CONTACT_BLOCK_ENABLED = env.bool("PREBOOKING_CONTACT_BLOCK_ENABLED", default=True)
+VERIFICATION_GATE_ENABLED = env.bool("VERIFICATION_GATE_ENABLED", default=True)
+VERIFICATION_DOCUMENT_KEY = env("VERIFICATION_DOCUMENT_KEY", default="")
+# Operational defaults only. Product/privacy owners can change these without code changes.
+VERIFICATION_REVIEW_SLA_HOURS = env.int("VERIFICATION_REVIEW_SLA_HOURS", default=48)
+VERIFICATION_RETENTION_DAYS = env.int("VERIFICATION_RETENTION_DAYS", default=365)
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
 CORS_ALLOWED_ORIGINS = [
@@ -57,6 +62,7 @@ INSTALLED_APPS = [
     "notifications",
     "health",
     "marketplace",
+    "verification.apps.VerificationConfig",
     "rest_framework",
     "drf_yasg",
     "rest_framework_simplejwt",
