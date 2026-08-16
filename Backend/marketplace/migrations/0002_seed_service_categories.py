@@ -1,4 +1,5 @@
 from django.db import migrations
+from django.utils.text import slugify
 
 
 CATEGORIES = [
@@ -20,7 +21,7 @@ def seed_categories(apps, schema_editor):
     for name, description in CATEGORIES:
         ServiceCategory.objects.get_or_create(
             name=name,
-            defaults={"description": description},
+            defaults={"slug": slugify(name), "description": description},
         )
 
 
