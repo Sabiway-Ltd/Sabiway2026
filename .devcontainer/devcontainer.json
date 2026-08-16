@@ -2,10 +2,11 @@
   "name": "SabiWay 2026",
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "postCreateCommand": "npm --prefix frontend ci",
+  "postStartCommand": "bash -lc 'if [ \"$(git branch --show-current)\" = \"main\" ]; then git pull --ff-only origin main; fi; pkill -f \"next dev\" || true; rm -rf frontend/.next; nohup npm run preview >/tmp/sabiway-frontend.log 2>&1 &'",
   "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {
-      "label": "SabiWay Frontend",
+      "label": "SabiWay V2 Frontend",
       "onAutoForward": "openBrowser"
     }
   }
