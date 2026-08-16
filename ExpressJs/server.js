@@ -17,14 +17,7 @@ app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: corsOrigins,
-    credentials: true,
-  },
-});
-
+const io = new Server(server, { cors: { origin: corsOrigins, credentials: true } });
 const userSockets = new Map();
 
 function base64UrlDecode(value) {
@@ -35,56 +28,32 @@ function base64UrlDecode(value) {
 
 function verifyAccessToken(token) {
   if (!jwtSigningKey || !token) return null;
-
   const parts = token.split(".");
   if (parts.length !== 3) return null;
-
   const [encodedHeader, encodedPayload, encodedSignature] = parts;
   let header;
   let payload;
-
   try {
     header = JSON.parse(base64UrlDecode(encodedHeader).toString("utf8"));
     payload = JSON.parse(base64UrlDecode(encodedPayload).toString("utf8"));
   } catch {
     return null;
   }
-
-  if (header.alg !== "HS256" || payload.token_type !== "access" || !payload.user_id) {
-    return null;
-  }
-
-  if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) {
-    return null;
-  }
-
-  const expectedSignature = crypto
-    .createHmac("sha256", jwtSigningKey)
-    .update(`${encodedHeader}.${encodedPayload}`)
-    .digest("base64url");
-
+  if (header.alg !== "HS256" || payload.token_type !== "access" || !payload.user_id) return null;
+  if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) return null;
+  const expectedSignature = crypto.createHmac("sha256", jwtSigningKey).update(`${encodedHeader}.${encodedPayload}`).digest("base64url");
   const received = Buffer.from(encodedSignature);
   const expected = Buffer.from(expectedSignature);
-  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-    return null;
-  }
-
+  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return null;
   return payload;
 }
 
 function requireInternalToken(req, res, next) {
-  if (!internalBroadcastToken) {
-    return res.status(503).json({ error: "Realtime broadcast authentication is not configured" });
-  }
-
+  if (!internalBroadcastToken) return res.status(503).json({ error: "Realtime broadcast authentication is not configured" });
   const supplied = req.get("x-sabiway-internal-token") ?? "";
   const received = Buffer.from(supplied);
   const expected = Buffer.from(internalBroadcastToken);
-
-  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
+  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return res.status(401).json({ error: "Unauthorized" });
   return next();
 }
 
@@ -92,11 +61,7 @@ io.use((socket, next) => {
   const rawToken = socket.handshake.auth?.token;
   const token = typeof rawToken === "string" ? rawToken.replace(/^Bearer\s+/i, "") : "";
   const payload = verifyAccessToken(token);
-
-  if (!payload) {
-    return next(new Error("unauthorized"));
-  }
-
+  if (!payload) return next(new Error("unauthorized"));
   socket.data.userId = String(payload.user_id);
   return next();
 });
@@ -107,7 +72,6 @@ io.on("connection", (socket) => {
   sockets.add(socket.id);
   userSockets.set(userId, sockets);
   socket.join(`user:${userId}`);
-
   socket.on("disconnect", () => {
     const currentSockets = userSockets.get(userId);
     if (!currentSockets) return;
@@ -116,30 +80,31 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok", authenticatedRealtime: true });
-});
+app.get("/health", (_req, res) => res.json({ status: "ok", authenticatedRealtime: true }));
 
 app.post("/broadcast", requireInternalToken, (req, res) => {
   const data = req.body;
-  if (!data?.action) {
-    return res.status(400).json({ error: "Missing action" });
-  }
-
+  if (!data?.action) return res.status(400).json({ error: "Missing action" });
   io.emit("new-post", data);
   return res.json({ status: "sent" });
 });
 
 app.post("/broadcast-notification", requireInternalToken, (req, res) => {
   const { notification, userId } = req.body;
-  if (!notification || !userId) {
-    return res.status(400).json({ error: "Missing notification or userId" });
-  }
-
+  if (!notification || !userId) return res.status(400).json({ error: "Missing notification or userId" });
   io.to(`user:${String(userId)}`).emit("new-notification", notification);
   return res.json({ status: "sent" });
 });
 
-server.listen(port, () => {
-  console.log(`Socket.io server running on port ${port}`);
+app.post("/broadcast-marketplace", requireInternalToken, (req, res) => {
+  const { userIds, event, payload } = req.body;
+  if (!Array.isArray(userIds) || userIds.length === 0 || typeof event !== "string" || !payload) {
+    return res.status(400).json({ error: "Missing userIds, event or payload" });
+  }
+  const allowedEvents = new Set(["new-message", "booking-updated", "schedule-updated"]);
+  if (!allowedEvents.has(event)) return res.status(400).json({ error: "Unsupported marketplace event" });
+  for (const userId of userIds) io.to(`user:${String(userId)}`).emit(event, payload);
+  return res.json({ status: "sent", recipients: userIds.length });
 });
+
+server.listen(port, () => console.log(`Socket.io server running on port ${port}`));
