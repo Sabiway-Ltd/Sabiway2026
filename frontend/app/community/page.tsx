@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { usePostStore } from "../store/usePostStore";
 import { useProfileStore } from "../store/useProfileStore";
 import CommunityNavbar from "../_components/feed/CommunityNavbar";
@@ -19,7 +19,6 @@ import { EXPRESS_URL } from "@/app/utils/MyConstants";
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
-
 
   const {
     posts,
@@ -43,14 +42,14 @@ export default function Community() {
   useEffect(() => {
     getAllPosts(1);
     fetchMyFollowing();
-  }, []);
+  }, [getAllPosts, fetchMyFollowing]);
 
   useEffect(() => {
     if (refreshFeed) {
       getAllPosts(1);
       consumeRefresh();
     }
-  }, [refreshFeed]);
+  }, [refreshFeed, getAllPosts, consumeRefresh]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -71,74 +70,81 @@ export default function Community() {
       clearTimeout(timeout);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [nextPage, hasMore, loading]);
+  }, [nextPage, hasMore, loading, getAllPosts]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("access");
+    if (!token) return;
 
+    const socket = io(EXPRESS_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+    });
 
-    // FOR SOCKET
-useEffect(() => {
-  const socket = io(EXPRESS_URL);
+    socket.on("new-post", (data) => {
+      const { action, post, post_id, repost_id } = data;
 
-  // Listen to new posts, updates, deletes, reposts, unreposts
-  socket.on("new-post", (data) => {
-    console.log("Real-time post event received:", data);
+      switch (action) {
+        case "create":
+          usePostStore.setState((state) => ({
+            posts: state.posts.some((existing) => existing.id === post.id)
+              ? state.posts
+              : [post, ...state.posts],
+          }));
+          break;
 
-    const { action, post, post_id, original_post_id, repost_id } = data;
+        case "update":
+          usePostStore.setState((state) => ({
+            posts: state.posts.map((existing) =>
+              existing.id === post.id ? post : existing
+            ),
+          }));
+          break;
 
-    switch (action) {
-      case "create":
-        usePostStore.setState((state) => ({
-          posts: [post, ...state.posts],  // prepend
-        }));
-        break;
+        case "delete":
+          usePostStore.setState((state) => ({
+            posts: state.posts.filter((existing) => existing.id !== post_id),
+          }));
+          break;
 
-      case "update":
-        usePostStore.setState((state) => ({
-          posts: state.posts.map((p) => (p.id === post.id ? post : p)),
-        }));
-        break;
+        case "repost":
+          usePostStore.setState((state) => ({
+            posts: state.posts.some((existing) => existing.id === post.id)
+              ? state.posts
+              : [post, ...state.posts],
+          }));
+          break;
 
-      case "delete":
-        usePostStore.setState((state) => ({
-          posts: state.posts.filter((p) => p.id !== post_id),
-        }));
-        break;
+        case "unrepost":
+          usePostStore.setState((state) => ({
+            posts: state.posts.filter((existing) => existing.id !== repost_id),
+          }));
+          break;
 
-      case "repost":
-        usePostStore.setState((state) => ({
-          posts: [post, ...state.posts],  // same prepend logic
-        }));
-        break;
+        default:
+          break;
+      }
+    });
 
-      case "unrepost":
-        // Remove the repost from store
-        usePostStore.setState((state) => ({
-          posts: state.posts.filter((p) => p.id !== repost_id),
-        }));
-        break;
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
+  }, []);
 
-      default:
-        console.warn("Unhandled real-time action:", action);
-    }
-  });
+  const { filterBySearch, resetFilteredPosts, filteredPosts } = usePostStore();
 
-  return () => {
-    socket.disconnect();
+  const handleSearch = (query: string) => {
+    filterBySearch(query, "posts");
   };
-}, []);
 
-const { filterBySearch, resetFilteredPosts, filteredPosts } = usePostStore();
+  const handleReset = () => {
+    resetFilteredPosts();
+    getAllPosts(1);
+  };
 
-const handleSearch = (query: string) => {
-  filterBySearch(query, "posts");
-};
-
-const handleReset = () => {
-  resetFilteredPosts();
-  getAllPosts(1);
-};
-
-const displayPosts = filteredPosts?.length ? filteredPosts : posts;
+  const displayPosts = filteredPosts?.length ? filteredPosts : posts;
 
   return (
     <div className="min-h-screen md:px-6 px-1 pb-5">
@@ -147,7 +153,6 @@ const displayPosts = filteredPosts?.length ? filteredPosts : posts;
         onSearch={handleSearch}
         onReset={handleReset}
       />
-
 
       <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10 mx-auto">
         <div className="md:w-[22rem] hidden lg:block mt-4">
