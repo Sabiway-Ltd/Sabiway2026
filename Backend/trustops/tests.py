@@ -9,8 +9,8 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from marketplace.models import BookingRequest, MessageThread
 from notifications.models import Notification, NotificationDelivery
-from profiles.models import Profile
 from sabipay.models import Dispute, PayoutDestination, Transaction
+from verification.models import VerificationSubmission
 
 from .models import DisputeCase, DisputeEvidence, FraudSignal, Review, SupportAudit, SupportCase
 from .services import decrypt_dispute_evidence
@@ -37,6 +37,18 @@ class TrustLifecycleTests(TestCase):
         self.provider.role = "professional"; self.provider.save()
         self.other_profile = self.other_user.profile
         self.other_profile.role = "client"; self.other_profile.save()
+        now = timezone.now()
+        VerificationSubmission.objects.create(
+            professional=self.provider,
+            status=VerificationSubmission.Status.APPROVED,
+            identity_type=VerificationSubmission.IdentityType.PASSPORT,
+            reviewer=self.admin_user,
+            submitted_at=now - timedelta(days=3),
+            review_started_at=now - timedelta(days=2),
+            decision_at=now - timedelta(days=2),
+            sla_due_at=now - timedelta(days=1),
+            decision_reason="Approved test provider for completed trust lifecycle journey.",
+        )
         self.thread = MessageThread.objects.create(client=self.client_profile, professional=self.provider)
         self.booking = BookingRequest.objects.create(
             client=self.client_profile,
@@ -46,9 +58,8 @@ class TrustLifecycleTests(TestCase):
             agreed_price="600000.00",
             currency="NGN",
             status=BookingRequest.Status.COMPLETED,
-            accepted_at=timezone.now() - timedelta(days=2),
+            accepted_at=now - timedelta(days=2),
         )
-        now = timezone.now()
         self.tx = Transaction.objects.create(
             booking=self.booking,
             client=self.client_profile,
