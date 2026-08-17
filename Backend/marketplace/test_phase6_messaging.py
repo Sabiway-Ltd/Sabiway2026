@@ -1,13 +1,18 @@
+from unittest.mock import patch
+from uuid import uuid4
+
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from accounts.models import User
 from verification.models import VerificationSubmission
 
 from .models import Message, MessageThread, ServiceCategory, ServiceListing
+from .realtime import broadcast_marketplace_event
 
 
+@override_settings(EXPRESS_URL="http://realtime.test")
 class Phase6MessagingSafetyTests(TestCase):
     def setUp(self):
         self.provider_user = User.objects.create_user(
@@ -60,7 +65,9 @@ class Phase6MessagingSafetyTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("attachment", response.data)
 
-    def test_accepts_supported_filename_and_records_safe_metadata(self):
+    @patch("marketplace.realtime.requests.post")
+    def test_accepts_supported_filename_and_records_safe_metadata(self, mock_post):
+        mock_post.return_value.ok = True
         attachment = SimpleUploadedFile(
             "notes.txt",
             b"Safe notes",
@@ -77,7 +84,9 @@ class Phase6MessagingSafetyTests(TestCase):
         self.assertEqual(message.attachment_content_type, "text/plain")
         self.assertEqual(message.attachment_size, len(b"Safe notes"))
 
-    def test_path_components_are_not_kept_in_attachment_display_name(self):
+    @patch("marketplace.realtime.requests.post")
+    def test_path_components_are_not_kept_in_attachment_display_name(self, mock_post):
+        mock_post.return_value.ok = True
         attachment = SimpleUploadedFile(
             "../private/notes.txt",
             b"Safe notes",
@@ -93,3 +102,19 @@ class Phase6MessagingSafetyTests(TestCase):
         self.assertNotIn("/", message.attachment_name)
         self.assertNotIn("\\", message.attachment_name)
         self.assertTrue(message.attachment_name.endswith("notes.txt"))
+
+    @patch("marketplace.realtime.requests.post")
+    def test_realtime_payload_converts_uuid_before_json_transport(self, mock_post):
+        mock_post.return_value.ok = True
+        value = uuid4()
+
+        result = broadcast_marketplace_event(
+            [self.provider_user.id],
+            "new-message",
+            {"id": value, "nested": {"thread": self.thread.id}},
+        )
+
+        self.assertTrue(result)
+        sent = mock_post.call_args.kwargs["json"]
+        self.assertEqual(sent["payload"]["id"], str(value))
+        self.assertEqual(sent["payload"]["nested"]["thread"], str(self.thread.id))
