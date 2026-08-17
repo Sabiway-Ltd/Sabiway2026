@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   actionText: { color: colors.brand, fontWeight: "900", fontSize: 12 },
   empty: { color: "#718078", textAlign: "center", padding: 24, lineHeight: 20 },
   signOut: { alignItems: "center", paddingVertical: 8, marginBottom: 4 },
-  sheetWrap: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(23,49,38,0.34)", alignItems: "center", justifyContent: "flex-end", padding: 12 },
+  sheetWrap: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(23,49,38,0.34)", alignItems: "center", justifyContent: "flex-end", padding: 12 },
   sheet: { backgroundColor: "#FFFFFF", borderRadius: 22, padding: 18, gap: 10, maxHeight: "86%" },
   sheetActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 4 },
   primaryButton: { minHeight: 44, backgroundColor: colors.brand, borderRadius: 11, paddingHorizontal: 15, alignItems: "center", justifyContent: "center" },
