@@ -22,7 +22,7 @@ class HealthCheckView(APIView):
     def get(self, request):
         ready = database_ready()
         response = Response(
-            {"status": "ready" if ready else "unavailable", "database": "ok" if ready else "unavailable"},
+            {"status": "healthy" if ready else "unavailable", "database": "ok" if ready else "unavailable"},
             status=status.HTTP_200_OK if ready else status.HTTP_503_SERVICE_UNAVAILABLE,
         )
         response["Cache-Control"] = "no-store, max-age=0"
