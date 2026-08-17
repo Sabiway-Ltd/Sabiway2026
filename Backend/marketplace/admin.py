@@ -1,5 +1,7 @@
 from django.contrib import admin, messages
+from django.utils import timezone
 
+from operations.services import record_operations_audit
 from verification.services import is_professional_verified
 
 from .models import (
@@ -102,11 +104,35 @@ class ConversationBlockAdmin(admin.ModelAdmin):
 @admin.register(ConversationReport)
 class ConversationReportAdmin(admin.ModelAdmin):
     """Report metadata is reviewable without exposing private message content."""
-    list_display = ("id", "reporter", "reported_user", "reason", "status", "thread", "message_id", "created_at")
+    list_display = ("id", "reporter", "reported_user", "reason", "status", "reviewed_by", "thread", "message_id", "created_at")
     list_filter = ("reason", "status", "created_at")
-    list_editable = ("status",)
     search_fields = ("reporter__full_name", "reported_user__full_name", "details")
-    readonly_fields = ("id", "thread", "reporter", "reported_user", "message", "details", "created_at")
+    readonly_fields = ("id", "thread", "reporter", "reported_user", "message", "details", "created_at", "reviewed_by", "reviewed_at")
+
+    def has_change_permission(self, request, obj=None):
+        return bool(request.user.is_superuser or request.user.has_perm("marketplace.change_conversationreport"))
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        previous_status = ""
+        if change and obj.pk:
+            previous_status = ConversationReport.objects.get(pk=obj.pk).status
+        if change and previous_status != obj.status:
+            obj.reviewed_by = request.user
+            obj.reviewed_at = timezone.now()
+        super().save_model(request, obj, form, change)
+        if change and previous_status != obj.status:
+            record_operations_audit(
+                actor=request.user,
+                action="conversation_report_status_changed",
+                target_type="conversation_report",
+                target_id=obj.pk,
+                previous_state={"status": previous_status},
+                new_state={"status": obj.status},
+                metadata={"thread_id": str(obj.thread_id), "reported_user_id": obj.reported_user_id, "source": "django_admin"},
+            )
 
 
 @admin.register(BookingRequest)
