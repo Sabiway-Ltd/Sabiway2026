@@ -4,8 +4,8 @@ from django.dispatch import receiver
 from accounts.models import PendingSignup, User
 from marketplace.models import BookingAudit, BookingRequest, Message
 from notifications.models import Notification
-from posts.models import ModerationAudit, Post
-from profiles.models import Profile
+from posts.models import Comment, Like, ModerationAudit, Post, Reply
+from profiles.models import Follow, Profile
 from sabipay.models import Transaction, TransactionAudit
 from verification.models import VerificationAudit, VerificationSubmission
 
@@ -64,6 +64,34 @@ def measure_verification(sender, instance, created, **kwargs):
 def measure_post_created(sender, instance, created, **kwargs):
     if created:
         record_product_event("post_created", actor=getattr(instance.author, "user", None))
+
+
+def _measure_engagement(actor, category):
+    record_product_event("engagement_created", actor=actor, properties={"category": category})
+
+
+@receiver(post_save, sender=Like, dispatch_uid="operations.measure_like")
+def measure_like(sender, instance, created, **kwargs):
+    if created:
+        _measure_engagement(getattr(instance.user, "user", None), "like")
+
+
+@receiver(post_save, sender=Comment, dispatch_uid="operations.measure_comment")
+def measure_comment(sender, instance, created, **kwargs):
+    if created:
+        _measure_engagement(getattr(instance.user, "user", None), "comment")
+
+
+@receiver(post_save, sender=Reply, dispatch_uid="operations.measure_reply")
+def measure_reply(sender, instance, created, **kwargs):
+    if created:
+        _measure_engagement(getattr(instance.user, "user", None), "reply")
+
+
+@receiver(post_save, sender=Follow, dispatch_uid="operations.measure_follow")
+def measure_follow(sender, instance, created, **kwargs):
+    if created:
+        _measure_engagement(getattr(instance.follower, "user", None), "follow")
 
 
 @receiver(post_save, sender=Message, dispatch_uid="operations.measure_message_sent")
