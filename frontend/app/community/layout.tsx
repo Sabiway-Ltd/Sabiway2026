@@ -1,6 +1,8 @@
 // app/community/layout.tsx
 import type { Metadata } from "next";
 
+import { AppShell } from "../_components/v2/AppShell";
+
 export const metadata: Metadata = {
   title: {
     default: "SabiForum – SabiWay Community",
@@ -50,7 +52,6 @@ export default function CommunityLayout({
 }) {
   return (
     <>
-      {/* JSON-LD Structured Data for SabiForum */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -70,8 +71,7 @@ export default function CommunityLayout({
           }),
         }}
       />
-
-      {children}
+      <AppShell>{children}</AppShell>
     </>
   );
 }
