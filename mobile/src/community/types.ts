@@ -32,7 +32,20 @@ export type ForumComment = {
   id: string;
   user: ForumAuthor;
   content: string;
+  image?: string | null;
   likes_count: number;
   reply_count?: number;
   created_at: string;
+};
+
+export type ForumReply = {
+  id: string;
+  user: ForumAuthor;
+  comment: string;
+  parent_reply_id?: string | null;
+  content: string;
+  image?: string | null;
+  likes_count: number;
+  created_at: string;
+  nested_replies?: ForumReply[];
 };

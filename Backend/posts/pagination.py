@@ -1,13 +1,17 @@
-# posts/pagination.py
 from rest_framework.pagination import PageNumberPagination
 
+
 class PostPagination(PageNumberPagination):
-    page_size = 10  # You can adjust this (e.g. 10, 15, 30)
+    """Bounded feed pagination for SabiForum and bookmark/post lists."""
+
+    page_size = 10
     page_size_query_param = "page_size"
-    max_page_size = 400
+    max_page_size = 50
 
 
 class ReplyPagination(PageNumberPagination):
-    page_size = 10  # adjust to your liking
+    """Bounded reply pagination for conversation threads."""
+
+    page_size = 10
     page_size_query_param = "page_size"
-    max_page_size = 100
+    max_page_size = 50

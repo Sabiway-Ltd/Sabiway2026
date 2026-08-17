@@ -1,0 +1,192 @@
+from unittest.mock import patch
+
+from django.test import TestCase
+from rest_framework.test import APIClient
+
+from accounts.models import User
+from .models import Comment, Post, PostReport, Reply
+
+
+class Phase5ForumSafetyTests(TestCase):
+    def setUp(self):
+        self.author_user = User.objects.create_user(
+            email="phase5-author@example.com",
+            full_name="Phase Five Author",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+        )
+        self.reader_user = User.objects.create_user(
+            email="phase5-reader@example.com",
+            full_name="Phase Five Reader",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+        )
+        self.staff_user = User.objects.create_user(
+            email="phase5-staff@example.com",
+            full_name="Phase Five Staff",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+            is_staff=True,
+        )
+        self.author = self.author_user.profile
+        self.reader = self.reader_user.profile
+        self.author.phone_number = "+2348012345678"
+        self.author.save(update_fields=["phone_number"])
+        self.client = APIClient()
+        self.client.force_authenticate(self.reader_user)
+        self.post = Post.objects.create(author=self.author, content="Community safety test")
+        self.comment = Comment.objects.create(user=self.author, post=self.post, content="First comment")
+
+    def test_comment_and_reply_payloads_do_not_expose_phone_number(self):
+        comment_response = self.client.get(f"/api/posts/{self.post.id}/comments/")
+        self.assertEqual(comment_response.status_code, 200)
+        self.assertNotIn("phone_number", comment_response.data[0]["user"])
+
+        reply = Reply.objects.create(user=self.author, comment=self.comment, content="A reply")
+        reply_response = self.client.get(f"/api/posts/comments/{self.comment.id}/replies/")
+        self.assertEqual(reply_response.status_code, 200)
+        matching = next(item for item in reply_response.data if str(item["id"]) == str(reply.id))
+        self.assertNotIn("phone_number", matching["user"])
+
+    def test_direct_comment_and_reply_creation_reject_hidden_posts(self):
+        self.post.is_hidden = True
+        self.post.save(update_fields=["is_hidden"])
+
+        comment_response = self.client.post(
+            "/api/posts/comments/",
+            {"post": str(self.post.id), "content": "Should not publish"},
+            format="json",
+        )
+        self.assertEqual(comment_response.status_code, 400)
+
+        reply_response = self.client.post(
+            "/api/posts/replies/",
+            {"comment": str(self.comment.id), "content": "Should not publish"},
+            format="json",
+        )
+        self.assertEqual(reply_response.status_code, 400)
+
+    def test_parent_reply_must_belong_to_same_comment(self):
+        second_comment = Comment.objects.create(user=self.author, post=self.post, content="Second comment")
+        parent = Reply.objects.create(user=self.author, comment=self.comment, content="Parent")
+
+        response = self.client.post(
+            "/api/posts/replies/",
+            {
+                "comment": str(second_comment.id),
+                "parent_reply": str(parent.id),
+                "content": "Invalid nesting",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("parent_reply", response.data)
+
+    def test_post_page_size_is_capped_at_fifty(self):
+        Post.objects.bulk_create(
+            [Post(author=self.author, content=f"Feed item {index}") for index in range(60)]
+        )
+        response = self.client.get("/api/posts/", {"page_size": 400})
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(len(response.data["results"]), 50)
+        self.assertIsNotNone(response.data["next"])
+
+    @patch("posts.views.broadcast_forum_event")
+    def test_owner_delete_repairs_profile_post_count_and_broadcasts(self, broadcast):
+        self.client.force_authenticate(self.author_user)
+        created = self.client.post("/api/posts/", {"content": "Delete me"}, format="json")
+        self.assertEqual(created.status_code, 201)
+        self.author.refresh_from_db()
+        before = self.author.posts_count
+        self.assertGreaterEqual(before, 1)
+        broadcast.reset_mock()
+
+        deleted = self.client.delete(f"/api/posts/{created.data['id']}/")
+        self.assertEqual(deleted.status_code, 204)
+        self.author.refresh_from_db()
+        self.assertEqual(self.author.posts_count, before - 1)
+        broadcast.assert_called_once_with({"action": "delete", "post_id": str(created.data["id"])})
+
+    def test_comment_delete_decrements_post_comment_count(self):
+        self.client.force_authenticate(self.author_user)
+        created = self.client.post(
+            f"/api/posts/{self.post.id}/comments/",
+            {"content": "Counted comment"},
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201)
+        self.post.refresh_from_db()
+        before = self.post.comments_count
+        self.assertGreaterEqual(before, 1)
+
+        deleted = self.client.delete(f"/api/posts/comments/{created.data['id']}/")
+        self.assertEqual(deleted.status_code, 204)
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.comments_count, before - 1)
+
+    def _report(self):
+        return PostReport.objects.create(
+            post=self.post,
+            reported_by=self.reader_user,
+            reason="Needs moderation review",
+            post_url=f"https://www.sabiway.com/posts/{self.post.id}",
+        )
+
+    @patch("posts.views.broadcast_forum_event")
+    def test_moderation_lifecycle_only_allows_open_to_removed_to_restored(self, _broadcast):
+        report = self._report()
+        self.client.force_authenticate(self.staff_user)
+
+        invalid_restore = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "restore", "note": "Nothing has been removed yet."},
+            format="json",
+        )
+        self.assertEqual(invalid_restore.status_code, 409)
+        self.assertEqual(invalid_restore.data["allowed_actions"], ["dismiss", "remove"])
+
+        remove = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "remove", "note": "Violates the community rules."},
+            format="json",
+        )
+        self.assertEqual(remove.status_code, 200)
+        report.refresh_from_db()
+        self.assertEqual(report.status, PostReport.Status.REMOVED)
+
+        invalid_dismiss = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "dismiss", "note": "Too late to dismiss."},
+            format="json",
+        )
+        self.assertEqual(invalid_dismiss.status_code, 409)
+        self.assertEqual(invalid_dismiss.data["allowed_actions"], ["restore"])
+
+        restore = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "restore", "note": "Appeal accepted after review."},
+            format="json",
+        )
+        self.assertEqual(restore.status_code, 200)
+        report.refresh_from_db()
+        self.assertEqual(report.status, PostReport.Status.RESTORED)
+
+        terminal_remove = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "remove", "note": "A new report is required for a new decision."},
+            format="json",
+        )
+        self.assertEqual(terminal_remove.status_code, 409)
+        self.assertEqual(terminal_remove.data["allowed_actions"], [])
+
+    def test_moderation_decision_requires_note(self):
+        report = self._report()
+        self.client.force_authenticate(self.staff_user)
+        response = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "dismiss", "note": "   "},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        report.refresh_from_db()
+        self.assertEqual(report.status, PostReport.Status.OPEN)
