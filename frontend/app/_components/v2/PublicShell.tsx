@@ -15,42 +15,49 @@ export function PublicHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#dce8e1] bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 text-2xl font-black tracking-tight text-[#173126]" aria-label="SabiWay home">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#008753] text-sm font-black text-white">SW</span>
+        <Link href="/" className="flex min-h-11 items-center gap-2 rounded-xl text-2xl font-black tracking-tight text-foreground" aria-label="SabiWay home">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground" aria-hidden="true">SW</span>
           SabiWay
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-xl px-4 py-2 text-sm font-bold text-[#4f6358] transition hover:bg-[#eef7f2] hover:text-[#008753]">
+            <Link key={item.href} href={item.href} className="flex min-h-11 items-center rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-primary">
               {item.label}
             </Link>
           ))}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link href="/login" className="rounded-xl px-4 py-2 text-sm font-extrabold text-[#173126]">Sign in</Link>
-          <Link href="/signup" className="inline-flex items-center gap-2 rounded-xl bg-[#FFB800] px-4 py-2.5 text-sm font-black text-[#173126] shadow-sm transition hover:-translate-y-0.5">
-            Join SabiWay <ArrowRight size={16} />
+          <Link href="/login" className="flex min-h-11 items-center rounded-xl px-4 py-2 text-sm font-extrabold text-foreground hover:bg-muted">Sign in</Link>
+          <Link href="/signup" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-black text-accent-foreground shadow-sm transition-transform hover:-translate-y-0.5 motion-reduce:transform-none">
+            Join SabiWay <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
 
-        <button onClick={() => setOpen((value) => !value)} className="rounded-xl border border-[#dce8e1] p-2 text-[#173126] md:hidden" aria-label="Toggle navigation" aria-expanded={open}>
-          {open ? <X size={22} /> : <Menu size={22} />}
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border text-foreground md:hidden"
+          aria-label={open ? "Close navigation" : "Open navigation"}
+          aria-expanded={open}
+          aria-controls="mobile-primary-navigation"
+        >
+          {open ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
         </button>
       </div>
 
       {open ? (
-        <div className="border-t border-[#e6eee9] bg-white px-4 py-4 md:hidden">
+        <div id="mobile-primary-navigation" className="border-t border-border bg-card px-4 py-4 md:hidden">
           <nav className="mx-auto grid max-w-7xl gap-1" aria-label="Mobile navigation">
             {navigation.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 font-bold text-[#42564b] hover:bg-[#eef7f2]">{item.label}</Link>
+              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-3 font-bold text-foreground hover:bg-muted">{item.label}</Link>
             ))}
-            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-[#edf2ef] pt-3">
-              <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl border border-[#cddbd3] px-3 py-3 text-center font-extrabold">Sign in</Link>
-              <Link href="/signup" onClick={() => setOpen(false)} className="rounded-xl bg-[#FFB800] px-3 py-3 text-center font-black text-[#173126]">Join</Link>
+            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-3">
+              <Link href="/login" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl border border-border px-3 py-3 text-center font-extrabold">Sign in</Link>
+              <Link href="/signup" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 py-3 text-center font-black text-accent-foreground">Join</Link>
             </div>
           </nav>
         </div>
@@ -61,40 +68,46 @@ export function PublicHeader() {
 
 export function PublicFooter() {
   return (
-    <footer className="mt-auto bg-[#062e20] text-white">
+    <footer className="mt-auto bg-[var(--sabi-primary-strong)] text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_1fr_1fr] lg:px-8">
         <div>
-          <div className="flex items-center gap-2 text-2xl font-black"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFB800] text-xs font-black text-[#173126]">SW</span>SabiWay</div>
-          <p className="mt-4 max-w-md text-sm leading-6 text-white/70">A Nigerian-led marketplace and community helping people discover trusted services, share useful knowledge and build stronger local connections.</p>
-          <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#bdebd6]"><ShieldCheck size={17}/> Trust-led by design</p>
+          <div className="flex items-center gap-2 text-2xl font-black"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-xs font-black text-accent-foreground" aria-hidden="true">SW</span>SabiWay</div>
+          <p className="mt-4 max-w-md text-sm leading-6 text-white/80">A Nigerian-led marketplace and community helping people discover trusted services, share useful knowledge and build stronger local connections.</p>
+          <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck size={17} aria-hidden="true"/> Trust-led by design</p>
         </div>
         <div>
-          <p className="text-xs font-black uppercase tracking-[.16em] text-[#8ccdb0]">Explore</p>
-          <div className="mt-4 grid gap-3 text-sm font-semibold text-white/75">
-            <Link href="/marketplace">Marketplace</Link><Link href="/community">SabiForum</Link><Link href="/about-us">About SabiWay</Link><Link href="/helpcenter">Help Centre</Link>
+          <p className="text-xs font-black uppercase tracking-[.16em] text-white/75">Explore</p>
+          <div className="mt-4 grid gap-1 text-sm font-semibold text-white/85">
+            <Link className="flex min-h-11 items-center rounded-lg hover:text-white" href="/marketplace">Marketplace</Link>
+            <Link className="flex min-h-11 items-center rounded-lg hover:text-white" href="/community">SabiForum</Link>
+            <Link className="flex min-h-11 items-center rounded-lg hover:text-white" href="/about-us">About SabiWay</Link>
+            <Link className="flex min-h-11 items-center rounded-lg hover:text-white" href="/helpcenter">Help Centre</Link>
           </div>
         </div>
         <div>
-          <p className="text-xs font-black uppercase tracking-[.16em] text-[#8ccdb0]">Legal</p>
-          <div className="mt-4 grid gap-3 text-sm font-semibold text-white/75"><Link href="/privacy-policy">Privacy Policy</Link><Link href="/terms-of-use">Terms of Use</Link></div>
+          <p className="text-xs font-black uppercase tracking-[.16em] text-white/75">Legal</p>
+          <div className="mt-4 grid gap-1 text-sm font-semibold text-white/85">
+            <Link className="flex min-h-11 items-center rounded-lg hover:text-white" href="/privacy-policy">Privacy Policy</Link>
+            <Link className="flex min-h-11 items-center rounded-lg hover:text-white" href="/terms-of-use">Terms of Use</Link>
+          </div>
         </div>
       </div>
-      <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-white/55">© {new Date().getFullYear()} SabiWay. Built for Nigerians at home and across the diaspora.</div>
+      <div className="border-t border-white/20 px-4 py-5 text-center text-xs text-white/75">© {new Date().getFullYear()} SabiWay. Built for Nigerians at home and across the diaspora.</div>
     </footer>
   );
 }
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-screen flex-col bg-[#f7faf8] text-[#173126]"><PublicHeader />{children}<PublicFooter /></div>;
+  return <div className="flex min-h-screen flex-col bg-background text-foreground"><PublicHeader />{children}<PublicFooter /></div>;
 }
 
 export function V2ContentHero({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
     <section className="px-4 pt-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-[#008753] px-6 py-12 text-white shadow-[0_20px_60px_rgba(0,135,83,.16)] sm:px-10 lg:px-14 lg:py-16">
-        <p className="text-xs font-black uppercase tracking-[.18em] text-[#c8f1dd]">{eyebrow}</p>
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-[var(--sabi-radius-xl)] bg-primary px-6 py-12 text-primary-foreground shadow-[var(--sabi-shadow-lg)] sm:px-10 lg:px-14 lg:py-16">
+        <p className="text-xs font-black uppercase tracking-[.18em] text-white/85">{eyebrow}</p>
         <h1 className="mt-3 max-w-4xl text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">{title}</h1>
-        <p className="mt-5 max-w-3xl text-base leading-7 text-white/82 sm:text-lg">{description}</p>
+        <p className="mt-5 max-w-3xl text-base leading-7 text-white/90 sm:text-lg">{description}</p>
       </div>
     </section>
   );

@@ -77,8 +77,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster
           position="top-right"
           toastOptions={{
-            success: { style: { background: "#008753", color: "#fff" } },
-            error: { style: { background: "#ef4444", color: "#fff" } },
+            duration: 4500,
+            style: {
+              background: "var(--sabi-surface)",
+              color: "var(--sabi-text)",
+              border: "1px solid var(--sabi-border)",
+            },
+            success: { iconTheme: { primary: "var(--sabi-success)", secondary: "var(--sabi-on-primary)" } },
+            error: { iconTheme: { primary: "var(--sabi-danger)", secondary: "#FFFFFF" } },
           }}
         />
       </body>

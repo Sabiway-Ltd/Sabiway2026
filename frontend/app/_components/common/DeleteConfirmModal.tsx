@@ -1,20 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useId, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Button from "./Button";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => Promise<void>; // make it async so we can await
+  onConfirm: () => Promise<void>;
 }
 
-export default function DeleteConfirmModal({
-  isOpen,
-  onClose,
-  onConfirm,
-}: DeleteConfirmModalProps) {
+export default function DeleteConfirmModal({ isOpen, onClose, onConfirm }: DeleteConfirmModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    cancelRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isDeleting) onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, isDeleting, onClose]);
 
   const handleConfirm = async () => {
     setIsDeleting(true);
@@ -27,52 +38,42 @@ export default function DeleteConfirmModal({
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen ? (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          exit={reduceMotion ? undefined : { opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isDeleting) onClose();
+          }}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
+            initial={reduceMotion ? false : { scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-xl shadow-lg w-[90%] max-w-sm p-6"
+            exit={reduceMotion ? undefined : { scale: 0.96, opacity: 0 }}
+            className="w-full max-w-sm rounded-[var(--sabi-radius-lg)] border border-border bg-card p-6 text-card-foreground shadow-[var(--sabi-shadow-lg)]"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              Delete Post
-            </h2>
-            <p className="text-sm text-gray-600 mb-6">
+            <h2 id={titleId} className="mb-2 text-lg font-semibold">Delete post</h2>
+            <p id={descriptionId} className="mb-6 text-sm leading-6 text-muted-foreground">
               Are you sure you want to delete this post? This action cannot be undone.
             </p>
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={onClose}
-                disabled={isDeleting}
-                className={`px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition ${
-                  isDeleting ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button ref={cancelRef} variant="secondary" onClick={onClose} disabled={isDeleting}>
                 Cancel
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={isDeleting}
-                className={`px-4 py-2 rounded-full text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
-                  isDeleting
-                    ? "bg-red-300 cursor-not-allowed opacity-50"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
-
+              </Button>
+              <Button variant="danger" onClick={handleConfirm} disabled={isDeleting} aria-busy={isDeleting}>
+                {isDeleting ? "Deleting…" : "Delete"}
+              </Button>
             </div>
           </motion.div>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }

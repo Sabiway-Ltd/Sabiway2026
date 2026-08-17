@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Linking, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import { AuthFlow } from "./src/auth/AuthFlow";
 import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
-import { colors } from "./src/design/tokens";
+import { AppErrorBoundary } from "./src/design/AppErrorBoundary";
+import { colors, interaction, radius, spacing, typography } from "./src/design/tokens";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
 import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
@@ -13,65 +14,119 @@ import { VerificationScreen } from "./src/verification/VerificationScreen";
 
 type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "verification";
 
+function sectionFromUrl(url: string): AppSection | null {
+  const normalised = url.toLowerCase();
+  if (normalised.includes("/messages") || normalised.includes("//messages")) return "messages";
+  if (normalised.includes("/marketplace") || normalised.includes("//marketplace")) return "marketplace";
+  if (normalised.includes("/sabipay") || normalised.includes("//sabipay")) return "sabipay";
+  if (normalised.includes("/verification") || normalised.includes("//verification")) return "verification";
+  if (normalised.includes("/community") || normalised.includes("//community")) return "community";
+  return null;
+}
+
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [section, setSection] = useState<AppSection>("community");
+
+  useEffect(() => {
+    if (!session) return;
+
+    const applyUrl = (url: string | null) => {
+      if (!url) return;
+      const next = sectionFromUrl(url);
+      if (!next) return;
+      if (next === "verification" && session.user.role !== "professional") return;
+      setSection(next);
+    };
+
+    void Linking.getInitialURL().then(applyUrl);
+    const subscription = Linking.addEventListener("url", ({ url }) => applyUrl(url));
+    return () => subscription.remove();
+  }, [session]);
 
   const signOut = () => {
     setSession(null);
     setSection("community");
   };
 
+  const navItems: Array<{ key: AppSection; label: string }> = [
+    { key: "community", label: "SabiForum" },
+    { key: "marketplace", label: "Market" },
+    { key: "messages", label: "Messages" },
+    { key: "sabipay", label: "SabiPay" },
+    ...(session?.user.role === "professional" ? [{ key: "verification" as const, label: "Verify" }] : []),
+  ];
+
   return (
-    <SafeAreaView style={styles.screen}>
-      <StatusBar style="dark" />
-      {session ? (
-        <View style={styles.authenticated}>
-          <View style={styles.navigation}>
-            <Pressable onPress={() => setSection("community")} style={[styles.navItem, section === "community" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "community" && styles.navTextActive]}>SabiForum</Text>
-            </Pressable>
-            <Pressable onPress={() => setSection("marketplace")} style={[styles.navItem, section === "marketplace" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "marketplace" && styles.navTextActive]}>Market</Text>
-            </Pressable>
-            <Pressable onPress={() => setSection("messages")} style={[styles.navItem, section === "messages" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "messages" && styles.navTextActive]}>Messages</Text>
-            </Pressable>
-            <Pressable onPress={() => setSection("sabipay")} style={[styles.navItem, section === "sabipay" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "sabipay" && styles.navTextActive]}>SabiPay</Text>
-            </Pressable>
-            {session.user.role === "professional" ? <Pressable onPress={() => setSection("verification")} style={[styles.navItem, section === "verification" && styles.navItemActive]}>
-              <Text style={[styles.navText, section === "verification" && styles.navTextActive]}>Verify</Text>
-            </Pressable> : null}
+    <AppErrorBoundary>
+      <SafeAreaView style={styles.screen}>
+        <StatusBar style="dark" />
+        {session ? (
+          <View style={styles.authenticated}>
+            <View style={styles.content}>
+              {section === "marketplace" ? (
+                <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
+              ) : section === "messages" ? (
+                <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
+              ) : section === "sabipay" ? (
+                <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
+              ) : section === "verification" && session.user.role === "professional" ? (
+                <VerificationScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
+              ) : (
+                <CommunityScreen session={session} onSignOut={signOut} />
+              )}
+            </View>
+
+            <View style={styles.navigation} accessibilityRole="tablist">
+              {navItems.map((item) => {
+                const active = section === item.key;
+                return (
+                  <Pressable
+                    key={item.key}
+                    accessibilityRole="tab"
+                    accessibilityLabel={item.label}
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setSection(item.key)}
+                    style={({ pressed }) => [styles.navItem, active && styles.navItemActive, pressed && styles.navItemPressed]}
+                  >
+                    <Text numberOfLines={1} style={[styles.navText, active && styles.navTextActive]}>{item.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-          <View style={styles.content}>
-            {section === "marketplace" ? (
-              <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
-            ) : section === "messages" ? (
-              <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
-            ) : section === "sabipay" ? (
-              <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
-            ) : section === "verification" ? (
-              <VerificationScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
-            ) : (
-              <CommunityScreen session={session} onSignOut={signOut} />
-            )}
-          </View>
-        </View>
-      ) : (
-        <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("community"); }} />
-      )}
-    </SafeAreaView>
+        ) : (
+          <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("community"); }} />
+        )}
+      </SafeAreaView>
+    </AppErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   authenticated: { flex: 1 },
-  navigation: { flexDirection: "row", gap: 4, paddingHorizontal: 6, paddingTop: 8, paddingBottom: 4, backgroundColor: colors.background },
-  navItem: { flex: 1, minHeight: 40, justifyContent: "center", alignItems: "center", borderRadius: 10, paddingHorizontal: 3, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  navItemActive: { backgroundColor: colors.brand, borderColor: colors.brand },
-  navText: { color: colors.text, fontWeight: "700", fontSize: 10 },
-  navTextActive: { color: "#FFFFFF" },
   content: { flex: 1 },
+  navigation: {
+    flexDirection: "row",
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingTop: spacing[1],
+    paddingBottom: spacing[2],
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  navItem: {
+    flex: 1,
+    minHeight: interaction.minimumTouchTarget,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: radius.md,
+    paddingHorizontal: spacing[1],
+  },
+  navItemActive: { backgroundColor: colors.primary },
+  navItemPressed: { opacity: 0.72 },
+  navText: { color: colors.textMuted, fontWeight: "600", fontSize: typography.size.xs },
+  navTextActive: { color: colors.onPrimary },
 });
