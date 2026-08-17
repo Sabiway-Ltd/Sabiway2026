@@ -28,7 +28,7 @@ def get_dashboard_metrics(user):
         "listings_pending": ServiceListing.objects.filter(moderation_status="pending").count(),
         "jobs_pending": JobPosting.objects.filter(moderation_status="pending").count(),
         "bookings_active": BookingRequest.objects.filter(status__in=[BookingRequest.Status.PENDING, BookingRequest.Status.ACCEPTED, BookingRequest.Status.IN_PROGRESS]).count(),
-        "payments_pending": Transaction.objects.filter(payment_status__in=[Transaction.PaymentStatus.PENDING, Transaction.PaymentStatus.INITIALIZED]).count(),
+        "payments_pending": Transaction.objects.filter(payment_status__in=[Transaction.PaymentStatus.NOT_STARTED, Transaction.PaymentStatus.PENDING]).count(),
         "disputes_open": Dispute.objects.filter(status__in=[Dispute.Status.OPEN, Dispute.Status.UNDER_REVIEW]).count(),
         "notifications_24h": Notification.objects.filter(created_at__gte=since).count(),
         "admin_actions_24h": OperationsAudit.objects.filter(created_at__gte=since).count(),
