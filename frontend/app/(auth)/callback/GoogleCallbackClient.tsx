@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
-import { EXPRESS_URL } from "@/app/utils/MyConstants";
+import { DJANGO_URL } from "@/app/utils/MyConstants";
 
 export default function GoogleCallbackClient() {
   const searchParams = useSearchParams();
@@ -28,7 +28,7 @@ export default function GoogleCallbackClient() {
         localStorage.setItem("refresh", refresh);
         document.cookie = `access=${access}; path=/; max-age=86400; SameSite=Strict; Secure`;
 
-        const response = await fetch(`${EXPRESS_URL}/api/profiles/me/`, {
+        const response = await fetch(`${DJANGO_URL}/api/profiles/me/`, {
           headers: { Authorization: `Bearer ${access}` },
         });
 
@@ -37,23 +37,31 @@ export default function GoogleCallbackClient() {
 
         const normalizedUser = {
           id: data.user_id,
+          user_id: data.user_id,
           full_name: data.full_name,
           email: data.email,
           username: data.username,
           profile_pic: data.profile_picture,
+          role: data.role,
+          phone_number: data.phone_number,
+          onboarding_complete: data.onboarding_complete,
         };
 
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
         google_logged_in(normalizedUser);
-        router.push("/community");
+        router.push("/home");
       } catch (error) {
         console.error("Profile fetch error:", error);
-        // toast.error("Failed to load profile");
+        toast.error("Failed to load your SabiWay profile");
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        localStorage.removeItem("user");
         router.push("/login");
       }
     };
 
-    fetchUserProfile();
+    void fetchUserProfile();
   }, [searchParams, router, google_logged_in]);
 
-  return <div className="flex items-center justify-center h-screen text-gray-600">Redirecting with Google...</div>;
+  return <div className="flex h-screen items-center justify-center text-gray-600" aria-live="polite">Redirecting with Google…</div>;
 }
