@@ -10,6 +10,7 @@ class OperationsConfig(AppConfig):
         from django.contrib import admin
         from django.db.models.signals import post_migrate
 
+        from . import signals  # noqa: F401
         from .dashboard import install_operations_dashboard
         from .roles import sync_operational_roles
 
