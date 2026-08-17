@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, MotionProps } from "framer-motion";
-import { ButtonHTMLAttributes } from "react";
+import { motion, type MotionProps, useReducedMotion } from "framer-motion";
+import type { ButtonHTMLAttributes } from "react";
 import clsx from "clsx";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
@@ -14,25 +14,28 @@ export default function Button({
   children,
   variant = "normal",
   className = "",
+  disabled,
   ...props
 }: ButtonProps) {
+  const reduceMotion = useReducedMotion();
   const baseStyles =
-    "rounded-full font-medium transition-all duration-150 focus:outline-none";
+    "min-h-11 rounded-full font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
   const variantStyles = {
-    normal: "bg-inherit text-inherit px-1 md:px-3",
-    primary: "bg-[#008753] text-white hover:bg-[#007046] px-3",
-    secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300 px-3",
-    danger: "bg-red-600 text-white hover:bg-red-700 px-3",
-    ghost: "bg-transparent text-gray-700 hover:bg-gray-100 px-3",
+    normal: "bg-inherit text-inherit px-2 md:px-3",
+    primary: "bg-primary text-primary-foreground hover:bg-[var(--sabi-primary-strong)] px-4",
+    secondary: "bg-secondary text-secondary-foreground hover:brightness-95 px-4",
+    danger: "bg-destructive text-white hover:brightness-90 px-4",
+    ghost: "bg-transparent text-foreground hover:bg-muted px-4",
   };
 
   return (
     <motion.button
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      whileHover={reduceMotion || disabled ? undefined : { scale: 1.02 }}
+      whileTap={reduceMotion || disabled ? undefined : { scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 24 }}
       className={clsx(baseStyles, variantStyles[variant], className)}
+      disabled={disabled}
       {...props}
     >
       {children}
