@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, type MotionProps, useReducedMotion } from "framer-motion";
-import type { ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 import clsx from "clsx";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
@@ -10,16 +10,13 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
     className?: string;
   };
 
-export default function Button({
-  children,
-  variant = "normal",
-  className = "",
-  disabled,
-  ...props
-}: ButtonProps) {
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { children, variant = "normal", className = "", disabled, ...props },
+  ref,
+) {
   const reduceMotion = useReducedMotion();
   const baseStyles =
-    "min-h-11 rounded-full font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    "min-h-11 rounded-full font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
   const variantStyles = {
     normal: "bg-inherit text-inherit px-2 md:px-3",
@@ -31,6 +28,7 @@ export default function Button({
 
   return (
     <motion.button
+      ref={ref}
       whileHover={reduceMotion || disabled ? undefined : { scale: 1.02 }}
       whileTap={reduceMotion || disabled ? undefined : { scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 24 }}
@@ -41,4 +39,8 @@ export default function Button({
       {children}
     </motion.button>
   );
-}
+});
+
+Button.displayName = "Button";
+
+export default Button;
