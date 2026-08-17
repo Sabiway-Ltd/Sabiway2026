@@ -13,23 +13,38 @@ export default function GoogleCallbackClient() {
   const { google_logged_in } = useAuthStore();
 
   useEffect(() => {
-    const access = searchParams.get("access");
-    const refresh = searchParams.get("refresh");
+    const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    // Query fallback is kept temporarily so a callback already in flight before
+    // deployment does not strand the user.
+    const access = fragment.get("access") ?? searchParams.get("access");
+    const refresh = fragment.get("refresh") ?? searchParams.get("refresh");
 
     if (!access || !refresh) {
-      toast.error("Missing Google authentication tokens");
-      router.push("/login");
+      const onboardingRequired = searchParams.get("onboarding_required") === "1";
+      const suspended = searchParams.get("account_suspended") === "1";
+      toast.error(
+        suspended
+          ? "This account is suspended."
+          : onboardingRequired
+            ? "Complete SabiWay onboarding before using Google sign-in."
+            : "Google authentication could not be completed.",
+      );
+      router.replace("/login");
       return;
     }
+
+    // Remove credentials from browser history before making any further request.
+    window.history.replaceState(null, "", "/callback");
 
     const fetchUserProfile = async () => {
       try {
         localStorage.setItem("access", access);
         localStorage.setItem("refresh", refresh);
-        document.cookie = `access=${access}; path=/; max-age=86400; SameSite=Strict; Secure`;
+        document.cookie = `access=${access}; path=/; max-age=1800; SameSite=Strict; Secure`;
 
         const response = await fetch(`${DJANGO_URL}/api/profiles/me/`, {
           headers: { Authorization: `Bearer ${access}` },
+          cache: "no-store",
         });
 
         const data = await response.json();
@@ -49,14 +64,15 @@ export default function GoogleCallbackClient() {
 
         localStorage.setItem("user", JSON.stringify(normalizedUser));
         google_logged_in(normalizedUser);
-        router.push("/home");
+        router.replace("/home");
       } catch (error) {
         console.error("Profile fetch error:", error);
         toast.error("Failed to load your SabiWay profile");
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         localStorage.removeItem("user");
-        router.push("/login");
+        document.cookie = "access=; path=/; max-age=0; SameSite=Strict; Secure";
+        router.replace("/login");
       }
     };
 

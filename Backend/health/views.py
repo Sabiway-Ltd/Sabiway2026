@@ -1,6 +1,18 @@
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.response import Response
-from django.db import connection
+from rest_framework.views import APIView
+
+from .hardening import database_ready
+
+
+class LivenessView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        response = Response({"status": "ok"})
+        response["Cache-Control"] = "no-store, max-age=0"
+        return response
 
 
 class HealthCheckView(APIView):
@@ -8,19 +20,10 @@ class HealthCheckView(APIView):
     permission_classes = []
 
     def get(self, request):
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
-
-            return Response({
-                "status": "healthy",
-                "database": "ok"
-            })
-
-        except Exception as e:
-            return Response({
-                "status": "unhealthy",
-                "database": "error",
-                "detail": str(e)
-            }, status=500)
+        ready = database_ready()
+        response = Response(
+            {"status": "healthy" if ready else "unavailable", "database": "ok" if ready else "unavailable"},
+            status=status.HTTP_200_OK if ready else status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        response["Cache-Control"] = "no-store, max-age=0"
+        return response

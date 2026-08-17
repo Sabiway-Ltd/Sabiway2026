@@ -70,7 +70,7 @@ jobs:
       - name: Migration drift
         run: python manage.py makemigrations --check --dry-run
       - name: Backend journeys
-        run: python manage.py test health accounts posts notifications marketplace verification sabipay operations
+        run: python manage.py test health accounts search posts notifications marketplace verification sabipay operations
 
   realtime-check:
     runs-on: ubuntu-latest
