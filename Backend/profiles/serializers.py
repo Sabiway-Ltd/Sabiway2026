@@ -5,6 +5,7 @@ from .models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="user.full_name")
     email = serializers.EmailField(source="user.email", read_only=True)
     role = serializers.CharField(source="user.role", read_only=True)
     initials = serializers.CharField(read_only=True)
@@ -77,6 +78,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         return candidate
 
     def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        full_name = user_data.get("full_name")
+        if full_name is not None and full_name != instance.user.full_name:
+            instance.user.full_name = full_name
+            instance.user.save(update_fields=["full_name"])
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
