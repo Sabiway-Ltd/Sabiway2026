@@ -7,7 +7,7 @@ import { AuthFlow } from "./src/auth/AuthFlow";
 import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
 import { AppErrorBoundary } from "./src/design/AppErrorBoundary";
-import { colors, interaction, radius, spacing, typography } from "./src/design/tokens";
+import { colors, radius, spacing } from "./src/design/tokens";
 import { HomeScreen } from "./src/home/HomeScreen";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
@@ -18,6 +18,7 @@ import { VerificationScreen } from "./src/verification/VerificationScreen";
 
 type AppSection = "home" | "community" | "marketplace" | "messages" | "notifications" | "sabipay" | "profile" | "verification";
 type PrimarySection = "home" | "marketplace" | "messages" | "community" | "profile";
+type NavItem = { key: PrimarySection; label: string; glyph: string };
 
 function sectionFromUrl(url: string): AppSection | null {
   const normalised = url.toLowerCase();
@@ -56,12 +57,12 @@ export default function App() {
   }, [section, session]);
 
   const signOut = () => { setSession(null); setSection("home"); };
-  const navItems: Array<{ key: PrimarySection; label: string }> = [
-    { key: "home", label: "Home" },
-    { key: "marketplace", label: "Market" },
-    { key: "messages", label: "Messages" },
-    { key: "community", label: "SabiForum" },
-    { key: "profile", label: "Profile" },
+  const navItems: NavItem[] = [
+    { key: "home", label: "Home", glyph: "⌂" },
+    { key: "marketplace", label: "Market", glyph: "▦" },
+    { key: "messages", label: "Messages", glyph: "✉" },
+    { key: "community", label: "SabiForum", glyph: "◎" },
+    { key: "profile", label: "Profile", glyph: "◉" },
   ];
   const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification" ? "profile" : section === "notifications" ? "home" : section;
 
@@ -93,7 +94,21 @@ export default function App() {
             <View style={styles.navigation} accessibilityRole="tablist">
               {navItems.map((item) => {
                 const active = selectedPrimarySection === item.key;
-                return <Pressable key={item.key} accessibilityRole="tab" accessibilityLabel={item.label} accessibilityState={{ selected: active }} onPress={() => setSection(item.key)} style={({ pressed }) => [styles.navItem, active && styles.navItemActive, pressed && styles.navItemPressed]}><Text numberOfLines={1} style={[styles.navText, active && styles.navTextActive]}>{item.label}</Text></Pressable>;
+                return (
+                  <Pressable
+                    key={item.key}
+                    accessibilityRole="tab"
+                    accessibilityLabel={item.label}
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setSection(item.key)}
+                    style={({ pressed }) => [styles.navItem, pressed && styles.navItemPressed]}
+                  >
+                    <View style={[styles.navGlyphWrap, active && styles.navGlyphWrapActive]} accessible={false}>
+                      <Text style={[styles.navGlyph, active && styles.navGlyphActive]}>{item.glyph}</Text>
+                    </View>
+                    <Text numberOfLines={1} style={[styles.navText, active && styles.navTextActive]}>{item.label}</Text>
+                  </Pressable>
+                );
               })}
             </View>
           </View>
@@ -107,10 +122,37 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   authenticated: { flex: 1 },
   content: { flex: 1 },
-  navigation: { flexDirection: "row", gap: spacing[1], paddingHorizontal: spacing[2], paddingTop: spacing[1], paddingBottom: spacing[2], borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface },
-  navItem: { flex: 1, minHeight: interaction.minimumTouchTarget, justifyContent: "center", alignItems: "center", borderRadius: radius.md, paddingHorizontal: spacing[1] },
-  navItemActive: { backgroundColor: colors.primary },
-  navItemPressed: { opacity: 0.72 },
-  navText: { color: colors.textMuted, fontWeight: "600", fontSize: typography.size.xs },
-  navTextActive: { color: colors.onPrimary },
+  navigation: {
+    flexDirection: "row",
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[2],
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  navItem: {
+    flex: 1,
+    minHeight: 58,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: radius.md,
+    paddingHorizontal: spacing[1],
+    gap: 2,
+  },
+  navGlyphWrap: {
+    minWidth: 30,
+    height: 26,
+    paddingHorizontal: spacing[2],
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.pill,
+  },
+  navGlyphWrapActive: { backgroundColor: "#DFF7EB" },
+  navGlyph: { color: colors.textMuted, fontSize: 18, lineHeight: 20, fontWeight: "700" },
+  navGlyphActive: { color: colors.primary },
+  navItemPressed: { opacity: 0.62 },
+  navText: { color: colors.textMuted, fontWeight: "600", fontSize: 10 },
+  navTextActive: { color: colors.primary, fontWeight: "800" },
 });
