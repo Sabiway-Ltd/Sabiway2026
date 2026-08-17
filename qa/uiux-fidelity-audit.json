@@ -1,0 +1,39 @@
+{
+  "name": "SabiWay V2 Final UI/UX and Figma Fidelity Audit",
+  "status": "in_progress",
+  "design_source": {
+    "documented": true,
+    "figma_project_name": "Sabiway Project",
+    "file_key_available": false,
+    "exact_parity_certified": false,
+    "reason": "The design report exposes selected screenshots only; the actual Figma file key or node URLs are not available in the connected sources."
+  },
+  "decisions": {
+    "public_web": "IMPROVE",
+    "web_marketplace": "IMPROVE",
+    "web_community": "IMPROVE",
+    "web_messaging": "IMPROVE",
+    "web_profile_verification_payments": "IMPROVE",
+    "mobile_navigation": "IMPROVE",
+    "mobile_client_home": "REWORK",
+    "mobile_professional_home": "IMPROVE",
+    "mobile_marketplace": "IMPROVE",
+    "mobile_messaging": "IMPROVE",
+    "mobile_community": "IMPROVE",
+    "mobile_profile_verification": "IMPROVE",
+    "mobile_sabipay_disputes": "IMPROVE"
+  },
+  "confirmed_corrections": [
+    "official public web SabiWay logo lockup",
+    "current V2 transaction copy on homepage",
+    "mobile primary navigation visual hierarchy",
+    "client-home popular-needs shortcuts",
+    "denser mobile secondary-action layout"
+  ],
+  "final_gate": {
+    "requires_figma_file_key": true,
+    "requires_screen_by_screen_matrix": true,
+    "requires_real_device_review": true,
+    "requires_browser_review": true
+  }
+}
