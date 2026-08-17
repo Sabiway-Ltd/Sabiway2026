@@ -22,14 +22,20 @@ from .models import VerificationAudit, VerificationDocument, VerificationSubmiss
 )
 class VerificationJourneyTests(TestCase):
     def setUp(self):
-        self.provider_user = User.objects.create_user(email="verify-provider@example.com", full_name="Verified Candidate", password="StrongPassword123!")
+        self.provider_user = User.objects.create_user(
+            email="verify-provider@example.com",
+            full_name="Verified Candidate",
+            password="StrongPassword123!",
+            role=User.Role.PROFESSIONAL,
+        )
         self.provider = self.provider_user.profile
-        self.provider.role = "professional"
-        self.provider.save()
-        self.client_user = User.objects.create_user(email="verify-client@example.com", full_name="Client", password="StrongPassword123!")
+        self.client_user = User.objects.create_user(
+            email="verify-client@example.com",
+            full_name="Client",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+        )
         self.client_profile = self.client_user.profile
-        self.client_profile.role = "client"
-        self.client_profile.save()
         self.reviewer = User.objects.create_user(email="reviewer@example.com", full_name="Reviewer", password="StrongPassword123!")
         self.reviewer.is_staff = True
         self.reviewer.save(update_fields=["is_staff"])

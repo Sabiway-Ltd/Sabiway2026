@@ -2,6 +2,20 @@
 
 import { api } from "./api";
 
+function sanitiseProfileUpdate(data: any) {
+  if (typeof FormData !== "undefined" && data instanceof FormData) {
+    data.delete("role");
+    return data;
+  }
+
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const { role: _ignoredRole, ...safeData } = data;
+    return safeData;
+  }
+
+  return data;
+}
+
 export const profile = {
   // Get all profiles
   getAll: () => api.get("/profiles/"),
@@ -14,12 +28,12 @@ export const profile = {
   getByUsername: (username: string) => api.get(`/profiles/${username}/`),
   getNotFollowed: () => api.get("/profiles/not_followed/"),
 
-  // Full update (PUT)
-  update: (userId: number, data: any) => api.put(`/profiles/${userId}/`, data),
+  // Full update (PUT). Account role is never a profile-editable field.
+  update: (userId: number, data: any) => api.put(`/profiles/${userId}/`, sanitiseProfileUpdate(data)),
 
-  // Partial update (PATCH) with optional config
+  // Partial update (PATCH) with optional config.
   patch: (userId: number, data: any, config?: object) => {
-    return api.patch(`/profiles/${userId}/`, data, config);
+    return api.patch(`/profiles/${userId}/`, sanitiseProfileUpdate(data), config);
   },
 
   // Delete profile

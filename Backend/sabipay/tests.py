@@ -26,20 +26,15 @@ from .services import mark_refunded, process_webhook
 )
 class SabiPayJourneyTests(TestCase):
     def setUp(self):
-        self.client_user = User.objects.create_user(email="client-pay@example.com", full_name="Paying Client", password="StrongPassword123!")
-        self.provider_user = User.objects.create_user(email="provider-pay@example.com", full_name="Verified Provider", password="StrongPassword123!")
-        self.other_user = User.objects.create_user(email="other-pay@example.com", full_name="Other Client", password="StrongPassword123!")
+        self.client_user = User.objects.create_user(email="client-pay@example.com", full_name="Paying Client", password="StrongPassword123!", role=User.Role.CLIENT)
+        self.provider_user = User.objects.create_user(email="provider-pay@example.com", full_name="Verified Provider", password="StrongPassword123!", role=User.Role.PROFESSIONAL)
+        self.other_user = User.objects.create_user(email="other-pay@example.com", full_name="Other Client", password="StrongPassword123!", role=User.Role.CLIENT)
         self.admin_user = User.objects.create_superuser(email="finance-admin@example.com", full_name="Finance Admin", password="StrongPassword123!")
         self.client_profile = self.client_user.profile
-        self.client_profile.role = "client"
-        self.client_profile.save()
         self.provider = self.provider_user.profile
-        self.provider.role = "professional"
         self.provider.country = "Nigeria"
         self.provider.save()
         self.other_profile = self.other_user.profile
-        self.other_profile.role = "client"
-        self.other_profile.save()
         VerificationSubmission.objects.create(
             professional=self.provider,
             status=VerificationSubmission.Status.APPROVED,

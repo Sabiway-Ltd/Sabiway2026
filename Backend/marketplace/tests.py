@@ -27,14 +27,14 @@ from .models import (
 
 class MarketplaceJourneyTests(TestCase):
     def setUp(self):
-        self.provider_user = User.objects.create_user(email="provider@example.com", full_name="Provider User", password="StrongPassword123!")
-        self.provider_two_user = User.objects.create_user(email="provider2@example.com", full_name="Provider Two", password="StrongPassword123!")
-        self.client_user = User.objects.create_user(email="client@example.com", full_name="Client User", password="StrongPassword123!")
-        self.other_client_user = User.objects.create_user(email="other@example.com", full_name="Other Client", password="StrongPassword123!")
-        self.provider = self.provider_user.profile; self.provider.role = "professional"; self.provider.country = "Nigeria"; self.provider.state = "Lagos"; self.provider.save()
-        self.provider_two = self.provider_two_user.profile; self.provider_two.role = "professional"; self.provider_two.save()
-        self.client_profile = self.client_user.profile; self.client_profile.role = "client"; self.client_profile.save()
-        self.other_client = self.other_client_user.profile; self.other_client.role = "client"; self.other_client.save()
+        self.provider_user = User.objects.create_user(email="provider@example.com", full_name="Provider User", password="StrongPassword123!", role=User.Role.PROFESSIONAL)
+        self.provider_two_user = User.objects.create_user(email="provider2@example.com", full_name="Provider Two", password="StrongPassword123!", role=User.Role.PROFESSIONAL)
+        self.client_user = User.objects.create_user(email="client@example.com", full_name="Client User", password="StrongPassword123!", role=User.Role.CLIENT)
+        self.other_client_user = User.objects.create_user(email="other@example.com", full_name="Other Client", password="StrongPassword123!", role=User.Role.CLIENT)
+        self.provider = self.provider_user.profile; self.provider.country = "Nigeria"; self.provider.state = "Lagos"; self.provider.save()
+        self.provider_two = self.provider_two_user.profile
+        self.client_profile = self.client_user.profile
+        self.other_client = self.other_client_user.profile
         now = timezone.now()
         VerificationSubmission.objects.create(professional=self.provider, status=VerificationSubmission.Status.APPROVED, identity_type=VerificationSubmission.IdentityType.NATIONAL_ID, submitted_at=now, decision_at=now)
         VerificationSubmission.objects.create(professional=self.provider_two, status=VerificationSubmission.Status.APPROVED, identity_type=VerificationSubmission.IdentityType.NATIONAL_ID, submitted_at=now, decision_at=now)
