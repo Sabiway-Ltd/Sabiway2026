@@ -14,19 +14,29 @@ const getCloudinaryImage = (path: string | null) =>
   path ? (path.startsWith("http") ? path : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${path}`) : DEFAULT_PROFILE_PICTURE;
 
 const getNotificationLink = (n: NotificationItem) => {
-  const target = n.target as any;
+  const target = n.target;
   if (target) {
     switch (target.type) {
       case "profile": return `/profile/${target.username.replace("@", "")}`;
       case "post": return `/posts/${target.slug || target.id}`;
-      case "reply":
-      case "comment": return `/posts/${target.post_slug || target.post_id}`;
+      case "reply": return `/posts/${target.post_id}`;
       default: return "#";
     }
   }
   if (n.type === "follow") return `/profile/${n.actor.username.replace("@", "")}`;
   return "#";
 };
+
+type UnreadCountControl = {
+  action: "update_unread_count";
+  unread_count: number;
+};
+
+function isUnreadCountControl(value: unknown): value is UnreadCountControl {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<UnreadCountControl>;
+  return candidate.action === "update_unread_count" && typeof candidate.unread_count === "number";
+}
 
 export default function NotificationDropdown() {
   const [open, setOpen] = useState(false);
@@ -42,14 +52,14 @@ export default function NotificationDropdown() {
   } = useNotificationStore();
 
   useEffect(() => {
-    getAllNotifications(1);
+    void getAllNotifications(1);
   }, [getAllNotifications]);
 
   const userProfile = useProfileStore((state) => state.profile);
   const getMyProfile = useProfileStore((state) => state.getMyProfile);
 
   useEffect(() => {
-    if (!userProfile) getMyProfile();
+    if (!userProfile) void getMyProfile();
   }, [userProfile, getMyProfile]);
 
   useEffect(() => {
@@ -63,12 +73,12 @@ export default function NotificationDropdown() {
     });
     socketRef.current = socket;
 
-    socket.on("new-notification", (notif: NotificationItem) => {
-      useNotificationStore.getState().prependNotification(notif);
-    });
-
-    socket.on("update-unread-count", (data: { unread_count: number }) => {
-      useNotificationStore.getState().setUnreadCount(data.unread_count);
+    socket.on("new-notification", (payload: NotificationItem | UnreadCountControl) => {
+      if (isUnreadCountControl(payload)) {
+        useNotificationStore.getState().setUnreadCount(payload.unread_count);
+        return;
+      }
+      useNotificationStore.getState().prependNotification(payload);
     });
 
     return () => {
@@ -79,8 +89,8 @@ export default function NotificationDropdown() {
   }, [userProfile]);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
@@ -90,79 +100,71 @@ export default function NotificationDropdown() {
 
   return (
     <div className="relative" ref={ref}>
-      <div className="md:p-1 p-0.5 bg-white rounded-full relative">
+      <div className="relative rounded-full bg-white p-0.5 md:p-1">
         <IconTooltipButton
-          onClick={() => setOpen(prev => !prev)}
+          onClick={() => setOpen((previous) => !previous)}
           icon={Bell}
           label="Notifications"
           size={18}
         />
 
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
+        {unreadCount > 0 ? (
+          <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 py-[1px] text-[10px] text-white" aria-label={`${unreadCount} unread notifications`}>
             {unreadCount}
           </span>
-        )}
+        ) : null}
       </div>
 
       <AnimatePresence>
-        {open && (
+        {open ? (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute md:right-0 -right-14 mt-2 w-80 bg-white rounded-xl shadow-lg border p-2 z-50 max-h-96 overflow-y-auto"
+            className="absolute -right-14 z-50 mt-2 max-h-96 w-80 overflow-y-auto rounded-xl border bg-white p-2 shadow-lg md:right-0"
+            role="region"
+            aria-label="Notifications"
           >
             {loading && notifications.length === 0 ? (
-              <p className="text-sm text-center text-gray-500 py-4">Loading...</p>
+              <p className="py-4 text-center text-sm text-gray-500" aria-live="polite">Loading notifications…</p>
             ) : notifications.length === 0 ? (
-              <p className="text-sm text-center text-gray-500 py-4">No notifications</p>
+              <p className="py-4 text-center text-sm text-gray-500">No notifications</p>
             ) : (
               <div className="space-y-1">
-                {notifications.map((n: NotificationItem) => (
+                {notifications.map((notification) => (
                   <a
-                    key={n.id}
-                    href={getNotificationLink(n)}
+                    key={notification.id}
+                    href={getNotificationLink(notification)}
                     onClick={() => {
-                      if (!n.is_read) markNotificationRead(n.id);
+                      if (!notification.is_read) void markNotificationRead(notification.id);
                       setOpen(false);
                     }}
-                    className={`flex items-start gap-3 p-2 rounded-lg transition ${
-                      n.is_read ? "bg-gray-50 hover:bg-gray-100" : "bg-[#008753]/5 hover:bg-[#008753]/10"
-                    }`}
+                    className={`flex items-start gap-3 rounded-lg p-2 transition ${notification.is_read ? "bg-gray-50 hover:bg-gray-100" : "bg-[#008753]/5 hover:bg-[#008753]/10"}`}
                   >
                     <img
-                      src={getCloudinaryImage(n.actor.profile_picture)}
-                      className="w-10 h-10 rounded-full object-cover"
-                      alt={n.actor.full_name}
+                      src={getCloudinaryImage(notification.actor.profile_picture)}
+                      className="h-10 w-10 rounded-full object-cover"
+                      alt=""
                     />
-
                     <div className="flex-1">
                       <p className="text-sm">
-                        <span className="font-semibold">{n.actor.full_name}</span>{" "}
-                        {n.message.replace(/^@\w+\s*/, "")}
+                        <span className="font-semibold">{notification.actor.full_name}</span>{" "}
+                        {notification.message.replace(/^@\w+\s*/, "")}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(n.created_at).toLocaleString("en-GB")}
-                      </p>
+                      <p className="text-xs text-gray-500">{new Date(notification.created_at).toLocaleString("en-GB")}</p>
                     </div>
-
-                    {!n.is_read && <Check className="h-4 w-4 text-[#008753]" />}
+                    {!notification.is_read ? <Check className="h-4 w-4 text-[#008753]" aria-label="Unread" /> : null}
                   </a>
                 ))}
 
-                <a
-                  href="/notifications"
-                  className="block text-center text-sm text-[#008753] font-medium py-2 hover:underline mt-2"
-                  onClick={() => setOpen(false)}
-                >
-                  View All Notifications
+                <a href="/notifications" className="mt-2 block py-2 text-center text-sm font-medium text-[#008753] hover:underline" onClick={() => setOpen(false)}>
+                  View all notifications
                 </a>
               </div>
             )}
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );
