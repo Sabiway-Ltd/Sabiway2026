@@ -1,7 +1,4 @@
 # notifications/signals.py
-import os
-import requests
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -9,6 +6,7 @@ from django.dispatch import receiver
 from profiles.models import Follow
 from posts.models import Like, Comment, Reply, Post
 from .models import Notification
+from .realtime import broadcast_notification
 from .serializers import NotificationSerializer
 
 
@@ -19,13 +17,8 @@ def safe_profile(profile_obj):
     return None
 
 
-def _realtime_headers():
-    token = os.environ.get("INTERNAL_BROADCAST_TOKEN", "")
-    return {"x-sabiway-internal-token": token} if token else {}
-
-
 def create_notification(user, actor, notif_type, target=None):
-    """Create a notification and best-effort broadcast it in realtime."""
+    """Create a persisted notification and best-effort realtime delivery."""
     if not user or not actor or user.user.id == actor.user.id:
         return None
 
@@ -58,19 +51,10 @@ def create_notification(user, actor, notif_type, target=None):
             return [convert_uuids_to_str(i) for i in obj]
         return str(obj) if hasattr(obj, "hex") else obj
 
-    notif_data_safe = convert_uuids_to_str(serializer.data)
-
-    try:
-        requests.post(
-            f"{settings.EXPRESS_URL}/broadcast-notification",
-            json={"userId": str(user.user.id), "notification": notif_data_safe},
-            headers=_realtime_headers(),
-            timeout=2,
-        )
-    except requests.RequestException:
-        # Persistence is authoritative; realtime delivery is best effort.
-        pass
-
+    broadcast_notification(
+        user.user.id,
+        convert_uuids_to_str(serializer.data),
+    )
     return notif
 
 
