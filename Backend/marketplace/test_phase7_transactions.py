@@ -6,7 +6,13 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from verification.models import VerificationSubmission
 
-from .models import BookingRequest, MessageThread
+from .models import (
+    BookingRequest,
+    JobPosting,
+    JobResponse,
+    MessageThread,
+    ServiceCategory,
+)
 
 
 class Phase7BookingHandoffTests(TestCase):
@@ -89,3 +95,108 @@ class Phase7BookingHandoffTests(TestCase):
         self.assertIn("status", bypass.data)
         booking = BookingRequest.objects.get(pk=booking_id)
         self.assertEqual(booking.status, BookingRequest.Status.ACCEPTED)
+
+
+class Phase7JobResponseLifecycleTests(TestCase):
+    def setUp(self):
+        self.client_user = User.objects.create_user(
+            email="phase7-job-client@example.com",
+            full_name="Phase Seven Job Client",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+        )
+        self.professional_user = User.objects.create_user(
+            email="phase7-job-professional@example.com",
+            full_name="Phase Seven Job Professional",
+            password="StrongPassword123!",
+            role=User.Role.PROFESSIONAL,
+        )
+        self.client_profile = self.client_user.profile
+        self.professional_profile = self.professional_user.profile
+        VerificationSubmission.objects.create(
+            professional=self.professional_profile,
+            status=VerificationSubmission.Status.APPROVED,
+            identity_type=VerificationSubmission.IdentityType.NATIONAL_ID,
+        )
+        self.category = ServiceCategory.objects.create(name="Phase Seven Services")
+        self.job = JobPosting.objects.create(
+            client=self.client_profile,
+            category=self.category,
+            title="Need a verified professional",
+            description="Complete an agreed service task",
+            budget_min="10000.00",
+            budget_max="25000.00",
+            currency="NGN",
+            status=JobPosting.Status.OPEN,
+            moderation_status=JobPosting.ModerationStatus.APPROVED,
+        )
+        self.response = JobResponse.objects.create(
+            job=self.job,
+            professional=self.professional_profile,
+            message="I can complete this work.",
+            proposed_price="18000.00",
+            currency="NGN",
+        )
+        self.client_api = APIClient()
+        self.client_api.force_authenticate(self.client_user)
+        self.professional_api = APIClient()
+        self.professional_api.force_authenticate(self.professional_user)
+
+    def test_professional_can_withdraw_active_response_but_not_withdraw_again(self):
+        withdrawn = self.professional_api.post(
+            f"/api/marketplace/job-responses/{self.response.id}/withdraw/",
+            {},
+            format="json",
+        )
+        self.assertEqual(withdrawn.status_code, 200)
+        self.response.refresh_from_db()
+        self.assertEqual(self.response.status, JobResponse.Status.WITHDRAWN)
+
+        repeated = self.professional_api.post(
+            f"/api/marketplace/job-responses/{self.response.id}/withdraw/",
+            {},
+            format="json",
+        )
+        self.assertEqual(repeated.status_code, 400)
+        self.response.refresh_from_db()
+        self.assertEqual(self.response.status, JobResponse.Status.WITHDRAWN)
+
+    def test_client_cannot_shortlist_withdrawn_response(self):
+        self.response.status = JobResponse.Status.WITHDRAWN
+        self.response.save(update_fields=["status", "updated_at"])
+
+        decision = self.client_api.post(
+            f"/api/marketplace/job-responses/{self.response.id}/decision/",
+            {"status": JobResponse.Status.SHORTLISTED},
+            format="json",
+        )
+
+        self.assertEqual(decision.status_code, 400)
+        self.response.refresh_from_db()
+        self.assertEqual(self.response.status, JobResponse.Status.WITHDRAWN)
+
+    def test_declined_response_cannot_start_new_job_conversation(self):
+        self.response.status = JobResponse.Status.DECLINED
+        self.response.save(update_fields=["status", "updated_at"])
+
+        thread = self.professional_api.post(
+            "/api/marketplace/threads/",
+            {"job_response_id": str(self.response.id)},
+            format="json",
+        )
+
+        self.assertEqual(thread.status_code, 400)
+        self.assertFalse(MessageThread.objects.filter(job_response=self.response).exists())
+
+    def test_active_response_cannot_start_thread_after_job_closes(self):
+        self.job.status = JobPosting.Status.CLOSED
+        self.job.save(update_fields=["status", "updated_at"])
+
+        thread = self.professional_api.post(
+            "/api/marketplace/threads/",
+            {"job_response_id": str(self.response.id)},
+            format="json",
+        )
+
+        self.assertEqual(thread.status_code, 400)
+        self.assertFalse(MessageThread.objects.filter(job_response=self.response).exists())
