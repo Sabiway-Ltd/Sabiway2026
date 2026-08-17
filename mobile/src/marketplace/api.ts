@@ -7,10 +7,13 @@ export type MarketplaceDiscoveryFilters = {
   subcategory?: string;
   deliveryMode?: "in_person" | "remote" | "both";
   availableNow?: boolean;
+  location?: string;
   country?: string;
   state?: string;
   city?: string;
   area?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 function authHeaders(access: string) {
@@ -29,10 +32,13 @@ function discoveryQuery(filters: MarketplaceDiscoveryFilters = {}) {
   if (filters.subcategory) params.set("subcategory", filters.subcategory);
   if (filters.deliveryMode) params.set("delivery_mode", filters.deliveryMode);
   if (filters.availableNow) params.set("available_now", "true");
+  if (filters.location?.trim()) params.set("location", filters.location.trim());
   if (filters.country?.trim()) params.set("country", filters.country.trim());
   if (filters.state?.trim()) params.set("state", filters.state.trim());
   if (filters.city?.trim()) params.set("city", filters.city.trim());
   if (filters.area?.trim()) params.set("area", filters.area.trim());
+  if (filters.page && filters.page > 1) params.set("page", String(filters.page));
+  if (filters.pageSize) params.set("page_size", String(filters.pageSize));
   const query = params.toString();
   return query ? `?${query}` : "";
 }
