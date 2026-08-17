@@ -1,35 +1,34 @@
-# accounts/views.py
-
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-from rest_framework.views import APIView
-from django.conf import settings
-import requests
-from .serializers import ForgotPasswordSerializer, ConfirmCodeSerializer, ResetPasswordSerializer
-from .models import PasswordReset, User, PendingSignup
-from .serializers import SignupSerializer, LoginSerializer, GoogleAuthSerializer
-from .serializers import LogoutSerializer
 from urllib.parse import urlencode
+
+import requests
+from django.conf import settings
 from django.http import JsonResponse
-from django.utils.crypto import get_random_string
-from rest_framework import viewsets, permissions
-from .serializers import UserSerializer
-from django.contrib.auth.models import BaseUserManager
-from .email_utils import send_resend_email
+from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.crypto import get_random_string
+from rest_framework import generics, permissions, status, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-
+from .email_utils import send_resend_email
+from .models import PasswordReset, PendingSignup, User
+from .serializers import (
+    ConfirmCodeSerializer,
+    ForgotPasswordSerializer,
+    GoogleAuthSerializer,
+    LoginSerializer,
+    LogoutSerializer,
+    ResetPasswordSerializer,
+    SignupSerializer,
+    UserSerializer,
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """
-    Admin-only endpoint to manage users
-    """
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("id")
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]  # Only admins can manage users
+    permission_classes = [permissions.IsAdminUser]
 
 
 class SignupView(generics.CreateAPIView):
@@ -47,56 +46,32 @@ class ConfirmSignupView(APIView):
         if not pending.is_valid():
             return Response({"error": "Token expired"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create the real User
+        now = timezone.now()
         user = User.objects.create_user(
             email=pending.email,
             full_name=pending.full_name,
             role=pending.role,
-            password=None  # we'll assign the hashed password
+            phone_number=pending.phone_number,
+            terms_accepted_at=pending.terms_accepted_at,
+            onboarding_completed_at=now,
+            password=None,
         )
         user.password = pending.password_hash
-        user.save()
+        user.save(update_fields=["password"])
 
         pending.is_used = True
-        pending.save()
+        pending.save(update_fields=["is_used"])
 
-        # Send welcome email
         email_body = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; background-color:#f9fafb; padding:20px;">
-            <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
-            
-            <!-- Header -->
-            <div style="background:#008753; padding:20px; text-align:center;">
-                <img src="https://res.cloudinary.com/dk6ew5ikb/image/upload/v1764563759/Group_3_2_1_buoqkz_vkpakj.png" alt="Sabiway Logo" style="height:50px;" />
-                <h2 style="color:#ffffff; margin:10px 0 0;">Welcome to Sabiway 🎉</h2>
-            </div>
-
-            <!-- Body -->
-            <div style="padding:30px; color:#333333; font-size:16px; line-height:1.5;">
-                <p>Hi <b>{user.full_name}</b>,</p>
-                <p>We’re excited to have you on board! 🎊</p>
-                <p>Sabiway is your trusted platform to simplify your journey. Get started by logging into your account and exploring what we have prepared for you.</p>
-
-                <div style="text-align:center; margin:20px;">
-                <a href="{settings.FRONTEND_URL}/community" style="background:#2563eb; color:#ffffff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">
-                    Go to Dashboard
-                </a>
-                </div>
-
-                <p>If you have any questions, feel free to reach out to our support team anytime.</p>
-            </div>
-
-            <!-- Footer -->
-            <div style="background:#f3f4f6; padding:15px; text-align:center; font-size:14px; color:#6b7280;">
-                © {timezone.now().year} Sabiway. All rights reserved.
-            </div>
-            </div>
-        </body>
-        </html>
+        <html><body style="font-family:Arial,sans-serif;background:#f9fafb;padding:20px">
+          <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden">
+            <div style="background:#008753;padding:20px;text-align:center"><h2 style="color:#fff">Welcome to SabiWay</h2></div>
+            <div style="padding:30px;color:#333"><p>Hi <b>{user.full_name}</b>,</p><p>Your SabiWay account is now active.</p></div>
+            <div style="background:#f3f4f6;padding:15px;text-align:center">© {now.year} SabiWay</div>
+          </div>
+        </body></html>
         """
-        send_resend_email(user.email, "Welcome to Sabiway 🎉", email_body)
-
+        send_resend_email(user.email, "Welcome to SabiWay", email_body)
         return Response({"message": "Signup confirmed. You can now login."}, status=status.HTTP_201_CREATED)
 
 
@@ -106,17 +81,21 @@ class LoginView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        email = serializer.validated_data["email"]
+        email = serializer.validated_data["email"].strip().lower()
         password = serializer.validated_data["password"]
 
-        user = authenticate(request, email=email, password=password)
-
-        if not user:
+        user = User.objects.filter(email=email).first()
+        if user and not user.is_active:
+            return Response({"error": "This account is suspended."}, status=status.HTTP_403_FORBIDDEN)
+        if not user or not user.check_password(password):
             return Response({"error": "Invalid email or password."}, status=status.HTTP_401_UNAUTHORIZED)
 
         refresh = RefreshToken.for_user(user)
-        return Response({
+        return Response(self._session_payload(user, refresh))
+
+    @staticmethod
+    def _session_payload(user, refresh):
+        return {
             "refresh": str(refresh),
             "access": str(refresh.access_token),
             "user": {
@@ -124,130 +103,122 @@ class LoginView(generics.GenericAPIView):
                 "full_name": user.full_name,
                 "email": user.email,
                 "role": user.role,
-                "is_active": user.is_active,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
-            }
-        })
-
-
-class GoogleLoginView(APIView):
-    """
-    Handles both Google OAuth flows:
-    1. POST with `id_token` (from frontend, verified by GoogleAuthSerializer).
-    2. GET with `code` (Google redirects back with an authorization code).
-    """
-
-    def post(self, request):
-        """Frontend sends id_token directly"""
-        serializer = GoogleAuthSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        idinfo = serializer.validated_data["token"]
-
-        email = idinfo.get("email")
-        full_name = idinfo.get("name")
-
-        return self._handle_user(email, full_name, from_redirect=False)
-
-    def get(self, request):
-        """Google redirects with ?code=..."""
-        code = request.query_params.get("code")
-        if not code:
-            return Response({"error": "Missing code"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Exchange code for tokens
-        token_url = "https://oauth2.googleapis.com/token"
-        data = {
-            "code": code,
-            "client_id": settings.GOOGLE_CLIENT_ID,
-            "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
-            "grant_type": "authorization_code",
-        }
-        r = requests.post(token_url, data=data)
-        tokens = r.json()
-
-        if "error" in tokens:
-            return Response(tokens, status=status.HTTP_400_BAD_REQUEST)
-
-        # Get user info
-        userinfo = requests.get(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {tokens['access_token']}"}
-        ).json()
-
-        email = userinfo.get("email")
-        full_name = userinfo.get("name")
-
-        # ✅ Handle user creation/login and redirect to frontend
-        return self._handle_user(email, full_name, from_redirect=True)
-
-    def _handle_user(self, email, full_name, from_redirect=False):
-        user = User.objects.filter(email=email).first()
-        created = False
-
-        if not user:
-            user = User.objects.create_user(
-                email=email,
-                full_name=full_name,
-                password=get_random_string(12)  # random, user can reset later
-            )
-            created = True
-         # ✅ SAFETY CHECK (PUT IT HERE)
-        if not isinstance(user, User):
-            raise TypeError("JWT can only be issued for User instances")
-
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        if from_redirect:
-            # ✅ Redirect user to frontend callback with tokens
-            redirect_url = (
-                f"{settings.FRONTEND_URL}/callback"
-                f"?access={access}&refresh={refresh_token}"
-            )
-            from django.shortcuts import redirect
-            return redirect(redirect_url)
-
-        # ✅ For API calls (POST) — return tokens as JSON
-        return Response({
-            "refresh": refresh_token,
-            "access": access,
-            "user": {
-                "id": user.id,
-                "full_name": user.full_name,
-                "email": user.email,
-                "role": user.role,
+                "phone_number": user.phone_number,
+                "onboarding_complete": bool(user.onboarding_completed_at),
                 "is_active": user.is_active,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
             },
-            "is_new_user": created
-        }, status=status.HTTP_200_OK)
+        }
 
 
+class GoogleLoginView(APIView):
+    """Google login without allowing first-time users to bypass role/terms onboarding."""
 
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        idinfo = serializer.validated_data["token"]
+        return self._handle_user(
+            idinfo.get("email"),
+            idinfo.get("name"),
+            role=serializer.validated_data.get("role"),
+            phone_number=serializer.validated_data.get("phone_number", ""),
+            terms_accepted=serializer.validated_data.get("terms_accepted", False),
+            from_redirect=False,
+        )
 
+    def get(self, request):
+        code = request.query_params.get("code")
+        if not code:
+            return Response({"error": "Missing code"}, status=status.HTTP_400_BAD_REQUEST)
+
+        token_response = requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+            timeout=15,
+        )
+        tokens = token_response.json()
+        if "error" in tokens or "access_token" not in tokens:
+            return Response({"error": "Google authentication failed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        userinfo = requests.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {tokens['access_token']}"},
+            timeout=15,
+        ).json()
+        return self._handle_user(userinfo.get("email"), userinfo.get("name"), from_redirect=True)
+
+    def _handle_user(self, email, full_name, role=None, phone_number="", terms_accepted=False, from_redirect=False):
+        if not email:
+            return Response({"error": "Google did not provide an email address."}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = email.strip().lower()
+        user = User.objects.filter(email=email).first()
+        created = False
+
+        if user and not user.is_active:
+            if from_redirect:
+                return redirect(f"{settings.FRONTEND_URL}/callback?account_suspended=1")
+            return Response({"error": "This account is suspended."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not user:
+            # Redirect-based OAuth cannot safely infer a role or terms acceptance.
+            if from_redirect:
+                return redirect(f"{settings.FRONTEND_URL}/callback?onboarding_required=1")
+            if role not in {User.Role.CLIENT, User.Role.PROFESSIONAL} or terms_accepted is not True:
+                return Response(
+                    {
+                        "error": "Role selection and terms acceptance are required for a new Google account.",
+                        "onboarding_required": True,
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+            now = timezone.now()
+            user = User.objects.create_user(
+                email=email,
+                full_name=(full_name or email.split("@")[0]).strip(),
+                role=role,
+                phone_number=phone_number,
+                terms_accepted_at=now,
+                onboarding_completed_at=now,
+                password=get_random_string(32),
+            )
+            created = True
+
+        if not user.onboarding_completed_at:
+            if from_redirect:
+                return redirect(f"{settings.FRONTEND_URL}/callback?onboarding_required=1")
+            return Response({"error": "Complete onboarding before signing in.", "onboarding_required": True}, status=status.HTTP_409_CONFLICT)
+
+        refresh = RefreshToken.for_user(user)
+        if from_redirect:
+            query = urlencode({"access": str(refresh.access_token), "refresh": str(refresh)})
+            return redirect(f"{settings.FRONTEND_URL}/callback?{query}")
+
+        payload = LoginView._session_payload(user, refresh)
+        payload["is_new_user"] = created
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 class GenerateGoogleAuthURLView(APIView):
-    """
-    Returns the Google OAuth2 login URL
-    """
-
     def get(self, request):
-        base_url = "https://accounts.google.com/o/oauth2/v2/auth"
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI,  # ✅ frontend URL
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
             "response_type": "code",
             "scope": "openid email profile",
             "access_type": "offline",
             "prompt": "consent",
         }
-        url = f"{base_url}?{urlencode(params)}"
-        return JsonResponse({"auth_url": url})
+        return JsonResponse({"auth_url": f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"})
+
 
 class ForgotPasswordView(generics.GenericAPIView):
     serializer_class = ForgotPasswordSerializer
@@ -277,12 +248,12 @@ class ResetPasswordView(generics.GenericAPIView):
             reset_obj = PasswordReset.objects.get(reset_token=token, is_used=False)
         except PasswordReset.DoesNotExist:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data=request.data, context={"user": reset_obj.user})
         serializer.is_valid(raise_exception=True)
         serializer.save(reset_obj)
         return Response({"message": "Password has been reset successfully"})
-    
+
+
 class LogoutView(generics.GenericAPIView):
     serializer_class = LogoutSerializer
 
@@ -291,7 +262,6 @@ class LogoutView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Logout successful"}, status=status.HTTP_200_OK)
-    
 
 
 class VerifyResetTokenView(APIView):
@@ -300,10 +270,6 @@ class VerifyResetTokenView(APIView):
             reset_obj = PasswordReset.objects.get(reset_token=token, is_used=False)
         except PasswordReset.DoesNotExist:
             return Response({"error": "Invalid token."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check expiration (assuming you already have is_valid() in your model)
         if not reset_obj.is_valid():
             return Response({"error": "Token expired or invalid."}, status=status.HTTP_400_BAD_REQUEST)
-
         return Response({"message": "Valid token."}, status=status.HTTP_200_OK)
-

@@ -21,6 +21,8 @@ export type SignUpInput = {
   email: string;
   password: string;
   role: AccountRole;
+  phoneNumber: string;
+  termsAccepted: boolean;
 };
 
 export type AuthUser = {
@@ -28,6 +30,8 @@ export type AuthUser = {
   full_name: string;
   email: string;
   role: AccountRole;
+  phone_number?: string;
+  onboarding_complete?: boolean;
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
