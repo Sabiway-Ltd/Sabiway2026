@@ -7,13 +7,15 @@ import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
 import { AppErrorBoundary } from "./src/design/AppErrorBoundary";
 import { colors, interaction, radius, spacing, typography } from "./src/design/tokens";
+import { HomeScreen } from "./src/home/HomeScreen";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
 import { ProfileScreen } from "./src/profile/ProfileScreen";
 import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
 import { VerificationScreen } from "./src/verification/VerificationScreen";
 
-type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "profile" | "verification";
+type AppSection = "home" | "community" | "marketplace" | "messages" | "sabipay" | "profile" | "verification";
+type PrimarySection = "home" | "marketplace" | "messages" | "community" | "profile";
 
 function sectionFromUrl(url: string): AppSection | null {
   const normalised = url.toLowerCase();
@@ -23,12 +25,13 @@ function sectionFromUrl(url: string): AppSection | null {
   if (normalised.includes("/profile") || normalised.includes("//profile")) return "profile";
   if (normalised.includes("/verification") || normalised.includes("//verification")) return "verification";
   if (normalised.includes("/community") || normalised.includes("//community")) return "community";
+  if (normalised.includes("/home") || normalised.includes("//home")) return "home";
   return null;
 }
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
-  const [section, setSection] = useState<AppSection>("community");
+  const [section, setSection] = useState<AppSection>("home");
 
   useEffect(() => {
     if (!session) return;
@@ -48,17 +51,18 @@ export default function App() {
 
   const signOut = () => {
     setSession(null);
-    setSection("community");
+    setSection("home");
   };
 
-  const navItems: Array<{ key: AppSection; label: string }> = [
-    { key: "community", label: "SabiForum" },
+  const navItems: Array<{ key: PrimarySection; label: string }> = [
+    { key: "home", label: "Home" },
     { key: "marketplace", label: "Market" },
     { key: "messages", label: "Messages" },
-    { key: "sabipay", label: "SabiPay" },
+    { key: "community", label: "SabiForum" },
     { key: "profile", label: "Profile" },
-    ...(session?.user.role === "professional" ? [{ key: "verification" as const, label: "Verify" }] : []),
   ];
+
+  const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification" ? "profile" : section;
 
   return (
     <AppErrorBoundary>
@@ -67,7 +71,17 @@ export default function App() {
         {session ? (
           <View style={styles.authenticated}>
             <View style={styles.content}>
-              {section === "marketplace" ? (
+              {section === "home" ? (
+                <HomeScreen
+                  session={session}
+                  onOpenMarketplace={() => setSection("marketplace")}
+                  onOpenMessages={() => setSection("messages")}
+                  onOpenCommunity={() => setSection("community")}
+                  onOpenProfile={() => setSection("profile")}
+                  onOpenVerification={() => session.user.role === "professional" && setSection("verification")}
+                  onOpenSabiPay={() => setSection("sabipay")}
+                />
+              ) : section === "marketplace" ? (
                 <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
               ) : section === "messages" ? (
                 <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
@@ -84,7 +98,7 @@ export default function App() {
 
             <View style={styles.navigation} accessibilityRole="tablist">
               {navItems.map((item) => {
-                const active = section === item.key;
+                const active = selectedPrimarySection === item.key;
                 return (
                   <Pressable
                     key={item.key}
@@ -101,7 +115,7 @@ export default function App() {
             </View>
           </View>
         ) : (
-          <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("community"); }} />
+          <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("home"); }} />
         )}
       </SafeAreaView>
     </AppErrorBoundary>
