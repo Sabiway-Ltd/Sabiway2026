@@ -33,8 +33,6 @@ Express Socket.IO already:
 - protects internal HTTP broadcast endpoints with `x-sabiway-internal-token`;
 - emits community, notification and marketplace events.
 
-Django marketplace already uses an authenticated best-effort `broadcast_marketplace_event` helper. Community uses the same architectural principle.
-
 Implemented hardening:
 - notification creation/read/read-all now use one authenticated Django -> Express helper;
 - internal broadcast token is applied consistently;
@@ -50,16 +48,21 @@ Decision:
 
 ## Notifications — KEEP / HARDEN
 
-The existing Django `notifications` app contains persisted notifications, serializers, pagination, signals, tests, URLs and read APIs.
+The existing Django `notifications` app contains persisted notifications, serializers, pagination, signals, URLs and read APIs.
 
 Completed:
 - hardened authenticated broadcast helper;
 - authoritative unread-count broadcasts after mark-read/read-all;
 - recipient ownership regression coverage;
-- Web socket contract aligned with backend payloads.
+- Web socket contract aligned with backend payloads;
+- Android/iOS notification API client added against the existing Django endpoints;
+- Android/iOS notification screen added with loading, empty, error, retry, pull-to-refresh, unread indicators, mark-one-read and mark-all-read;
+- Socket.IO `new-notification` is used only as a refresh hint; persisted Django state remains authoritative;
+- mobile `/notifications` deep-link destination added;
+- notification targets route into existing Profile or SabiForum sections rather than creating duplicate detail systems;
+- Notifications remains contextual from Home and does not become a sixth primary bottom-navigation item.
 
 Remaining:
-- mobile notification UI/deep-link parity;
 - message/booking/schedule notification mapping;
 - reconnect/idempotency review;
 - analytics without private message content.
@@ -112,7 +115,6 @@ Audit outcome:
 Remaining:
 - persistent inbox/conversation retry states;
 - block/unblock/report lifecycle parity;
-- notification/deep-link parity;
 - reconnect/idempotency and accessibility validation.
 
 ## Safety lifecycle — CURRENT DECISION
@@ -144,13 +146,13 @@ Next hardening:
 - Platform CI #214: FAIL — new attachment success tests exposed pre-existing UUID realtime serialisation defect.
 - defect fixed at the shared marketplace realtime boundary rather than weakening tests.
 - Platform CI #216: PASS — UUID-safe realtime + attachment hardening.
-- Platform CI #217: running on Web counterparty/shell/retry refactor at time of this update.
+- Platform CI #217: PASS — Web counterparty/shell/retry refactor.
+- Platform CI #223: pending on Android/iOS notification parity at time of this update.
 
 ## Remaining before Phase 6 certification
 
 - duplicate unresolved report protection and block/unblock state parity;
 - persistent mobile inbox/conversation error + retry states;
-- mobile notifications + deep links;
 - message/thread pagination and request-deduplication review;
 - reconnect/duplicate-event behaviour;
 - offline/retry behaviour;
