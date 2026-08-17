@@ -7,7 +7,7 @@ import { AuthFlow } from "./src/auth/AuthFlow";
 import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
 import { AppErrorBoundary } from "./src/design/AppErrorBoundary";
-import { colors, interaction, radius, spacing, typography } from "./src/design/tokens";
+import { colors, radius, spacing } from "./src/design/tokens";
 import { HomeScreen } from "./src/home/HomeScreen";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
@@ -18,7 +18,6 @@ import { VerificationScreen } from "./src/verification/VerificationScreen";
 
 type AppSection = "home" | "community" | "marketplace" | "messages" | "notifications" | "sabipay" | "profile" | "verification";
 type PrimarySection = "home" | "marketplace" | "messages" | "community" | "profile";
-
 type NavItem = { key: PrimarySection; label: string; glyph: string };
 
 function sectionFromUrl(url: string): AppSection | null {
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: radius.pill,
   },
-  navGlyphWrapActive: { backgroundColor: colors.green100 ?? "#DFF7EB" },
+  navGlyphWrapActive: { backgroundColor: "#DFF7EB" },
   navGlyph: { color: colors.textMuted, fontSize: 18, lineHeight: 20, fontWeight: "700" },
   navGlyphActive: { color: colors.primary },
   navItemPressed: { opacity: 0.62 },
