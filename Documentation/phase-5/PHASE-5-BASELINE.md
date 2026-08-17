@@ -1,6 +1,6 @@
 # Master Phase 5 — Community, Content & Engagement Baseline
 
-Status: AUDIT / IN PROGRESS
+Status: IMPLEMENTATION / FINAL HARDENING
 Branch: `feat/phase-5-community-content-engagement`
 Base: certified Phase 4 `main` (`2f70ffa270297670385239b05cd5096520e4e905`)
 
@@ -10,158 +10,102 @@ Deliver SabiForum as one coherent, safe, accessible and performant community exp
 
 This phase follows the Master Playbook sequence: inspect first, understand second, decide third, design fourth, build fifth, test sixth.
 
-## Existing backend capability — KEEP / IMPROVE
+## Architectural decisions
 
-`Backend/posts/` already contains models, serializers, permissions, pagination, realtime hooks, tests, URLs, views and Django admin.
+### Backend content domain — KEEP / IMPROVE
 
-Existing content primitives include:
-- posts with text + optional image;
-- hashtags and hashtag use counts;
-- likes;
-- comments;
-- replies including nested reply parent linkage;
-- comment likes and reply likes;
-- bookmarks;
-- reposts/original-post linkage;
-- impressions;
-- post reports;
-- moderation status/reason on posts;
-- moderation reports and immutable-style moderation audit events.
+`Backend/posts/` remains the authoritative community domain. Existing models and APIs cover posts, images, hashtags, likes, comments, replies, nested replies, comment/reply likes, bookmarks, reposts, impressions, reports and moderation audit events.
 
-Decision:
-- KEEP the existing domain model as the Phase 5 foundation.
-- IMPROVE APIs, permission boundaries, counters, pagination and complete states where evidence shows gaps.
-- DO NOT create parallel post/comment/reaction/report systems.
+No parallel community data model or search service has been introduced.
 
-## Existing admin/moderation — KEEP / HARDEN
+### Moderation — KEEP / HARDEN
 
-Django admin already exposes posts, hashtags, likes, comments, replies, reports and moderation audit records.
+Django remains authoritative for moderation state and permissions. Web moderation is a staff surface over the existing report/audit lifecycle. Client-side visibility is never treated as authorisation.
 
-Web also has an existing `/community/moderation` surface.
+### Web SabiForum — REFACTOR / MERGE
 
-Decision:
-- KEEP existing admin/moderation capability.
-- Audit transition enforcement, sensitive-data visibility, report resolution lifecycle, hidden-content behaviour and reviewer permissions before adding new admin UI.
-- Prefer one authoritative moderation state and audit trail.
+The old SabiForum-specific global navigation has been removed from the community page. Phase 4 `AppShell` now owns authenticated product navigation. The community page keeps only local feed controls such as create, search/reset and retry.
 
-## Existing mobile SabiForum — KEEP / REFACTOR
+### Mobile SabiForum — KEEP / REFACTOR
 
-`mobile/src/community/CommunityScreen.tsx` already supports:
-- feed loading + pull to refresh;
-- create post;
-- optimistic like/unlike;
+The existing mobile community screen is retained and expanded rather than replaced. It now uses the existing Django endpoints for replies, reporting, ownership mutations and media.
+
+## Implemented backend hardening
+
+- removed `phone_number` from public comment/reply user payloads;
+- blocked comments and replies against hidden posts at serializer level;
+- blocked nested replies whose parent belongs to a different comment;
+- required meaningful text or image for posts/comments/replies;
+- bounded SabiForum page-size requests to 50 while preserving the existing default page size;
+- kept owner-only post/comment/reply mutation permissions server-side;
+- added focused regression coverage for privacy, hidden-post interaction, reply integrity and pagination;
+- added regression coverage for post-delete profile counters, comment-delete post counters and realtime delete broadcasts;
+- existing tests already cover report -> remove -> restore audit events, staff-only moderation access and authenticated realtime broadcast transport.
+
+## Implemented Web parity
+
+- `/community` uses the shared authenticated `AppShell`;
+- duplicate `CommunityNavbar` product navigation removed from the community page;
+- local feed toolbar owns only SabiForum actions;
+- loading, empty and persistent error/retry states are present;
+- existing Web post cards retain create/edit/delete/media/comments/replies/bookmarks/reposts/reporting capability;
+- existing `/community/moderation` staff route is retained for the moderation workflow.
+
+## Implemented Android / iOS parity
+
+Mobile SabiForum now supports:
+- feed loading and pull-to-refresh;
+- persistent feed error + retry;
+- create text or image post;
+- render post/comment/reply images;
+- owner-only Edit/Delete affordances backed by Django authorisation;
+- edit text and replace/add post image;
+- delete confirmation + deleting state;
+- optimistic like/unlike with reconciliation;
 - bookmark/unbookmark;
 - repost;
-- open comments;
-- add comment;
-- report post;
-- loading and empty state;
-- Phase 1 design tokens for core colours.
-
-Current gaps identified:
-- initial/feed load failure is Alert-only rather than persistent retry;
-- comment load/post failure is Alert-only;
-- report flow relies on platform `Alert.prompt`, which is not a reliable cross-platform Android/iOS interaction contract;
-- replies/nested replies exist in backend but are not surfaced here;
-- comment/reply likes are not surfaced here;
-- hashtag/trending/discovery integration requires audit;
-- image/media creation and rendering require audit;
-- post edit/delete/ownership controls require audit;
-- feed pagination/incremental loading requires audit;
-- sign-out is still exposed inside SabiForum even though Profile/application navigation already owns account actions;
-- screen remains a large multi-concern component and should be refactored selectively, not replaced wholesale.
-
-Decision: KEEP / REFACTOR.
-
-## Existing Web SabiForum — AUDIT / REFACTOR
-
-`frontend/app/community/` contains:
-- layout;
-- community page;
-- moderation route.
-
-Phase 5 must inspect the full Web journey before modifying it, including existing shared components/stores/hooks used by the page.
-
-Decision so far:
-- preserve working domain capability;
-- align signed-in product navigation with Phase 4 `AppShell` rather than create another navigation shell;
-- Web must remain a native responsive experience, not a stretched mobile UI.
-
-## Content lifecycle target
-
-For relevant roles and permissions, Phase 5 must verify or deliver:
-1. load feed;
-2. create post;
-3. optional media where supported;
-4. render hashtags/linkage;
-5. like/unlike;
-6. comment;
-7. reply;
-8. save/unsave;
-9. repost;
-10. edit/delete own content where product rules allow;
-11. report harmful content;
-12. moderation review/removal/restoration;
-13. hidden content excluded from ordinary discovery;
-14. counters remain consistent;
-15. realtime/notification hooks do not create duplicate state.
+- comments with persistent load error + retry;
+- replies with persistent load error + retry;
+- image attachments for comments and replies using the existing Expo ImagePicker dependency and Django image fields;
+- in-app reporting sheet with reason, cancel, submit and submitting states rather than platform-dependent `Alert.prompt`.
 
 ## Discovery boundary
 
-Phase 4 established `/api/search/` as the authoritative SabiForum discovery API for posts, profiles and hashtags. Phase 5 must reuse that boundary rather than creating a second community-search service.
-
-Hashtag/trending/feed features may use dedicated posts-domain endpoints where they already exist, but must not duplicate search ownership.
+Phase 4 established `/api/search/` as the authoritative SabiForum discovery API for posts, profiles and hashtags. Phase 5 reuses that boundary. Existing posts-domain hashtag/trending endpoints remain specialised content endpoints and are not a second general search service.
 
 ## Accessibility / complete states
 
-Target WCAG 2.2 AA on Web and equivalent accessible mobile interactions.
+Target remains WCAG 2.2 AA on Web and equivalent accessible mobile interactions.
 
-Required states for feed, composer, comments/replies and moderation actions:
-- loading;
-- empty;
-- error + retry;
-- success feedback;
-- disabled/submitting;
-- permission denied;
-- offline/connection failure where applicable;
-- long content;
-- media failure;
-- hidden/removed content;
-- first-time user.
+Implemented or retained states include loading, empty, error/retry, disabled/submitting, success feedback, permission-controlled ownership actions, long content and media previews.
 
-Interactive controls require meaningful accessible names and non-colour-only state.
+Final manual user-testing certification must still verify device-level focus/VoiceOver/TalkBack behaviour and offline/connection failure handling.
 
 ## Performance
 
-Audit existing post pagination before changing it. Do not introduce unbounded community feeds.
+- SabiForum feed is paginated;
+- maximum requested page size is now 50 rather than 400;
+- Web retains incremental loading;
+- mobile avoids unbounded feed downloads;
+- optimistic mutations reconcile on failure;
+- media reuses existing Cloudinary-backed fields rather than creating another upload system.
 
-Requirements:
-- paginated/incremental feed;
-- bounded comments/replies where necessary;
-- avoid duplicate requests;
-- optimistic mutations must reconcile on failure;
-- image/media payloads optimised;
-- avoid automatic high-frequency refresh on expensive mobile connections.
+## Safety and moderation status
 
-## Safety and moderation
+Verified existing capability:
+- owner-only content mutation permissions;
+- hidden content excluded from ordinary feed/retrieve paths;
+- staff-only moderation queue/actions;
+- report lifecycle and audit records;
+- remove/restore realtime events;
+- privacy-safe public profile/comment/reply payloads.
 
-Audit:
-- owner-only edit/delete;
-- staff/moderator permissions;
-- hidden content filtering across feed/search/profile/hashtag routes;
-- report spam/duplicate controls;
-- reason/resolution requirements;
-- restoration lifecycle;
-- block/report interaction where relevant;
-- audit events;
-- abusive media/content handling;
-- rate limits where appropriate.
-
-Client-side visibility is never authorisation.
+Final hardening item identified by Phase 5 audit:
+- moderation action transitions are currently exposed too broadly in the Web staff UI and must be treated as a server-side lifecycle rule first. Do not rely on hiding buttons in the client as authorisation.
 
 ## Analytics by design
 
-Identify Phase 5 events before certification, including at minimum:
+Required Phase 5 event catalogue remains:
 - feed viewed;
 - post composer opened;
 - post published/failed;
@@ -173,31 +117,40 @@ Identify Phase 5 events before certification, including at minimum:
 - content reported;
 - moderation decision completed.
 
-Do not add analytics that captures private post/comment text as event properties.
+Do not send private post/comment text as analytics properties.
 
-## Vercel / deployment gate
+## Vercel / deployment review
 
-The previous programme hold was "until Phase 5". Phase 5 is therefore the first phase where Web deployment may be considered.
+The previous programme hold was "until Phase 5". Phase 5 has now completed the initial Vercel audit.
 
-Before any deployment action:
-1. inspect the existing Vercel project/configuration and build root;
-2. understand the previous build-rate-limit status;
-3. confirm environment-variable boundaries and no secrets in source;
-4. decide whether a deployment is useful for Phase 5 validation;
-5. do not let deployment work bypass CI or derail the community implementation.
+Verified configuration:
+- Vercel project: `sabiway2026`;
+- framework: Next.js;
+- project is not marked live/production;
+- the build is correctly scoped to the `frontend` application: build logs identify `frontend@0.1.0` and Next.js 15.5.7;
+- recent preview deployments are being created automatically from GitHub feature-branch commits;
+- recent successful previews demonstrate the project is buildable;
+- earlier cancellations/rate-limit pressure are consistent with the high volume of automatic preview builds rather than a persistent application build failure.
 
-## Initial build order
+Decision:
+- no monorepo root-directory change is required;
+- do not create an additional manual deployment merely to duplicate GitHub-triggered previews;
+- deployment frequency should be controlled before wider testing/production so every small implementation commit does not consume unnecessary build capacity;
+- repository Platform CI remains the code-certification gate; Vercel preview readiness is supplementary evidence.
 
-1. Complete backend posts/views/serializers/permissions/pagination/test audit.
-2. Complete full Web community + moderation audit.
-3. Complete mobile API/types/screen audit.
-4. Map current functionality to V2 mobile design evidence.
-5. Record KEEP / IMPROVE / REFACTOR / MERGE / REPLACE / REMOVE per surface.
-6. Close safety/permission/counter/pagination gaps first.
-7. Refactor Web/mobile interaction surfaces around existing APIs.
-8. Complete replies, reporting, media and discovery parity where required.
-9. Add complete states/accessibility.
-10. Add regression tests and final Platform CI.
-11. Inspect/decide Vercel deployment within Phase 5, separately from code certification.
+## CI evidence
+
+- Platform CI #194 passed the first backend safety/privacy slice.
+- Platform CI #199 passed Web AppShell + mobile replies/reporting/retry parity.
+- Platform CI #202 passed backend, Web, realtime, design-system and repository checks but caught one React Native type compatibility issue (`StyleSheet.absoluteFillObject`).
+- That compatibility issue was corrected without changing behaviour.
+- Current final media-parity head: `a3e793baece081b55842d7a5fb02a993499f7dc6`; Platform CI #204 is running.
+
+## Remaining Phase 5 certification gates
+
+1. Platform CI green on the current final media-parity head.
+2. Server-side moderation transition-rule hardening and matching staff UI state, or explicit documented deferral if the authoritative backend lifecycle already proves sufficient after deeper inspection.
+3. Final changed-file / regression audit.
+4. Update PR evidence and mark ready only after the above gates pass.
 
 Phase 5 is not certified until Web + Android + iOS community journeys and moderation boundaries pass the final gate.
