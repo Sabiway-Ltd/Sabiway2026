@@ -122,9 +122,43 @@ class ServiceListingViewSet(viewsets.ModelViewSet):
         serializer.save(provider=profile, moderation_status=ServiceListing.ModerationStatus.PENDING)
 
     def perform_update(self, serializer):
-        if serializer.instance.provider_id != self.request.user.profile.pk:
+        instance = serializer.instance
+        if instance.provider_id != self.request.user.profile.pk:
             raise PermissionDenied("You cannot update another professional's listing.")
-        serializer.save(moderation_status=ServiceListing.ModerationStatus.PENDING)
+        material_fields = {
+            "category",
+            "subcategory",
+            "title",
+            "description",
+            "price_from",
+            "currency",
+            "pricing_note",
+            "delivery_mode",
+            "country",
+            "state",
+            "city",
+            "area",
+        }
+        has_activity = instance.message_threads.exists() or instance.booking_requests.exists()
+        material_change = bool(material_fields.intersection(serializer.validated_data))
+        if has_activity and material_change:
+            raise ValidationError(
+                "Commercial listing details cannot be rewritten after conversations or bookings exist. "
+                "Update availability or deactivate the listing instead."
+            )
+        if material_change:
+            serializer.save(moderation_status=ServiceListing.ModerationStatus.PENDING)
+        else:
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.provider_id != self.request.user.profile.pk:
+            raise PermissionDenied("You cannot delete another professional's listing.")
+        if instance.message_threads.exists() or instance.booking_requests.exists():
+            raise ValidationError(
+                "This listing has conversation or booking history and cannot be deleted. Deactivate it instead."
+            )
+        instance.delete()
 
 
 class JobPostingViewSet(viewsets.ModelViewSet):
@@ -166,13 +200,47 @@ class JobPostingViewSet(viewsets.ModelViewSet):
         serializer.save(client=profile, moderation_status=JobPosting.ModerationStatus.PENDING)
 
     def perform_update(self, serializer):
-        if serializer.instance.client_id != self.request.user.profile.pk:
+        instance = serializer.instance
+        if instance.client_id != self.request.user.profile.pk:
             raise PermissionDenied("You cannot update another client's job.")
-        serializer.save(moderation_status=JobPosting.ModerationStatus.PENDING)
+        material_fields = {
+            "category",
+            "subcategory",
+            "title",
+            "description",
+            "budget_min",
+            "budget_max",
+            "currency",
+            "delivery_mode",
+            "country",
+            "state",
+            "city",
+            "area",
+            "needed_by",
+        }
+        has_activity = (
+            instance.responses.exists()
+            or instance.message_threads.exists()
+            or instance.bookings.exists()
+        )
+        material_change = bool(material_fields.intersection(serializer.validated_data))
+        if has_activity and material_change:
+            raise ValidationError(
+                "Job scope, budget and delivery details cannot be rewritten after responses, conversations or bookings exist. "
+                "Pause, close or cancel the job instead."
+            )
+        if material_change:
+            serializer.save(moderation_status=JobPosting.ModerationStatus.PENDING)
+        else:
+            serializer.save()
 
     def perform_destroy(self, instance):
         if instance.client_id != self.request.user.profile.pk:
             raise PermissionDenied("You cannot delete another client's job.")
+        if instance.responses.exists() or instance.message_threads.exists() or instance.bookings.exists():
+            raise ValidationError(
+                "This job has response, conversation or booking history and cannot be deleted. Close or cancel it instead."
+            )
         instance.delete()
 
 
