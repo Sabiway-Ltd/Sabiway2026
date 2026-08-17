@@ -21,6 +21,8 @@ type Action = {
   emphasis?: "primary" | "accent";
 };
 
+const popularNeeds = ["Cleaning", "Electrical", "Plumbing", "Beauty", "Tutoring", "Tech support"];
+
 export function HomeScreen({
   session,
   onOpenMarketplace,
@@ -77,22 +79,22 @@ export function HomeScreen({
   const secondaryActions: Action[] = [
     {
       title: "Notifications",
-      description: "See new SabiForum and connection activity in one place.",
+      description: "Updates that need your attention.",
       onPress: onOpenNotifications,
     },
     {
       title: "SabiForum",
-      description: "Learn from the community and discover useful contributors.",
+      description: "Community knowledge and useful people.",
       onPress: onOpenCommunity,
     },
     {
       title: "Profile",
-      description: "Keep your identity, details and trust information up to date.",
+      description: "Identity, details and trust signals.",
       onPress: onOpenProfile,
     },
     {
       title: "SabiPay",
-      description: "Open your transaction and payment workspace when you need it.",
+      description: "Payments and transaction status.",
       onPress: onOpenSabiPay,
     },
   ];
@@ -108,6 +110,27 @@ export function HomeScreen({
             : "Find the right professional, post work and keep every conversation in one place."}
         </Text>
       </View>
+
+      {!isProfessional ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeadingRow}>
+            <View style={styles.sectionHeadingCopy}>
+              <Text style={styles.sectionEyebrow}>POPULAR NEEDS</Text>
+              <Text style={styles.sectionTitle}>Start with what you need</Text>
+            </View>
+            <Pressable accessibilityRole="button" onPress={onOpenMarketplace} style={({ pressed }) => [styles.textAction, pressed && styles.pressed]}>
+              <Text style={styles.textActionLabel}>See all</Text>
+            </Pressable>
+          </View>
+          <View style={styles.needGrid}>
+            {popularNeeds.map((need) => (
+              <Pressable key={need} accessibilityRole="button" accessibilityLabel={`Browse ${need}`} onPress={onOpenMarketplace} style={({ pressed }) => [styles.needChip, pressed && styles.pressed]}>
+                <Text style={styles.needChipText}>{need}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={styles.sectionEyebrow}>YOUR NEXT MOVE</Text>
@@ -180,6 +203,8 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   section: { gap: spacing[3] },
+  sectionHeadingRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: spacing[3] },
+  sectionHeadingCopy: { flex: 1, gap: spacing[1] },
   sectionEyebrow: {
     color: colors.primary,
     fontSize: typography.size.xs,
@@ -191,6 +216,19 @@ const styles = StyleSheet.create({
     fontSize: typography.size.xl,
     fontWeight: "900",
   },
+  textAction: { minHeight: interaction.minimumTouchTarget, justifyContent: "center", paddingHorizontal: spacing[2] },
+  textActionLabel: { color: colors.primary, fontSize: typography.size.sm, fontWeight: "800" },
+  needGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
+  needChip: {
+    minHeight: interaction.minimumTouchTarget,
+    justifyContent: "center",
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing[3],
+  },
+  needChipText: { color: colors.text, fontSize: typography.size.sm, fontWeight: "700" },
   stack: { gap: spacing[3] },
   actionCard: {
     minHeight: 110,
@@ -208,9 +246,10 @@ const styles = StyleSheet.create({
   actionTitlePrimary: { color: colors.onPrimary },
   actionDescription: { color: colors.textMuted, fontSize: typography.size.sm, lineHeight: 20 },
   actionDescriptionPrimary: { color: "#E8F7F0" },
-  grid: { gap: spacing[3] },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing[3] },
   secondaryCard: {
-    minHeight: interaction.minimumTouchTarget * 2,
+    width: "48%",
+    minHeight: interaction.minimumTouchTarget * 2.4,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.lg,
@@ -220,6 +259,6 @@ const styles = StyleSheet.create({
     gap: spacing[1],
   },
   secondaryTitle: { color: colors.text, fontSize: typography.size.md, fontWeight: "900" },
-  secondaryDescription: { color: colors.textMuted, fontSize: typography.size.sm, lineHeight: 20 },
+  secondaryDescription: { color: colors.textMuted, fontSize: typography.size.xs, lineHeight: 18 },
   pressed: { opacity: 0.72 },
 });
