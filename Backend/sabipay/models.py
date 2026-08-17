@@ -19,6 +19,14 @@ class Transaction(models.Model):
         REFUNDED = "refunded", "Refunded"
         CANCELLED = "cancelled", "Cancelled"
 
+    class PaymentStatus(models.TextChoices):
+        NOT_STARTED = "not_started", "Not started"
+        PENDING = "pending", "Pending"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        ABANDONED = "abandoned", "Abandoned"
+        MISMATCH = "mismatch", "Mismatch"
+
     class ReconciliationStatus(models.TextChoices):
         PENDING = "pending", "Pending"
         MATCHED = "matched", "Matched"
@@ -40,6 +48,9 @@ class Transaction(models.Model):
     commission_amount = models.DecimalField(max_digits=12, decimal_places=2)
     provider_amount = models.DecimalField(max_digits=12, decimal_places=2)
     state = models.CharField(max_length=24, choices=State.choices, default=State.PENDING_PAYMENT)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.NOT_STARTED)
+    last_payment_error = models.TextField(blank=True)
+    last_payment_checked_at = models.DateTimeField(null=True, blank=True)
     gateway = models.CharField(max_length=24, default="paystack")
     funding_reference = models.CharField(max_length=120, blank=True, db_index=True)
     gateway_transaction_id = models.CharField(max_length=80, blank=True)
@@ -67,6 +78,7 @@ class Transaction(models.Model):
             models.Index(fields=["state", "release_eligible_at"], name="sabipay_release_due_idx"),
             models.Index(fields=["client", "state"], name="sabipay_client_state_idx"),
             models.Index(fields=["professional", "state"], name="sabipay_prof_state_idx"),
+            models.Index(fields=["payment_status", "updated_at"], name="sabipay_payment_state_idx"),
         ]
         permissions = [("manage_sabipay", "Can manage SabiPay transactions and payouts")]
 
@@ -156,15 +168,37 @@ class Dispute(models.Model):
         RESOLVED = "resolved", "Resolved"
         CLOSED = "closed", "Closed"
 
+    class Reason(models.TextChoices):
+        SERVICE_NOT_PROVIDED = "service_not_provided", "Service not provided"
+        SERVICE_NOT_AS_AGREED = "service_not_as_agreed", "Service not as agreed"
+        PAYMENT_PROBLEM = "payment_problem", "Payment problem"
+        SAFETY_CONCERN = "safety_concern", "Safety concern"
+        DUPLICATE_CHARGE = "duplicate_charge", "Duplicate charge"
+        OTHER = "other", "Other"
+
+    class Outcome(models.TextChoices):
+        NONE = "none", "No decision yet"
+        RESUME = "resume", "Resume transaction"
+        REFUND = "refund", "Refund client"
+        RELEASE = "release", "Release provider payment"
+        CLOSED_NO_ACTION = "closed_no_action", "Close with no financial action"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     transaction = models.ForeignKey(Transaction, on_delete=models.PROTECT, related_name="disputes")
     opened_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="sabipay_disputes_opened")
-    reason = models.CharField(max_length=80)
-    details = models.TextField(blank=True)
+    opened_by_profile = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="sabipay_disputes_opened", null=True, blank=True)
+    reason = models.CharField(max_length=80, choices=Reason.choices, default=Reason.OTHER)
+    details = models.TextField()
+    transaction_state_at_open = models.CharField(max_length=24, blank=True)
     status = models.CharField(max_length=24, choices=Status.choices, default=Status.OPEN)
+    outcome = models.CharField(max_length=32, choices=Outcome.choices, default=Outcome.NONE)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="sabipay_disputes_assigned", null=True, blank=True)
     resolution = models.TextField(blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="sabipay_disputes_resolved", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -172,6 +206,21 @@ class Dispute(models.Model):
 
     def __str__(self):
         return f"{self.transaction.receipt_number} — {self.status}"
+
+
+class DisputeEvidence(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dispute = models.ForeignKey(Dispute, on_delete=models.CASCADE, related_name="evidence")
+    submitted_by = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="sabipay_dispute_evidence")
+    note = models.TextField()
+    reference_url = models.URLField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Evidence {self.id} — {self.dispute_id}"
 
 
 class TransactionAudit(models.Model):
