@@ -1,28 +1,63 @@
-# UI/UX Redesign — Next Exact Figma Gate
+# UI/UX Redesign — Exact Figma Export Gate
 
-This correction pass intentionally separates **confirmed design improvements** from **exact Figma certification**.
+The founder has now supplied `Sabiway Project (2).zip`, containing exported screens for the client, provider, jobs, messaging, community, payments, reviews and authentication journeys.
 
-## Confirmed now
+## What changed
 
-- Shared SabiWay brand tokens are already implemented across web/mobile.
-- Public web now uses the real SabiWay logo asset instead of a temporary `SW` block.
-- Homepage copy now reflects the completed V2 journey instead of describing booking/payments/support as future work.
-- Mobile navigation now has visual destination cues and a lighter selected state.
-- Mobile client home now gives faster service-discovery entry through popular needs.
-- Mobile secondary actions use a denser, more useful layout.
+The previous UI/UX pass was forced to rely on the design report and selected screenshots. That limitation no longer applies to the exported frames.
 
-## Exact Figma gate
+The exact export confirms several design rules that must now drive implementation:
 
-The connected sources identify the design as **Figma: Sabiway Project**, but they do not provide a usable file key or node-specific URL. The design report explicitly says the PDF only contains selected screens and the complete flows live in Figma.
+- role-specific client and provider homes;
+- green rounded header zones;
+- search-led marketplace entry;
+- circular service-category navigation;
+- image/reputation-led provider discovery;
+- five primary mobile destinations with a raised centre Home control;
+- role-specific `History` versus `Earning` navigation;
+- Messages and Notifications outside the five primary bottom tabs;
+- clean full-canvas authentication rather than a generic bordered card shell;
+- compact job/message list-detail patterns;
+- payment/status-first SabiPay presentation.
 
-Therefore the next exact-fidelity action is:
+## Implementation gate
 
-1. open the actual `Sabiway Project` Figma file;
-2. capture its file key and the top-level page/frame IDs;
-3. review every client/provider/community frame;
-4. compare each against current mobile and web;
-5. assign KEEP / IMPROVE / REWORK / REPLACE / REMOVE;
-6. implement the remaining frame-specific corrections;
-7. certify only the screens actually inspected.
+The full exported-screen matrix is recorded in `Documentation/FIGMA-EXPORT-SCREEN-MATRIX.md`.
 
-No engineer or AI agent should infer missing Figma frames from thumbnails and label them matched.
+Work must now proceed in this order:
+
+1. Mobile shell and role-specific Home.
+2. Auth and onboarding.
+3. Categories, filter, My Jobs and job detail.
+4. Messages and conversation.
+5. Community feed, create post and post detail.
+6. Professional profile, reviews and verification.
+7. SabiPay payment method, summary, history, withdrawal and receipt.
+8. Translate the approved mobile product language into responsive web layouts.
+
+## Web rule
+
+The mobile export is a design foundation, not a desktop template.
+
+Web must preserve:
+- brand identity;
+- information hierarchy;
+- role logic;
+- state language;
+- action priority;
+- trust and transaction semantics.
+
+Web may deliberately use:
+- top/side navigation;
+- multi-column layouts;
+- split panes;
+- persistent filter panels;
+- tables for transaction/job history;
+- wider detail views;
+- modal workflows.
+
+## Remaining Figma boundary
+
+A native Figma file key is still not available. That no longer blocks direct visual comparison of the exported frames, but it does mean prototype-only transitions, component metadata and unexported variants cannot be certified.
+
+No screen should be labelled fully certified until implementation, CI and real-device visual review have all passed.
