@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils import timezone
 
 from .models import OperationsAudit, PlatformConfiguration, SupportCase
-from .services import record_operations_audit
+from .services import notify_support_case, record_operations_audit
 
 
 @admin.register(SupportCase)
@@ -46,6 +46,8 @@ class SupportCaseAdmin(admin.ModelAdmin):
             new_state={"status": obj.status, "priority": obj.priority, "assigned_to": obj.assigned_to_id},
             metadata={"source": "django_admin"},
         )
+        if change and previous.get("status") != obj.status:
+            notify_support_case(obj, actor=request.user)
 
 
 @admin.register(PlatformConfiguration)
