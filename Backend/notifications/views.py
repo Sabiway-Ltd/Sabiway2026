@@ -3,11 +3,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Count, Q
 
 from .models import Notification
-from .serializers import NotificationSerializer
 from .pagination import NotificationPagination
+from .realtime import broadcast_unread_count
+from .serializers import NotificationSerializer
 
 
 class NotificationListView(generics.ListAPIView):
@@ -21,29 +21,20 @@ class NotificationListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         unread_count = queryset.filter(is_read=False).count()
-
-        # Pagination
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True) if page is not None else self.get_serializer(queryset, many=True)
-        
-        # Reshape response
         notifications_with_user = [
-            {
-                "userId": str(request.user.id),
-                "notification": n
-            } for n in serializer.data
+            {"userId": str(request.user.id), "notification": notification}
+            for notification in serializer.data
         ]
 
-        if page is not None:
-            return self.get_paginated_response({
-                "notifications": notifications_with_user,
-                "unread_count": unread_count
-            })
-
-        return Response({
+        payload = {
             "notifications": notifications_with_user,
-            "unread_count": unread_count
-        })
+            "unread_count": unread_count,
+        }
+        if page is not None:
+            return self.get_paginated_response(payload)
+        return Response(payload)
 
 
 class MarkNotificationReadView(generics.UpdateAPIView):
@@ -51,36 +42,24 @@ class MarkNotificationReadView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
-        notif = get_object_or_404(Notification, id=kwargs["id"], user=request.user.profile)
-        notif.is_read = True
-        notif.save(update_fields=["is_read"])
+        notification = get_object_or_404(
+            Notification,
+            id=kwargs["id"],
+            user=request.user.profile,
+        )
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save(update_fields=["is_read"])
 
-        # Updated unread count
-        unread_count = Notification.objects.filter(user=request.user.profile, is_read=False).count()
-
-        # 🔹 Real-time update via Socket.io
-        try:
-            import requests
-            from django.conf import settings
-            requests.post(
-                f"{settings.EXPRESS_URL}/broadcast-notification",
-                json={
-                    "userId": str(request.user.id),
-                    "notification": {
-                        "action": "update_unread_count",
-                        "unread_count": unread_count
-                    }
-                },
-                timeout=2
-            )
-        except Exception as e:
-            print("⚠️ Real-time unread count update failed:", e)
-
+        unread_count = Notification.objects.filter(
+            user=request.user.profile,
+            is_read=False,
+        ).count()
+        broadcast_unread_count(request.user.id, unread_count)
         return Response({
             "detail": "Notification marked as read",
-            "unread_count": unread_count
+            "unread_count": unread_count,
         })
-
 
 
 class MarkAllNotificationsReadView(generics.UpdateAPIView):
@@ -88,32 +67,13 @@ class MarkAllNotificationsReadView(generics.UpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         user_profile = request.user.profile
-
-        # Bulk update
-        updated_count = Notification.objects.filter(user=user_profile, is_read=False).update(is_read=True)
-
-        unread_count = 0  # all now read
-
-        # 🔹 Real-time update via Socket.io
-        try:
-            import requests
-            from django.conf import settings
-            requests.post(
-                f"{settings.EXPRESS_URL}/broadcast-notification",
-                json={
-                    "userId": str(request.user.id),
-                    "notification": {
-                        "action": "update_unread_count",
-                        "unread_count": unread_count
-                    }
-                },
-                timeout=2
-            )
-        except Exception as e:
-            print("⚠️ Real-time unread count update failed:", e)
-
+        updated_count = Notification.objects.filter(
+            user=user_profile,
+            is_read=False,
+        ).update(is_read=True)
+        broadcast_unread_count(request.user.id, 0)
         return Response({
             "detail": "All notifications marked as read.",
             "updated_count": updated_count,
-            "unread_count": unread_count
+            "unread_count": 0,
         }, status=status.HTTP_200_OK)
