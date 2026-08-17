@@ -66,19 +66,65 @@ export const designTokens = {
   },
   "typography": {
     "fontFamily": "Inter",
-    "size": { "xs": 12, "sm": 14, "md": 16, "lg": 18, "xl": 20, "2xl": 24, "3xl": 30, "4xl": 36 },
-    "lineHeight": { "tight": 1.2, "normal": 1.5, "relaxed": 1.65 },
-    "weight": { "regular": 400, "medium": 500, "semibold": 600, "bold": 700 }
+    "size": {
+      "xs": 12,
+      "sm": 14,
+      "md": 16,
+      "lg": 18,
+      "xl": 20,
+      "2xl": 24,
+      "3xl": 30,
+      "4xl": 36
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.5,
+      "relaxed": 1.65
+    },
+    "weight": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    }
   },
-  "spacing": { "0": 0, "1": 4, "2": 8, "3": 12, "4": 16, "5": 20, "6": 24, "8": 32, "10": 40, "12": 48, "16": 64 },
-  "radius": { "sm": 8, "md": 12, "lg": 16, "xl": 20, "pill": 999 },
+  "spacing": {
+    "0": 0,
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "8": 32,
+    "10": 40,
+    "12": 48,
+    "16": 64
+  },
+  "radius": {
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "pill": 999
+  },
   "elevation": {
     "sm": "0 1px 2px rgba(23, 33, 27, 0.08)",
     "md": "0 6px 18px rgba(23, 33, 27, 0.10)",
     "lg": "0 16px 40px rgba(23, 33, 27, 0.14)"
   },
-  "interaction": { "minimumTouchTarget": 44, "focusRingWidth": 3 },
-  "breakpoint": { "xs": 320, "sm": 430, "md": 768, "lg": 1024, "xl": 1280, "2xl": 1440 }
+  "interaction": {
+    "minimumTouchTarget": 44,
+    "focusRingWidth": 3
+  },
+  "breakpoint": {
+    "xs": 320,
+    "sm": 430,
+    "md": 768,
+    "lg": 1024,
+    "xl": 1280,
+    "2xl": 1440
+  }
 } as const;
 
 const light = designTokens.semantic.color.light;
