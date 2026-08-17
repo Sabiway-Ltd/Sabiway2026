@@ -18,7 +18,10 @@ def _existing_transaction(booking):
 
 @receiver(pre_save, sender=BookingRequest)
 def protect_funded_booking_transitions(sender, instance, **kwargs):
-    if not instance.pk:
+    # UUID primary keys are assigned before the first save, so checking ``pk``
+    # does not reliably distinguish creates from updates. Only enforce funded
+    # transition rules when an existing booking is actually changing state.
+    if instance._state.adding:
         return
     previous = BookingRequest.objects.filter(pk=instance.pk).values_list("status", flat=True).first()
     if previous == instance.status:
