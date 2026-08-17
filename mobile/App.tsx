@@ -9,16 +9,18 @@ import { AppErrorBoundary } from "./src/design/AppErrorBoundary";
 import { colors, interaction, radius, spacing, typography } from "./src/design/tokens";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
+import { ProfileScreen } from "./src/profile/ProfileScreen";
 import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
 import { VerificationScreen } from "./src/verification/VerificationScreen";
 
-type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "verification";
+type AppSection = "community" | "marketplace" | "messages" | "sabipay" | "profile" | "verification";
 
 function sectionFromUrl(url: string): AppSection | null {
   const normalised = url.toLowerCase();
   if (normalised.includes("/messages") || normalised.includes("//messages")) return "messages";
   if (normalised.includes("/marketplace") || normalised.includes("//marketplace")) return "marketplace";
   if (normalised.includes("/sabipay") || normalised.includes("//sabipay")) return "sabipay";
+  if (normalised.includes("/profile") || normalised.includes("//profile")) return "profile";
   if (normalised.includes("/verification") || normalised.includes("//verification")) return "verification";
   if (normalised.includes("/community") || normalised.includes("//community")) return "community";
   return null;
@@ -54,6 +56,7 @@ export default function App() {
     { key: "marketplace", label: "Market" },
     { key: "messages", label: "Messages" },
     { key: "sabipay", label: "SabiPay" },
+    { key: "profile", label: "Profile" },
     ...(session?.user.role === "professional" ? [{ key: "verification" as const, label: "Verify" }] : []),
   ];
 
@@ -70,6 +73,8 @@ export default function App() {
                 <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
               ) : section === "sabipay" ? (
                 <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
+              ) : section === "profile" ? (
+                <ProfileScreen session={session} onOpenVerification={() => setSection("verification")} />
               ) : section === "verification" && session.user.role === "professional" ? (
                 <VerificationScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
               ) : (

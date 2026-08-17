@@ -30,7 +30,7 @@ class VerificationSubmissionViewSet(mixins.ListModelMixin, mixins.RetrieveModelM
             status_filter = self.request.query_params.get("status", "").strip()
             return qs.filter(status=status_filter) if status_filter else qs
         profile = user.profile
-        return qs.filter(professional=profile) if profile.role == "professional" else qs.none()
+        return qs.filter(professional=profile) if user.role == "professional" else qs.none()
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -41,8 +41,8 @@ class VerificationSubmissionViewSet(mixins.ListModelMixin, mixins.RetrieveModelM
 
     def create(self, request, *args, **kwargs):
         profile = request.user.profile
-        if profile.role != "professional":
-            raise PermissionDenied("Only professional profiles can submit verification.")
+        if request.user.role != "professional":
+            raise PermissionDenied("Only professional accounts can submit verification.")
         if VerificationSubmission.objects.filter(professional=profile).exists():
             raise ValidationError("A verification submission already exists. Use resubmit when action is required.")
         serializer = self.get_serializer(data=request.data, context={"request": request})
@@ -53,8 +53,8 @@ class VerificationSubmissionViewSet(mixins.ListModelMixin, mixins.RetrieveModelM
     @action(detail=False, methods=["get"], url_path="me")
     def me(self, request):
         profile = request.user.profile
-        if profile.role != "professional":
-            raise PermissionDenied("Verification applies to professional profiles.")
+        if request.user.role != "professional":
+            raise PermissionDenied("Verification applies to professional accounts.")
         submission = self.get_queryset().filter(professional=profile).first()
         if not submission:
             return Response({"status": "not_submitted"})
@@ -63,8 +63,8 @@ class VerificationSubmissionViewSet(mixins.ListModelMixin, mixins.RetrieveModelM
     @action(detail=False, methods=["post"], url_path="resubmit")
     def resubmit(self, request):
         profile = request.user.profile
-        if profile.role != "professional":
-            raise PermissionDenied("Verification applies to professional profiles.")
+        if request.user.role != "professional":
+            raise PermissionDenied("Verification applies to professional accounts.")
         submission = VerificationSubmission.objects.filter(professional=profile).first()
         if not submission:
             raise ValidationError("Submit verification first.")

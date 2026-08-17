@@ -5,7 +5,9 @@ from .models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="user.full_name")
     email = serializers.EmailField(source="user.email", read_only=True)
+    role = serializers.CharField(source="user.role", read_only=True)
     initials = serializers.CharField(read_only=True)
     followers_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
@@ -26,12 +28,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "is_verified", "verification_status",
         ]
         read_only_fields = (
-            "email", "initials", "followers_count", "following_count",
+            "email", "role", "initials", "followers_count", "following_count",
             "posts_count", "is_following", "address", "is_verified", "verification_status",
         )
 
     def _verification_state(self, instance):
-        if instance.role != "professional":
+        if instance.user.role != "professional":
             return "not_applicable"
         try:
             return instance.verification_submission.status
@@ -76,6 +78,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         return candidate
 
     def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        full_name = user_data.get("full_name")
+        if full_name is not None and full_name != instance.user.full_name:
+            instance.user.full_name = full_name
+            instance.user.save(update_fields=["full_name"])
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
