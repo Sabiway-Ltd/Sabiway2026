@@ -1,5 +1,5 @@
 import { environment } from "../config/environment";
-import type { NigerianBank, PayoutDestination, SabiPayBooking, SabiPayTransaction } from "./types";
+import type { NigerianBank, PayoutDestination, SabiPayBooking, SabiPayDispute, SabiPayDisputeEvidence, SabiPayTransaction } from "./types";
 
 function unwrap<T>(payload: T[] | { results: T[] }): T[] {
   return Array.isArray(payload) ? payload : payload.results;
@@ -7,7 +7,7 @@ function unwrap<T>(payload: T[] | { results: T[] }): T[] {
 
 async function parseError(response: Response, fallback: string) {
   const payload = await response.json().catch(() => ({}));
-  return payload.detail || payload.non_field_errors?.[0] || payload.account_number?.[0] || fallback;
+  return payload.detail || payload.non_field_errors?.[0] || payload.account_number?.[0] || payload.details?.[0] || fallback;
 }
 
 export async function getSabiPayBookings(access: string): Promise<SabiPayBooking[]> {
@@ -42,6 +42,15 @@ export async function verifySabiPay(access: string, transactionId: string, refer
   return response.json() as Promise<SabiPayTransaction>;
 }
 
+export async function refreshSabiPayStatus(access: string, transactionId: string) {
+  const response = await fetch(`${environment.djangoUrl}/api/sabipay/transactions/${transactionId}/refresh-status/`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${access}` },
+  });
+  if (!response.ok) throw new Error(await parseError(response, "Payment status could not be refreshed."));
+  return response.json() as Promise<SabiPayTransaction>;
+}
+
 export async function actOnSabiPay(access: string, transactionId: string, action: "start-service" | "mark-delivered" | "confirm-satisfaction") {
   const response = await fetch(`${environment.djangoUrl}/api/sabipay/transactions/${transactionId}/${action}/`, {
     method: "POST",
@@ -49,6 +58,26 @@ export async function actOnSabiPay(access: string, transactionId: string, action
   });
   if (!response.ok) throw new Error(await parseError(response, "SabiPay could not update this transaction."));
   return response.json() as Promise<SabiPayTransaction>;
+}
+
+export async function openSabiPayDispute(access: string, transactionId: string, reason: string, details: string): Promise<SabiPayDispute> {
+  const response = await fetch(`${environment.djangoUrl}/api/sabipay/disputes/`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ transaction_id: transactionId, reason, details }),
+  });
+  if (!response.ok) throw new Error(await parseError(response, "The dispute could not be opened."));
+  return response.json();
+}
+
+export async function addSabiPayDisputeEvidence(access: string, disputeId: string, note: string, referenceUrl = ""): Promise<SabiPayDisputeEvidence> {
+  const response = await fetch(`${environment.djangoUrl}/api/sabipay/disputes/${disputeId}/evidence/`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ note, reference_url: referenceUrl }),
+  });
+  if (!response.ok) throw new Error(await parseError(response, "Dispute evidence could not be added."));
+  return response.json();
 }
 
 export async function getPayoutDestinations(access: string): Promise<PayoutDestination[]> {

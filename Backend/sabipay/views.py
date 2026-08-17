@@ -10,23 +10,32 @@ from rest_framework.views import APIView
 from verification.services import is_professional_verified
 
 from . import gateway
-from .models import PayoutDestination, Transaction
+from .models import Dispute, PayoutDestination, Transaction
 from .permissions import IsSabiPayOperator
 from .serializers import (
     AdminRefundSerializer,
+    DisputeEvidenceCreateSerializer,
+    DisputeEvidenceSerializer,
+    DisputeResolutionSerializer,
+    DisputeSerializer,
     InitializePaymentSerializer,
+    OpenDisputeSerializer,
     PayoutDestinationCreateSerializer,
     PayoutDestinationSerializer,
     TransactionSerializer,
     VerifyPaymentSerializer,
 )
 from .services import (
+    add_dispute_evidence,
     create_payout_destination,
     initialize_checkout,
     mark_delivered,
+    open_dispute,
     reconcile_transaction,
     release_transaction,
     request_refund,
+    resolve_dispute,
+    start_dispute_review,
     start_service,
     verify_attempt,
 )
@@ -41,10 +50,15 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
         user = self.request.user
         qs = Transaction.objects.select_related(
             "booking", "client__user", "professional__user", "payout__destination"
-        ).prefetch_related("payment_attempts", "audit_events__actor")
+        ).prefetch_related("payment_attempts", "audit_events__actor", "disputes__evidence__submitted_by")
         if user.is_staff and (user.is_superuser or user.has_perm("sabipay.manage_sabipay")):
             state_filter = self.request.query_params.get("state", "").strip()
-            return qs.filter(state=state_filter) if state_filter else qs
+            payment_filter = self.request.query_params.get("payment_status", "").strip()
+            if state_filter:
+                qs = qs.filter(state=state_filter)
+            if payment_filter:
+                qs = qs.filter(payment_status=payment_filter)
+            return qs
         profile = user.profile
         return qs.filter(Q(client=profile) | Q(professional=profile)).distinct()
 
@@ -82,6 +96,11 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
         tx = verify_attempt(attempt, source="client")
         return Response(TransactionSerializer(tx, context={"request": request}).data)
 
+    @action(detail=True, methods=["post"], url_path="refresh-status")
+    def refresh_status(self, request, pk=None):
+        tx = reconcile_transaction(self.get_object())
+        return Response(TransactionSerializer(tx, context={"request": request}).data)
+
     @action(detail=True, methods=["post"], url_path="start-service")
     def start_service_action(self, request, pk=None):
         tx = start_service(self.get_object(), request.user)
@@ -113,6 +132,61 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
     def reconcile(self, request, pk=None):
         tx = reconcile_transaction(self.get_object())
         return Response(TransactionSerializer(tx, context={"request": request}).data)
+
+
+class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Dispute.objects.select_related(
+            "transaction__client__user", "transaction__professional__user", "opened_by_profile__user", "assigned_to", "resolved_by"
+        ).prefetch_related("evidence__submitted_by__user")
+        if user.is_staff and (user.is_superuser or user.has_perm("sabipay.manage_sabipay")):
+            status_filter = self.request.query_params.get("status", "").strip()
+            return qs.filter(status=status_filter) if status_filter else qs
+        profile = user.profile
+        return qs.filter(Q(transaction__client=profile) | Q(transaction__professional=profile)).distinct()
+
+    def get_serializer_class(self):
+        return OpenDisputeSerializer if self.action == "create" else DisputeSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = OpenDisputeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tx = Transaction.objects.select_related("client__user", "professional__user").filter(
+            Q(client=request.user.profile) | Q(professional=request.user.profile),
+            pk=serializer.validated_data["transaction_id"],
+        ).first()
+        if not tx:
+            raise PermissionDenied("This transaction is not available to your account.")
+        dispute = open_dispute(
+            tx,
+            actor=request.user,
+            reason=serializer.validated_data["reason"],
+            details=serializer.validated_data["details"],
+        )
+        return Response(DisputeSerializer(dispute, context={"request": request}).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"])
+    def evidence(self, request, pk=None):
+        dispute = self.get_object()
+        serializer = DisputeEvidenceCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        evidence = add_dispute_evidence(dispute, actor=request.user, **serializer.validated_data)
+        return Response(DisputeEvidenceSerializer(evidence).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="start-review", permission_classes=[permissions.IsAuthenticated, IsSabiPayOperator])
+    def start_review(self, request, pk=None):
+        dispute = start_dispute_review(self.get_object(), actor=request.user)
+        return Response(DisputeSerializer(dispute, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, IsSabiPayOperator])
+    def resolve(self, request, pk=None):
+        serializer = DisputeResolutionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        dispute = resolve_dispute(self.get_object(), actor=request.user, **serializer.validated_data)
+        return Response(DisputeSerializer(dispute, context={"request": request}).data)
 
 
 class PayoutDestinationViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):

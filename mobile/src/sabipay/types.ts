@@ -32,6 +32,28 @@ export type SabiPayPayout = {
   destination_label: string;
 };
 
+export type SabiPayDisputeEvidence = {
+  id: string;
+  submitted_by: SabiPayProfile;
+  note: string;
+  reference_url?: string;
+  created_at: string;
+};
+
+export type SabiPayDispute = {
+  id: string;
+  transaction: string;
+  receipt_number: string;
+  opened_by_profile: SabiPayProfile;
+  reason: string;
+  details: string;
+  status: string;
+  outcome: string;
+  resolution?: string;
+  evidence: SabiPayDisputeEvidence[];
+  created_at: string;
+};
+
 export type SabiPayTransaction = {
   id: string;
   booking_id: string;
@@ -44,10 +66,13 @@ export type SabiPayTransaction = {
   commission_amount: string;
   provider_amount: string;
   state: string;
+  payment_status: string;
+  last_payment_error?: string;
   receipt_number: string;
   reconciliation_status: string;
   latest_attempt?: SabiPayAttempt | null;
   payout?: SabiPayPayout | null;
+  disputes: SabiPayDispute[];
   freeze_seconds_remaining: number;
 };
 

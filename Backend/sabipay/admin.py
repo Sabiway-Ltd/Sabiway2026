@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 
 from .models import (
     Dispute,
+    DisputeEvidence,
     GatewayWebhookEvent,
     PaymentAttempt,
     PayoutDestination,
@@ -9,7 +10,7 @@ from .models import (
     Transaction,
     TransactionAudit,
 )
-from .services import reconcile_transaction, release_transaction, request_refund
+from .services import reconcile_transaction
 
 
 class PaymentAttemptInline(admin.TabularInline):
@@ -30,14 +31,14 @@ class PayoutInline(admin.StackedInline):
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ("receipt_number", "client", "professional", "amount", "currency", "state", "commission_amount", "provider_amount", "reconciliation_status", "release_eligible_at", "created_at")
-    list_filter = ("state", "reconciliation_status", "refund_status", "currency", "created_at")
+    list_display = ("receipt_number", "client", "professional", "amount", "currency", "state", "payment_status", "reconciliation_status", "refund_status", "release_eligible_at", "created_at")
+    list_filter = ("state", "payment_status", "reconciliation_status", "refund_status", "currency", "created_at")
     search_fields = ("receipt_number", "funding_reference", "client__full_name", "professional__full_name", "booking__scope_summary")
     readonly_fields = (
         "id", "booking", "client", "professional", "amount", "currency", "commission_rate", "commission_amount", "provider_amount",
-        "state", "gateway", "funding_reference", "gateway_transaction_id", "receipt_number", "funded_at", "service_started_at", "delivered_at",
-        "release_eligible_at", "client_confirmed_at", "released_at", "cancelled_at", "refunded_at", "refund_status", "refund_gateway_id", "refund_reason",
-        "reconciliation_status", "reconciliation_note", "reconciled_at", "created_at", "updated_at",
+        "state", "payment_status", "last_payment_error", "last_payment_checked_at", "gateway", "funding_reference", "gateway_transaction_id", "receipt_number",
+        "funded_at", "service_started_at", "delivered_at", "release_eligible_at", "client_confirmed_at", "released_at", "cancelled_at", "refunded_at",
+        "refund_status", "refund_gateway_id", "refund_reason", "reconciliation_status", "reconciliation_note", "reconciled_at", "created_at", "updated_at",
     )
     inlines = [PaymentAttemptInline, PayoutInline]
     actions = ["reconcile_selected"]
@@ -77,12 +78,24 @@ class PayoutRecordAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None): return False
 
 
+class DisputeEvidenceInline(admin.TabularInline):
+    model = DisputeEvidence
+    extra = 0
+    can_delete = False
+    readonly_fields = ("submitted_by", "note", "reference_url", "created_at")
+    fields = readonly_fields
+
+
 @admin.register(Dispute)
 class DisputeAdmin(admin.ModelAdmin):
-    list_display = ("transaction", "opened_by", "reason", "status", "created_at", "resolved_at")
-    list_filter = ("status", "created_at")
-    search_fields = ("transaction__receipt_number", "opened_by__email", "reason", "details")
-    readonly_fields = ("id", "transaction", "opened_by", "reason", "details", "status", "resolution", "created_at", "resolved_at")
+    list_display = ("transaction", "opened_by_profile", "reason", "status", "outcome", "assigned_to", "created_at", "resolved_at")
+    list_filter = ("status", "outcome", "reason", "created_at")
+    search_fields = ("transaction__receipt_number", "opened_by__email", "opened_by_profile__full_name", "details", "resolution")
+    readonly_fields = (
+        "id", "transaction", "opened_by", "opened_by_profile", "reason", "details", "transaction_state_at_open", "status", "outcome",
+        "assigned_to", "reviewed_at", "resolution", "resolved_by", "created_at", "resolved_at", "closed_at",
+    )
+    inlines = [DisputeEvidenceInline]
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False

@@ -1,10 +1,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import BankListView, PaystackWebhookView, PayoutDestinationViewSet, TransactionViewSet
+from .views import BankListView, DisputeViewSet, PaystackWebhookView, PayoutDestinationViewSet, TransactionViewSet
 
 router = DefaultRouter()
 router.register("transactions", TransactionViewSet, basename="sabipay-transaction")
+router.register("disputes", DisputeViewSet, basename="sabipay-dispute")
 router.register("payout-destinations", PayoutDestinationViewSet, basename="sabipay-payout-destination")
 
 urlpatterns = [
