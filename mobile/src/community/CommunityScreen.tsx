@@ -63,11 +63,13 @@ export function CommunityScreen({ session, onSignOut }: Props) {
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [comments, setComments] = useState<ForumComment[]>([]);
   const [commentText, setCommentText] = useState("");
+  const [commentImage, setCommentImage] = useState<ForumMediaAsset | null>(null);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [selectedComment, setSelectedComment] = useState<string | null>(null);
   const [replies, setReplies] = useState<ForumReply[]>([]);
   const [replyText, setReplyText] = useState("");
+  const [replyImage, setReplyImage] = useState<ForumMediaAsset | null>(null);
   const [repliesLoading, setRepliesLoading] = useState(false);
   const [repliesError, setRepliesError] = useState<string | null>(null);
 
@@ -93,13 +95,10 @@ export function CommunityScreen({ session, onSignOut }: Props) {
   const pickImage = async (onPick: (asset: ForumMediaAsset) => void) => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Photo access needed", "Allow photo access to attach an image to your SabiForum post.");
+      Alert.alert("Photo access needed", "Allow photo access to attach an image to SabiForum.");
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      quality: 0.85,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, quality: 0.85 });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
     if (asset.mimeType && !asset.mimeType.startsWith("image/")) {
@@ -149,11 +148,7 @@ export function CommunityScreen({ session, onSignOut }: Props) {
   const confirmDelete = (post: ForumPost) => {
     Alert.alert("Delete post?", "This removes the post and its discussion from SabiForum.", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => void removePost(post.id),
-      },
+      { text: "Delete", style: "destructive", onPress: () => void removePost(post.id) },
     ]);
   };
 
@@ -198,6 +193,8 @@ export function CommunityScreen({ session, onSignOut }: Props) {
     setSelectedComment(null);
     setReplies([]);
     setComments([]);
+    setCommentImage(null);
+    setReplyImage(null);
     setCommentsError(null);
     setCommentsLoading(true);
     try {
@@ -210,11 +207,12 @@ export function CommunityScreen({ session, onSignOut }: Props) {
   };
 
   const submitComment = async () => {
-    if (!selectedPost || !commentText.trim()) return;
+    if (!selectedPost || (!commentText.trim() && !commentImage)) return;
     try {
-      const comment = await addComment(session.access, selectedPost, commentText.trim());
+      const comment = await addComment(session.access, selectedPost, commentText.trim(), commentImage);
       setComments((current) => [comment, ...current]);
       setCommentText("");
+      setCommentImage(null);
       setPosts((current) => current.map((post) => post.id === selectedPost ? { ...post, comments_count: post.comments_count + 1 } : post));
     } catch (error) {
       Alert.alert("Comment not posted", messageFrom(error));
@@ -224,6 +222,7 @@ export function CommunityScreen({ session, onSignOut }: Props) {
   const openReplies = async (comment: ForumComment) => {
     setSelectedComment(comment.id);
     setReplies([]);
+    setReplyImage(null);
     setRepliesError(null);
     setRepliesLoading(true);
     try {
@@ -236,11 +235,12 @@ export function CommunityScreen({ session, onSignOut }: Props) {
   };
 
   const submitReply = async () => {
-    if (!selectedComment || !replyText.trim()) return;
+    if (!selectedComment || (!replyText.trim() && !replyImage)) return;
     try {
-      const reply = await addReply(session.access, selectedComment, replyText.trim());
+      const reply = await addReply(session.access, selectedComment, replyText.trim(), undefined, replyImage);
       setReplies((current) => [...current, reply]);
       setReplyText("");
+      setReplyImage(null);
       setComments((current) => current.map((comment) => comment.id === selectedComment ? { ...comment, reply_count: (comment.reply_count ?? 0) + 1 } : comment));
     } catch (error) {
       Alert.alert("Reply not posted", messageFrom(error));
@@ -268,13 +268,8 @@ export function CommunityScreen({ session, onSignOut }: Props) {
     <View style={styles.screen}>
       <View style={[styles.shell, { width: contentWidth }]}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.brand}>SABIWAY</Text>
-            <Text accessibilityRole="header" style={styles.title}>SabiForum</Text>
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={onSignOut} style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Sign out</Text>
-          </Pressable>
+          <View><Text style={styles.brand}>SABIWAY</Text><Text accessibilityRole="header" style={styles.title}>SabiForum</Text></View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={onSignOut} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Sign out</Text></Pressable>
         </View>
 
         <View style={styles.composer}>
@@ -318,9 +313,12 @@ export function CommunityScreen({ session, onSignOut }: Props) {
 
                 {selectedPost === item.id ? (
                   <View style={styles.commentsPanel}>
-                    <View style={styles.commentComposer}>
-                      <TextInput accessibilityLabel="Write a comment" value={commentText} onChangeText={setCommentText} placeholder="Write a comment…" placeholderTextColor={colors.muted} style={styles.commentInput} />
-                      <Pressable accessibilityRole="button" disabled={!commentText.trim()} onPress={() => void submitComment()} style={[styles.commentButton, !commentText.trim() && styles.disabled]}><Text style={styles.commentButtonText}>Reply</Text></Pressable>
+                    <TextInput accessibilityLabel="Write a comment" value={commentText} onChangeText={setCommentText} placeholder="Write a comment…" placeholderTextColor={colors.muted} style={styles.commentInput} />
+                    {commentImage ? <Image source={{ uri: commentImage.uri }} style={styles.smallPreview} accessibilityLabel="Selected comment image" /> : null}
+                    <View style={styles.composerActions}>
+                      <Pressable accessibilityRole="button" onPress={() => void pickImage(setCommentImage)} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>{commentImage ? "Change image" : "Add image"}</Text></Pressable>
+                      {commentImage ? <Pressable accessibilityRole="button" onPress={() => setCommentImage(null)} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Remove</Text></Pressable> : null}
+                      <Pressable accessibilityRole="button" disabled={!commentText.trim() && !commentImage} onPress={() => void submitComment()} style={[styles.commentButton, !commentText.trim() && !commentImage && styles.disabled]}><Text style={styles.commentButtonText}>Reply</Text></Pressable>
                     </View>
                     {commentsLoading ? <ActivityIndicator accessibilityLabel="Loading comments" color={colors.brand} /> : null}
                     {commentsError ? <InlineError message={commentsError} retry={() => void openComments(item)} /> : null}
@@ -334,7 +332,13 @@ export function CommunityScreen({ session, onSignOut }: Props) {
                             {repliesLoading ? <ActivityIndicator accessibilityLabel="Loading replies" color={colors.brand} /> : null}
                             {repliesError ? <InlineError message={repliesError} retry={() => void openReplies(comment)} /> : null}
                             {replies.map((reply) => <View key={reply.id} style={styles.reply}><Text style={styles.commentAuthor}>{reply.user.full_name}</Text><Text style={styles.commentText}>{reply.content}</Text>{reply.image ? <Image source={{ uri: reply.image }} style={styles.commentImage} accessibilityLabel="Reply image" /> : null}</View>)}
-                            <View style={styles.commentComposer}><TextInput accessibilityLabel="Write a reply" value={replyText} onChangeText={setReplyText} placeholder="Write a reply…" placeholderTextColor={colors.muted} style={styles.commentInput} /><Pressable accessibilityRole="button" disabled={!replyText.trim()} onPress={() => void submitReply()} style={[styles.commentButton, !replyText.trim() && styles.disabled]}><Text style={styles.commentButtonText}>Send</Text></Pressable></View>
+                            <TextInput accessibilityLabel="Write a reply" value={replyText} onChangeText={setReplyText} placeholder="Write a reply…" placeholderTextColor={colors.muted} style={styles.commentInput} />
+                            {replyImage ? <Image source={{ uri: replyImage.uri }} style={styles.smallPreview} accessibilityLabel="Selected reply image" /> : null}
+                            <View style={styles.composerActions}>
+                              <Pressable accessibilityRole="button" onPress={() => void pickImage(setReplyImage)} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>{replyImage ? "Change image" : "Add image"}</Text></Pressable>
+                              {replyImage ? <Pressable accessibilityRole="button" onPress={() => setReplyImage(null)} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Remove</Text></Pressable> : null}
+                              <Pressable accessibilityRole="button" disabled={!replyText.trim() && !replyImage} onPress={() => void submitReply()} style={[styles.commentButton, !replyText.trim() && !replyImage && styles.disabled]}><Text style={styles.commentButtonText}>Send</Text></Pressable>
+                            </View>
                           </View>
                         ) : null}
                       </View>
@@ -421,6 +425,7 @@ const styles = StyleSheet.create({
   postText: { color: colors.text, fontSize: 16, lineHeight: 24 },
   postImage: { width: "100%", height: 260, borderRadius: 14, backgroundColor: colors.background },
   previewImage: { width: "100%", height: 180, borderRadius: 12, backgroundColor: colors.background },
+  smallPreview: { width: 120, height: 90, borderRadius: 10, backgroundColor: colors.background },
   commentImage: { width: "100%", height: 140, borderRadius: 10, marginTop: 6 },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   action: { minHeight: 40, justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 11 },
@@ -428,8 +433,7 @@ const styles = StyleSheet.create({
   actionText: { color: colors.muted, fontSize: 12, fontWeight: "700" },
   actionTextActive: { color: colors.brand },
   commentsPanel: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12, gap: 8 },
-  commentComposer: { flexDirection: "row", gap: 8 },
-  commentInput: { flex: 1, minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, color: colors.text },
+  commentInput: { minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, color: colors.text },
   commentButton: { minHeight: 44, justifyContent: "center", backgroundColor: colors.brandStrong, borderRadius: 12, paddingHorizontal: 14 },
   commentButtonText: { color: "#FFFFFF", fontWeight: "800" },
   comment: { backgroundColor: colors.background, borderRadius: 12, padding: 10 },
