@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { BriefcaseBusiness, CheckCircle2, Clock3, MapPin, MessageCircle, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 
 import { environment } from "@/app/config/environment";
@@ -89,23 +89,13 @@ export default function MarketplaceClient({ initialListings, initialJobs, catego
     return access;
   };
 
-  const locationListings = useMemo(() => {
-    const place = location.trim().toLowerCase();
-    if (!place) return listings;
-    return listings.filter((item) => [item.area, item.city ?? "", item.state, item.country ?? ""].some((value) => value.toLowerCase().includes(place)));
-  }, [listings, location]);
-
-  const locationJobs = useMemo(() => {
-    const place = location.trim().toLowerCase();
-    if (!place) return jobs;
-    return jobs.filter((item) => [item.area ?? "", item.city ?? "", item.state ?? "", item.country ?? ""].some((value) => value.toLowerCase().includes(place)));
-  }, [jobs, location]);
-
-  async function searchMarketplace(overrides?: { category?: string; query?: string }) {
+  async function searchMarketplace(overrides?: { category?: string; query?: string; location?: string }) {
     const q = (overrides?.query ?? query).trim();
+    const place = (overrides?.location ?? location).trim();
     const category = overrides?.category ?? categoryFilter;
     const params = new URLSearchParams();
     if (q) params.set("q", q);
+    if (place) params.set("location", place);
     if (category) params.set("category", category);
     const suffix = params.size ? `?${params.toString()}` : "";
 
@@ -197,11 +187,11 @@ export default function MarketplaceClient({ initialListings, initialJobs, catego
           </div>
           <form onSubmit={(event) => { event.preventDefault(); void searchMarketplace(); }} className="mt-8 grid gap-3 rounded-2xl bg-white p-3 shadow-xl md:grid-cols-[1fr_1fr_220px_auto]" role="search">
             <label className="relative"><span className="sr-only">Service or problem</span><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#708077]" size={18} aria-hidden="true"/><input value={query} onChange={(e) => setQuery(e.target.value)} className={`${inputClass} pl-11`} placeholder="What service or problem do you have?"/></label>
-            <label className="relative"><span className="sr-only">Location</span><MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#708077]" size={18} aria-hidden="true"/><input value={location} onChange={(e) => setLocation(e.target.value)} className={`${inputClass} pl-11`} placeholder="City, state or country"/></label>
+            <label className="relative"><span className="sr-only">Location</span><MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#708077]" size={18} aria-hidden="true"/><input value={location} onChange={(e) => setLocation(e.target.value)} className={`${inputClass} pl-11`} placeholder="City, state, area or country"/></label>
             <label><span className="sr-only">Category</span><select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={inputClass}><option value="">All categories</option>{categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}</select></label>
             <button type="submit" disabled={searching} className="min-h-12 rounded-xl bg-[#FFB800] px-5 font-extrabold text-[#173126] disabled:opacity-60">{searching ? "Searching…" : "Search"}</button>
           </form>
-          <p className="mt-2 text-xs text-white/75">Text and category filters run on SabiWay servers. Location is currently refined on the returned result set while the shared generic-location API is finalised.</p>
+          <p className="mt-2 text-xs text-white/75">Search and location filters run on SabiWay servers. Use a city, state, area or country; structured filters remain available to clients that need more precision.</p>
         </div>
       </section>
 
@@ -219,8 +209,8 @@ export default function MarketplaceClient({ initialListings, initialJobs, catego
           {notice && <div className="my-4 flex items-center gap-2 rounded-xl bg-[#eaf8f1] p-4 text-sm font-bold text-[#006b42]" role="status"><CheckCircle2 size={18} aria-hidden="true"/>{notice}</div>}
           {error && <div className="my-4 flex items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700" role="alert"><span>{error}</span><button type="button" onClick={() => void searchMarketplace()} className="rounded-lg border border-red-200 px-3 py-2 font-bold">Retry</button></div>}
 
-          {tab === "services" ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{locationListings.map((listing) => <article key={listing.id} className="overflow-hidden rounded-2xl border border-[#dde7e1] bg-white shadow-sm"><div className="h-2 bg-[#008753]"/><div className="p-5"><div className="flex items-start justify-between gap-3"><div><span className="rounded-full bg-[#fff5d6] px-3 py-1 text-xs font-bold text-[#7a5a00]">{listing.category.name}</span><h3 className="mt-3 text-xl font-black">{listing.title}</h3></div>{listing.available_now && <span className="rounded-full bg-[#e7f7ef] px-2 py-1 text-xs font-bold text-[#008753]">Available now</span>}</div><p className="mt-2 line-clamp-3 text-sm leading-6 text-[#66756d]">{listing.description}</p><div className="mt-4 border-t border-[#edf2ef] pt-4"><p className="font-extrabold">{listing.provider.full_name}</p><p className="text-sm text-[#66756d]">{listing.provider.job || "SabiWay professional"}</p><p className="mt-2 flex items-center gap-1 text-xs text-[#66756d]"><MapPin size={14} aria-hidden="true"/>{[listing.area, listing.city, listing.state, listing.country].filter(Boolean).join(", ") || "Location flexible"}</p></div><div className="mt-5 flex items-end justify-between gap-3"><div><p className="text-xs text-[#66756d]">Starting from</p><p className="text-lg font-black">{listing.currency} {Number(listing.price_from).toLocaleString()}</p></div><button onClick={() => setSelectedListing(listing)} className="rounded-xl bg-[#008753] px-4 py-2 text-sm font-extrabold text-white">View provider</button></div></div></article>)}</div> : <div className="mt-6 grid gap-4 lg:grid-cols-2">{locationJobs.map((job) => <article key={job.id} className="rounded-2xl border border-[#dde7e1] bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><span className="rounded-full bg-[#eaf8f1] px-3 py-1 text-xs font-bold text-[#008753]">{job.category.name}</span><span className="text-xs font-semibold text-[#6b7a72]">{job.response_count} responses</span></div><h3 className="mt-3 text-xl font-black">{job.title}</h3><p className="mt-2 line-clamp-3 text-sm leading-6 text-[#66756d]">{job.description}</p><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-xs text-[#75827b]">Location</p><p className="font-bold">{[job.city, job.state, job.country].filter(Boolean).join(", ") || "Flexible"}</p></div><div><p className="text-xs text-[#75827b]">Budget</p><p className="font-bold">{job.budget_min || job.budget_max ? `${job.currency} ${Number(job.budget_min || 0).toLocaleString()} – ${Number(job.budget_max || job.budget_min || 0).toLocaleString()}` : "Open to quote"}</p></div></div><div className="mt-5 flex items-center justify-between border-t border-[#edf2ef] pt-4"><p className="text-xs text-[#66756d]">Posted by {job.client.full_name}</p><button onClick={() => setSelectedJob(job)} className="rounded-xl bg-[#FFB800] px-4 py-2 text-sm font-extrabold text-[#173126]">Respond & message</button></div></article>)}</div>}
-          {((tab === "services" && locationListings.length === 0) || (tab === "jobs" && locationJobs.length === 0)) && <div className="mt-6 rounded-2xl border border-dashed border-[#bfd2c7] bg-white p-10 text-center" role="status"><SlidersHorizontal className="mx-auto text-[#008753]" aria-hidden="true"/><h3 className="mt-3 text-lg font-black">No results yet</h3><p className="mt-1 text-sm text-[#66756d]">Try another service, category or location.</p></div>}
+          {tab === "services" ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{listings.map((listing) => <article key={listing.id} className="overflow-hidden rounded-2xl border border-[#dde7e1] bg-white shadow-sm"><div className="h-2 bg-[#008753]"/><div className="p-5"><div className="flex items-start justify-between gap-3"><div><span className="rounded-full bg-[#fff5d6] px-3 py-1 text-xs font-bold text-[#7a5a00]">{listing.category.name}</span><h3 className="mt-3 text-xl font-black">{listing.title}</h3></div>{listing.available_now && <span className="rounded-full bg-[#e7f7ef] px-2 py-1 text-xs font-bold text-[#008753]">Available now</span>}</div><p className="mt-2 line-clamp-3 text-sm leading-6 text-[#66756d]">{listing.description}</p><div className="mt-4 border-t border-[#edf2ef] pt-4"><p className="font-extrabold">{listing.provider.full_name}</p><p className="text-sm text-[#66756d]">{listing.provider.job || "SabiWay professional"}</p><p className="mt-2 flex items-center gap-1 text-xs text-[#66756d]"><MapPin size={14} aria-hidden="true"/>{[listing.area, listing.city, listing.state, listing.country].filter(Boolean).join(", ") || "Location flexible"}</p></div><div className="mt-5 flex items-end justify-between gap-3"><div><p className="text-xs text-[#66756d]">Starting from</p><p className="text-lg font-black">{listing.currency} {Number(listing.price_from).toLocaleString()}</p></div><button onClick={() => setSelectedListing(listing)} className="rounded-xl bg-[#008753] px-4 py-2 text-sm font-extrabold text-white">View provider</button></div></div></article>)}</div> : <div className="mt-6 grid gap-4 lg:grid-cols-2">{jobs.map((job) => <article key={job.id} className="rounded-2xl border border-[#dde7e1] bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><span className="rounded-full bg-[#eaf8f1] px-3 py-1 text-xs font-bold text-[#008753]">{job.category.name}</span><span className="text-xs font-semibold text-[#6b7a72]">{job.response_count} responses</span></div><h3 className="mt-3 text-xl font-black">{job.title}</h3><p className="mt-2 line-clamp-3 text-sm leading-6 text-[#66756d]">{job.description}</p><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-xs text-[#75827b]">Location</p><p className="font-bold">{[job.city, job.state, job.country].filter(Boolean).join(", ") || "Flexible"}</p></div><div><p className="text-xs text-[#75827b]">Budget</p><p className="font-bold">{job.budget_min || job.budget_max ? `${job.currency} ${Number(job.budget_min || 0).toLocaleString()} – ${Number(job.budget_max || job.budget_min || 0).toLocaleString()}` : "Open to quote"}</p></div></div><div className="mt-5 flex items-center justify-between border-t border-[#edf2ef] pt-4"><p className="text-xs text-[#66756d]">Posted by {job.client.full_name}</p><button onClick={() => setSelectedJob(job)} className="rounded-xl bg-[#FFB800] px-4 py-2 text-sm font-extrabold text-[#173126]">Respond & message</button></div></article>)}</div>}
+          {((tab === "services" && listings.length === 0) || (tab === "jobs" && jobs.length === 0)) && <div className="mt-6 rounded-2xl border border-dashed border-[#bfd2c7] bg-white p-10 text-center" role="status"><SlidersHorizontal className="mx-auto text-[#008753]" aria-hidden="true"/><h3 className="mt-3 text-lg font-black">No results yet</h3><p className="mt-1 text-sm text-[#66756d]">Try another service, category or location.</p></div>}
         </section>
       </div>
 
