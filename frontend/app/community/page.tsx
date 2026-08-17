@@ -5,9 +5,8 @@
 import { useState, useEffect } from "react";
 import { usePostStore } from "../store/usePostStore";
 import { useProfileStore } from "../store/useProfileStore";
-import CommunityNavbar from "../_components/feed/CommunityNavbar";
 import PostBox from "../_components/feed/PostBox";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, RotateCcw, Search } from "lucide-react";
 import PeopleYouMayKnow from "../_components/profile/PeopleYouMayKnow";
 import { RenderPostList } from "../_components/common/RenderPostList ";
 import PostSkeleton from "../_components/feed/PostSkeleton";
@@ -19,6 +18,7 @@ import { EXPRESS_URL } from "@/app/utils/MyConstants";
 export default function Community() {
   const [showPostBox, setShowPostBox] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     posts,
@@ -135,11 +135,14 @@ export default function Community() {
 
   const { filterBySearch, resetFilteredPosts, filteredPosts } = usePostStore();
 
-  const handleSearch = (query: string) => {
-    filterBySearch(query, "posts");
+  const runSearch = () => {
+    const term = searchQuery.trim();
+    if (term) filterBySearch(term, "posts");
+    else resetFilteredPosts();
   };
 
-  const handleReset = () => {
+  const resetSearch = () => {
+    setSearchQuery("");
     resetFilteredPosts();
     getAllPosts(1);
   };
@@ -147,25 +150,51 @@ export default function Community() {
   const displayPosts = filteredPosts?.length ? filteredPosts : posts;
 
   return (
-    <div className="min-h-screen md:px-6 px-1 pb-5">
-      <CommunityNavbar
-        onCreatePost={() => setShowPostBox(true)}
-        onSearch={handleSearch}
-        onReset={handleReset}
-      />
-
-      <section className="flex justify-center gap-3 lg:gap-4 w-full md:px-10 mx-auto">
-        <div className="md:w-[22rem] hidden lg:block mt-4">
+    <div className="min-h-screen px-1 pb-5 md:px-6">
+      <section className="mx-auto flex w-full justify-center gap-3 md:px-10 lg:gap-4">
+        <div className="mt-4 hidden md:w-[22rem] lg:block">
           <div className="sticky top-4">
             <PeopleYouMayKnow />
           </div>
         </div>
 
-        <main className="flex-[3] md:mt-4 w-full">
+        <main className="w-full flex-[3] md:mt-4">
+          <div className="mb-4 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4" aria-label="SabiForum controls">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl font-black text-foreground">SabiForum</h1>
+                <p className="text-sm font-medium text-muted-foreground">Ask questions, share local knowledge and learn from the community.</p>
+              </div>
+              <button type="button" onClick={() => setShowPostBox(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">
+                <Plus size={18} aria-hidden="true" />Create post
+              </button>
+            </div>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <label className="relative min-w-0 flex-1">
+                <span className="sr-only">Search SabiForum</span>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} aria-hidden="true" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") runSearch();
+                    if (event.key === "Escape") resetSearch();
+                  }}
+                  placeholder="Search SabiForum"
+                  className="min-h-11 w-full rounded-xl border border-border bg-background pl-11 pr-4 text-sm outline-none focus:border-primary"
+                />
+              </label>
+              <button type="button" onClick={runSearch} className="min-h-11 rounded-xl border border-border px-4 text-sm font-black text-foreground hover:bg-muted">Search</button>
+              <button type="button" onClick={resetSearch} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-black text-muted-foreground hover:bg-muted hover:text-foreground">
+                <RotateCcw size={17} aria-hidden="true" />Reset
+              </button>
+            </div>
+          </div>
+
           <PostBox visible={showPostBox} onClose={() => setShowPostBox(false)} />
 
           {firstLoad && loading && (
-            <div className="space-y-4 pb-6">
+            <div className="space-y-4 pb-6" aria-label="Loading SabiForum posts">
               {[...Array(5)].map((_, i) => (
                 <PostSkeleton key={i} />
               ))}
@@ -173,40 +202,45 @@ export default function Community() {
           )}
 
           {!firstLoad && loading && (
-            <div className="flex justify-center items-center gap-2 py-4">
-              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-              <p className="text-gray-500 text-sm">Refreshing posts...</p>
+            <div className="flex items-center justify-center gap-2 py-4" aria-live="polite">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Refreshing posts…</p>
             </div>
           )}
 
           {posts.length > 0 && (
-            <div className="md:space-y-4 space-y-1">
+            <div className="space-y-1 md:space-y-4">
               <RenderPostList
                 posts={displayPosts}
-                emptyMessage=""
+                emptyMessage="No posts match your current search."
                 reloadFn={getAllPosts}
                 clickable
               />
 
               {loading && (
-                <div className="flex justify-center items-center gap-2 py-4">
-                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                  <p className="text-gray-400 text-sm">Loading more posts...</p>
+                <div className="flex items-center justify-center gap-2 py-4" aria-live="polite">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Loading more posts…</p>
                 </div>
               )}
             </div>
           )}
 
-          {error && <div className="text-center text-red-500 py-8">{error}</div>}
+          {error && (
+            <div role="alert" className="my-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-center">
+              <p className="font-bold text-destructive">{error}</p>
+              <button type="button" onClick={() => getAllPosts(1)} className="mt-3 min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">Try again</button>
+            </div>
+          )}
 
-          {!loading && posts.length === 0 && (
-            <div className="text-center text-gray-400 py-8">
-              No posts yet — be the first to share something!
+          {!loading && !error && posts.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border py-10 text-center text-muted-foreground">
+              No posts yet — be the first to share something.
             </div>
           )}
         </main>
 
-        <aside className="hidden md:block md:w-[22rem] mt-2">
+        <aside className="mt-2 hidden md:block md:w-[22rem]">
           <div className="sticky top-4">
             <Aside />
           </div>
