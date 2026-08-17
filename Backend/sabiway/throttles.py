@@ -4,13 +4,7 @@ from rest_framework.throttling import SimpleRateThrottle
 
 
 class SabiWayRateThrottle(SimpleRateThrottle):
-    """One shared throttle that tightens sensitive anonymous endpoints.
-
-    General authenticated traffic is keyed by user; anonymous traffic is keyed
-    by client address. Authentication/reset routes additionally include a short
-    hash of the submitted email where available so one person cannot cheaply
-    brute-force a target while raw PII never appears in cache keys.
-    """
+    """One shared throttle with tighter scopes for sensitive/high-volume routes."""
 
     scope = "user"
 
@@ -23,6 +17,7 @@ class SabiWayRateThrottle(SimpleRateThrottle):
         ("/auth/google-login/", "oauth"),
         ("/auth/google/callback/", "oauth"),
         ("/auth/token/refresh/", "token_refresh"),
+        ("/operations/events/", "analytics"),
     )
 
     def _scope_for(self, request):

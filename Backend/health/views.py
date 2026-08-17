@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from operations.analytics import record_technical_metric
 from .hardening import database_ready
 
 
@@ -21,6 +22,11 @@ class HealthCheckView(APIView):
 
     def get(self, request):
         ready = database_ready()
+        try:
+            record_technical_metric("database", route="readiness", success=ready, source="backend")
+        except Exception:
+            # Readiness must remain usable even if observability storage itself is unavailable.
+            pass
         response = Response(
             {"status": "healthy" if ready else "unavailable", "database": "ok" if ready else "unavailable"},
             status=status.HTTP_200_OK if ready else status.HTTP_503_SERVICE_UNAVAILABLE,

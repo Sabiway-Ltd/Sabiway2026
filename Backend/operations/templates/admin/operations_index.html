@@ -8,7 +8,7 @@
     </style>
     <h2 class="sabiway-ops-heading">Operational overview</h2>
     <div class="sabiway-ops-grid" aria-label="SabiWay operational overview">
-      <div class="sabiway-ops-card"><span>Active users</span><strong>{{ operations_metrics.users_active }}</strong><span>{{ operations_metrics.users_total }} total</span></div>
+      <div class="sabiway-ops-card"><span>Active accounts</span><strong>{{ operations_metrics.users_active }}</strong><span>{{ operations_metrics.users_total }} total</span></div>
       <div class="sabiway-ops-card"><span>Open support</span><strong>{{ operations_metrics.support_open }}</strong><span>{{ operations_metrics.support_urgent }} urgent</span></div>
       <div class="sabiway-ops-card"><span>Content reports</span><strong>{{ operations_metrics.post_reports_open }}</strong><span>open</span></div>
       <div class="sabiway-ops-card"><span>Conversation reports</span><strong>{{ operations_metrics.conversation_reports_open }}</strong><span>open</span></div>
@@ -20,6 +20,20 @@
       <div class="sabiway-ops-card"><span>Open disputes</span><strong>{{ operations_metrics.disputes_open }}</strong><span>funds protected</span></div>
       <div class="sabiway-ops-card"><span>Notifications</span><strong>{{ operations_metrics.notifications_24h }}</strong><span>last 24h</span></div>
       <div class="sabiway-ops-card"><span>Admin actions</span><strong>{{ operations_metrics.admin_actions_24h }}</strong><span>last 24h</span></div>
+    </div>
+
+    <h2 class="sabiway-ops-heading">Product & technical measurement — last 24h</h2>
+    <div class="sabiway-ops-grid" aria-label="SabiWay product and technical measurement">
+      <div class="sabiway-ops-card"><span>Measured active users</span><strong>{{ operations_metrics.measure_active_users }}</strong><span>users with product events</span></div>
+      <div class="sabiway-ops-card"><span>Registrations</span><strong>{{ operations_metrics.measure_registration_completed }}</strong><span>completed</span></div>
+      <div class="sabiway-ops-card"><span>Verification</span><strong>{{ operations_metrics.measure_verification_completed }}</strong><span>{{ operations_metrics.measure_verification_started }} started</span></div>
+      <div class="sabiway-ops-card"><span>Searches</span><strong>{{ operations_metrics.measure_search_performed }}</strong><span>privacy-safe events</span></div>
+      <div class="sabiway-ops-card"><span>Messages</span><strong>{{ operations_metrics.measure_message_sent }}</strong><span>sent</span></div>
+      <div class="sabiway-ops-card"><span>Transactions</span><strong>{{ operations_metrics.measure_transaction_completed }}</strong><span>{{ operations_metrics.measure_transaction_started }} started</span></div>
+      <div class="sabiway-ops-card"><span>API requests</span><strong>{{ operations_metrics.measure_api_requests }}</strong><span>{{ operations_metrics.measure_api_avg_latency_ms }} ms avg</span></div>
+      <div class="sabiway-ops-card"><span>API failures</span><strong>{{ operations_metrics.measure_api_5xx_or_failures }}</strong><span>{{ operations_metrics.measure_api_error_rate }} error rate</span></div>
+      <div class="sabiway-ops-card"><span>Payment failures</span><strong>{{ operations_metrics.measure_payment_failures }}</strong><span>last 24h</span></div>
+      <div class="sabiway-ops-card"><span>Realtime failures</span><strong>{{ operations_metrics.measure_realtime_failures }}</strong><span>last 24h</span></div>
     </div>
   {% endif %}
   {{ block.super }}
