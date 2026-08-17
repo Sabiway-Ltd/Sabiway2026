@@ -12,12 +12,34 @@ const corsOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000")
   .filter(Boolean);
 const internalBroadcastToken = process.env.INTERNAL_BROADCAST_TOKEN ?? "";
 const jwtSigningKey = process.env.JWT_SIGNING_KEY ?? "";
+const maxSocketsPerUser = Math.max(1, Number(process.env.MAX_SOCKETS_PER_USER ?? 5));
 
+app.disable("x-powered-by");
 app.use(cors({ origin: corsOrigins, credentials: true }));
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "512kb", strict: true }));
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: corsOrigins, credentials: true } });
+server.requestTimeout = 10_000;
+server.headersTimeout = 12_000;
+server.keepAliveTimeout = 5_000;
+
+const io = new Server(server, {
+  cors: { origin: corsOrigins, credentials: true },
+  maxHttpBufferSize: 256 * 1024,
+  pingInterval: 25_000,
+  pingTimeout: 20_000,
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000,
+    skipMiddlewares: false,
+  },
+});
 const userSockets = new Map();
 
 function base64UrlDecode(value) {
@@ -40,7 +62,7 @@ function verifyAccessToken(token) {
     return null;
   }
   if (header.alg !== "HS256" || payload.token_type !== "access" || !payload.user_id) return null;
-  if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) return null;
+  if (!payload.exp || Math.floor(Date.now() / 1000) >= payload.exp) return null;
   const expectedSignature = crypto.createHmac("sha256", jwtSigningKey).update(`${encodedHeader}.${encodedPayload}`).digest("base64url");
   const received = Buffer.from(encodedSignature);
   const expected = Buffer.from(expectedSignature);
@@ -69,6 +91,11 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   const userId = socket.data.userId;
   const sockets = userSockets.get(userId) ?? new Set();
+  if (sockets.size >= maxSocketsPerUser) {
+    socket.emit("session-limit", { message: "Too many active realtime sessions." });
+    socket.disconnect(true);
+    return;
+  }
   sockets.add(socket.id);
   userSockets.set(userId, sockets);
   socket.join(`user:${userId}`);
@@ -84,7 +111,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok", authenticatedRealtime
 
 app.post("/broadcast", requireInternalToken, (req, res) => {
   const data = req.body;
-  if (!data?.action) return res.status(400).json({ error: "Missing action" });
+  if (!data?.action || typeof data.action !== "string" || data.action.length > 80) return res.status(400).json({ error: "Invalid action" });
   io.emit("new-post", data);
   return res.json({ status: "sent" });
 });
@@ -98,13 +125,18 @@ app.post("/broadcast-notification", requireInternalToken, (req, res) => {
 
 app.post("/broadcast-marketplace", requireInternalToken, (req, res) => {
   const { userIds, event, payload } = req.body;
-  if (!Array.isArray(userIds) || userIds.length === 0 || typeof event !== "string" || !payload) {
-    return res.status(400).json({ error: "Missing userIds, event or payload" });
+  if (!Array.isArray(userIds) || userIds.length === 0 || userIds.length > 100 || typeof event !== "string" || !payload) {
+    return res.status(400).json({ error: "Invalid recipients, event or payload" });
   }
   const allowedEvents = new Set(["new-message", "booking-updated", "schedule-updated"]);
   if (!allowedEvents.has(event)) return res.status(400).json({ error: "Unsupported marketplace event" });
-  for (const userId of userIds) io.to(`user:${String(userId)}`).emit(event, payload);
-  return res.json({ status: "sent", recipients: userIds.length });
+  const recipients = [...new Set(userIds.map((userId) => String(userId)))];
+  for (const userId of recipients) io.to(`user:${userId}`).emit(event, payload);
+  return res.json({ status: "sent", recipients: recipients.length });
+});
+
+server.on("clientError", (_err, socket) => {
+  if (socket.writable) socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
 });
 
 server.listen(port, () => console.log(`Socket.io server running on port ${port}`));
