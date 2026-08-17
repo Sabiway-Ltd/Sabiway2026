@@ -1,6 +1,6 @@
 # Phase 2 — Identity, Authentication & Onboarding
 
-Status: **IN PROGRESS**
+Status: **IN PROGRESS — IMPLEMENTATION COMPLETE, FINAL CI/SESSION GATE OPEN**
 
 ## Programme constraint
 
@@ -12,38 +12,58 @@ Deliver one SabiWay identity across Web + Android + iOS using the shared Django/
 
 ## Audit decisions
 
-| Capability | Existing state | Decision |
+| Capability | Existing state / result | Decision |
 |---|---|---|
-| User identity | Custom email-based Django `User` exists | **KEEP / IMPROVE** |
-| Roles | `client` / `professional` stored on `User` and pending signup | **KEEP** as authoritative identity role |
-| Email confirmation | `PendingSignup` confirmation flow exists | **IMPROVE** |
-| Password recovery | Code + reset token flow exists | **KEEP / IMPROVE** |
-| JWT | SimpleJWT with refresh rotation/blacklisting exists | **IMPROVE** session/client handling |
-| Google auth | Existing OAuth login/creation exists | **REFACTOR** so new users cannot bypass role/onboarding requirements |
-| Admin | Django admin can search/manage users | **KEEP / IMPROVE** |
-| Mobile auth | Existing `AuthFlow` covers role, signup, login and recovery | **IMPROVE**, do not rebuild |
-| Web auth | Existing login/signup/recovery routes exist | **IMPROVE / REFACTOR** to shared design system and role parity |
-| Phone identity | Not persisted/normalised | **ADD** Nigerian-friendly optional canonical phone field |
-| Terms/onboarding state | Not persisted | **ADD** centrally |
+| User identity | Custom email-based Django `User` retained | **KEEP / IMPROVE** |
+| Roles | `accounts.User.role` remains authoritative | **KEEP** |
+| Email confirmation | Pending signup now carries role, canonical phone and terms into the real account | **KEEP / IMPROVE** |
+| Password recovery | Existing non-enumerating reset flow retained | **KEEP / IMPROVE** |
+| JWT | SimpleJWT refresh rotation/blacklisting retained | **KEEP / HARDEN CLIENT STORAGE** |
+| Google auth | New accounts no longer receive a session without role + explicit terms onboarding | **REFACTOR COMPLETE** |
+| Admin | Existing Django admin account management retained | **KEEP** |
+| Mobile auth | Existing flow upgraded with phone, explicit terms consent and account-state messaging | **IMPROVE COMPLETE** |
+| Web auth | Existing routes retained; signup now has role, phone and explicit terms parity | **IMPROVE COMPLETE** |
+| Phone identity | Optional canonical Nigerian mobile stored as `+234…` | **ADD COMPLETE** |
+| Terms/onboarding | `terms_accepted_at` and `onboarding_completed_at` stored centrally | **ADD COMPLETE** |
 
-## Phase 2 requirements being closed
+## Implemented identity rules
 
-- one shared account across all clients
-- role persistence
-- email confirmation
-- password recovery
-- secure logout/session expiry behaviour
-- suspended account restriction
-- duplicate-account controls
-- Nigerian phone normalisation (`080…`, `070…`, `081…`, `090…`, `+234…`)
-- terms acceptance and onboarding state
-- admin account lookup
-- web/mobile loading, error and accessibility parity
-- cross-platform auth regression tests
+- one shared Django account for Web + Android + iOS
+- explicit `client` / `professional` role selection
+- email normalisation and duplicate/pending-signup protection
+- Nigerian phone normalisation for local `07/08/09…` and `+234…` mobile formats
+- explicit terms acceptance before account creation
+- terms and phone survive pending-email-confirmation flow
+- onboarding completion is authoritative on the account
+- suspended/inactive accounts receive no JWT session
+- first-time Google users cannot bypass role/terms onboarding
+- web and mobile signup payloads use the same backend contract
+- password recovery continues not to reveal whether an email exists
+- role/phone/onboarding state returned consistently in login session payloads
+- regression coverage added for the above identity rules
+
+## Remaining Phase 2 gates
+
+- [x] Audit existing backend/Web/mobile auth.
+- [x] Establish `User.role` as authoritative role.
+- [x] Add central phone, terms and onboarding state.
+- [x] Add Nigerian phone normalisation/validation.
+- [x] Propagate identity fields through pending signup → confirmation → login.
+- [x] Prevent Google first-login role/onboarding bypass.
+- [x] Block suspended/inactive account sessions.
+- [x] Bring web signup into role/phone/terms parity.
+- [x] Bring Android/iOS signup into role/phone/terms parity.
+- [x] Add backend regression tests for identity/onboarding state.
+- [ ] Final Platform CI green on current Phase 2 head.
+- [ ] Replace JavaScript-readable browser refresh-token persistence with the production session boundary before user-testing/production readiness. Current localStorage use is explicitly transitional and must not be treated as the final security design.
+
+## Browser session security note
+
+The current web client still uses JavaScript-readable token persistence inherited from the existing implementation. Phase 2 has corrected consistency problems (refresh/user state is now stored and cleared coherently), but **this is not the desired production trust boundary**. The preferred production direction is an HttpOnly/Secure/SameSite server-issued browser session or equivalent BFF token boundary so refresh credentials are not readable by application JavaScript. This hardening is mandatory before controlled user-testing readiness and may be completed in the security-hardening phase if it would otherwise destabilise current auth flows prematurely.
 
 ## Delivery sequencing
 
-Phase 3 may proceed as **stacked work-in-progress** from the Phase 2 branch to avoid idle time while working solo. This does **not** certify Phase 2 and does not allow Phase 3 to merge into `main` before its Phase 2 dependency is integrated and green.
+Phase 3 may proceed as stacked work-in-progress, but it cannot merge to `main` before this Phase 2 dependency is integrated and green.
 
 ## Deployment rule
 
