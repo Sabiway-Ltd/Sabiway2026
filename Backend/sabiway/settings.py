@@ -171,8 +171,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "sabiway.throttles.SabiWayRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("API_ANON_RATE", default="120/min"),
