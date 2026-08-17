@@ -3,7 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from .models import SupportCase
 from .serializers import SupportCaseSerializer, SupportCaseStaffUpdateSerializer
-from .services import record_operations_audit
+from .services import notify_support_case, record_operations_audit
 
 
 class SupportCaseViewSet(
@@ -64,3 +64,5 @@ class SupportCaseViewSet(
                 "assigned_to": updated.assigned_to_id,
             },
         )
+        if previous["status"] != updated.status:
+            notify_support_case(updated, actor=self.request.user)
