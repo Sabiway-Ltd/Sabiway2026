@@ -433,22 +433,41 @@ class ModerationReportListView(APIView):
 class ModerationReportActionView(APIView):
     permission_classes = [IsAdminUser]
     allowed_actions = {"dismiss", "remove", "restore"}
+    allowed_transitions = {
+        PostReport.Status.OPEN: {"dismiss", "remove"},
+        PostReport.Status.REMOVED: {"restore"},
+        PostReport.Status.DISMISSED: set(),
+        PostReport.Status.RESTORED: set(),
+    }
 
     def post(self, request, report_id):
         requested_action = request.data.get("action")
         note = str(request.data.get("note", "")).strip()
         if requested_action not in self.allowed_actions:
             return Response({"detail": "action must be dismiss, remove or restore"}, status=status.HTTP_400_BAD_REQUEST)
+        if not note:
+            return Response({"detail": "A moderator note is required for every decision."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             report = get_object_or_404(PostReport.objects.select_for_update().select_related("post"), id=report_id)
+            allowed = self.allowed_transitions.get(report.status, set())
+            if requested_action not in allowed:
+                return Response(
+                    {
+                        "detail": f"Cannot {requested_action} a report with status '{report.status}'.",
+                        "status": report.status,
+                        "allowed_actions": sorted(allowed),
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+
             post = report.post
             if requested_action == "dismiss":
                 report.status = PostReport.Status.DISMISSED
                 audit_action = ModerationAudit.Action.DISMISSED
             elif requested_action == "remove":
                 post.is_hidden = True
-                post.moderation_reason = note or report.reason
+                post.moderation_reason = note
                 post.save(update_fields=["is_hidden", "moderation_reason", "updated_at"])
                 report.status = PostReport.Status.REMOVED
                 audit_action = ModerationAudit.Action.REMOVED
