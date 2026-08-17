@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from accounts.models import User
+from accounts.models import PendingSignup, User
 from marketplace.models import BookingAudit, BookingRequest, Message
 from notifications.models import Notification
 from posts.models import ModerationAudit, Post
@@ -28,6 +28,12 @@ def _record_once(event_name, actor, *, properties=None):
     if ProductEvent.objects.filter(event_name=event_name, actor=actor).exists():
         return None
     return record_product_event(event_name, actor=actor, properties=properties)
+
+
+@receiver(post_save, sender=PendingSignup, dispatch_uid="operations.measure_registration_started")
+def measure_registration_started(sender, instance, created, **kwargs):
+    if created:
+        record_product_event("registration_started", properties={"role": instance.role})
 
 
 @receiver(post_save, sender=User, dispatch_uid="operations.measure_user_lifecycle")
