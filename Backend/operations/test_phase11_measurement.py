@@ -45,6 +45,8 @@ class Phase11MeasurementTests(APITestCase):
         self.assertEqual(self.client.get("/api/operations/measurement/").status_code, 403)
         permission = Permission.objects.get(content_type__app_label="operations", codename="view_product_measurement")
         self.staff.user_permissions.add(permission)
+        for cache_name in ("_perm_cache", "_user_perm_cache", "_group_perm_cache"):
+            self.staff.__dict__.pop(cache_name, None)
         allowed = self.client.get("/api/operations/measurement/?hours=24")
         self.assertEqual(allowed.status_code, 200)
         self.assertIn("api_error_rate", allowed.data)
