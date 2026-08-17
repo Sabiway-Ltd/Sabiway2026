@@ -1,6 +1,18 @@
 import { apiRequest } from "../api/client";
 import type { JobResponse, MarketplaceCategory, MarketplaceJob, MarketplaceListing } from "./types";
 
+export type MarketplaceDiscoveryFilters = {
+  q?: string;
+  category?: string;
+  subcategory?: string;
+  deliveryMode?: "in_person" | "remote" | "both";
+  availableNow?: boolean;
+  country?: string;
+  state?: string;
+  city?: string;
+  area?: string;
+};
+
 function authHeaders(access: string) {
   return { Authorization: `Bearer ${access}` };
 }
@@ -9,16 +21,32 @@ function unwrap<T>(payload: T[] | { results: T[] }): T[] {
   return Array.isArray(payload) ? payload : payload.results;
 }
 
+function discoveryQuery(filters: MarketplaceDiscoveryFilters = {}) {
+  const params = new URLSearchParams();
+  const q = filters.q?.trim();
+  if (q) params.set("q", q);
+  if (filters.category) params.set("category", filters.category);
+  if (filters.subcategory) params.set("subcategory", filters.subcategory);
+  if (filters.deliveryMode) params.set("delivery_mode", filters.deliveryMode);
+  if (filters.availableNow) params.set("available_now", "true");
+  if (filters.country?.trim()) params.set("country", filters.country.trim());
+  if (filters.state?.trim()) params.set("state", filters.state.trim());
+  if (filters.city?.trim()) params.set("city", filters.city.trim());
+  if (filters.area?.trim()) params.set("area", filters.area.trim());
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
 export async function getMarketplaceCategories(): Promise<MarketplaceCategory[]> {
   return unwrap(await apiRequest<MarketplaceCategory[] | { results: MarketplaceCategory[] }>("marketplace/categories/"));
 }
 
-export async function getMarketplaceListings(): Promise<MarketplaceListing[]> {
-  return unwrap(await apiRequest<MarketplaceListing[] | { results: MarketplaceListing[] }>("marketplace/listings/"));
+export async function getMarketplaceListings(filters: MarketplaceDiscoveryFilters = {}): Promise<MarketplaceListing[]> {
+  return unwrap(await apiRequest<MarketplaceListing[] | { results: MarketplaceListing[] }>(`marketplace/listings/${discoveryQuery(filters)}`));
 }
 
-export async function getMarketplaceJobs(): Promise<MarketplaceJob[]> {
-  return unwrap(await apiRequest<MarketplaceJob[] | { results: MarketplaceJob[] }>("marketplace/jobs/"));
+export async function getMarketplaceJobs(filters: MarketplaceDiscoveryFilters = {}): Promise<MarketplaceJob[]> {
+  return unwrap(await apiRequest<MarketplaceJob[] | { results: MarketplaceJob[] }>(`marketplace/jobs/${discoveryQuery(filters)}`));
 }
 
 export async function createMarketplaceJob(access: string, payload: Record<string, unknown>): Promise<MarketplaceJob> {
