@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -33,6 +33,7 @@ import {
   reportThread,
   sendAttachment,
   sendTextMessage,
+  unblockThread,
   updateBookingStatus,
 } from "./api";
 import type { Booking, MarketplaceMessage, MessageThread, PickedAttachment } from "./types";
@@ -59,6 +60,9 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   const [attachment, setAttachment] = useState<PickedAttachment | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const [inboxError, setInboxError] = useState("");
+  const [conversationError, setConversationError] = useState("");
   const [sending, setSending] = useState(false);
   const [panel, setPanel] = useState<Panel>("conversation");
   const [scope, setScope] = useState("");
@@ -66,39 +70,59 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   const [currency, setCurrency] = useState("NGN");
   const [scheduleText, setScheduleText] = useState("");
   const [scheduleNote, setScheduleNote] = useState("");
+  const threadRequestInFlight = useRef(false);
+  const conversationRequestInFlight = useRef<string | null>(null);
 
   const activeThread = useMemo(() => threads.find((item) => item.id === activeId) ?? null, [threads, activeId]);
   const activeBooking = useMemo(() => bookings.find((item) => item.thread === activeId) ?? null, [bookings, activeId]);
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
   const isProfessional = session.user.role === "professional";
+  const messagingBlocked = Boolean(activeThread?.is_blocked_by_me || activeThread?.is_blocked_by_other);
 
   const loadThreads = useCallback(async () => {
+    if (threadRequestInFlight.current) return;
+    threadRequestInFlight.current = true;
+    setInboxError("");
     try {
       const [nextThreads, nextBookings] = await Promise.all([getThreads(session.access), getBookings(session.access)]);
       setThreads(nextThreads);
       setBookings(nextBookings);
       setActiveId((current) => current ?? nextThreads[0]?.id ?? null);
     } catch (error) {
-      Alert.alert("Could not load messages", error instanceof Error ? error.message : "Please try again.");
+      setInboxError(error instanceof Error ? error.message : "Could not load conversations. Please try again.");
     } finally {
+      threadRequestInFlight.current = false;
       setLoading(false);
       setRefreshing(false);
     }
   }, [session.access]);
 
   const loadConversation = useCallback(async (threadId: string) => {
+    if (conversationRequestInFlight.current === threadId) return;
+    conversationRequestInFlight.current = threadId;
+    setConversationError("");
+    setConversationLoading(true);
     try {
       const nextMessages = await getMessages(session.access, threadId);
       setMessages(nextMessages);
       await markThreadRead(session.access, threadId);
       setThreads((current) => current.map((item) => item.id === threadId ? { ...item, unread_count: 0 } : item));
     } catch (error) {
-      Alert.alert("Could not load conversation", error instanceof Error ? error.message : "Please try again.");
+      setConversationError(error instanceof Error ? error.message : "Could not load this conversation. Please try again.");
+    } finally {
+      if (conversationRequestInFlight.current === threadId) conversationRequestInFlight.current = null;
+      setConversationLoading(false);
     }
   }, [session.access]);
 
-  useEffect(() => { loadThreads(); }, [loadThreads]);
-  useEffect(() => { if (activeId) loadConversation(activeId); else setMessages([]); }, [activeId, loadConversation]);
+  useEffect(() => { void loadThreads(); }, [loadThreads]);
+  useEffect(() => {
+    if (activeId) void loadConversation(activeId);
+    else {
+      setMessages([]);
+      setConversationError("");
+    }
+  }, [activeId, loadConversation]);
 
   useEffect(() => {
     const socket: Socket = io(environment.realtimeUrl, {
@@ -107,21 +131,24 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
       reconnection: true,
     });
     const refresh = () => {
-      loadThreads();
-      if (activeId) loadConversation(activeId);
+      void loadThreads();
+      if (activeId) void loadConversation(activeId);
     };
     socket.on("new-message", refresh);
     socket.on("booking-updated", refresh);
     socket.on("schedule-updated", refresh);
+    socket.on("connect", refresh);
     return () => {
       socket.off("new-message", refresh);
       socket.off("booking-updated", refresh);
       socket.off("schedule-updated", refresh);
+      socket.off("connect", refresh);
       socket.disconnect();
     };
   }, [activeId, loadConversation, loadThreads, session.access]);
 
   const pickDocument = async () => {
+    if (messagingBlocked) return;
     const result = await DocumentPicker.getDocumentAsync({
       type: ["image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"],
       copyToCacheDirectory: true,
@@ -138,6 +165,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   };
 
   const takePhoto = async () => {
+    if (messagingBlocked) return;
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       Alert.alert("Camera permission required", "Allow camera access to attach a new photo.");
@@ -155,7 +183,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   };
 
   const send = async () => {
-    if (!activeId || (!messageText.trim() && !attachment)) return;
+    if (!activeId || messagingBlocked || (!messageText.trim() && !attachment)) return;
     setSending(true);
     try {
       const created = attachment
@@ -222,28 +250,32 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
     }
   };
 
-  const safety = (action: "block" | "report") => {
+  const safety = (action: "block" | "unblock" | "report") => {
     if (!activeId) return;
-    Alert.alert(
-      action === "block" ? "Block this user?" : "Report this conversation?",
-      action === "block" ? "Neither participant will be able to send new messages until you unblock them." : "SabiWay support will receive the report metadata for review.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: action === "block" ? "Block" : "Report",
-          style: action === "block" ? "destructive" : "default",
-          onPress: async () => {
-            try {
-              if (action === "block") await blockThread(session.access, activeId);
-              else await reportThread(session.access, activeId);
-              Alert.alert(action === "block" ? "User blocked" : "Report submitted");
-            } catch (error) {
-              Alert.alert("Action failed", error instanceof Error ? error.message : "Please try again.");
-            }
-          },
+    const title = action === "block" ? "Block this user?" : action === "unblock" ? "Unblock this user?" : "Report this conversation?";
+    const message = action === "block"
+      ? "Neither participant will be able to send new messages until you unblock them."
+      : action === "unblock"
+        ? "You can message again unless the other participant has also blocked you."
+        : "SabiWay support will receive the report metadata for review.";
+    Alert.alert(title, message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: action === "block" ? "Block" : action === "unblock" ? "Unblock" : "Report",
+        style: action === "block" ? "destructive" : "default",
+        onPress: async () => {
+          try {
+            if (action === "block") await blockThread(session.access, activeId);
+            else if (action === "unblock") await unblockThread(session.access, activeId);
+            else await reportThread(session.access, activeId);
+            await loadThreads();
+            Alert.alert(action === "block" ? "User blocked" : action === "unblock" ? "User unblocked" : "Report submitted");
+          } catch (error) {
+            Alert.alert("Action failed", error instanceof Error ? error.message : "Please try again.");
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   if (loading) return <View style={styles.center}><ActivityIndicator color={colors.brand} /></View>;
@@ -251,30 +283,31 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={[styles.header, { width: contentWidth }]}>
-        <Pressable onPress={onBackToMarketplace} style={styles.headerButton}><Text style={styles.headerButtonText}>Marketplace</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back to Marketplace" onPress={onBackToMarketplace} style={styles.headerButton}><Text style={styles.headerButtonText}>Marketplace</Text></Pressable>
         <View style={{ flex: 1 }}><Text style={styles.eyebrow}>PRIVATE & AUDITABLE</Text><Text style={styles.title}>Messages & bookings</Text></View>
-        <Pressable onPress={onBackToCommunity} style={styles.headerButton}><Text style={styles.headerButtonText}>SabiForum</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Open SabiForum" onPress={onBackToCommunity} style={styles.headerButton}><Text style={styles.headerButtonText}>SabiForum</Text></Pressable>
       </View>
 
       {compact && activeThread ? (
-        <View style={[styles.mobileTabs, { width: contentWidth }]}>
-          <Pressable onPress={() => setPanel("conversation")} style={[styles.mobileTab, panel === "conversation" && styles.mobileTabActive]}><Text style={[styles.mobileTabText, panel === "conversation" && styles.mobileTabTextActive]}>Conversation</Text></Pressable>
-          <Pressable onPress={() => setPanel("agreement")} style={[styles.mobileTab, panel === "agreement" && styles.mobileTabActive]}><Text style={[styles.mobileTabText, panel === "agreement" && styles.mobileTabTextActive]}>Booking</Text></Pressable>
+        <View style={[styles.mobileTabs, { width: contentWidth }]} accessibilityRole="tablist">
+          <Pressable accessibilityRole="tab" accessibilityState={{ selected: panel === "conversation" }} onPress={() => setPanel("conversation")} style={[styles.mobileTab, panel === "conversation" && styles.mobileTabActive]}><Text style={[styles.mobileTabText, panel === "conversation" && styles.mobileTabTextActive]}>Conversation</Text></Pressable>
+          <Pressable accessibilityRole="tab" accessibilityState={{ selected: panel === "agreement" }} onPress={() => setPanel("agreement")} style={[styles.mobileTab, panel === "agreement" && styles.mobileTabActive]}><Text style={[styles.mobileTabText, panel === "agreement" && styles.mobileTabTextActive]}>Booking</Text></Pressable>
         </View>
       ) : null}
 
       <View style={[styles.body, { width: contentWidth, flexDirection: compact ? "column" : "row" }]}>
         <View style={[styles.threadPane, compact && activeThread ? styles.hidden : null, !compact ? { width: 270 } : { width: "100%" }]}>
           <View style={styles.paneHeader}><Text style={styles.paneTitle}>Inbox</Text><Text style={styles.muted}>{threads.length} conversations</Text></View>
+          {inboxError ? <View style={styles.errorCard}><Text style={styles.errorText}>{inboxError}</Text><Pressable accessibilityRole="button" onPress={() => void loadThreads()} style={styles.retryButton}><Text style={styles.retryText}>Retry</Text></Pressable></View> : null}
           <FlatList
             data={threads}
             keyExtractor={(item) => item.id}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadThreads(); }} />}
-            ListEmptyComponent={<Text style={styles.empty}>No conversations yet. Open a service or respond to a job from Marketplace.</Text>}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { if (!threadRequestInFlight.current) { setRefreshing(true); void loadThreads(); } }} />}
+            ListEmptyComponent={!inboxError ? <Text style={styles.empty}>No conversations yet. Open a service or respond to a job from Marketplace.</Text> : null}
             renderItem={({ item }) => (
-              <Pressable onPress={() => { setActiveId(item.id); setPanel("conversation"); }} style={[styles.threadRow, item.id === activeId && styles.threadRowActive]}>
+              <Pressable accessibilityRole="button" onPress={() => { setActiveId(item.id); setPanel("conversation"); }} style={[styles.threadRow, item.id === activeId && styles.threadRowActive]}>
                 <View style={styles.rowBetween}><Text style={styles.threadName}>{isProfessional ? item.client.full_name : item.professional.full_name}</Text>{item.unread_count > 0 ? <Text style={styles.unread}>{item.unread_count}</Text> : null}</View>
-                <Text style={styles.muted} numberOfLines={1}>{isProfessional ? "Client conversation" : item.professional.job || "SabiWay professional"}</Text>
+                <Text style={styles.muted} numberOfLines={1}>{item.is_blocked_by_me ? "You blocked this user" : item.is_blocked_by_other ? "Messaging restricted" : isProfessional ? "Client conversation" : item.professional.job || "SabiWay professional"}</Text>
               </Pressable>
             )}
           />
@@ -283,23 +316,27 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
         {activeThread && (!compact || panel === "conversation") ? (
           <View style={[styles.conversationPane, !compact ? { flex: 1 } : { width: "100%" }]}>
             <View style={styles.paneHeader}>
-              <View style={styles.rowBetween}><View style={{ flex: 1 }}><Text style={styles.paneTitle}>{isProfessional ? activeThread.client.full_name : activeThread.professional.full_name}</Text><Text style={styles.muted}>Private SabiWay conversation</Text></View><Pressable onPress={() => safety("report")} style={styles.safetyButton}><Text style={styles.safetyText}>Report</Text></Pressable><Pressable onPress={() => safety("block")} style={styles.safetyButton}><Text style={styles.dangerText}>Block</Text></Pressable></View>
-              {compact ? <Pressable onPress={() => setActiveId(null)}><Text style={styles.link}>← All conversations</Text></Pressable> : null}
+              <View style={styles.rowBetween}><View style={{ flex: 1 }}><Text style={styles.paneTitle}>{isProfessional ? activeThread.client.full_name : activeThread.professional.full_name}</Text><Text style={styles.muted}>Private SabiWay conversation</Text></View><Pressable accessibilityRole="button" onPress={() => safety("report")} style={styles.safetyButton}><Text style={styles.safetyText}>Report</Text></Pressable><Pressable accessibilityRole="button" onPress={() => safety(activeThread.is_blocked_by_me ? "unblock" : "block")} style={styles.safetyButton}><Text style={activeThread.is_blocked_by_me ? styles.safetyText : styles.dangerText}>{activeThread.is_blocked_by_me ? "Unblock" : "Block"}</Text></Pressable></View>
+              {activeThread.is_blocked_by_other ? <Text style={styles.blockNotice}>This participant has blocked messaging. You can still view the conversation history.</Text> : activeThread.is_blocked_by_me ? <Text style={styles.blockNotice}>You blocked this participant. Unblock them to resume messaging, unless they have also blocked you.</Text> : null}
+              {compact ? <Pressable accessibilityRole="button" onPress={() => setActiveId(null)}><Text style={styles.link}>← All conversations</Text></Pressable> : null}
             </View>
-            <FlatList
-              data={messages}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.messageList}
-              ListEmptyComponent={<Text style={styles.empty}>Describe the work, expected outcome, budget or availability to start the conversation.</Text>}
-              renderItem={({ item }) => {
-                const mine = item.sender.user_id === session.user.id;
-                return <View style={[styles.messageBubble, mine ? styles.mine : styles.theirs]}><Text style={styles.sender}>{mine ? "You" : item.sender.full_name}</Text>{item.body ? <Text style={styles.messageText}>{item.body}</Text> : null}{item.attachment_name ? <Text style={styles.attachmentText}>Attachment: {item.attachment_name}</Text> : null}<Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text></View>;
-              }}
-            />
-            <View style={styles.composer}>
-              <TextInput value={messageText} onChangeText={setMessageText} multiline placeholder="Message securely. Contact details unlock after booking acceptance." placeholderTextColor="#7A8880" style={[styles.input, styles.messageInput]} />
+            {conversationError ? <View style={styles.errorCard}><Text style={styles.errorText}>{conversationError}</Text><Pressable accessibilityRole="button" onPress={() => activeId && void loadConversation(activeId)} style={styles.retryButton}><Text style={styles.retryText}>Retry conversation</Text></Pressable></View> : null}
+            {conversationLoading && messages.length === 0 ? <View style={styles.conversationLoading}><ActivityIndicator color={colors.brand} /></View> : (
+              <FlatList
+                data={messages}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.messageList}
+                ListEmptyComponent={!conversationError ? <Text style={styles.empty}>Describe the work, expected outcome, budget or availability to start the conversation.</Text> : null}
+                renderItem={({ item }) => {
+                  const mine = item.sender.user_id === session.user.id;
+                  return <View style={[styles.messageBubble, mine ? styles.mine : styles.theirs]}><Text style={styles.sender}>{mine ? "You" : item.sender.full_name}</Text>{item.body ? <Text style={styles.messageText}>{item.body}</Text> : null}{item.attachment_name ? <Text style={styles.attachmentText}>Attachment: {item.attachment_name}</Text> : null}<Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text></View>;
+                }}
+              />
+            )}
+            <View style={[styles.composer, messagingBlocked && styles.composerDisabled]}>
+              <TextInput editable={!messagingBlocked} value={messageText} onChangeText={setMessageText} multiline placeholder={messagingBlocked ? "Messaging is currently restricted." : "Message securely. Contact details unlock after booking acceptance."} placeholderTextColor="#7A8880" style={[styles.input, styles.messageInput, messagingBlocked && styles.inputDisabled]} />
               {attachment ? <View style={styles.attachmentChip}><Text style={styles.attachmentChipText} numberOfLines={1}>{attachment.name}</Text><Pressable onPress={() => setAttachment(null)}><Text style={styles.link}>Remove</Text></Pressable></View> : null}
-              <View style={styles.composerActions}><Pressable onPress={pickDocument} style={styles.secondaryButton}><Text style={styles.secondaryText}>Attach file</Text></Pressable><Pressable onPress={takePhoto} style={styles.secondaryButton}><Text style={styles.secondaryText}>Camera</Text></Pressable><Pressable disabled={sending} onPress={send} style={styles.primaryButton}><Text style={styles.primaryText}>{sending ? "Sending…" : "Send"}</Text></Pressable></View>
+              <View style={styles.composerActions}><Pressable disabled={messagingBlocked} onPress={pickDocument} style={[styles.secondaryButton, messagingBlocked && styles.disabledButton]}><Text style={styles.secondaryText}>Attach file</Text></Pressable><Pressable disabled={messagingBlocked} onPress={takePhoto} style={[styles.secondaryButton, messagingBlocked && styles.disabledButton]}><Text style={styles.secondaryText}>Camera</Text></Pressable><Pressable disabled={sending || messagingBlocked} onPress={send} style={[styles.primaryButton, (sending || messagingBlocked) && styles.disabledButton]}><Text style={styles.primaryText}>{sending ? "Sending…" : "Send"}</Text></Pressable></View>
             </View>
           </View>
         ) : null}
@@ -347,6 +384,11 @@ const styles = StyleSheet.create({
   paneTitle: { color: "#173126", fontWeight: "900", fontSize: 18 },
   muted: { color: "#718078", fontSize: 11, lineHeight: 16 },
   empty: { color: "#718078", padding: 20, textAlign: "center", lineHeight: 20 },
+  errorCard: { margin: 10, borderWidth: 1, borderColor: "#F0C7C9", borderRadius: 12, backgroundColor: "#FFF4F4", padding: 11, gap: 8 },
+  errorText: { color: "#8C1F26", fontSize: 11, lineHeight: 17, fontWeight: "700" },
+  retryButton: { alignSelf: "flex-start", borderRadius: 8, backgroundColor: colors.brand, paddingHorizontal: 11, paddingVertical: 7 },
+  retryText: { color: "#FFFFFF", fontSize: 10, fontWeight: "900" },
+  conversationLoading: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 160 },
   threadRow: { padding: 13, borderBottomWidth: 1, borderBottomColor: "#EDF2EF" },
   threadRowActive: { backgroundColor: "#EEF8F3" },
   threadName: { color: "#173126", fontWeight: "900", flex: 1 },
@@ -355,6 +397,7 @@ const styles = StyleSheet.create({
   safetyButton: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
   safetyText: { color: "#58675F", fontSize: 10, fontWeight: "800" },
   dangerText: { color: "#A51D25", fontSize: 10, fontWeight: "900" },
+  blockNotice: { color: "#7A4D00", backgroundColor: "#FFF7DE", borderRadius: 8, padding: 8, fontSize: 10, lineHeight: 15, fontWeight: "700" },
   link: { color: colors.brand, fontWeight: "900", fontSize: 11 },
   messageList: { flexGrow: 1, padding: 12, gap: 8, backgroundColor: "#F9FBFA" },
   messageBubble: { maxWidth: "84%", borderRadius: 15, padding: 10, borderWidth: 1 },
@@ -365,7 +408,9 @@ const styles = StyleSheet.create({
   timestamp: { color: "#819087", fontSize: 9, marginTop: 5 },
   attachmentText: { color: colors.brand, fontWeight: "800", fontSize: 11, marginTop: 5 },
   composer: { padding: 10, borderTopWidth: 1, borderTopColor: "#EDF2EF", gap: 7 },
+  composerDisabled: { backgroundColor: "#F5F6F5" },
   input: { minHeight: 44, borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 11, paddingHorizontal: 11, backgroundColor: "#FFFFFF", color: "#173126" },
+  inputDisabled: { backgroundColor: "#F0F2F1", color: "#718078" },
   messageInput: { minHeight: 70, textAlignVertical: "top", paddingTop: 10 },
   composerActions: { flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "flex-end" },
   attachmentChip: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderRadius: 10, backgroundColor: "#EEF8F3", padding: 8 },
@@ -374,6 +419,7 @@ const styles = StyleSheet.create({
   primaryText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
   secondaryButton: { borderWidth: 1, borderColor: "#CAD8D0", backgroundColor: "#FFFFFF", borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, alignItems: "center" },
   secondaryText: { color: "#173126", fontWeight: "900", fontSize: 11 },
+  disabledButton: { opacity: 0.45 },
   amberButton: { backgroundColor: "#FFB800", borderRadius: 10, padding: 12, alignItems: "center" },
   amberText: { color: "#173126", fontWeight: "900" },
   eyebrowDark: { color: colors.brand, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
