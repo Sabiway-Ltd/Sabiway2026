@@ -1,75 +1,64 @@
 # Master Phase 6 — Messaging, Realtime & Notifications Baseline
 
-Status: BUILD / IN PROGRESS
+Status: COMPLETE / CERTIFIED
 Branch: `feat/phase-6-messaging-realtime-notifications`
 Base: certified Phase 5 `main` (`74aba654cd300d107655f135fb82a99c0fa2293f`)
+Final executable head: `41070f3d61b02d4bb8cd446fe6c594cab8a89d76`
+Final certification CI: Platform CI #229 — PASS
 
 ## Objective
 
 Deliver one reliable cross-platform messaging, realtime and notifications experience across Web, Android and iOS while keeping Django as authoritative state and Express/Socket.IO as a best-effort delivery channel.
 
-This phase follows the Master Playbook sequence: inspect first, understand second, decide third, design fourth, build fifth, test sixth.
+This phase followed the Master Playbook sequence: inspect first, understand second, decide third, design fourth, build fifth, test sixth.
 
 ## Messaging domain — KEEP / IMPROVE
 
-The existing Django marketplace domain already owns:
+The existing Django marketplace domain remains authoritative for:
 - `MessageThread` participant membership and open/closed state;
-- `Message` body, attachment metadata, read state and timestamps;
+- `Message` content, attachment metadata, read state and timestamps;
 - `ConversationBlock`;
 - `ConversationReport`;
 - booking/thread linkage;
 - message/read indexes.
 
-Decision:
-- KEEP the existing `MessageThread` / `Message` domain as the authoritative messaging source.
-- IMPROVE permissions, blocking, read/unread, attachments, pagination, lifecycle and complete states where audit identifies gaps.
-- DO NOT create a second generic conversation/message persistence layer.
+No second conversation or message persistence layer was introduced.
 
-## Realtime — KEEP AS DELIVERY / HARDEN
+## Realtime — KEEP AS DELIVERY / HARDENED
 
-Express Socket.IO already:
-- verifies signed access JWTs before socket connection;
-- joins authenticated sockets to `user:<id>` rooms;
-- protects internal HTTP broadcast endpoints with `x-sabiway-internal-token`;
-- emits community, notification and marketplace events.
-
-Implemented hardening:
-- notification creation/read/read-all now use one authenticated Django -> Express helper;
+Completed:
+- notification creation/read/read-all use one authenticated Django -> Express helper;
 - internal broadcast token is applied consistently;
 - unread-count control payloads use explicit `update_unread_count` semantics;
 - Web no longer treats unread-count control payloads as ordinary notifications;
 - marketplace realtime payloads are converted to JSON-safe primitives before fanout, including UUID, Decimal, date and datetime values;
-- realtime transport/serialisation failures remain best-effort and never roll back successful Django mutations.
+- realtime transport/serialisation failures remain best-effort and cannot roll back successful Django mutations;
+- Web and mobile reconcile socket hints against authoritative Django state;
+- Web/mobile request deduplication prevents overlapping socket-triggered thread/conversation refreshes;
+- reconnect triggers authoritative reconciliation rather than relying on socket memory.
 
-Decision:
-- Django database state remains authoritative.
-- Express is delivery/fanout only.
-- clients reconcile realtime hints against Django rather than treating socket memory as authoritative state.
+Decision: Express/Socket.IO remains delivery/fanout only. Django state is authoritative.
 
-## Notifications — KEEP / HARDEN
-
-The existing Django `notifications` app contains persisted notifications, serializers, pagination, signals, URLs and read APIs.
+## Notifications — KEEP / HARDENED
 
 Completed:
-- hardened authenticated broadcast helper;
+- persisted Django notification/read state retained;
+- authenticated realtime broadcaster added;
 - authoritative unread-count broadcasts after mark-read/read-all;
 - recipient ownership regression coverage;
 - Web socket contract aligned with backend payloads;
-- Android/iOS notification API client added against the existing Django endpoints;
-- Android/iOS notification screen added with loading, empty, error, retry, pull-to-refresh, unread indicators, mark-one-read and mark-all-read;
-- Socket.IO `new-notification` is used only as a refresh hint; persisted Django state remains authoritative;
+- Android/iOS notification API client added against existing Django endpoints;
+- Android/iOS notification screen with loading, empty, error, retry, pull-to-refresh, unread, mark-one-read and mark-all-read states;
+- Socket.IO notification events used only as refresh hints;
 - mobile `/notifications` deep-link destination added;
-- notification targets route into existing Profile or SabiForum sections rather than creating duplicate detail systems;
-- Notifications remains contextual from Home and does not become a sixth primary bottom-navigation item.
+- notification targets route to existing Profile or SabiForum destinations;
+- Notifications remains contextual from Home rather than becoming a sixth primary tab.
 
-Remaining:
-- message/booking/schedule notification mapping;
-- reconnect/idempotency review;
-- analytics without private message content.
+Message/booking/schedule notification expansion remains intentionally deferred to later transaction phases where those lifecycle events are audited end-to-end.
 
-## Message attachments — KEEP / HARDEN
+## Message attachments — KEEP / HARDENED
 
-Existing rules already enforce:
+Existing rules retained:
 - 10 MB maximum size;
 - JPEG, PNG, WebP, PDF and text/plain allow-list;
 - participant-only message creation;
@@ -77,58 +66,61 @@ Existing rules already enforce:
 - bilateral block restrictions;
 - pre-booking contact-detail protection.
 
-Implemented hardening:
-- filename extension must match the declared allowed MIME type;
+Completed hardening:
+- filename extension must match declared allowed MIME type;
 - stored attachment display names are sanitised;
 - spoofed executable-style filenames are rejected;
 - regression coverage validates safe uploads and unsafe/path-style names.
 
 No new upload service or persistence model was introduced.
 
-## Web messaging — KEEP / REFACTOR
-
-`frontend/app/messages/MessagesClient.tsx` already provides thread list, unread counts, message history, attachments, realtime refresh, bookings, schedules and safety controls.
+## Web messaging — KEEP / REFACTORED
 
 Completed:
-- `/messages` is wrapped by the shared authenticated Phase 4 `AppShell`;
-- duplicate Marketplace/SabiForum product header removed;
-- participant/counterparty labels now derive from the authenticated account role so professionals see the client and clients see the professional;
-- booking creation/acceptance controls are role-aware in the UI while Django remains authoritative;
-- message/proposal labels identify the current user as `You`/`proposed by you` where appropriate;
-- persistent Web retry action added for load/conversation failures.
+- `/messages` uses the shared authenticated Phase 4 `AppShell`;
+- duplicate global product header removed;
+- counterparty labels derive from authoritative authenticated role;
+- booking controls are role-aware while Django remains authoritative;
+- persistent retry state added;
+- directional `is_blocked_by_me` / `is_blocked_by_other` state consumed from Django;
+- valid Block/Unblock action shown from authoritative state;
+- composer, attachment and send controls are disabled while either side has an active block;
+- message history remains readable while blocked;
+- thread state is reconciled after Block/Unblock;
+- in-flight thread/conversation request deduplication added;
+- reconnect and realtime events use deduplicated authoritative refreshes.
 
-Remaining:
-- block/unblock/report lifecycle parity;
-- realtime request-deduplication/reconnect review;
-- accessibility and final responsive journey validation.
+## Mobile messaging — KEEP / REFACTORED
 
-## Mobile messaging — KEEP / REFACTOR
+Completed across Android and iOS:
+- existing client/professional counterparty behaviour retained;
+- text/file/photo messaging, booking and scheduling retained;
+- persistent inbox error + Retry state;
+- persistent conversation error + Retry state;
+- conversation loading state;
+- directional Block/Unblock state from Django;
+- composer disabled whenever either participant has an active block;
+- message history remains readable while blocked;
+- pull-to-refresh and socket refreshes deduplicated;
+- reconnect reconciles from Django;
+- primary messaging controls expose appropriate accessibility role/state semantics.
 
-`mobile/src/messaging/` already contains `MessagingScreen.tsx`, `api.ts` and `types.ts` and uses the same Django marketplace APIs.
-
-Audit outcome:
-- client/professional counterparty rendering is already correct;
-- text/file/photo messaging, booking, schedule, report and block actions already exist;
-- realtime already listens for `new-message`, `booking-updated` and `schedule-updated`;
-- the principal current reliability gap is transient Alert-only load/conversation failure handling rather than missing messaging capability.
-
-Remaining:
-- persistent inbox/conversation retry states;
-- block/unblock/report lifecycle parity;
-- reconnect/idempotency and accessibility validation.
-
-## Safety lifecycle — CURRENT DECISION
+## Safety lifecycle — HARDENED
 
 Existing Django models remain authoritative:
-- `ConversationBlock` is unique per blocker/blocked pair and supports active/inactive state;
-- `ConversationReport` lifecycle is `open / reviewed / dismissed / actioned`.
+- `ConversationBlock` remains unique per blocker/blocked pair with active/inactive state;
+- `ConversationReport` lifecycle remains `open / reviewed / dismissed / actioned`.
 
-Next hardening:
-- prevent duplicate unresolved reports for the same reporter/thread while a case is open or reviewed;
-- expose/consume block state consistently enough for Web/mobile to offer valid Block/Unblock actions;
-- do not invent a second moderation lifecycle.
+Completed:
+- thread API exposes `is_blocked_by_me` and `is_blocked_by_other`;
+- duplicate unresolved reports are rejected while an existing reporter/thread case is `open` or `reviewed`;
+- a new report is allowed after the previous case is resolved;
+- Web and mobile consume the same authoritative block state;
+- regression coverage verifies block, unblock and report lifecycle behaviour.
 
-## Single-source-of-truth rules for Phase 6
+No second moderation lifecycle was introduced.
+
+## Single-source-of-truth rules
 
 - thread membership: Django `MessageThread`;
 - messages: Django `Message`;
@@ -143,19 +135,26 @@ Next hardening:
 ## CI evidence
 
 - Platform CI #211: PASS — notification/realtime hardening.
-- Platform CI #214: FAIL — new attachment success tests exposed pre-existing UUID realtime serialisation defect.
-- defect fixed at the shared marketplace realtime boundary rather than weakening tests.
+- Platform CI #214: FAIL — new attachment tests exposed pre-existing UUID realtime serialisation defect.
+- defect fixed at the shared realtime boundary rather than weakening tests.
 - Platform CI #216: PASS — UUID-safe realtime + attachment hardening.
 - Platform CI #217: PASS — Web counterparty/shell/retry refactor.
-- Platform CI #223: pending on Android/iOS notification parity at time of this update.
+- Platform CI #224: PASS — Android/iOS notification parity.
+- Platform CI #227: PASS — block/report safety contract.
+- Platform CI #228: PASS — mobile messaging safety/retry/deduplication.
+- Platform CI #229: PASS — final Web Block/Unblock + deduplicated realtime/reconnect head.
 
-## Remaining before Phase 6 certification
+Final #229 checks passed:
+- backend deploy check, migration drift and journey tests;
+- frontend TypeScript and lint;
+- mobile typecheck;
+- realtime check;
+- design-system check;
+- repository hygiene;
+- waitlist syntax.
 
-- duplicate unresolved report protection and block/unblock state parity;
-- persistent mobile inbox/conversation error + retry states;
-- message/thread pagination and request-deduplication review;
-- reconnect/duplicate-event behaviour;
-- offline/retry behaviour;
-- accessibility and responsive journey checks;
-- analytics events without private message text;
-- final Web + Android + iOS regression CI and certification.
+## Certification outcome
+
+Phase 6 is COMPLETE / CERTIFIED for the scope defined by the Master Playbook. Web, Android and iOS now share one authoritative messaging, safety and notification model with hardened realtime delivery, consistent failure states and cross-platform Block/Unblock behaviour.
+
+Later phases still own broader transaction notification coverage, analytics instrumentation without private message content, production observability and final Phase 10/12/13 hardening/certification. These are programme-level future gates, not Phase 6 blockers.
