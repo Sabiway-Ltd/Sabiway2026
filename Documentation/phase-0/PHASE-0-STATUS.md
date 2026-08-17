@@ -1,6 +1,6 @@
 # Phase 0 — Authoritative Status & Exit Gate
 
-Status: **IN PROGRESS — NOT YET CERTIFIED**
+Status: **IN PROGRESS — OWNER-CONTROLLED GOVERNANCE EVIDENCE REMAINS**
 
 This file is the controlling Phase 0 status for the SabiWay V2 master playbook. Older phase numbering and historical completion notes must not override it.
 
@@ -16,7 +16,7 @@ This file is the controlling Phase 0 status for the SabiWay V2 master playbook. 
 - [x] One-business-authority architecture baseline documented.
 - [x] Critical cross-platform journeys baselined.
 - [x] Responsive/device/accessibility baseline refreshed.
-- [x] Platform CI run #118 passed on the Phase 0 branch before the exported-design documentation update; the current head must also pass before merge.
+- [x] Platform CI run #121 passed on the latest inspected Phase 0 head.
 - [x] Dependabot exists.
 - [x] Current-tree hygiene CI rejects `.env`, generated dependencies/caches and local DB files.
 - [x] Realtime broadcast authentication is present in current code.
@@ -32,14 +32,22 @@ This file is the controlling Phase 0 status for the SabiWay V2 master playbook. 
 - [x] Design-system, state-completeness, accessibility, trust, marketplace-state, messaging, search/filter and payment-state refinements documented.
 - [x] Supplied branding package inspected and initial brand-source colour/assets baseline documented.
 - [x] New-web rule recorded: derive from the approved app design language but build native responsive web layouts rather than stretching mobile designs.
+- [x] GitHub environments inspected: `Preview` and `Production` exist.
+- [x] Vercel project `sabiway2026` inspected; latest deployment is READY and preview-targeted (`target: null`), not production.
+- [x] Repository admin permission confirmed for `OlaoluwajohnsonT`.
+- [x] Connected Supabase organisation inspected; no SabiWay project is currently visible there, so no staging/production Supabase separation can be claimed.
+- [x] Manual closure tracking created as GitHub issue #38.
 
 ## Open Phase 0 gates
 
-- [ ] **Credential rotation evidence:** confirm all historically exposed secrets/credentials have been rotated/revoked.
-- [ ] **Branch protection:** manually verify enforced public-repository rules for `main`; connector cannot read this setting.
-- [ ] **Backup governance:** confirm at least one trusted backup organisation owner/admin and least-privilege team/developer access.
-- [ ] **Staging boundary:** confirm isolated staging credentials/data, named staging owner and release approver.
-- [ ] **Current-head CI:** after the latest Phase 0 documentation commits, confirm Platform CI passes on the final branch head before merge.
+These are now limited to evidence/actions that cannot be truthfully completed by the connected tooling alone:
+
+- [ ] **Credential rotation evidence:** confirm all historically exposed secrets/credentials have been rotated/revoked at their providers. Do not store secret values in GitHub; record only provider + rotation/revocation date.
+- [ ] **Branch protection:** manually verify enforced rules for `main`. The branch-protection API returns 403 to this integration. Minimum target: PR required, Platform CI required, no normal direct pushes, and force-push/deletion protection where appropriate.
+- [ ] **Backup governance:** confirm at least one trusted backup Sabiway-Ltd organisation owner/admin and least-privilege developer/team access. Organisation membership detail is not readable by this integration.
+- [ ] **Staging boundary:** establish isolated staging credentials/data and record a named staging owner and release approver. GitHub currently has `Preview` and `Production`, but both lack deployment protection rules; Vercel currently has a READY preview deployment; no SabiWay Supabase project is visible in the connected Supabase organisation.
+
+Tracking issue: **#38 — Phase 0 manual security and governance closure**.
 
 ## Design-gate note
 
@@ -49,11 +57,11 @@ The V1 `Sabiway website` Figma page remains excluded from V2 design authority.
 
 ## Phase 0 exit rule
 
-Phase 1 must not be certified as started until the open gates above are either:
+Phase 1 must not be certified as started until the four open gates above are either:
 
 1. closed with evidence; or
 2. explicitly accepted as a time-bounded risk by the named owner where the playbook permits operational follow-up.
 
 ## Next action
 
-Close the remaining security/governance/staging evidence, confirm CI on the final Phase 0 head, then merge Phase 0 before beginning Phase 1.
+Complete issue #38, update this file to `CERTIFIED`, mark PR #37 ready, merge Phase 0, then begin Master Phase 1 — Shared Technical Foundation & Design System.
