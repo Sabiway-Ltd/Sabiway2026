@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 16.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "qa": {
+      "distribution": "internal",
+      "channel": "qa",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "uat": {
+      "distribution": "internal",
+      "channel": "uat",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "beta": {
+      "distribution": "store",
+      "channel": "beta"
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "beta": {},
+    "production": {}
+  }
+}
