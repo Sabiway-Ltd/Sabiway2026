@@ -37,6 +37,16 @@ jobs:
       - name: Verify canonical design tokens are synced
         run: node scripts/sync-design-tokens.mjs --check
 
+  uiux-fidelity-audit-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify UI/UX fidelity audit evidence and honesty gate
+        run: node scripts/verify-uiux-fidelity-audit.mjs
+
   journey-contract-check:
     runs-on: ubuntu-latest
     steps:
