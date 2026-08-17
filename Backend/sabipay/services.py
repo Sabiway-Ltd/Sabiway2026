@@ -15,6 +15,7 @@ from verification.services import is_professional_verified
 from . import gateway
 from .models import (
     Dispute,
+    DisputeEvidence,
     GatewayWebhookEvent,
     PaymentAttempt,
     PayoutDestination,
@@ -24,6 +25,8 @@ from .models import (
 )
 
 MONEY = Decimal("0.01")
+ACTIVE_DISPUTE_STATUSES = [Dispute.Status.OPEN, Dispute.Status.UNDER_REVIEW]
+DISPUTABLE_STATES = [Transaction.State.FUNDED, Transaction.State.IN_PROGRESS, Transaction.State.DELIVERED]
 
 
 def money(value):
@@ -86,15 +89,25 @@ def _safe_return_url(return_url):
     raise ValidationError({"return_url": "Unsupported SabiPay return URL."})
 
 
+def _is_operator(user):
+    return bool(user and user.is_staff and (user.is_superuser or user.has_perm("sabipay.manage_sabipay")))
+
+
+def _participant_profile(tx, user):
+    if tx.client.user_id == user.id:
+        return tx.client
+    if tx.professional.user_id == user.id:
+        return tx.professional
+    raise PermissionDenied("You are not a participant in this SabiPay transaction.")
+
+
 def create_or_get_transaction(booking, actor):
-    if actor.profile_id if hasattr(actor, "profile_id") else False:
-        pass
     if booking.client.user_id != actor.id:
         raise PermissionDenied("Only the booking client can fund this booking.")
     if booking.status != BookingRequest.Status.ACCEPTED:
         raise ValidationError("The professional must accept the booking before payment.")
     if booking.currency.upper() != "NGN":
-        raise ValidationError("Phase 7 SabiPay supports NGN Nigeria-pilot bookings only.")
+        raise ValidationError("SabiPay currently supports NGN Nigeria-pilot bookings only.")
     if booking.agreed_price is None or booking.agreed_price <= 0:
         raise ValidationError("A positive agreed booking price is required.")
     if not booking.professional or not is_professional_verified(booking.professional):
@@ -137,6 +150,10 @@ def initialize_checkout(*, booking, actor, idempotency_key=None, return_url=None
         reference = _payment_reference()
         callback_url = _safe_return_url(return_url)
         attempt = PaymentAttempt.objects.create(transaction=tx, reference=reference, idempotency_key=idempotency_key)
+        tx.payment_status = Transaction.PaymentStatus.PENDING
+        tx.last_payment_error = ""
+        tx.last_payment_checked_at = timezone.now()
+        tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "updated_at"])
     try:
         data = gateway.initialize_payment(
             email=booking.client.user.email,
@@ -150,6 +167,10 @@ def initialize_checkout(*, booking, actor, idempotency_key=None, return_url=None
         attempt.failure_reason = str(exc)
         attempt.completed_at = timezone.now()
         attempt.save(update_fields=["status", "failure_reason", "completed_at"])
+        tx.payment_status = Transaction.PaymentStatus.FAILED
+        tx.last_payment_error = str(exc)
+        tx.last_payment_checked_at = timezone.now()
+        tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "updated_at"])
         audit(tx, "checkout_initialization_failed", actor=actor, source="gateway", reason=str(exc), metadata={"reference": reference})
         raise ValidationError(str(exc)) from exc
     attempt.authorization_url = data.get("authorization_url", "")
@@ -164,31 +185,40 @@ def _fund_attempt(attempt, verified_data, *, source="gateway", event_key=None):
     with db_transaction.atomic():
         tx = Transaction.objects.select_for_update().get(pk=tx_id)
         attempt = PaymentAttempt.objects.select_for_update().get(pk=attempt.pk)
-        status = verified_data.get("status")
         amount = int(verified_data.get("amount") or 0)
         currency = (verified_data.get("currency") or "").upper()
-        if status != "success" or amount != amount_to_subunit(tx.amount) or currency != tx.currency:
+        if amount != amount_to_subunit(tx.amount) or currency != tx.currency:
+            reason = "Gateway verification did not match the expected payment amount/currency."
             attempt.status = PaymentAttempt.Status.FAILED
-            attempt.failure_reason = "Gateway verification did not match the expected successful amount/currency."
+            attempt.failure_reason = reason
             attempt.completed_at = timezone.now()
             attempt.save(update_fields=["status", "failure_reason", "completed_at"])
+            tx.payment_status = Transaction.PaymentStatus.MISMATCH
+            tx.last_payment_error = reason
+            tx.last_payment_checked_at = timezone.now()
             tx.reconciliation_status = Transaction.ReconciliationStatus.MISMATCH
-            tx.reconciliation_note = attempt.failure_reason
+            tx.reconciliation_note = reason
             tx.reconciled_at = timezone.now()
-            tx.save(update_fields=["reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
-            audit(tx, "funding_mismatch", source=source, reason=attempt.failure_reason, metadata={"reference": attempt.reference}, event_key=event_key)
+            tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+            audit(tx, "funding_mismatch", source=source, reason=reason, metadata={"reference": attempt.reference}, event_key=event_key)
             raise ValidationError("Payment verification did not match this booking.")
         attempt.status = PaymentAttempt.Status.SUCCESS
+        attempt.failure_reason = ""
         attempt.gateway_transaction_id = str(verified_data.get("id") or "")
         attempt.completed_at = timezone.now()
-        attempt.save(update_fields=["status", "gateway_transaction_id", "completed_at"])
+        attempt.save(update_fields=["status", "failure_reason", "gateway_transaction_id", "completed_at"])
+        tx.payment_status = Transaction.PaymentStatus.SUCCEEDED
+        tx.last_payment_error = ""
+        tx.last_payment_checked_at = timezone.now()
         if tx.state != Transaction.State.PENDING_PAYMENT:
             if tx.funding_reference != attempt.reference:
                 tx.reconciliation_status = Transaction.ReconciliationStatus.MISMATCH
                 tx.reconciliation_note = "A second successful payment was detected for an already funded booking."
                 tx.reconciled_at = timezone.now()
-                tx.save(update_fields=["reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+                tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
                 audit(tx, "duplicate_successful_charge_detected", source=source, reason=tx.reconciliation_note, metadata={"reference": attempt.reference}, event_key=event_key)
+            else:
+                tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "updated_at"])
             return tx
         old = tx.state
         tx.state = Transaction.State.FUNDED
@@ -203,12 +233,53 @@ def _fund_attempt(attempt, verified_data, *, source="gateway", event_key=None):
         return tx
 
 
+def apply_payment_verification(attempt, data, *, source="client", event_key=None):
+    status_value = str(data.get("status") or "").lower()
+    if status_value == "success":
+        return _fund_attempt(attempt, data, source=source, event_key=event_key)
+    with db_transaction.atomic():
+        tx = Transaction.objects.select_for_update().get(pk=attempt.transaction_id)
+        attempt = PaymentAttempt.objects.select_for_update().get(pk=attempt.pk)
+        now = timezone.now()
+        if status_value in {"failed", "reversed"}:
+            attempt.status = PaymentAttempt.Status.FAILED
+            tx.payment_status = Transaction.PaymentStatus.FAILED
+            reason = str(data.get("gateway_response") or data.get("message") or "Payment failed at the gateway.")
+        elif status_value in {"abandoned", "cancelled"}:
+            attempt.status = PaymentAttempt.Status.ABANDONED
+            tx.payment_status = Transaction.PaymentStatus.ABANDONED
+            reason = "Checkout was not completed. You can safely try again."
+        else:
+            tx.payment_status = Transaction.PaymentStatus.PENDING
+            reason = "Payment is still pending confirmation from the provider."
+        if attempt.status != PaymentAttempt.Status.INITIALIZED:
+            attempt.failure_reason = reason
+            attempt.completed_at = now
+            attempt.save(update_fields=["status", "failure_reason", "completed_at"])
+        tx.last_payment_error = reason if tx.payment_status in {Transaction.PaymentStatus.FAILED, Transaction.PaymentStatus.ABANDONED} else ""
+        tx.last_payment_checked_at = now
+        tx.reconciliation_status = Transaction.ReconciliationStatus.PENDING
+        tx.reconciliation_note = reason
+        tx.reconciled_at = now
+        tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+        audit(tx, "payment_status_checked", source=source, reason=reason, metadata={"reference": attempt.reference, "gateway_status": status_value or "unknown"}, event_key=event_key)
+        return tx
+
+
 def verify_attempt(attempt, *, source="client"):
     try:
         data = gateway.verify_payment(attempt.reference)
     except gateway.PaystackError as exc:
-        raise ValidationError(str(exc)) from exc
-    return _fund_attempt(attempt, data, source=source)
+        tx = attempt.transaction
+        tx.payment_status = Transaction.PaymentStatus.PENDING
+        tx.last_payment_checked_at = timezone.now()
+        tx.reconciliation_status = Transaction.ReconciliationStatus.PENDING
+        tx.reconciliation_note = f"Gateway status could not be confirmed yet: {exc}"
+        tx.reconciled_at = timezone.now()
+        tx.save(update_fields=["payment_status", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+        audit(tx, "payment_verification_deferred", source=source, reason=str(exc), metadata={"reference": attempt.reference})
+        raise ValidationError("Payment confirmation is temporarily unavailable. Your payment has not been marked failed; retry status shortly.") from exc
+    return apply_payment_verification(attempt, data, source=source)
 
 
 def start_service(tx, actor):
@@ -241,7 +312,7 @@ def mark_delivered(tx, actor):
         old = locked.state
         locked.state = Transaction.State.DELIVERED
         locked.delivered_at = now
-        locked.release_eligible_at = now + timedelta(days=7)
+        locked.release_eligible_at = now + timedelta(days=int(getattr(settings, "SABIPAY_FREEZE_DAYS", 7)))
         locked.save(update_fields=["state", "delivered_at", "release_eligible_at", "updated_at"])
         booking = locked.booking
         if booking.status == BookingRequest.Status.IN_PROGRESS:
@@ -296,7 +367,7 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
             return locked, getattr(locked, "payout", None)
         if locked.state != Transaction.State.DELIVERED:
             raise ValidationError("Only delivered escrow can be released.")
-        if Dispute.objects.filter(transaction=locked, status__in=[Dispute.Status.OPEN, Dispute.Status.UNDER_REVIEW]).exists():
+        if Dispute.objects.filter(transaction=locked, status__in=ACTIVE_DISPUTE_STATUSES).exists():
             raise ValidationError("This escrow is frozen by an active dispute.")
         now = timezone.now()
         if client_confirmed:
@@ -304,7 +375,7 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
                 raise PermissionDenied("Only the client can confirm satisfaction.")
             locked.client_confirmed_at = now
         elif not force and (not locked.release_eligible_at or now < locked.release_eligible_at):
-            raise ValidationError("The 7-day SabiPay freeze period has not ended.")
+            raise ValidationError("The SabiPay freeze period has not ended.")
         try:
             destination = locked.professional.sabipay_payout_destination
         except PayoutDestination.DoesNotExist as exc:
@@ -314,12 +385,7 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
             raise ValidationError("The professional payout destination is inactive.")
         payout, created = PayoutRecord.objects.get_or_create(
             transaction=locked,
-            defaults={
-                "destination": destination,
-                "amount": locked.provider_amount,
-                "currency": locked.currency,
-                "reference": _payout_reference(),
-            },
+            defaults={"destination": destination, "amount": locked.provider_amount, "currency": locked.currency, "reference": _payout_reference()},
         )
         if not created and payout.status not in {PayoutRecord.Status.FAILED, PayoutRecord.Status.MANUAL_REVIEW}:
             return locked, payout
@@ -330,10 +396,9 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
             payout.failure_reason = ""
             payout.save()
         reference = payout.reference
-        amount_subunit = amount_to_subunit(locked.provider_amount)
         try:
             data = gateway.initiate_transfer(
-                amount_subunit=amount_subunit,
+                amount_subunit=amount_to_subunit(locked.provider_amount),
                 recipient_code=destination.recipient_code,
                 reference=reference,
                 reason=f"SabiWay payout {locked.receipt_number}",
@@ -368,8 +433,9 @@ def cancel_unfunded_transaction(booking, actor):
         if locked.state == Transaction.State.PENDING_PAYMENT:
             old = locked.state
             locked.state = Transaction.State.CANCELLED
+            locked.payment_status = Transaction.PaymentStatus.ABANDONED
             locked.cancelled_at = timezone.now()
-            locked.save(update_fields=["state", "cancelled_at", "updated_at"])
+            locked.save(update_fields=["state", "payment_status", "cancelled_at", "updated_at"])
             PaymentAttempt.objects.filter(transaction=locked, status=PaymentAttempt.Status.INITIALIZED).update(status=PaymentAttempt.Status.ABANDONED, completed_at=timezone.now())
             audit(locked, "unfunded_booking_cancelled", actor=actor, source="booking", old=old, new=locked.state)
             return locked
@@ -379,19 +445,19 @@ def cancel_unfunded_transaction(booking, actor):
 
 
 def request_refund(tx, *, actor, reason):
-    if not (actor.is_staff and (actor.is_superuser or actor.has_perm("sabipay.manage_sabipay"))):
+    if not _is_operator(actor):
         raise PermissionDenied("Only an authorised SabiPay operator can initiate refunds.")
     with db_transaction.atomic():
         locked = Transaction.objects.select_for_update().get(pk=tx.pk)
-        if locked.state != Transaction.State.FUNDED or locked.booking.status not in {BookingRequest.Status.ACCEPTED, BookingRequest.Status.CANCELLED}:
-            raise ValidationError("Phase 7 controlled refunds are limited to funded bookings before service commencement.")
+        if locked.state not in {Transaction.State.FUNDED, Transaction.State.IN_PROGRESS, Transaction.State.DELIVERED, Transaction.State.DISPUTED}:
+            raise ValidationError("Only funded, unreleased SabiPay transactions can enter the controlled refund process.")
         if locked.refund_status == Transaction.RefundStatus.PENDING:
             return locked
         try:
             data = gateway.initiate_refund(
                 transaction_reference=locked.funding_reference,
                 amount_subunit=amount_to_subunit(locked.amount),
-                reason=reason or "Approved SabiWay cancellation refund",
+                reason=reason or "Approved SabiWay refund",
             )
         except gateway.PaystackError as exc:
             locked.refund_status = Transaction.RefundStatus.FAILED
@@ -414,7 +480,7 @@ def mark_refunded(tx, *, source="gateway", event_key=None):
         locked = Transaction.objects.select_for_update().get(pk=tx.pk)
         if locked.state == Transaction.State.REFUNDED:
             return locked
-        if locked.state not in {Transaction.State.FUNDED, Transaction.State.DISPUTED}:
+        if locked.state not in {Transaction.State.FUNDED, Transaction.State.IN_PROGRESS, Transaction.State.DELIVERED, Transaction.State.DISPUTED}:
             return locked
         old = locked.state
         locked.state = Transaction.State.REFUNDED
@@ -423,6 +489,111 @@ def mark_refunded(tx, *, source="gateway", event_key=None):
         locked.save(update_fields=["state", "refund_status", "refunded_at", "updated_at"])
         audit(locked, "refund_processed", source=source, old=old, new=locked.state, event_key=event_key)
         return locked
+
+
+def open_dispute(tx, *, actor, reason, details):
+    profile = _participant_profile(tx, actor)
+    details = (details or "").strip()
+    if len(details) < 10:
+        raise ValidationError({"details": "Explain what happened so SabiWay can review it."})
+    with db_transaction.atomic():
+        locked = Transaction.objects.select_for_update().get(pk=tx.pk)
+        if locked.state not in DISPUTABLE_STATES:
+            raise ValidationError("A dispute can only be opened after funding and before funds are released or refunded.")
+        if Dispute.objects.filter(transaction=locked, status__in=ACTIVE_DISPUTE_STATUSES).exists():
+            raise ValidationError("This transaction already has an active dispute.")
+        prior_state = locked.state
+        dispute = Dispute.objects.create(
+            transaction=locked,
+            opened_by=actor,
+            opened_by_profile=profile,
+            reason=reason,
+            details=details,
+            transaction_state_at_open=prior_state,
+        )
+        locked.state = Transaction.State.DISPUTED
+        locked.save(update_fields=["state", "updated_at"])
+        audit(locked, "dispute_opened", actor=actor, source="participant", old=prior_state, new=locked.state, reason=reason, metadata={"dispute_id": str(dispute.id)})
+        return dispute
+
+
+def add_dispute_evidence(dispute, *, actor, note, reference_url=""):
+    profile = _participant_profile(dispute.transaction, actor)
+    if dispute.status not in ACTIVE_DISPUTE_STATUSES:
+        raise ValidationError("Evidence can only be added while the dispute is active.")
+    note = (note or "").strip()
+    if len(note) < 3:
+        raise ValidationError({"note": "Add a short description of this evidence."})
+    evidence = DisputeEvidence.objects.create(
+        dispute=dispute,
+        submitted_by=profile,
+        note=note,
+        reference_url=(reference_url or "").strip(),
+    )
+    audit(dispute.transaction, "dispute_evidence_added", actor=actor, source="participant", metadata={"dispute_id": str(dispute.id), "evidence_id": str(evidence.id)})
+    return evidence
+
+
+def start_dispute_review(dispute, *, actor):
+    if not _is_operator(actor):
+        raise PermissionDenied("Only an authorised SabiPay operator can review disputes.")
+    if dispute.status != Dispute.Status.OPEN:
+        raise ValidationError("Only open disputes can move to review.")
+    dispute.status = Dispute.Status.UNDER_REVIEW
+    dispute.assigned_to = actor
+    dispute.reviewed_at = timezone.now()
+    dispute.save(update_fields=["status", "assigned_to", "reviewed_at"])
+    audit(dispute.transaction, "dispute_review_started", actor=actor, source="admin", metadata={"dispute_id": str(dispute.id)})
+    return dispute
+
+
+def resolve_dispute(dispute, *, actor, outcome, resolution):
+    if not _is_operator(actor):
+        raise PermissionDenied("Only an authorised SabiPay operator can resolve disputes.")
+    if dispute.status not in ACTIVE_DISPUTE_STATUSES:
+        raise ValidationError("This dispute is no longer active.")
+    resolution = (resolution or "").strip()
+    if len(resolution) < 5:
+        raise ValidationError({"resolution": "Record the reason for the dispute decision."})
+    tx = dispute.transaction
+    restore_state = dispute.transaction_state_at_open
+    if restore_state not in DISPUTABLE_STATES:
+        raise ValidationError("The transaction state captured when this dispute opened cannot be safely restored.")
+
+    # Close the dispute first so controlled release/refund services no longer see an active freeze.
+    dispute.status = Dispute.Status.RESOLVED
+    dispute.outcome = outcome
+    dispute.resolution = resolution
+    dispute.resolved_by = actor
+    dispute.resolved_at = timezone.now()
+    dispute.save(update_fields=["status", "outcome", "resolution", "resolved_by", "resolved_at"])
+
+    locked = Transaction.objects.get(pk=tx.pk)
+    old = locked.state
+    if outcome in {Dispute.Outcome.RESUME, Dispute.Outcome.CLOSED_NO_ACTION}:
+        locked.state = restore_state
+        locked.save(update_fields=["state", "updated_at"])
+        audit(locked, "dispute_resolved_resume", actor=actor, source="admin", old=old, new=locked.state, reason=resolution, metadata={"dispute_id": str(dispute.id), "outcome": outcome})
+    elif outcome == Dispute.Outcome.REFUND:
+        # Keep the transaction frozen until the gateway accepts the controlled refund request.
+        request_refund(locked, actor=actor, reason=resolution)
+        audit(locked, "dispute_resolved_refund", actor=actor, source="admin", old=old, new=locked.state, reason=resolution, metadata={"dispute_id": str(dispute.id)})
+    elif outcome == Dispute.Outcome.RELEASE:
+        if restore_state != Transaction.State.DELIVERED:
+            dispute.status = Dispute.Status.UNDER_REVIEW
+            dispute.outcome = Dispute.Outcome.NONE
+            dispute.resolution = ""
+            dispute.resolved_by = None
+            dispute.resolved_at = None
+            dispute.save(update_fields=["status", "outcome", "resolution", "resolved_by", "resolved_at"])
+            raise ValidationError("Provider release is only valid for a dispute opened after delivery.")
+        locked.state = Transaction.State.DELIVERED
+        locked.save(update_fields=["state", "updated_at"])
+        release_transaction(locked, actor=actor, source="admin", force=True)
+        audit(locked, "dispute_resolved_release", actor=actor, source="admin", old=old, new=Transaction.State.RELEASED, reason=resolution, metadata={"dispute_id": str(dispute.id)})
+    else:
+        raise ValidationError("Unsupported dispute outcome.")
+    return Dispute.objects.select_related("transaction", "opened_by_profile", "assigned_to", "resolved_by").get(pk=dispute.pk)
 
 
 def process_webhook(raw_body, payload):
@@ -439,7 +610,7 @@ def process_webhook(raw_body, payload):
             attempt = PaymentAttempt.objects.select_related("transaction").filter(reference=reference).first()
             if attempt:
                 verified = gateway.verify_payment(reference)
-                _fund_attempt(attempt, verified, source="gateway", event_key=f"webhook:{digest}")
+                apply_payment_verification(attempt, verified, source="gateway", event_key=f"webhook:{digest}")
                 note = "funding processed"
             else:
                 note = "unknown payment reference"
@@ -480,26 +651,36 @@ def process_webhook(raw_body, payload):
 def reconcile_transaction(tx):
     latest_success = tx.payment_attempts.filter(status=PaymentAttempt.Status.SUCCESS).first()
     latest_attempt = latest_success or tx.payment_attempts.first()
+    now = timezone.now()
     if not latest_attempt:
+        tx.payment_status = Transaction.PaymentStatus.NOT_STARTED
         tx.reconciliation_status = Transaction.ReconciliationStatus.PENDING
         tx.reconciliation_note = "No payment attempt exists yet."
-        tx.reconciled_at = timezone.now()
-        tx.save(update_fields=["reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+        tx.last_payment_checked_at = now
+        tx.reconciled_at = now
+        tx.save(update_fields=["payment_status", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
         return tx
     try:
         data = gateway.verify_payment(latest_attempt.reference)
     except gateway.PaystackError as exc:
-        tx.reconciliation_status = Transaction.ReconciliationStatus.MISMATCH
-        tx.reconciliation_note = str(exc)
-        tx.reconciled_at = timezone.now()
-        tx.save(update_fields=["reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+        # A slow/unreachable gateway is not evidence that the ledger mismatches.
+        tx.reconciliation_status = Transaction.ReconciliationStatus.PENDING
+        tx.reconciliation_note = f"Gateway confirmation pending: {exc}"
+        tx.last_payment_checked_at = now
+        tx.reconciled_at = now
+        tx.save(update_fields=["last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+        audit(tx, "reconciliation_deferred", source="reconciliation", reason=str(exc), metadata={"reference": latest_attempt.reference})
         return tx
-    gateway_success = data.get("status") == "success" and int(data.get("amount") or 0) == amount_to_subunit(tx.amount) and (data.get("currency") or "").upper() == tx.currency
-    if gateway_success and tx.state == Transaction.State.PENDING_PAYMENT:
-        return _fund_attempt(latest_attempt, data, source="reconciliation")
+    gateway_status = str(data.get("status") or "").lower()
+    if tx.state == Transaction.State.PENDING_PAYMENT:
+        return apply_payment_verification(latest_attempt, data, source="reconciliation")
+    gateway_success = gateway_status == "success" and int(data.get("amount") or 0) == amount_to_subunit(tx.amount) and (data.get("currency") or "").upper() == tx.currency
     expected_funded = tx.state not in {Transaction.State.PENDING_PAYMENT, Transaction.State.CANCELLED}
+    tx.payment_status = Transaction.PaymentStatus.SUCCEEDED if gateway_success else Transaction.PaymentStatus.MISMATCH
     tx.reconciliation_status = Transaction.ReconciliationStatus.MATCHED if gateway_success == expected_funded else Transaction.ReconciliationStatus.MISMATCH
     tx.reconciliation_note = "Gateway funding status reconciled." if tx.reconciliation_status == Transaction.ReconciliationStatus.MATCHED else "Gateway funding status differs from the SabiPay ledger."
-    tx.reconciled_at = timezone.now()
-    tx.save(update_fields=["reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
+    tx.last_payment_error = "" if tx.reconciliation_status == Transaction.ReconciliationStatus.MATCHED else tx.reconciliation_note
+    tx.last_payment_checked_at = now
+    tx.reconciled_at = now
+    tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
     return tx
