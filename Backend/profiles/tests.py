@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from profiles.models import Profile
 
 
 class ProfileTrustBoundaryTests(APITestCase):
@@ -19,8 +20,6 @@ class ProfileTrustBoundaryTests(APITestCase):
             role=User.Role.CLIENT,
         )
         profile = self.professional.profile
-        # Deliberately simulate legacy drift. Account identity must still win.
-        profile.role = "client"
         profile.phone_number = "+2348012345678"
         profile.gender = "other"
         profile.country = "Nigeria"
@@ -29,11 +28,28 @@ class ProfileTrustBoundaryTests(APITestCase):
         profile.street = "Private Street"
         profile.save()
 
+        # Simulate historical database drift without triggering model signals.
+        Profile.objects.filter(pk=profile.pk).update(role=User.Role.CLIENT)
+
     def test_account_role_is_authoritative_even_when_legacy_profile_role_drifted(self):
         self.client.force_authenticate(self.professional)
         response = self.client.get("/api/profiles/me/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["role"], User.Role.PROFESSIONAL)
+
+    def test_saving_account_repairs_legacy_profile_role_mirror(self):
+        self.professional.save(update_fields=["role"])
+        self.professional.profile.refresh_from_db()
+        self.assertEqual(self.professional.profile.role, User.Role.PROFESSIONAL)
+
+    def test_profile_save_cannot_reintroduce_role_drift(self):
+        profile = self.professional.profile
+        profile.refresh_from_db()
+        profile.role = User.Role.CLIENT
+        profile.bio = "Safe profile edit"
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.role, User.Role.PROFESSIONAL)
 
     def test_profile_update_cannot_change_authoritative_account_role(self):
         self.client.force_authenticate(self.professional)
