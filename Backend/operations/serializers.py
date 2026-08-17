@@ -7,17 +7,13 @@ from .models import SupportCase
 
 
 class SupportCaseSerializer(serializers.ModelSerializer):
-    opened_by_email = serializers.EmailField(source="opened_by.email", read_only=True)
-    assigned_to_email = serializers.EmailField(source="assigned_to.email", read_only=True)
-
     class Meta:
         model = SupportCase
         fields = [
-            "id", "opened_by_email", "category", "subject", "description", "status", "priority",
-            "assigned_to", "assigned_to_email", "reference_type", "reference_id", "internal_note",
-            "resolved_at", "created_at", "updated_at",
+            "id", "category", "subject", "description", "status", "priority",
+            "reference_type", "reference_id", "resolved_at", "created_at", "updated_at",
         ]
-        read_only_fields = ["status", "priority", "assigned_to", "internal_note", "resolved_at", "created_at", "updated_at"]
+        read_only_fields = ["status", "priority", "resolved_at", "created_at", "updated_at"]
 
     def validate_subject(self, value):
         value = value.strip()
