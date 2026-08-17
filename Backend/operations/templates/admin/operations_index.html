@@ -1,0 +1,26 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+  {% if operations_metrics %}
+    <style>
+      .sabiway-ops-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin:0 0 24px}.sabiway-ops-card{background:var(--body-bg);border:1px solid var(--hairline-color);border-radius:8px;padding:14px}.sabiway-ops-card strong{display:block;font-size:24px;line-height:1.2;margin-top:4px}.sabiway-ops-card span{color:var(--body-quiet-color);font-size:12px}.sabiway-ops-heading{margin:0 0 12px}
+    </style>
+    <h2 class="sabiway-ops-heading">Operational overview</h2>
+    <div class="sabiway-ops-grid" aria-label="SabiWay operational overview">
+      <div class="sabiway-ops-card"><span>Active users</span><strong>{{ operations_metrics.users_active }}</strong><span>{{ operations_metrics.users_total }} total</span></div>
+      <div class="sabiway-ops-card"><span>Open support</span><strong>{{ operations_metrics.support_open }}</strong><span>{{ operations_metrics.support_urgent }} urgent</span></div>
+      <div class="sabiway-ops-card"><span>Content reports</span><strong>{{ operations_metrics.post_reports_open }}</strong><span>open</span></div>
+      <div class="sabiway-ops-card"><span>Conversation reports</span><strong>{{ operations_metrics.conversation_reports_open }}</strong><span>open</span></div>
+      <div class="sabiway-ops-card"><span>Verification queue</span><strong>{{ operations_metrics.verification_queue }}</strong><span>submitted / in review</span></div>
+      <div class="sabiway-ops-card"><span>Listings pending</span><strong>{{ operations_metrics.listings_pending }}</strong><span>moderation</span></div>
+      <div class="sabiway-ops-card"><span>Jobs pending</span><strong>{{ operations_metrics.jobs_pending }}</strong><span>moderation</span></div>
+      <div class="sabiway-ops-card"><span>Active bookings</span><strong>{{ operations_metrics.bookings_active }}</strong><span>pending / accepted / in progress</span></div>
+      <div class="sabiway-ops-card"><span>Payments pending</span><strong>{{ operations_metrics.payments_pending }}</strong><span>gateway confirmation</span></div>
+      <div class="sabiway-ops-card"><span>Open disputes</span><strong>{{ operations_metrics.disputes_open }}</strong><span>funds protected</span></div>
+      <div class="sabiway-ops-card"><span>Notifications</span><strong>{{ operations_metrics.notifications_24h }}</strong><span>last 24h</span></div>
+      <div class="sabiway-ops-card"><span>Admin actions</span><strong>{{ operations_metrics.admin_actions_24h }}</strong><span>last 24h</span></div>
+    </div>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
