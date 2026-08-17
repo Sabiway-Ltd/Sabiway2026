@@ -1,5 +1,5 @@
 import { environment } from "../config/environment";
-import type { ForumComment, ForumPost, PostPage } from "./types";
+import type { ForumComment, ForumPost, ForumReply, PostPage } from "./types";
 
 async function forumRequest<T>(path: string, access: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${environment.djangoUrl}/api/posts/${path.replace(/^\//, "")}`, {
@@ -59,6 +59,21 @@ export function getComments(access: string, id: string) {
 
 export function addComment(access: string, id: string, content: string) {
   return forumRequest<ForumComment>(`${id}/comments/`, access, { method: "POST", body: JSON.stringify({ content }) });
+}
+
+export function getReplies(access: string, commentId: string) {
+  return forumRequest<ForumReply[]>(`comments/${commentId}/replies/`, access);
+}
+
+export function addReply(access: string, commentId: string, content: string, parentReply?: string) {
+  return forumRequest<ForumReply>("replies/", access, {
+    method: "POST",
+    body: JSON.stringify({
+      comment: commentId,
+      content,
+      ...(parentReply ? { parent_reply: parentReply } : {}),
+    }),
+  });
 }
 
 export function reportPost(access: string, id: string, reason: string) {
