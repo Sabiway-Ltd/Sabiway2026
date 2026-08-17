@@ -1,0 +1,81 @@
+name: Controlled user-testing defect
+description: Record a defect or usability issue found during SabiWay controlled testing.
+title: "[USER TEST] "
+labels: []
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Severity 1 — Blocker
+        - Severity 2 — Major
+        - Severity 3 — Moderate
+        - Severity 4 — Minor
+    validations:
+      required: true
+  - type: input
+    id: task
+    attributes:
+      label: Task ID
+      placeholder: T01
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Web desktop
+        - Mobile web
+        - Android
+        - iOS
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device / browser
+      placeholder: e.g. Samsung A15 / Chrome 151
+    validations:
+      required: true
+  - type: input
+    id: network
+    attributes:
+      label: Network condition
+      placeholder: Wi-Fi, 4G, constrained connection, etc.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected outcome
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual outcome
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Do not include passwords, payment-card details, identity documents or other sensitive personal data.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Safe evidence
+      description: Add a redacted screenshot, safe log reference or short note. Remove personal and financial information first.
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: Reproducible?
+      options:
+        - Always
+        - Sometimes
+        - Once only
+        - Not retested
+    validations:
+      required: true
