@@ -10,16 +10,18 @@ import { colors, interaction, radius, spacing, typography } from "./src/design/t
 import { HomeScreen } from "./src/home/HomeScreen";
 import { MarketplaceScreen } from "./src/marketplace/MarketplaceScreen";
 import { MessagingScreen } from "./src/messaging/MessagingScreen";
+import { NotificationsScreen } from "./src/notifications/NotificationsScreen";
 import { ProfileScreen } from "./src/profile/ProfileScreen";
 import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
 import { VerificationScreen } from "./src/verification/VerificationScreen";
 
-type AppSection = "home" | "community" | "marketplace" | "messages" | "sabipay" | "profile" | "verification";
+type AppSection = "home" | "community" | "marketplace" | "messages" | "notifications" | "sabipay" | "profile" | "verification";
 type PrimarySection = "home" | "marketplace" | "messages" | "community" | "profile";
 
 function sectionFromUrl(url: string): AppSection | null {
   const normalised = url.toLowerCase();
   if (normalised.includes("/messages") || normalised.includes("//messages")) return "messages";
+  if (normalised.includes("/notifications") || normalised.includes("//notifications")) return "notifications";
   if (normalised.includes("/marketplace") || normalised.includes("//marketplace")) return "marketplace";
   if (normalised.includes("/sabipay") || normalised.includes("//sabipay")) return "sabipay";
   if (normalised.includes("/profile") || normalised.includes("//profile")) return "profile";
@@ -62,7 +64,11 @@ export default function App() {
     { key: "profile", label: "Profile" },
   ];
 
-  const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification" ? "profile" : section;
+  const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification"
+    ? "profile"
+    : section === "notifications"
+      ? "home"
+      : section;
 
   return (
     <AppErrorBoundary>
@@ -80,11 +86,19 @@ export default function App() {
                   onOpenProfile={() => setSection("profile")}
                   onOpenVerification={() => session.user.role === "professional" && setSection("verification")}
                   onOpenSabiPay={() => setSection("sabipay")}
+                  onOpenNotifications={() => setSection("notifications")}
                 />
               ) : section === "marketplace" ? (
                 <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
               ) : section === "messages" ? (
                 <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
+              ) : section === "notifications" ? (
+                <NotificationsScreen
+                  session={session}
+                  onBackHome={() => setSection("home")}
+                  onOpenCommunity={() => setSection("community")}
+                  onOpenProfile={() => setSection("profile")}
+                />
               ) : section === "sabipay" ? (
                 <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
               ) : section === "profile" ? (
