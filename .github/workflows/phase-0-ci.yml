@@ -37,6 +37,16 @@ jobs:
       - name: Verify canonical design tokens are synced
         run: node scripts/sync-design-tokens.mjs --check
 
+  journey-contract-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify Phase 12 cross-platform journey contracts
+        run: node scripts/verify-phase12-journeys.mjs
+
   backend-check:
     runs-on: ubuntu-latest
     defaults:
@@ -104,6 +114,8 @@ jobs:
         run: npm run type-check
       - name: Lint
         run: npm run lint
+      - name: Production build
+        run: npm run build
 
   waitlist-syntax:
     runs-on: ubuntu-latest
