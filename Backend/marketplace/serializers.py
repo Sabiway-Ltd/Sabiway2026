@@ -312,8 +312,8 @@ class BookingRequestSerializer(serializers.ModelSerializer):
         price = attrs.get("agreed_price")
         if price is None:
             raise serializers.ValidationError({"agreed_price": "Agreed price is required."})
-        if price < 0:
-            raise serializers.ValidationError({"agreed_price": "Agreed price cannot be negative."})
+        if price <= 0:
+            raise serializers.ValidationError({"agreed_price": "Agreed price must be greater than zero."})
         currency = (attrs.get("currency") or "").strip().upper()
         if len(currency) != 3 or not currency.isalpha():
             raise serializers.ValidationError({"currency": "Use a three-letter currency code."})
@@ -323,7 +323,13 @@ class BookingRequestSerializer(serializers.ModelSerializer):
 
 
 class BookingStatusSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(choices=BookingRequest.Status.choices)
+    status = serializers.ChoiceField(
+        choices=[
+            BookingRequest.Status.ACCEPTED,
+            BookingRequest.Status.DECLINED,
+            BookingRequest.Status.CANCELLED,
+        ]
+    )
 
 
 class ScheduleProposalSerializer(serializers.ModelSerializer):
