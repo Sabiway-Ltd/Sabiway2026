@@ -3,7 +3,15 @@ from rest_framework import serializers
 from marketplace.models import BookingRequest
 from profiles.serializers import ProfileSerializer
 
-from .models import PaymentAttempt, PayoutDestination, PayoutRecord, Transaction, TransactionAudit
+from .models import (
+    Dispute,
+    DisputeEvidence,
+    PaymentAttempt,
+    PayoutDestination,
+    PayoutRecord,
+    Transaction,
+    TransactionAudit,
+)
 
 
 class PaymentAttemptSerializer(serializers.ModelSerializer):
@@ -31,6 +39,32 @@ class TransactionAuditSerializer(serializers.ModelSerializer):
         fields = ["id", "source", "event", "from_state", "to_state", "reason", "metadata", "actor_email", "created_at"]
 
 
+class DisputeEvidenceSerializer(serializers.ModelSerializer):
+    submitted_by = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = DisputeEvidence
+        fields = ["id", "submitted_by", "note", "reference_url", "created_at"]
+        read_only_fields = fields
+
+
+class DisputeSerializer(serializers.ModelSerializer):
+    opened_by_profile = ProfileSerializer(read_only=True)
+    evidence = DisputeEvidenceSerializer(many=True, read_only=True)
+    assigned_to_email = serializers.EmailField(source="assigned_to.email", read_only=True)
+    resolved_by_email = serializers.EmailField(source="resolved_by.email", read_only=True)
+    receipt_number = serializers.CharField(source="transaction.receipt_number", read_only=True)
+
+    class Meta:
+        model = Dispute
+        fields = [
+            "id", "transaction", "receipt_number", "opened_by_profile", "reason", "details",
+            "transaction_state_at_open", "status", "outcome", "assigned_to_email", "reviewed_at",
+            "resolution", "resolved_by_email", "resolved_at", "closed_at", "evidence", "created_at",
+        ]
+        read_only_fields = fields
+
+
 class TransactionSerializer(serializers.ModelSerializer):
     client = ProfileSerializer(read_only=True)
     professional = ProfileSerializer(read_only=True)
@@ -39,6 +73,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     scope_summary = serializers.CharField(source="booking.scope_summary", read_only=True)
     latest_attempt = serializers.SerializerMethodField()
     payout = serializers.SerializerMethodField()
+    disputes = DisputeSerializer(many=True, read_only=True)
     audit_events = TransactionAuditSerializer(many=True, read_only=True)
     freeze_seconds_remaining = serializers.SerializerMethodField()
 
@@ -47,11 +82,12 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = [
             "id", "booking_id", "booking_status", "scope_summary", "client", "professional",
             "amount", "currency", "commission_rate", "commission_amount", "provider_amount",
-            "state", "gateway", "funding_reference", "receipt_number", "funded_at",
+            "state", "payment_status", "last_payment_error", "last_payment_checked_at",
+            "gateway", "funding_reference", "receipt_number", "funded_at",
             "service_started_at", "delivered_at", "release_eligible_at", "client_confirmed_at",
             "released_at", "cancelled_at", "refunded_at", "refund_status", "refund_reason",
             "reconciliation_status", "reconciliation_note", "reconciled_at", "latest_attempt",
-            "payout", "freeze_seconds_remaining", "audit_events", "created_at", "updated_at",
+            "payout", "disputes", "freeze_seconds_remaining", "audit_events", "created_at", "updated_at",
         ]
 
     def get_latest_attempt(self, obj):
@@ -105,3 +141,24 @@ class PayoutDestinationCreateSerializer(serializers.Serializer):
 
 class AdminRefundSerializer(serializers.Serializer):
     reason = serializers.CharField(min_length=4, max_length=500)
+
+
+class OpenDisputeSerializer(serializers.Serializer):
+    transaction_id = serializers.UUIDField()
+    reason = serializers.ChoiceField(choices=Dispute.Reason.choices)
+    details = serializers.CharField(min_length=10, max_length=4000)
+
+
+class DisputeEvidenceCreateSerializer(serializers.Serializer):
+    note = serializers.CharField(min_length=3, max_length=4000)
+    reference_url = serializers.URLField(required=False, allow_blank=True, max_length=500)
+
+
+class DisputeResolutionSerializer(serializers.Serializer):
+    outcome = serializers.ChoiceField(choices=[
+        Dispute.Outcome.RESUME,
+        Dispute.Outcome.REFUND,
+        Dispute.Outcome.RELEASE,
+        Dispute.Outcome.CLOSED_NO_ACTION,
+    ])
+    resolution = serializers.CharField(min_length=5, max_length=4000)
