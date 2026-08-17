@@ -1,40 +1,55 @@
-# Phase 0 repository and security audit
+# Phase 0 — Current Repository, Security & Delivery Audit
 
-Audit date: 2026-08-15
+Audit refreshed: 2026-08-17  
+Repository: `Sabiway-Ltd/Sabiway2026`  
+Default branch: `main`
 
-## Control baseline
+## Current verified state
 
-- Organization repository: `Sabiway-Ltd/Sabiway2026`
-- Visibility: private (verified after branch-protection creation)
-- Default branch: `main`
-- Connected account: `OlaoluwajohnsonT` with administrator permission
-- Direct collaborators found: one administrator
-- Repository teams found: none
-- Branch rulesets found before remediation: none
-- GitHub Actions workflows found before remediation: none
+- Repository is public.
+- Current product code is split across `frontend/`, `mobile/`, `Backend/`, `ExpressJs/`, `WaitList/` and `Documentation/`.
+- `frontend/` is a Next.js/React/TypeScript application.
+- `mobile/` is an Expo/React Native/TypeScript application.
+- `Backend/` is Django + Django REST Framework with JWT support.
+- `ExpressJs/` is an Express + Socket.IO realtime service.
+- `.github/workflows/phase-0-ci.yml` exists and runs repository hygiene, Django system/migration/tests, realtime checks, frontend type/lint, waitlist syntax and mobile typecheck.
+- `.github/dependabot.yml` exists.
+- The latest verified `main` Platform CI run inspected during this refresh completed successfully.
+- Repository hygiene CI rejects tracked `.env`, local databases, Python bytecode/cache, `node_modules` and virtual-environment directories.
+- `ExpressJs/.env.example` exists; a live `.env` is not present in the current ExpressJs tree.
+- Realtime internal broadcast endpoints now require `x-sabiway-internal-token` and authenticated Socket.IO connections validate access JWTs.
 
-## Findings
+## Historical findings and present decision
 
-| Priority | Finding | Phase 0 action |
+| Historical issue | Current decision | Current status |
 |---|---|---|
-| Critical | A tracked `ExpressJs/.env` exists in a public repository. | Remove from the current tree, add ignore rules and require credential rotation. |
-| Critical | Django configuration contains hard-coded secret, OAuth, email, database and media-service values. | Replace active values with environment lookups and publish placeholder templates. |
-| High | Realtime broadcast endpoints accept requests without service authentication. | Record as a release blocker; design a backend-to-realtime service credential before production. |
-| High | `main` had no protection rules. | A classic rule now exists, but GitHub marks it **Not enforced** while the repository is private on the organization free plan. Make the repository public or upgrade the organization plan. |
-| High | More than ten thousand generated dependency/environment files are tracked. | Remove `node_modules`, `venv`, Python caches and local database files from the current tree. |
-| Medium | One administrator and no repository team creates a continuity risk. | Add at least one second trusted organization owner/admin and use teams for developer access. |
-| Medium | Automated dependency updates are absent. | Add Dependabot configuration for Python and npm projects. |
-| High | The inherited frontend has numerous existing TypeScript contract errors across stores, profiles, navigation and help-centre components. | Run diagnostics non-blocking in Phase 0; repair the baseline and restore strict type/lint gates at the start of Phase 1. |
-| Medium | Automated test coverage is sparse or missing in several services. | Establish syntax and framework gates now; expand functional coverage in later phases. |
+| Tracked `.env` / generated dependencies / local databases | REMOVE from source and reject in CI | Current tree protected by hygiene gate; historical Git exposure still requires credential rotation evidence |
+| Hard-coded application secrets | REPLACE with environment-driven configuration | Current Phase 0 must verify sensitive settings remain environment-driven before exit |
+| Unauthenticated realtime broadcast | REFACTOR | Remediated in current `ExpressJs/server.js`; KEEP current protected approach pending Phase 6 architecture review |
+| No CI | REPLACE | Remediated; KEEP and improve as phase gates grow |
+| No Dependabot | REPLACE | Remediated; KEEP |
+| No mobile application | Historical assumption invalid | Mobile application now exists and must be audited as a first-class client |
+| Frontend TypeScript/lint debt | IMPROVE | Current CI has blocking TypeScript/lint jobs and latest inspected `main` run passed |
+| Sparse automated tests | IMPROVE | Backend journey tests now run in CI; coverage depth still expands by phase |
+| Branch protection not enforced while private | RE-CHECK | Repository is now public, but the connected GitHub integration cannot read branch protection; manual GitHub Settings verification remains required |
 
-## Cleanup counts
+## Current risks / Phase 0 blockers
 
-The pre-remediation tree contained 10,803 files: 10,437 under committed dependency or virtual-environment directories and 3,535 Python cache/bytecode entries (some categories overlap). It also contained a local waitlist database.
+### 1. Credential-rotation evidence — OPEN
+Credentials previously exposed in repository history must be treated as compromised until rotation is confirmed. Current-tree cleanup alone is insufficient.
 
-## Mandatory manual security action
+### 2. Branch-protection enforcement — MANUAL VERIFICATION REQUIRED
+The repository is public, removing the previous private/free-plan limitation, but the current integration receives HTTP 403 when reading the protection endpoint. Confirm in GitHub Settings that `main` requires pull requests, required checks, resolved conversations and appropriate review rules.
 
-Rotate every credential that appeared in the copied repository or its history, including Django, database, Google OAuth, Resend and Cloudinary credentials. Deleting or replacing the current file does not invalidate credentials and does not purge Git history.
+### 3. Figma design audit — OPEN
+The master playbook requires the existing mobile Figma to be inspected screen-by-screen. The repository does not provide the Figma file key, so design audit cannot be certified from GitHub alone.
 
-## Branch-protection enforcement status
+### 4. Environment separation — OPEN EVIDENCE
+Development, staging and production must use separate credentials and data. Code structure supports environment configuration, but Phase 0 requires named staging ownership and evidence before this control is considered closed.
 
-A classic protection rule for `main` was created with one approval, resolved conversations, no administrator bypass, and required backend, hygiene, realtime and waitlist checks. GitHub currently displays the rule as **Not enforced** because the repository is private and Sabiway Ltd is not on GitHub Team or Enterprise.
+### 5. Architecture authority review — IN PROGRESS
+Existing functionality spans Django, Next.js, Expo and Express. Phase 0 must explicitly document which system owns identity, roles, profiles, verification, transactions, payments, realtime and admin decisions to prevent future duplication.
+
+## Phase 0 repository decision
+
+KEEP the current monorepo and current primary stacks. Do not perform a greenfield rewrite. Refactor only where a single-source-of-truth, security, maintainability, accessibility, performance or cross-platform gap is demonstrated.
