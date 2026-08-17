@@ -47,11 +47,12 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
   const [showCreate, setShowCreate] = useState(false);
   const contentWidth = Math.min(width - 24, 760);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (searchQuery = "") => {
     try {
+      const filters = { q: searchQuery.trim() || undefined };
       const [nextListings, nextJobs, nextCategories] = await Promise.all([
-        getMarketplaceListings(),
-        getMarketplaceJobs(),
+        getMarketplaceListings(filters),
+        getMarketplaceJobs(filters),
         getMarketplaceCategories(),
       ]);
       setListings(nextListings);
@@ -65,32 +66,33 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
+  // Phase 4 keeps the free-text location box as a client refinement until the
+  // backend exposes one generic location parameter across country/state/city/area.
+  // Service/job text search itself is authoritative on Django.
   const serviceResults = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     const place = location.trim().toLowerCase();
-    return listings.filter((item) => {
-      const matchesSearch = !needle || [item.title, item.description, item.category.name, item.subcategory?.name ?? "", item.provider.full_name]
-        .some((value) => value.toLowerCase().includes(needle));
-      const matchesLocation = !place || [item.area, item.city ?? "", item.state, item.country ?? ""].some((value) => value.toLowerCase().includes(place));
-      return matchesSearch && matchesLocation;
-    });
-  }, [listings, query, location]);
+    if (!place) return listings;
+    return listings.filter((item) => [item.area, item.city ?? "", item.state, item.country ?? ""]
+      .some((value) => value.toLowerCase().includes(place)));
+  }, [listings, location]);
 
   const jobResults = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     const place = location.trim().toLowerCase();
-    return jobs.filter((item) => {
-      const matchesSearch = !needle || [item.title, item.description, item.category.name].some((value) => value.toLowerCase().includes(needle));
-      const matchesLocation = !place || [item.area ?? "", item.city ?? "", item.state ?? "", item.country ?? ""].some((value) => value.toLowerCase().includes(place));
-      return matchesSearch && matchesLocation;
-    });
-  }, [jobs, query, location]);
+    if (!place) return jobs;
+    return jobs.filter((item) => [item.area ?? "", item.city ?? "", item.state ?? "", item.country ?? ""]
+      .some((value) => value.toLowerCase().includes(place)));
+  }, [jobs, location]);
 
   const feed: FeedItem[] = tab === "services"
     ? serviceResults.map((data) => ({ kind: "service" as const, data }))
     : jobResults.map((data) => ({ kind: "job" as const, data }));
+
+  const runSearch = () => {
+    setRefreshing(true);
+    void load(query);
+  };
 
   const sendJobResponse = async () => {
     if (!selectedJob || !responseMessage.trim()) return;
@@ -122,13 +124,16 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
           </View>
           <Pressable onPress={onBackToCommunity} style={styles.heroButton}><Text style={styles.heroButtonText}>SabiForum</Text></Pressable>
         </View>
-        <TextInput value={query} onChangeText={setQuery} placeholder="What service or problem do you have?" placeholderTextColor={colors.muted} style={styles.search} />
-        <TextInput value={location} onChangeText={setLocation} placeholder="City, state or country" placeholderTextColor={colors.muted} style={styles.search} />
+        <TextInput value={query} onChangeText={setQuery} onSubmitEditing={runSearch} returnKeyType="search" placeholder="What service or problem do you have?" placeholderTextColor={colors.muted} style={styles.search} accessibilityLabel="Search services and jobs" />
+        <TextInput value={location} onChangeText={setLocation} placeholder="City, state or country" placeholderTextColor={colors.muted} style={styles.search} accessibilityLabel="Filter results by location" />
+        <Pressable onPress={runSearch} disabled={refreshing} accessibilityRole="button" accessibilityLabel="Search marketplace" style={[styles.searchButton, refreshing && styles.buttonDisabled]}>
+          <Text style={styles.searchButtonText}>{refreshing ? "Searching…" : "Search"}</Text>
+        </Pressable>
       </View>
 
-      <View style={[styles.tabs, { width: contentWidth }]}>
-        <Pressable onPress={() => setTab("services")} style={[styles.tab, tab === "services" && styles.tabActive]}><Text style={[styles.tabText, tab === "services" && styles.tabTextActive]}>Find services</Text></Pressable>
-        <Pressable onPress={() => setTab("jobs")} style={[styles.tab, tab === "jobs" && styles.tabActive]}><Text style={[styles.tabText, tab === "jobs" && styles.tabTextActive]}>Open jobs</Text></Pressable>
+      <View style={[styles.tabs, { width: contentWidth }]} accessibilityRole="tablist">
+        <Pressable accessibilityRole="tab" accessibilityState={{ selected: tab === "services" }} onPress={() => setTab("services")} style={[styles.tab, tab === "services" && styles.tabActive]}><Text style={[styles.tabText, tab === "services" && styles.tabTextActive]}>Find services</Text></Pressable>
+        <Pressable accessibilityRole="tab" accessibilityState={{ selected: tab === "jobs" }} onPress={() => setTab("jobs")} style={[styles.tab, tab === "jobs" && styles.tabActive]}><Text style={[styles.tabText, tab === "jobs" && styles.tabTextActive]}>Open jobs</Text></Pressable>
       </View>
 
       <Pressable onPress={() => setShowCreate(true)} style={[styles.createButton, { width: contentWidth }]}>
@@ -140,8 +145,8 @@ export function MarketplaceScreen({ session, onBackToCommunity, onSignOut }: Pro
         data={feed}
         keyExtractor={(item) => `${item.kind}-${item.data.id}`}
         contentContainerStyle={[styles.list, { width: contentWidth }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
-        ListEmptyComponent={<Text style={styles.empty}>No marketplace results match your search yet.</Text>}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(query); }} />}
+        ListEmptyComponent={<Text accessibilityRole="text" style={styles.empty}>No marketplace results match your search yet. Try another service or location.</Text>}
         renderItem={({ item }) => item.kind === "service" ? (
           <Pressable onPress={() => setSelectedService(item.data)} style={styles.card}>
             <View style={styles.rowBetween}>
@@ -236,6 +241,9 @@ const styles = StyleSheet.create({
   title: { color: "#FFFFFF", fontWeight: "900", fontSize: 27, lineHeight: 32, marginTop: 3 },
   subtitle: { color: "#E7F7EF", lineHeight: 20, marginTop: 5 },
   search: { minHeight: 48, borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 12, paddingHorizontal: 14, backgroundColor: "#FFFFFF", color: "#173126" },
+  searchButton: { minHeight: 48, borderRadius: 12, backgroundColor: colors.accent, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
+  searchButtonText: { color: colors.onAccent, fontWeight: "900" },
+  buttonDisabled: { opacity: 0.62 },
   tabs: { flexDirection: "row", backgroundColor: "#EAF4EF", borderRadius: 12, padding: 4, marginTop: 12 },
   tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: 9 },
   tabActive: { backgroundColor: "#FFFFFF" },
