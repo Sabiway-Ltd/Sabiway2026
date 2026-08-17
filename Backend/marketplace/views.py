@@ -197,7 +197,25 @@ class JobResponseViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Only the job owner can shortlist or decline responses.")
         decision = JobResponseStatusSerializer(data=request.data)
         decision.is_valid(raise_exception=True)
-        response.status = decision.validated_data["status"]
+        target = decision.validated_data["status"]
+        allowed = {
+            JobResponse.Status.SENT: {JobResponse.Status.SHORTLISTED, JobResponse.Status.DECLINED},
+            JobResponse.Status.SHORTLISTED: {JobResponse.Status.DECLINED},
+        }
+        if target not in allowed.get(response.status, set()):
+            raise ValidationError({"status": "This job response can no longer move to that state."})
+        response.status = target
+        response.save(update_fields=["status", "updated_at"])
+        return Response(JobResponseSerializer(response, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"])
+    def withdraw(self, request, pk=None):
+        response = self.get_object()
+        if response.professional_id != request.user.profile.pk:
+            raise PermissionDenied("Only the professional who submitted this response can withdraw it.")
+        if response.status not in {JobResponse.Status.SENT, JobResponse.Status.SHORTLISTED}:
+            raise ValidationError({"status": "This job response can no longer be withdrawn."})
+        response.status = JobResponse.Status.WITHDRAWN
         response.save(update_fields=["status", "updated_at"])
         return Response(JobResponseSerializer(response, context={"request": request}).data)
 
@@ -243,6 +261,13 @@ class MessageThreadViewSet(viewsets.ModelViewSet):
             serializer.save(client=me, professional=professional)
         else:
             response = data["job_response"]
+            if response.status not in {JobResponse.Status.SENT, JobResponse.Status.SHORTLISTED}:
+                raise ValidationError({"job_response_id": "This job response is no longer active."})
+            if (
+                response.job.status != JobPosting.Status.OPEN
+                or response.job.moderation_status != JobPosting.ModerationStatus.APPROVED
+            ):
+                raise ValidationError({"job_response_id": "The related job is no longer open for conversation."})
             serializer.save(client=response.job.client, professional=me, job=response.job)
 
     @action(detail=True, methods=["post"], url_path="mark-read")
