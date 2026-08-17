@@ -1,0 +1,46 @@
+{
+  "phase": 12,
+  "title": "End-to-End QA & Cross-Platform Journey Certification",
+  "basis": "SabiWay V2 Master Cross-Platform Build, Audit, Design & User-Testing Readiness Playbook",
+  "certification_level": "software-contract-and-regression",
+  "journeys": [
+    {"journey":"Register","web":"frontend/app/(auth)/signup/page.tsx","mobile":"mobile/src/auth/AuthFlow.tsx","backend":"Backend/accounts/urls.py","status":"software-covered"},
+    {"journey":"Login","web":"frontend/app/(auth)/login/page.tsx","mobile":"mobile/src/auth/AuthFlow.tsx","backend":"Backend/accounts/urls.py","status":"software-covered"},
+    {"journey":"Password recovery","web":"frontend/app/(auth)/forgot-password/page.tsx","mobile":"mobile/src/auth/AuthFlow.tsx","backend":"Backend/accounts/urls.py","status":"software-covered"},
+    {"journey":"Profile","web":"frontend/app/profile/MyProfile.tsx","mobile":"mobile/src/profile/ProfileScreen.tsx","backend":"Backend/profiles","status":"software-covered"},
+    {"journey":"Verification","web":"frontend/app/verification","mobile":"mobile/src/verification/VerificationScreen.tsx","backend":"Backend/verification","status":"software-covered"},
+    {"journey":"Search","web":"shared discovery/search integration","mobile":"mobile/src/marketplace/MarketplaceScreen.tsx","backend":"Backend/search/views.py","status":"software-covered"},
+    {"journey":"Content","web":"frontend/app/community","mobile":"mobile/src/community/CommunityScreen.tsx","backend":"Backend/posts","status":"software-covered"},
+    {"journey":"Messaging","web":"frontend/app/messages/MessagesClient.tsx","mobile":"mobile/src/messaging/MessagingScreen.tsx","backend":"Backend/marketplace","status":"software-covered"},
+    {"journey":"Notifications","web":"frontend/app/notifications","mobile":"mobile/src/notifications/NotificationsScreen.tsx","backend":"Backend/notifications","status":"software-covered"},
+    {"journey":"Transactions","web":"frontend/app/marketplace","mobile":"mobile/src/marketplace/MarketplaceScreen.tsx","backend":"Backend/marketplace","status":"software-covered"},
+    {"journey":"Payments","web":"frontend/app/sabipay","mobile":"mobile/src/sabipay/SabiPayScreen.tsx","backend":"Backend/sabipay","status":"software-covered"},
+    {"journey":"Support/report","web":"frontend/app/helpcenter","mobile":"mobile/src/community/api.ts#reportPost","backend":"Backend/operations","status":"software-covered"},
+    {"journey":"Logout","web":"shared auth/logout integration","mobile":"mobile/App.tsx#signOut","backend":"Backend/accounts/urls.py#logout","status":"software-covered"}
+  ],
+  "cross_device_scenarios": [
+    {"id":1,"scenario":"Register Android -> update profile Web -> view update iOS","software_contract":"covered","runtime_execution":"required"},
+    {"id":2,"scenario":"Create content Web -> engagement Android -> notification iOS","software_contract":"covered","runtime_execution":"required"},
+    {"id":3,"scenario":"Start transaction Android -> inspect Web -> admin changes state -> update appears iOS","software_contract":"covered","runtime_execution":"required"},
+    {"id":4,"scenario":"Admin suspends user -> Web restricted -> Android restricted -> iOS restricted","software_contract":"covered","runtime_execution":"required"}
+  ],
+  "browser_matrix": [
+    {"browser":"Chrome","runtime_status":"not-executed-in-CI"},
+    {"browser":"Edge","runtime_status":"not-executed-in-CI"},
+    {"browser":"Safari","runtime_status":"not-executed-in-CI"},
+    {"browser":"Firefox","runtime_status":"not-executed-in-CI"}
+  ],
+  "real_device_matrix": [
+    {"device_class":"Low-range Android","runtime_status":"not-executed-in-CI"},
+    {"device_class":"Mid-range Android","runtime_status":"not-executed-in-CI"},
+    {"device_class":"Higher-range Android","runtime_status":"not-executed-in-CI"},
+    {"device_class":"Older supported iPhone","runtime_status":"not-executed-in-CI"},
+    {"device_class":"Current supported iPhone","runtime_status":"not-executed-in-CI"}
+  ],
+  "severity_model": {
+    "severity_1":"Critical journey impossible, security issue or serious data risk",
+    "severity_2":"Journey only possible with significant difficulty",
+    "severity_3":"Issue affects usability but journey remains possible",
+    "severity_4":"Cosmetic or low-impact"
+  }
+}
