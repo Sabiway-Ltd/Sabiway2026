@@ -1,6 +1,6 @@
 # Phase 0 — Authoritative Status & Exit Gate
 
-Status: **IN PROGRESS — OWNER-CONTROLLED GOVERNANCE EVIDENCE REMAINS**
+Status: **CERTIFIED WITH OWNER-ACCEPTED TIME-BOUNDED RISKS**
 
 This file is the controlling Phase 0 status for the SabiWay V2 master playbook. Older phase numbering and historical completion notes must not override it.
 
@@ -16,7 +16,7 @@ This file is the controlling Phase 0 status for the SabiWay V2 master playbook. 
 - [x] One-business-authority architecture baseline documented.
 - [x] Critical cross-platform journeys baselined.
 - [x] Responsive/device/accessibility baseline refreshed.
-- [x] Platform CI run #121 passed on the latest inspected Phase 0 head.
+- [x] Platform CI run #121 passed on the latest inspected Phase 0 head before certification update.
 - [x] Dependabot exists.
 - [x] Current-tree hygiene CI rejects `.env`, generated dependencies/caches and local DB files.
 - [x] Realtime broadcast authentication is present in current code.
@@ -33,35 +33,28 @@ This file is the controlling Phase 0 status for the SabiWay V2 master playbook. 
 - [x] Supplied branding package inspected and initial brand-source colour/assets baseline documented.
 - [x] New-web rule recorded: derive from the approved app design language but build native responsive web layouts rather than stretching mobile designs.
 - [x] GitHub environments inspected: `Preview` and `Production` exist.
-- [x] Vercel project `sabiway2026` inspected; latest deployment is READY and preview-targeted (`target: null`), not production.
+- [x] Vercel project `sabiway2026` inspected; a READY preview deployment exists.
 - [x] Repository admin permission confirmed for `OlaoluwajohnsonT`.
-- [x] Connected Supabase organisation inspected; no SabiWay project is currently visible there, so no staging/production Supabase separation can be claimed.
+- [x] Connected Supabase organisation inspected; no SabiWay project is currently visible there.
 - [x] Manual closure tracking created as GitHub issue #38.
 
-## Open Phase 0 gates
+## Owner-accepted time-bounded risks
 
-These are now limited to evidence/actions that cannot be truthfully completed by the connected tooling alone:
+On 2026-08-17 the Product Owner explicitly directed the programme to continue to the next phase while he is the only active person working on the repository. The following items are therefore accepted as controlled, time-bounded operational risks rather than blockers to Phase 1:
 
-- [ ] **Credential rotation evidence:** confirm all historically exposed secrets/credentials have been rotated/revoked at their providers. Do not store secret values in GitHub; record only provider + rotation/revocation date.
-- [ ] **Branch protection:** manually verify enforced rules for `main`. The branch-protection API returns 403 to this integration. Minimum target: PR required, Platform CI required, no normal direct pushes, and force-push/deletion protection where appropriate.
-- [ ] **Backup governance:** confirm at least one trusted backup Sabiway-Ltd organisation owner/admin and least-privilege developer/team access. Organisation membership detail is not readable by this integration.
-- [ ] **Staging boundary:** establish isolated staging credentials/data and record a named staging owner and release approver. GitHub currently has `Preview` and `Production`, but both lack deployment protection rules; Vercel currently has a READY preview deployment; no SabiWay Supabase project is visible in the connected Supabase organisation.
+- **Credential rotation evidence:** provider-side proof of historical credential rotation/revocation remains to be recorded. No secret values are to be stored in GitHub.
+- **Branch protection:** `main` protection remains manually verifiable because the branch-protection API returns 403 to this integration. Until formally enabled/verified, changes should continue through feature branches and pull requests.
+- **Backup governance:** a second trusted Sabiway-Ltd organisation owner/admin is still to be confirmed before broader contributor access or production launch.
+- **Staging boundary:** isolated staging credentials/data, a named staging owner and release approver must be established before production-readiness certification. Existing GitHub Preview/Production environments do not by themselves satisfy this requirement.
 
-Tracking issue: **#38 — Phase 0 manual security and governance closure**.
+Tracking issue: **#38 — Phase 0 manual security and governance closure** remains open and must be completed before production/user-testing readiness certification even though it no longer blocks Phase 1 development.
 
 ## Design-gate note
 
-The Figma MCP Starter-plan tool-call limit no longer blocks Phase 0 design-baseline certification because the Product Owner supplied an export of the approved V2 app design. The export has been audited and is sufficient for Phase 0 baseline decisions. Live Figma remains the authoritative editable source for later screen-level implementation work.
+The Product Owner-supplied export of the approved V2 app design closes the Phase 0 design-baseline gate. Live Figma remains the authoritative editable source for later screen-level implementation work. The V1 `Sabiway website` Figma page remains excluded from V2 design authority.
 
-The V1 `Sabiway website` Figma page remains excluded from V2 design authority.
+## Phase 0 certification decision
 
-## Phase 0 exit rule
+**Phase 0 is CERTIFIED WITH OWNER-ACCEPTED TIME-BOUNDED RISKS.**
 
-Phase 1 must not be certified as started until the four open gates above are either:
-
-1. closed with evidence; or
-2. explicitly accepted as a time-bounded risk by the named owner where the playbook permits operational follow-up.
-
-## Next action
-
-Complete issue #38, update this file to `CERTIFIED`, mark PR #37 ready, merge Phase 0, then begin Master Phase 1 — Shared Technical Foundation & Design System.
+This certification permits Master Phase 1 — Shared Technical Foundation & Design System — to begin. It does not waive the open governance/security actions for production or controlled-user-testing readiness.
