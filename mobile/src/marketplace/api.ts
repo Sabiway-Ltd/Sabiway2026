@@ -16,6 +16,8 @@ export type MarketplaceDiscoveryFilters = {
   pageSize?: number;
 };
 
+export type MarketplaceThread = { id: string };
+
 function authHeaders(access: string) {
   return { Authorization: `Bearer ${access}` };
 }
@@ -76,5 +78,21 @@ export async function respondToMarketplaceJob(access: string, jobId: string, mes
     method: "POST",
     headers: authHeaders(access),
     body: JSON.stringify({ job_id: jobId, message, proposed_price: proposedPrice || null, currency: "NGN" }),
+  });
+}
+
+export async function startServiceConversation(access: string, listingId: string): Promise<MarketplaceThread> {
+  return apiRequest<MarketplaceThread>("marketplace/threads/", {
+    method: "POST",
+    headers: authHeaders(access),
+    body: JSON.stringify({ listing_id: listingId }),
+  });
+}
+
+export async function startJobResponseConversation(access: string, jobResponseId: string): Promise<MarketplaceThread> {
+  return apiRequest<MarketplaceThread>("marketplace/threads/", {
+    method: "POST",
+    headers: authHeaders(access),
+    body: JSON.stringify({ job_response_id: jobResponseId }),
   });
 }

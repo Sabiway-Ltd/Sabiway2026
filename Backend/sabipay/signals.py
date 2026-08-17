@@ -18,7 +18,9 @@ def _existing_transaction(booking):
 
 @receiver(pre_save, sender=BookingRequest)
 def protect_funded_booking_transitions(sender, instance, **kwargs):
-    if not instance.pk:
+    # BookingRequest uses a UUID default, so ``pk`` exists before the first save.
+    # ``_state.adding`` is the reliable create/update boundary.
+    if instance._state.adding:
         return
     previous = BookingRequest.objects.filter(pk=instance.pk).values_list("status", flat=True).first()
     if previous == instance.status:

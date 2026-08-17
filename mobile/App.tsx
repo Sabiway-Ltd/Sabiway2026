@@ -37,7 +37,6 @@ export default function App() {
 
   useEffect(() => {
     if (!session) return;
-
     const applyUrl = (url: string | null) => {
       if (!url) return;
       const next = sectionFromUrl(url);
@@ -45,17 +44,12 @@ export default function App() {
       if (next === "verification" && session.user.role !== "professional") return;
       setSection(next);
     };
-
     void Linking.getInitialURL().then(applyUrl);
     const subscription = Linking.addEventListener("url", ({ url }) => applyUrl(url));
     return () => subscription.remove();
   }, [session]);
 
-  const signOut = () => {
-    setSession(null);
-    setSection("home");
-  };
-
+  const signOut = () => { setSession(null); setSection("home"); };
   const navItems: Array<{ key: PrimarySection; label: string }> = [
     { key: "home", label: "Home" },
     { key: "marketplace", label: "Market" },
@@ -63,12 +57,7 @@ export default function App() {
     { key: "community", label: "SabiForum" },
     { key: "profile", label: "Profile" },
   ];
-
-  const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification"
-    ? "profile"
-    : section === "notifications"
-      ? "home"
-      : section;
+  const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification" ? "profile" : section === "notifications" ? "home" : section;
 
   return (
     <AppErrorBoundary>
@@ -78,27 +67,13 @@ export default function App() {
           <View style={styles.authenticated}>
             <View style={styles.content}>
               {section === "home" ? (
-                <HomeScreen
-                  session={session}
-                  onOpenMarketplace={() => setSection("marketplace")}
-                  onOpenMessages={() => setSection("messages")}
-                  onOpenCommunity={() => setSection("community")}
-                  onOpenProfile={() => setSection("profile")}
-                  onOpenVerification={() => session.user.role === "professional" && setSection("verification")}
-                  onOpenSabiPay={() => setSection("sabipay")}
-                  onOpenNotifications={() => setSection("notifications")}
-                />
+                <HomeScreen session={session} onOpenMarketplace={() => setSection("marketplace")} onOpenMessages={() => setSection("messages")} onOpenCommunity={() => setSection("community")} onOpenProfile={() => setSection("profile")} onOpenVerification={() => session.user.role === "professional" && setSection("verification")} onOpenSabiPay={() => setSection("sabipay")} onOpenNotifications={() => setSection("notifications")} />
               ) : section === "marketplace" ? (
-                <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onSignOut={signOut} />
+                <MarketplaceScreen session={session} onBackToCommunity={() => setSection("community")} onOpenMessages={() => setSection("messages")} onSignOut={signOut} />
               ) : section === "messages" ? (
                 <MessagingScreen session={session} onBackToMarketplace={() => setSection("marketplace")} onBackToCommunity={() => setSection("community")} />
               ) : section === "notifications" ? (
-                <NotificationsScreen
-                  session={session}
-                  onBackHome={() => setSection("home")}
-                  onOpenCommunity={() => setSection("community")}
-                  onOpenProfile={() => setSection("profile")}
-                />
+                <NotificationsScreen session={session} onBackHome={() => setSection("home")} onOpenCommunity={() => setSection("community")} onOpenProfile={() => setSection("profile")} />
               ) : section === "sabipay" ? (
                 <SabiPayScreen session={session} onBackToMarketplace={() => setSection("marketplace")} />
               ) : section === "profile" ? (
@@ -109,28 +84,14 @@ export default function App() {
                 <CommunityScreen session={session} onSignOut={signOut} />
               )}
             </View>
-
             <View style={styles.navigation} accessibilityRole="tablist">
               {navItems.map((item) => {
                 const active = selectedPrimarySection === item.key;
-                return (
-                  <Pressable
-                    key={item.key}
-                    accessibilityRole="tab"
-                    accessibilityLabel={item.label}
-                    accessibilityState={{ selected: active }}
-                    onPress={() => setSection(item.key)}
-                    style={({ pressed }) => [styles.navItem, active && styles.navItemActive, pressed && styles.navItemPressed]}
-                  >
-                    <Text numberOfLines={1} style={[styles.navText, active && styles.navTextActive]}>{item.label}</Text>
-                  </Pressable>
-                );
+                return <Pressable key={item.key} accessibilityRole="tab" accessibilityLabel={item.label} accessibilityState={{ selected: active }} onPress={() => setSection(item.key)} style={({ pressed }) => [styles.navItem, active && styles.navItemActive, pressed && styles.navItemPressed]}><Text numberOfLines={1} style={[styles.navText, active && styles.navTextActive]}>{item.label}</Text></Pressable>;
               })}
             </View>
           </View>
-        ) : (
-          <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("home"); }} />
-        )}
+        ) : <AuthFlow onAuthenticated={(next) => { setSession(next); setSection("home"); }} />}
       </SafeAreaView>
     </AppErrorBoundary>
   );
@@ -140,24 +101,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   authenticated: { flex: 1 },
   content: { flex: 1 },
-  navigation: {
-    flexDirection: "row",
-    gap: spacing[1],
-    paddingHorizontal: spacing[2],
-    paddingTop: spacing[1],
-    paddingBottom: spacing[2],
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  navItem: {
-    flex: 1,
-    minHeight: interaction.minimumTouchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: radius.md,
-    paddingHorizontal: spacing[1],
-  },
+  navigation: { flexDirection: "row", gap: spacing[1], paddingHorizontal: spacing[2], paddingTop: spacing[1], paddingBottom: spacing[2], borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface },
+  navItem: { flex: 1, minHeight: interaction.minimumTouchTarget, justifyContent: "center", alignItems: "center", borderRadius: radius.md, paddingHorizontal: spacing[1] },
   navItemActive: { backgroundColor: colors.primary },
   navItemPressed: { opacity: 0.72 },
   navText: { color: colors.textMuted, fontWeight: "600", fontSize: typography.size.xs },

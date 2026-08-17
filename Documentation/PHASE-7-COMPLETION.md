@@ -1,91 +1,105 @@
-# Phase 7 — SabiPay escrow — Nigeria pilot
+# Master Phase 7 — Marketplace / Services / Core SabiWay Transactions
+
+## Status
+Implementation candidate. Final completion is conditional on the exact PR head passing Platform CI and the phase merge gate.
 
 ## Source authority
+This phase follows **SabiWay V2 — Master Cross-Platform Build, Audit, Design & User-Testing Readiness Playbook**. Phase 7 owns the main value-exchange journey:
 
-Phase 7 follows the approved AI Development Playbook: a Paystack-based Nigeria-to-Nigeria transaction lifecycle before cross-border expansion. The confirmed business rules are a 7-day post-delivery freeze and a 10% SabiWay commission. Stripe/cross-border settlement remains Phase 9.
+`Discover → Inspect → Assess provider → Review conditions → Initiate → Confirm → Track → Complete → Review/support`
 
-## Delivered scope
+Payment reconciliation, financial failure handling and disputes remain Master Phase 8. Shared admin consolidation, moderation and support operations remain Master Phase 9.
 
-### Financial domain
-- `Transaction` is one-to-one with an accepted booking and records the immutable financial snapshot: gross service amount, 10% SabiWay fee and provider net amount.
-- Transaction states cover `pending_payment`, `funded`, `in_progress`, `delivered`, `released`, `disputed`, `refunded` and `cancelled`.
-- `PaymentAttempt` preserves each Paystack checkout reference and supports request idempotency without overwriting failed/abandoned attempts.
-- `PayoutDestination` stores the Paystack recipient token and masked account information only; full bank account numbers are not persisted by SabiWay.
-- `PayoutRecord` is one-to-one with a released transaction so automatic/manual retry cannot create duplicate ledger payouts.
-- `Dispute` exists as the financial freeze contract for Phase 8; Phase 7 does not prematurely invent the full Phase 8 evidence/triage/partial-outcome workflow.
-- `TransactionAudit` and `GatewayWebhookEvent` preserve attributable state transitions and gateway delivery processing.
+## Existing-system audit and decisions
 
-### Paystack integration
-- Hosted checkout is initialised by the Django backend only; no secret key is exposed to web/mobile clients.
-- Payment funding is accepted only after server-side verification of gateway success, exact amount and NGN currency.
-- Paystack webhook signatures are verified using HMAC-SHA512 against the raw body.
-- Webhook deliveries are idempotent by raw-body digest and state-transition event key.
-- Transient gateway verification failures remain retryable instead of being falsely marked processed.
-- Nigerian bank accounts are resolved with Paystack before a transfer recipient is stored.
-- Payouts use a unique SabiPay transfer reference and the provider net amount after commission.
-- Controlled pre-service refunds are initiated by authorised SabiPay operators only.
+| Component | Existing state | Decision | Phase 7 reason |
+|---|---|---|---|
+| Service/category/job discovery | Mature V2 web + mobile foundation | KEEP / IMPROVE | Search, location, service and job discovery already satisfy the transaction entry need. |
+| Message threads and secure negotiation | Shared Django/DRF + realtime, web/mobile clients | KEEP | Existing Phase 6 communication is the correct transaction negotiation layer. |
+| BookingRequest | Scope, price, currency, role-bound states, scheduling | KEEP / CERTIFY | Already provides the core booking agreement and lifecycle. |
+| BookingAudit | Persisted immutable-style events | KEEP | Provides state traceability required by Phase 7. |
+| Web Messages + SabiPay handoff | Booking creation/acceptance/scheduling plus funded service controls | KEEP / IMPROVE | Web can progress from agreement to tracked work without inventing a second transaction model. |
+| Mobile Messages | Booking, scheduling, lifecycle actions | KEEP | Strong transaction workspace already exists. |
+| Mobile Marketplace → Messages | Discovery existed but service-detail transaction entry was incomplete | IMPROVE | Phase 7 now starts the secure service conversation directly and converts job responses into conversations. |
+| Booking user notifications | Realtime booking events existed; persisted lifecycle history was incomplete | IMPROVE | Audited booking/schedule events now generate persisted recipient notifications. |
+| SabiPay booking transition guard | Existing guard used UUID `pk` as a create/update test | FIX | UUIDs are assigned before first save; `_state.adding` is now used. |
 
-### Escrow rules
-- Only the booking client can initialise funding.
-- Only accepted, positive-price, NGN bookings with an approved professional can enter SabiPay in Phase 7.
-- Service cannot move to `in_progress` until escrow funding is confirmed.
-- Provider delivery starts the confirmed seven-day freeze.
-- Client satisfaction can release earlier than seven days.
-- Otherwise `release_due_escrow` releases due delivered escrow after seven days and is repeat-safe.
-- Active disputes block release.
-- Direct cancellation after funding is blocked; funded cancellations use the controlled refund/dispute path.
-- Booking status mutations are guarded even when called through the existing marketplace endpoint.
+## Delivered
+
+### Shared backend
+- Retains one authoritative `BookingRequest` model for client/professional transactions.
+- Retains role-bound creation, acceptance, decline, cancellation, in-progress and completion rules.
+- Retains linked service/job/thread context, agreed scope, agreed price, currency and schedule.
+- Retains booking/schedule audit events.
+- Adds persisted booking lifecycle notifications driven from authorised `BookingAudit` events.
+- Expands notification vocabulary for transaction-oriented events while keeping community notification compatibility.
+- Makes system-originated notification actors safe for future operational events.
+- Corrects UUID create/update detection in the SabiPay transition guard.
 
 ### Web
-- `/sabipay` provides accepted-booking funding, Paystack redirect/return verification, receipts/history, reconciliation state, delivery/freeze/release controls and provider payout setup.
-- `Messages & bookings` shows the confirmed 10% fee and provider net payout before the professional accepts an NGN booking.
-- V2 green/amber trust-led visual language and responsive card layouts are retained.
+Existing V2 web transaction journey is deliberately retained:
+1. Marketplace service/job discovery.
+2. Secure conversation creation.
+3. Scope and price negotiation in Messages.
+4. Client creates booking summary.
+5. Professional accepts/declines.
+6. Both participants schedule the work.
+7. NGN accepted bookings hand off to SabiPay for funded start/delivery controls.
+8. Booking and payment status remain visible through Messages/SabiPay.
 
-### Mobile
-- SabiPay is available as an authenticated app section.
-- Hosted checkout opens externally and returns using the `sabiway://sabipay` deep-link scheme.
-- Return handling verifies the Paystack reference through the backend and recovers after app background/foreground transitions.
-- Client funding/release, provider start/delivery, transaction history and payout-destination setup share the same backend contracts as web.
+The web client already contains loading, empty and recoverable error states and responsive multi-column behaviour; Phase 7 does not replace it merely to create new code.
 
-### Operations
-- Django admin provides transaction, payout, webhook, reconciliation and audit visibility under `manage_sabipay` least privilege.
-- `release_due_escrow` supports scheduled release with safe retries.
-- `reconcile_sabipay` compares SabiPay funding state against Paystack verification.
-- `PAYSTACK_SECRET_KEY`, public key, 10% commission and 7-day freeze configuration are documented in `.env.example`.
+### Android / iOS shared Expo client
+- Marketplace service detail now gives clients **Message professional** as the direct transaction entry action.
+- Service conversation creation uses the shared Django thread endpoint.
+- A professional job response now immediately creates/opens the corresponding auditable conversation.
+- Marketplace exposes **Messages & bookings** as an explicit tracking route.
+- Removes stale copy claiming messaging/booking is a future phase.
+- Existing mobile Messages continues to provide scope/price agreement, booking acceptance/decline, scheduling, lifecycle controls, safety actions, retry/empty/loading states and responsive compact/wide layouts.
 
-## Automated journey evidence
+## State and phase boundary
+Core service booking states currently used are pending, accepted, declined, cancelled, in progress and completed.
 
-Backend tests cover:
-- accepted booking → idempotent checkout → verified funding → provider start → delivery → client confirmation → single 90% payout record;
-- no service commencement before funding;
-- checkout failure/abandonment remains recoverable without false funding;
-- HMAC webhook validation and replay idempotency;
-- seven-day automatic release exactly once;
-- authorised pre-service refund and refund state;
-- transaction-history participant privacy;
-- invalid redirect rejection and unsigned webhook rejection.
+The Master Playbook also lists failed and disputed where relevant. Phase 7 does **not** invent a second generic booking failure/dispute model: payment pending/failure/recovery and dispute handling are explicitly owned by Master Phase 8. Those states are implemented against the financial transaction where they are meaningful. Pre-service non-progression remains represented by declined/cancelled booking states.
 
-Platform CI additionally executes migration drift, Django checks, existing accounts/posts/notifications/marketplace/verification journeys, frontend TypeScript/lint, mobile TypeScript, realtime checks, repository hygiene and waitlist syntax.
+## Permissions and safety
+- Only a client participant creates a booking agreement.
+- Only booking participants can read/update their booking.
+- Professional/client transition rules remain server-side.
+- Conversation blocking/reporting and attachment safety remain in force.
+- Provider verification gates remain server-side.
+- SabiPay prevents work starting without confirmed escrow funding where the financial transaction applies.
+- Transaction notifications are derived from authorised audit events rather than trusting client-side state.
 
-## Responsive/device audit checklist
+## Phase 7 certification tests
+`marketplace/test_phase7_transactions.py` adds focused coverage for persisted booking-created notification, one recipient notification per audited state change, schedule-event notification/UUID target serialisation, and UUID booking creation not being mistaken for an update by SabiPay guards.
 
-Automated type/lint coverage validates implementation contracts, while the following physical/runtime evidence remains required before payment production sign-off:
-- desktop web and mobile web: hosted checkout redirect, browser back, duplicate taps, slow/intermittent network, session expiry, long content and 200% text scaling;
-- iOS/Android: external checkout, app backgrounding, `sabiway://sabipay` return/deep link, virtual keyboard, large text and screen-reader labels;
-- admin laptop/tablet: transaction filtering, audit/reconciliation visibility and payout/refund permission boundaries;
-- currency formatting and very large/small allowed NGN amounts;
-- webhook replay/out-of-order deliveries in the Paystack sandbox;
-- scheduler retry/reconciliation drills.
+Existing marketplace tests continue to cover discovery, role boundaries, direct negotiation, contact policy, booking creation, professional acceptance, scheduling, job-to-thread-to-booking conversion, blocking/reporting, outsider denial and attachment safety.
 
-## Release boundary and production gate
+## Cross-platform journey matrix
 
-This phase establishes the application-side SabiPay transaction lifecycle. It does **not** claim production financial/escrow readiness merely because code and mocked automated tests pass.
+| Journey | Web | Android | iOS | Backend/Admin |
+|---|---|---|---|---|
+| Discover service/job | Yes | Yes | Yes | Shared API/admin visibility |
+| Inspect provider/service | Yes | Yes | Yes | Shared listing data |
+| Start secure conversation | Yes | Yes | Yes | Participant thread permissions |
+| Job response → conversation | Yes | Yes | Yes | Shared job/thread contract |
+| Agree scope/price/currency | Yes | Yes | Yes | Booking validation |
+| Accept/decline | Yes | Yes | Yes | Server transition rules |
+| Schedule/change schedule | Yes | Yes | Yes | Audit + realtime + persisted notification |
+| Track active work | Yes | Yes | Yes | Booking/SabiPay state is source of truth |
+| Complete funded work | Yes | Yes | Yes | SabiPay/booking transition controls |
+| Audit state changes | User-visible status | User-visible status | User-visible status | BookingAudit + admin |
 
-The Playbook Phase 7 exit gate still requires, before real customer money is enabled:
-1. independent payment/security review;
-2. Paystack sandbox end-to-end reconciliation with real sandbox callbacks/webhooks/transfers/refunds;
-3. a controlled real-money test after commercial/compliance approval;
-4. confirmation that SabiWay's intended hold/release/payout operating model is permitted under the chosen Paystack account/commercial arrangement;
-5. no unresolved critical financial defect.
+## Responsive/accessibility evidence
+Code-level review confirms web marketplace/messages use responsive layouts; Expo marketplace uses bounded content width/native scrolling; Messaging switches between compact tabbed and wide multi-pane layouts; and the journey contains loading, empty, error and retry states.
 
-Phase 8 owns the complete dispute, evidence, reviews, notifications and operational trust workflow. Phase 9 owns Stripe and cross-border settlement/FX/jurisdiction mechanics.
+Exact manual device-matrix evidence at 320/360/375/390/430/768/1024/1280/1366/1440+, Android hardware and iPhone hardware is still a later release/UAT evidence item; it is not fabricated here.
+
+## Design evidence
+The implementation retains the established SabiWay V2 green/amber, Inter-led, warm-card design language across web and mobile. The exact SabiWay Figma file key is not available to this implementation session, so frame-by-frame Figma parity is **not claimed**.
+
+## Exit gate
+Master Phase 7 is complete only when Platform CI is green on the exact PR head, migration drift is zero, backend regression tests pass, frontend TypeScript/lint pass, mobile TypeScript passes, realtime/repository-hygiene checks pass, and the PR is mergeable and merged to `main`.
+
+Manual real-device/accessibility/product-owner acceptance remains part of the later cross-platform certification and controlled-user-testing release gates.
