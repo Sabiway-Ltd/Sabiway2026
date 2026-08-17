@@ -27,21 +27,7 @@ class Phase11MeasurementTests(APITestCase):
 
     def test_client_event_is_accepted_and_privacy_fields_are_dropped(self):
         raw_anon = "raw-browser-session-123"
-        response = self.client.post(
-            "/api/operations/events/",
-            {
-                "event_name": "screen_viewed",
-                "source": "web",
-                "anonymous_id": raw_anon,
-                "properties": {
-                    "route": "/marketplace",
-                    "email": "private@example.com",
-                    "message": "private message body",
-                    "query": "private search text",
-                },
-            },
-            format="json",
-        )
+        response = self.client.post("/api/operations/events/", {"event_name":"screen_viewed","source":"web","anonymous_id":raw_anon,"properties":{"route":"/marketplace","email":"private@example.com","message":"private message body","query":"private search text"}}, format="json")
         self.assertEqual(response.status_code, 202)
         event = ProductEvent.objects.get(event_name="screen_viewed")
         self.assertTrue(event.anonymous_id_hash)
@@ -51,15 +37,12 @@ class Phase11MeasurementTests(APITestCase):
         self.assertNotIn("private search text", str(event.properties))
 
     def test_ingest_rejects_invalid_name_and_backend_source_spoofing(self):
-        invalid_name = self.client.post("/api/operations/events/", {"event_name": "Bad Event!", "source": "web"}, format="json")
-        self.assertEqual(invalid_name.status_code, 400)
-        backend_source = self.client.post("/api/operations/events/", {"event_name": "screen_viewed", "source": "backend"}, format="json")
-        self.assertEqual(backend_source.status_code, 400)
+        self.assertEqual(self.client.post("/api/operations/events/", {"event_name":"Bad Event!","source":"web"}, format="json").status_code, 400)
+        self.assertEqual(self.client.post("/api/operations/events/", {"event_name":"screen_viewed","source":"backend"}, format="json").status_code, 400)
 
     def test_measurement_snapshot_requires_measurement_permission(self):
         self.client.force_authenticate(self.staff)
-        denied = self.client.get("/api/operations/measurement/")
-        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(self.client.get("/api/operations/measurement/").status_code, 403)
         permission = Permission.objects.get(content_type__app_label="operations", codename="view_product_measurement")
         self.staff.user_permissions.add(permission)
         allowed = self.client.get("/api/operations/measurement/?hours=24")
@@ -68,6 +51,8 @@ class Phase11MeasurementTests(APITestCase):
         self.assertIn("retention_7d", allowed.data)
 
     def test_snapshot_calculates_funnels_and_failure_rates(self):
+        ProductEvent.objects.all().delete()
+        TechnicalMetric.objects.all().delete()
         record_product_event("registration_started")
         record_product_event("registration_completed", actor=self.user)
         record_product_event("transaction_started", actor=self.user)
@@ -99,12 +84,12 @@ class Phase11MeasurementTests(APITestCase):
 
     @override_settings(PRODUCT_EVENT_RETENTION_DAYS=30, TECHNICAL_METRIC_RETENTION_DAYS=7)
     def test_retention_cleanup_deletes_only_expired_measurement(self):
-        old_event = record_product_event("screen_viewed", actor=self.user, properties={"screen": "home"})
-        fresh_event = record_product_event("screen_viewed", actor=self.user, properties={"screen": "marketplace"})
+        old_event = record_product_event("screen_viewed", actor=self.user, properties={"screen":"home"})
+        fresh_event = record_product_event("screen_viewed", actor=self.user, properties={"screen":"marketplace"})
         old_metric = record_technical_metric("api_request", route="/api/old/", status_code=200)
         fresh_metric = record_technical_metric("api_request", route="/api/fresh/", status_code=200)
-        ProductEvent.objects.filter(pk=old_event.pk).update(created_at=timezone.now() - timedelta(days=31))
-        TechnicalMetric.objects.filter(pk=old_metric.pk).update(created_at=timezone.now() - timedelta(days=8))
+        ProductEvent.objects.filter(pk=old_event.pk).update(created_at=timezone.now()-timedelta(days=31))
+        TechnicalMetric.objects.filter(pk=old_metric.pk).update(created_at=timezone.now()-timedelta(days=8))
         call_command("purge_measurement", stdout=StringIO())
         self.assertFalse(ProductEvent.objects.filter(pk=old_event.pk).exists())
         self.assertTrue(ProductEvent.objects.filter(pk=fresh_event.pk).exists())
