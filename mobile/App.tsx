@@ -17,7 +17,7 @@ import { SabiPayScreen } from "./src/sabipay/SabiPayScreen";
 import { VerificationScreen } from "./src/verification/VerificationScreen";
 
 type AppSection = "home" | "community" | "marketplace" | "messages" | "notifications" | "sabipay" | "profile" | "verification";
-type PrimarySection = "home" | "marketplace" | "messages" | "community" | "profile";
+type PrimarySection = "marketplace" | "community" | "home" | "sabipay" | "profile";
 type NavItem = { key: PrimarySection; label: string; glyph: string };
 
 function sectionFromUrl(url: string): AppSection | null {
@@ -58,13 +58,17 @@ export default function App() {
 
   const signOut = () => { setSession(null); setSection("home"); };
   const navItems: NavItem[] = [
+    { key: "marketplace", label: "My Jobs", glyph: "▣" },
+    { key: "community", label: "Community", glyph: "◎" },
     { key: "home", label: "Home", glyph: "⌂" },
-    { key: "marketplace", label: "Market", glyph: "▦" },
-    { key: "messages", label: "Messages", glyph: "✉" },
-    { key: "community", label: "SabiForum", glyph: "◎" },
+    { key: "sabipay", label: session?.user.role === "professional" ? "Earning" : "History", glyph: "▤" },
     { key: "profile", label: "Profile", glyph: "◉" },
   ];
-  const selectedPrimarySection: PrimarySection = section === "sabipay" || section === "verification" ? "profile" : section === "notifications" ? "home" : section;
+
+  const selectedPrimarySection: PrimarySection =
+    section === "messages" || section === "notifications" ? "home" :
+    section === "verification" ? "profile" :
+    section;
 
   return (
     <AppErrorBoundary>
@@ -91,9 +95,11 @@ export default function App() {
                 <CommunityScreen session={session} onSignOut={signOut} />
               )}
             </View>
+
             <View style={styles.navigation} accessibilityRole="tablist">
               {navItems.map((item) => {
                 const active = selectedPrimarySection === item.key;
+                const isHome = item.key === "home";
                 return (
                   <Pressable
                     key={item.key}
@@ -101,12 +107,12 @@ export default function App() {
                     accessibilityLabel={item.label}
                     accessibilityState={{ selected: active }}
                     onPress={() => setSection(item.key)}
-                    style={({ pressed }) => [styles.navItem, pressed && styles.navItemPressed]}
+                    style={({ pressed }) => [styles.navItem, isHome && styles.homeNavItem, pressed && styles.navItemPressed]}
                   >
-                    <View style={[styles.navGlyphWrap, active && styles.navGlyphWrapActive]} accessible={false}>
-                      <Text style={[styles.navGlyph, active && styles.navGlyphActive]}>{item.glyph}</Text>
+                    <View style={[styles.navGlyphWrap, active && !isHome && styles.navGlyphWrapActive, isHome && styles.homeGlyphWrap]} accessible={false}>
+                      <Text style={[styles.navGlyph, active && !isHome && styles.navGlyphActive, isHome && styles.homeGlyph]}>{item.glyph}</Text>
                     </View>
-                    <Text numberOfLines={1} style={[styles.navText, active && styles.navTextActive]}>{item.label}</Text>
+                    <Text numberOfLines={1} style={[styles.navText, active && !isHome && styles.navTextActive, isHome && styles.homeNavText]}>{item.label}</Text>
                   </Pressable>
                 );
               })}
@@ -124,7 +130,9 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   navigation: {
     flexDirection: "row",
+    alignItems: "flex-end",
     gap: spacing[1],
+    minHeight: 76,
     paddingHorizontal: spacing[2],
     paddingTop: spacing[2],
     paddingBottom: spacing[2],
@@ -139,20 +147,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: radius.md,
     paddingHorizontal: spacing[1],
-    gap: 2,
+    gap: 3,
   },
+  homeNavItem: { marginTop: -20, minHeight: 74 },
   navGlyphWrap: {
     minWidth: 30,
-    height: 26,
+    height: 28,
     paddingHorizontal: spacing[2],
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radius.pill,
   },
   navGlyphWrapActive: { backgroundColor: "#DFF7EB" },
-  navGlyph: { color: colors.textMuted, fontSize: 18, lineHeight: 20, fontWeight: "700" },
+  homeGlyphWrap: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+  },
+  navGlyph: { color: colors.text, fontSize: 18, lineHeight: 20, fontWeight: "700" },
   navGlyphActive: { color: colors.primary },
+  homeGlyph: { color: colors.onPrimary, fontSize: 24, lineHeight: 28 },
   navItemPressed: { opacity: 0.62 },
-  navText: { color: colors.textMuted, fontWeight: "600", fontSize: 10 },
+  navText: { color: colors.text, fontWeight: "600", fontSize: 10 },
   navTextActive: { color: colors.primary, fontWeight: "800" },
+  homeNavText: { color: colors.primary, fontWeight: "800" },
 });
