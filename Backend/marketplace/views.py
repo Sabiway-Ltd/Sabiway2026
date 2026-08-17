@@ -18,6 +18,7 @@ from .models import (
     ServiceCategory,
     ServiceListing,
 )
+from .pagination import MarketplacePagination
 from .permissions import IsListingOwnerOrReadOnly
 from .realtime import broadcast_marketplace_event
 from .serializers import (
@@ -37,6 +38,14 @@ from .serializers import (
 
 
 def _apply_location_filters(queryset, params):
+    location = params.get("location", "").strip()
+    if location:
+        queryset = queryset.filter(
+            Q(country__icontains=location)
+            | Q(state__icontains=location)
+            | Q(city__icontains=location)
+            | Q(area__icontains=location)
+        )
     for field in ["country", "state", "city", "area"]:
         value = params.get(field, "").strip()
         if value:
@@ -69,6 +78,7 @@ class ServiceCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, v
 class ServiceListingViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceListingSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsListingOwnerOrReadOnly]
+    pagination_class = MarketplacePagination
 
     def get_queryset(self):
         queryset = ServiceListing.objects.select_related("provider__user", "category", "subcategory")
@@ -107,7 +117,7 @@ class ServiceListingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         profile = self.request.user.profile
-        if profile.role != "professional":
+        if self.request.user.role != "professional":
             raise PermissionDenied("Only professional profiles can publish service listings.")
         serializer.save(provider=profile, moderation_status=ServiceListing.ModerationStatus.PENDING)
 
@@ -120,6 +130,7 @@ class ServiceListingViewSet(viewsets.ModelViewSet):
 class JobPostingViewSet(viewsets.ModelViewSet):
     serializer_class = JobPostingSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = MarketplacePagination
 
     def get_queryset(self):
         queryset = JobPosting.objects.select_related("client__user", "category", "subcategory")
@@ -150,7 +161,7 @@ class JobPostingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         profile = self.request.user.profile
-        if profile.role != "client":
+        if self.request.user.role != "client":
             raise PermissionDenied("Only client profiles can create jobs.")
         serializer.save(client=profile, moderation_status=JobPosting.ModerationStatus.PENDING)
 
@@ -207,13 +218,13 @@ class MessageThreadViewSet(viewsets.ModelViewSet):
         listing_id = request.data.get("listing_id")
         response_id = request.data.get("job_response_id")
         existing = None
-        if me.role == "client" and listing_id:
+        if request.user.role == "client" and listing_id:
             existing = MessageThread.objects.filter(
                 client=me,
                 listing_id=listing_id,
                 status=MessageThread.Status.OPEN,
             ).first()
-        elif me.role == "professional" and response_id:
+        elif request.user.role == "professional" and response_id:
             existing = MessageThread.objects.filter(
                 professional=me,
                 job_response_id=response_id,
@@ -226,7 +237,7 @@ class MessageThreadViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         me = self.request.user.profile
         data = serializer.validated_data
-        if me.role == "client":
+        if self.request.user.role == "client":
             listing = data.get("listing")
             professional = listing.provider if listing else data.get("professional")
             serializer.save(client=me, professional=professional)
