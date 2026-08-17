@@ -35,27 +35,14 @@ Decision:
 
 ### Mobile primary navigation — REFACTOR
 
-`mobile/App.tsx` currently:
-- defaults signed-in users to `community`;
-- exposes SabiForum, Market, Messages, SabiPay, Profile and optionally Verify at the same bottom-navigation level;
-- has no signed-in Home destination;
-- exposes verification as a top-level destination even though Profile already links into verification.
+The previous mobile shell defaulted signed-in users to SabiForum, exposed six top-level destinations and had no signed-in Home destination.
 
-Decision:
-- add a role-aware Home as the signed-in default;
-- keep a maximum of five primary mobile destinations;
-- nest verification under Profile;
-- avoid using primary navigation for secondary/conditional workflows;
-- keep deep-link routing but map secondary destinations into the appropriate journey.
-
-Target primary mobile navigation:
-1. Home
-2. Market
-3. Messages
-4. SabiForum
-5. Profile
-
-SabiPay and Verification remain accessible contextually from relevant journeys rather than consuming permanent bottom-navigation slots.
+Implemented Phase 4 decision:
+- role-aware Home added as signed-in default;
+- primary navigation is Home / Market / Messages / SabiForum / Profile;
+- verification is nested under Profile;
+- SabiPay and Verification remain contextual destinations;
+- deep-link routing remains supported.
 
 ### Marketplace discovery — KEEP / REFACTOR
 
@@ -67,8 +54,6 @@ The Django marketplace already supports authoritative server-side filtering:
 - available-now for listings
 - country/state/city/area filters
 
-Both Web and mobile currently fetch collections and then repeat search/location filtering locally.
-
 Decision:
 - KEEP Django marketplace endpoints as the authoritative marketplace discovery API.
 - REFACTOR clients to send filter parameters to the server instead of independently reimplementing business search rules.
@@ -76,69 +61,69 @@ Decision:
 - add explicit loading, empty, error and retry behaviour.
 - preserve role boundaries and moderation filters on the server.
 
+Current implementation:
+- mobile marketplace API now accepts authoritative `q`, category, subcategory, delivery mode, availability and explicit location query parameters;
+- Android/iOS marketplace text search and pull-to-refresh now query Django rather than re-filtering the full downloaded collection;
+- the current single free-text location box remains a local refinement until a generic backend location parameter is introduced; this limitation is explicit rather than hidden;
+- web marketplace server-driven search remains open.
+
 ### Community/profile search — KEEP / IMPROVE
 
-`Backend/search/views.py` currently supports scoped search for posts, profiles and hashtags.
+`Backend/search/views.py` supports scoped search for posts, profiles and hashtags.
 
-Decision:
-- KEEP this API for SabiForum/community discovery.
-- IMPROVE query validation, result limits/pagination and client states as needed.
-- Do NOT create a second marketplace search implementation inside `/api/search/`.
-- Product search surfaces may present multiple scopes, but each scope must call its authoritative domain API.
+Implemented hardening:
+- empty/one-character broad scans are rejected;
+- marketplace scope is not accepted by `/api/search/`;
+- result limits remain bounded;
+- public profile search returns discovery-safe fields and authoritative account role;
+- regression tests cover these domain boundaries.
 
 ## Duplication findings
 
-1. Web has shared public navigation plus a separate marketplace header.
-2. Web marketplace duplicates Django search/location/category logic in `useMemo` filtering.
-3. Mobile marketplace duplicates Django search/location logic in `useMemo` filtering.
-4. Mobile exposes Profile -> Verification while also keeping Verify as a separate primary tab.
-5. SabiPay is currently a permanent mobile primary tab even though it is transaction-context functionality.
+1. Web still has shared navigation plus a separate marketplace header — OPEN.
+2. Web marketplace still duplicates Django search/location/category logic locally — OPEN.
+3. Mobile marketplace text discovery duplication — CLOSED; Django now owns text search.
+4. Mobile Profile -> Verification plus Verify top-level duplication — CLOSED.
+5. SabiPay permanent mobile primary-tab duplication — CLOSED.
 
 ## V2 product decisions
 
 ### Home
 
-Signed-in Home must be distinct from the public marketing homepage.
+Signed-in Home is distinct from the public marketing homepage.
 
-Client home should prioritise:
-- find a service;
-- browse categories;
-- post a job;
-- continue active conversations/jobs;
-- trust/verification signals where relevant;
-- SabiForum entry as a supporting community surface.
+Implemented:
+- role-aware mobile Home;
+- `/home` signed-in web Home;
+- password and Google sign-in default to `/home` rather than SabiForum;
+- authenticated web `AppShell` uses Home / Market / Messages / SabiForum / Profile.
 
-Professional home should prioritise:
-- open jobs/opportunities;
-- service visibility/listings;
-- messages/responding;
-- verification/trust status;
-- transaction/SabiPay entry when context exists;
-- SabiForum as a supporting community surface.
+Client home prioritises service discovery, job posting, messages and community support context.
+Professional home prioritises open opportunities, service visibility, messages, trust/verification and contextual transaction entry.
 
 ### Navigation
 
-Navigation hierarchy must reflect frequency and user intent, not expose every implemented module equally.
+Navigation hierarchy reflects frequency and user intent, not every implemented module equally.
 
 Web:
-- public shell for unauthenticated/public pages;
-- signed-in application navigation for product journeys;
-- responsive desktop/tablet/mobile-web behaviour.
+- public shell remains for unauthenticated/public pages;
+- signed-in `AppShell` now exists for product journeys;
+- marketplace bespoke header consolidation remains open.
 
 Mobile:
 - maximum five persistent primary destinations;
 - secondary capabilities opened contextually;
-- role-sensitive actions are inside screens, not additional permanent tabs.
+- role-sensitive actions are inside screens rather than permanent tabs.
 
 ### Discovery
 
-Discovery must use one authoritative server-side rule set per domain.
+Discovery uses one authoritative server-side rule set per domain.
 
 Marketplace discovery:
 - listings endpoint for services;
 - jobs endpoint for open jobs;
 - category endpoint for taxonomy;
-- server-side filters for query/location/category/delivery/availability.
+- server-side filters for query/category/delivery/availability and explicit structured location fields.
 
 Community discovery:
 - existing search endpoint for posts/profiles/hashtags.
@@ -154,41 +139,55 @@ Community discovery:
 - explicit loading, empty, error and retry states.
 - preserve user query/filter state during retries and navigation where practical.
 
+Implemented on mobile discovery:
+- explicit Search button and keyboard submit;
+- labelled search/location controls;
+- selected-state semantics on tabs;
+- visible searching state;
+- pull-to-refresh reuses the current query;
+- clearer empty-result guidance.
+
 ## Nigerian-context requirements
 
 - location input must support Nigerian city/state/area usage without requiring perfect formatting;
 - NGN remains default marketplace currency where applicable;
 - remote/diaspora discovery must remain possible through country + delivery mode rather than assuming physical proximity;
 - minimise unnecessary requests/data transfer;
-- debounced or explicit-submit server queries must prevent request storms on unstable/mobile connections.
+- explicit-submit server queries prevent request storms on unstable/mobile connections.
 
 ## Performance requirements
 
 - move filtering to the backend rather than downloading ever-growing collections for client-side search;
 - introduce pagination/incremental loading before user-testing certification if endpoints are still effectively unbounded;
 - debounce free-text search or query on explicit submission;
-- deduplicate in-flight requests;
+- deduplicate in-flight requests where practical;
 - preserve cached/category data where safe;
 - add backend indexes only where query evidence supports them.
 
-## Phase 4 build order
+## Phase 4 build order and status
 
-1. Signed-in Home and corrected navigation hierarchy.
-2. Shared web application navigation; remove marketplace header duplication.
-3. Server-driven marketplace search/filter contract for Web.
-4. Server-driven marketplace search/filter contract for Android/iOS.
-5. Category and location UX refinement.
-6. Community/profile/hashtag search hardening.
-7. Loading/empty/error/retry/accessibility states.
-8. Cross-platform regression tests and Platform CI.
-9. Final audit against V2 design evidence and Master Playbook Definition of Done.
+1. Signed-in Home and corrected navigation hierarchy — SUBSTANTIALLY COMPLETE.
+2. Shared web application navigation — COMPLETE; marketplace bespoke header removal OPEN.
+3. Server-driven marketplace search/filter contract for Web — OPEN.
+4. Server-driven marketplace search/filter contract for Android/iOS — TEXT SEARCH COMPLETE; structured filter UI refinement OPEN.
+5. Category and location UX refinement — OPEN.
+6. Community/profile/hashtag search hardening — COMPLETE.
+7. Loading/empty/error/retry/accessibility states — PARTIAL.
+8. Cross-platform regression tests and Platform CI — IN PROGRESS.
+9. Final audit against V2 design evidence and Master Playbook Definition of Done — OPEN.
 
-## Initial gate
+## CI evidence
 
-Phase 4 may proceed to implementation because:
-- current Web, mobile and backend search/discovery paths have been inspected;
-- duplication has been identified;
-- authoritative domain boundaries are known;
-- initial KEEP / IMPROVE / REFACTOR / MERGE decisions are documented.
+- Platform CI #172 passed on the initial mobile Home/navigation slice.
+- Later Phase 4 heads require their own green Platform CI before certification.
+
+## Remaining certification blockers
+
+1. Remove the duplicate web marketplace top-level header and align public/authenticated navigation behaviour.
+2. Move web marketplace text/category discovery onto Django query parameters rather than local-only `useMemo` rules.
+3. Decide and implement the generic location-query contract without weakening structured location filtering.
+4. Complete web/mobile error/retry/loading states and structured filter UI.
+5. Validate pagination/incremental loading requirements.
+6. Final Platform CI and cross-platform journey gate.
 
 Phase 4 is not certified until all relevant Web + Android + iOS journeys and server-side discovery behaviour have passed the final gate.
