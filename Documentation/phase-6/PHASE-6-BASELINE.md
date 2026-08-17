@@ -1,6 +1,6 @@
 # Master Phase 6 — Messaging, Realtime & Notifications Baseline
 
-Status: AUDIT / IN PROGRESS
+Status: BUILD / IN PROGRESS
 Branch: `feat/phase-6-messaging-realtime-notifications`
 Base: certified Phase 5 `main` (`74aba654cd300d107655f135fb82a99c0fa2293f`)
 
@@ -35,55 +35,96 @@ Express Socket.IO already:
 
 Django marketplace already uses an authenticated best-effort `broadcast_marketplace_event` helper. Community uses the same architectural principle.
 
+Implemented hardening:
+- notification creation/read/read-all now use one authenticated Django -> Express helper;
+- internal broadcast token is applied consistently;
+- unread-count control payloads use explicit `update_unread_count` semantics;
+- Web no longer treats unread-count control payloads as ordinary notifications;
+- marketplace realtime payloads are converted to JSON-safe primitives before fanout, including UUID, Decimal, date and datetime values;
+- realtime transport/serialisation failures remain best-effort and never roll back successful Django mutations.
+
 Decision:
 - Django database state remains authoritative.
-- Express is delivery/fanout only; realtime failure must not roll back successful persisted mutations.
-- REFACTOR notification realtime calls to one authenticated helper rather than direct ad-hoc `requests.post` calls.
-- clients should reconcile realtime hints against Django rather than treating socket memory as authoritative state.
+- Express is delivery/fanout only.
+- clients reconcile realtime hints against Django rather than treating socket memory as authoritative state.
 
 ## Notifications — KEEP / HARDEN
 
 The existing Django `notifications` app contains persisted notifications, serializers, pagination, signals, tests, URLs and read APIs.
 
-Current notification types are community-oriented: follow, like, comment, reply and followed-user post.
+Completed:
+- hardened authenticated broadcast helper;
+- authoritative unread-count broadcasts after mark-read/read-all;
+- recipient ownership regression coverage;
+- Web socket contract aligned with backend payloads.
 
-Current gaps identified:
-- notification read/read-all views call Express directly instead of reusing a hardened transport helper;
-- those direct calls do not currently add the internal broadcast token header;
-- direct `print` failure handling should be replaced by best-effort transport behaviour suitable for later observability hardening;
-- unread-count realtime shape is inconsistent: Express emits the payload on `new-notification`, while Web separately listens for an `update-unread-count` event;
-- message/booking/schedule/payment notification coverage requires later mapping rather than inventing new types before the transaction phases are audited;
-- mobile notification UI/deep-link parity still requires audit.
+Remaining:
+- mobile notification UI/deep-link parity;
+- message/booking/schedule notification mapping;
+- reconnect/idempotency review;
+- analytics without private message content.
 
-Decision: KEEP / HARDEN.
+## Message attachments — KEEP / HARDEN
+
+Existing rules already enforce:
+- 10 MB maximum size;
+- JPEG, PNG, WebP, PDF and text/plain allow-list;
+- participant-only message creation;
+- closed-thread restrictions;
+- bilateral block restrictions;
+- pre-booking contact-detail protection.
+
+Implemented hardening:
+- filename extension must match the declared allowed MIME type;
+- stored attachment display names are sanitised;
+- spoofed executable-style filenames are rejected;
+- regression coverage validates safe uploads and unsafe/path-style names.
+
+No new upload service or persistence model was introduced.
 
 ## Web messaging — KEEP / REFACTOR
 
-`frontend/app/messages/MessagesClient.tsx` already provides:
-- thread list + unread counts;
-- message history;
-- send text/file message;
-- Socket.IO refresh on `new-message`, `booking-updated` and `schedule-updated`;
-- booking creation/status controls;
-- schedule proposal/decision controls;
-- block/report controls.
+`frontend/app/messages/MessagesClient.tsx` already provides thread list, unread counts, message history, attachments, realtime refresh, bookings, schedules and safety controls.
 
-Current gaps identified:
-- page owns a bespoke product header rather than the Phase 4 authenticated `AppShell`;
-- socket events cause broad thread/conversation refetches and require request-deduplication review;
-- message/error/retry/empty/send states require full audit;
-- participant labels must work correctly for both client and professional roles;
-- block/unblock/report lifecycle needs server + UI parity review.
+Completed:
+- `/messages` is wrapped by the shared authenticated Phase 4 `AppShell`;
+- duplicate Marketplace/SabiForum product header removed;
+- participant/counterparty labels now derive from the authenticated account role so professionals see the client and clients see the professional;
+- booking creation/acceptance controls are role-aware in the UI while Django remains authoritative;
+- message/proposal labels identify the current user as `You`/`proposed by you` where appropriate;
+- persistent Web retry action added for load/conversation failures.
 
-Decision: KEEP / REFACTOR.
+Remaining:
+- block/unblock/report lifecycle parity;
+- realtime request-deduplication/reconnect review;
+- accessibility and final responsive journey validation.
 
 ## Mobile messaging — KEEP / REFACTOR
 
-`mobile/src/messaging/` already contains `MessagingScreen.tsx`, `api.ts` and `types.ts` and uses the same Django marketplace APIs for threads, messages, attachments, blocking/reporting, bookings and schedules.
+`mobile/src/messaging/` already contains `MessagingScreen.tsx`, `api.ts` and `types.ts` and uses the same Django marketplace APIs.
 
-Decision:
-- KEEP the existing screen/API foundation.
-- audit complete states, pagination, participant-role rendering, block/report behaviour, attachment constraints, realtime reconciliation and accessibility before changing it.
+Audit outcome:
+- client/professional counterparty rendering is already correct;
+- text/file/photo messaging, booking, schedule, report and block actions already exist;
+- realtime already listens for `new-message`, `booking-updated` and `schedule-updated`;
+- the principal current reliability gap is transient Alert-only load/conversation failure handling rather than missing messaging capability.
+
+Remaining:
+- persistent inbox/conversation retry states;
+- block/unblock/report lifecycle parity;
+- notification/deep-link parity;
+- reconnect/idempotency and accessibility validation.
+
+## Safety lifecycle — CURRENT DECISION
+
+Existing Django models remain authoritative:
+- `ConversationBlock` is unique per blocker/blocked pair and supports active/inactive state;
+- `ConversationReport` lifecycle is `open / reviewed / dismissed / actioned`.
+
+Next hardening:
+- prevent duplicate unresolved reports for the same reporter/thread while a case is open or reviewed;
+- expose/consume block state consistently enough for Web/mobile to offer valid Block/Unblock actions;
+- do not invent a second moderation lifecycle.
 
 ## Single-source-of-truth rules for Phase 6
 
@@ -97,25 +138,22 @@ Decision:
 - Django -> Express: internal broadcast token;
 - client UI visibility never substitutes for server authorisation.
 
-## First implementation slice
+## CI evidence
 
-1. Create one reusable authenticated notification realtime broadcaster.
-2. Refactor notification signals + mark-read/read-all paths to use it.
-3. Make the unread-count socket contract explicit and consistent.
-4. Update Web notification handling to consume the authoritative contract correctly.
-5. Add regression tests for internal-token use and read/unread broadcasts.
-6. Run Platform CI before proceeding to messaging UI refactors.
+- Platform CI #211: PASS — notification/realtime hardening.
+- Platform CI #214: FAIL — new attachment success tests exposed pre-existing UUID realtime serialisation defect.
+- defect fixed at the shared marketplace realtime boundary rather than weakening tests.
+- Platform CI #216: PASS — UUID-safe realtime + attachment hardening.
+- Platform CI #217: running on Web counterparty/shell/retry refactor at time of this update.
 
-## Remaining audit before Phase 6 certification
+## Remaining before Phase 6 certification
 
-- marketplace messaging serializers, attachment limits and permission validators;
-- block/unblock/report rules and moderation/admin surface;
-- message pagination and thread unread-count correctness;
-- full mobile `MessagingScreen` states and realtime usage;
-- Web messages integration with shared `AppShell`;
-- mobile notifications UI/deep links;
-- notification target/deep-link schema across platforms;
+- duplicate unresolved report protection and block/unblock state parity;
+- persistent mobile inbox/conversation error + retry states;
+- mobile notifications + deep links;
+- message/thread pagination and request-deduplication review;
 - reconnect/duplicate-event behaviour;
 - offline/retry behaviour;
+- accessibility and responsive journey checks;
 - analytics events without private message text;
-- final cross-platform CI/regression certification.
+- final Web + Android + iOS regression CI and certification.
