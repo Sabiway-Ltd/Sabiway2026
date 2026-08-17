@@ -9,7 +9,7 @@ const categories = ["Electricians", "Plumbing", "Tailors", "Hair & Beauty", "Tut
 const steps = [
   { title: "Search or post the job", text: "Tell SabiWay what you need and where you need it.", icon: Search },
   { title: "Compare trusted professionals", text: "Review providers, location, pricing and availability before you decide.", icon: UsersRound },
-  { title: "Move the work forward safely", text: "Use SabiWay to continue from discovery into messaging, booking and protected transactions as V2 expands.", icon: ShieldCheck },
+  { title: "Move the work forward safely", text: "Continue into messaging, booking, protected payment, progress tracking and support without losing context.", icon: ShieldCheck },
 ];
 
 const trustPoints = [
@@ -62,7 +62,7 @@ export default function Home() {
 
         <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[.17em] text-[#008753]">How SabiWay works</p><h2 className="mt-3 text-3xl font-black tracking-[-.025em] sm:text-4xl">Designed around the real journey, not just a directory.</h2><p className="mt-4 text-base leading-7 text-[#69786f]">The V2 experience connects discovery, jobs, community and the later transaction journey instead of sending users across disconnected tools.</p></div>
+            <div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[.17em] text-[#008753]">How SabiWay works</p><h2 className="mt-3 text-3xl font-black tracking-[-.025em] sm:text-4xl">Designed around the real journey, not just a directory.</h2><p className="mt-4 text-base leading-7 text-[#69786f]">Discovery, jobs, messaging, booking, protected payments, community and support are designed as one connected experience instead of separate tools.</p></div>
             <div className="mt-8 grid gap-4 md:grid-cols-3">{steps.map(({title,text,icon:Icon}, index) => <article key={title} className="rounded-3xl border border-[#dce8e1] bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e8f7f0] text-[#008753]"><Icon size={22}/></div><span className="text-sm font-black text-[#bdc9c2]">0{index+1}</span></div><h3 className="mt-5 text-xl font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-[#6b7a72]">{text}</p></article>)}</div>
           </div>
         </section>
@@ -77,7 +77,7 @@ export default function Home() {
         <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-[#dce8e1] bg-white p-6 sm:p-10 lg:p-12">
             <div className="grid gap-8 lg:grid-cols-[1fr_.8fr] lg:items-center">
-              <div><p className="text-xs font-black uppercase tracking-[.17em] text-[#008753]">One SabiWay</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Move from discovery to action without losing context.</h2><p className="mt-4 max-w-2xl leading-7 text-[#68776f]">The V2 migration is building a single experience for clients, professionals and community members across web and mobile.</p><div className="mt-6 flex flex-wrap gap-3"><Link href="/marketplace" className="rounded-xl bg-[#008753] px-5 py-3 font-black text-white">Browse services</Link><Link href="/about-us" className="rounded-xl border border-[#cddbd3] px-5 py-3 font-black">Why SabiWay</Link></div></div>
+              <div><p className="text-xs font-black uppercase tracking-[.17em] text-[#008753]">One SabiWay</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">Move from discovery to action without losing context.</h2><p className="mt-4 max-w-2xl leading-7 text-[#68776f]">Clients, professionals and community members use one connected SabiWay identity and shared platform across web and mobile.</p><div className="mt-6 flex flex-wrap gap-3"><Link href="/marketplace" className="rounded-xl bg-[#008753] px-5 py-3 font-black text-white">Browse services</Link><Link href="/about-us" className="rounded-xl border border-[#cddbd3] px-5 py-3 font-black">Why SabiWay</Link></div></div>
               <div className="relative mx-auto w-full max-w-sm"><Image src="/Hero-phone-mockup.png" alt="SabiWay mobile app preview" width={520} height={720} className="h-auto w-full object-contain" priority={false}/></div>
             </div>
           </div>
