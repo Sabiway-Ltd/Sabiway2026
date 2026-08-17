@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Linking, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
+import { trackMobileEvent } from "./src/api/analytics";
 import { AuthFlow } from "./src/auth/AuthFlow";
 import type { AuthSession } from "./src/auth/types";
 import { CommunityScreen } from "./src/community/CommunityScreen";
@@ -48,6 +49,11 @@ export default function App() {
     const subscription = Linking.addEventListener("url", ({ url }) => applyUrl(url));
     return () => subscription.remove();
   }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    void trackMobileEvent(session.access, "screen_viewed", { screen: section, role: session.user.role });
+  }, [section, session]);
 
   const signOut = () => { setSession(null); setSection("home"); };
   const navItems: Array<{ key: PrimarySection; label: string }> = [
