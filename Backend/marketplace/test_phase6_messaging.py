@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from verification.models import VerificationSubmission
 
-from .models import Message, MessageThread, ServiceCategory, ServiceListing
+from .models import ConversationReport, Message, MessageThread, ServiceCategory, ServiceListing
 from .realtime import broadcast_marketplace_event
 
 
@@ -118,3 +118,58 @@ class Phase6MessagingSafetyTests(TestCase):
         sent = mock_post.call_args.kwargs["json"]
         self.assertEqual(sent["payload"]["id"], str(value))
         self.assertEqual(sent["payload"]["nested"]["thread"], str(self.thread.id))
+
+    def test_thread_payload_exposes_directional_block_state(self):
+        before = self.client.get("/api/marketplace/threads/")
+        self.assertEqual(before.status_code, 200)
+        thread = before.data[0] if isinstance(before.data, list) else before.data["results"][0]
+        self.assertFalse(thread["is_blocked_by_me"])
+        self.assertFalse(thread["is_blocked_by_other"])
+
+        blocked = self.client.post(f"/api/marketplace/threads/{self.thread.id}/block/")
+        self.assertEqual(blocked.status_code, 200)
+        after = self.client.get("/api/marketplace/threads/")
+        thread = after.data[0] if isinstance(after.data, list) else after.data["results"][0]
+        self.assertTrue(thread["is_blocked_by_me"])
+        self.assertFalse(thread["is_blocked_by_other"])
+
+        unblocked = self.client.post(f"/api/marketplace/threads/{self.thread.id}/unblock/")
+        self.assertEqual(unblocked.status_code, 200)
+        final = self.client.get("/api/marketplace/threads/")
+        thread = final.data[0] if isinstance(final.data, list) else final.data["results"][0]
+        self.assertFalse(thread["is_blocked_by_me"])
+
+    def test_duplicate_unresolved_conversation_report_is_rejected(self):
+        first = self.client.post(
+            f"/api/marketplace/threads/{self.thread.id}/report/",
+            {"reason": "spam", "details": "Repeated unsolicited messages."},
+            format="json",
+        )
+        self.assertEqual(first.status_code, 201)
+
+        duplicate = self.client.post(
+            f"/api/marketplace/threads/{self.thread.id}/report/",
+            {"reason": "harassment", "details": "Same unresolved conversation."},
+            format="json",
+        )
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertEqual(ConversationReport.objects.filter(thread=self.thread, reporter=self.client_profile).count(), 1)
+
+    def test_new_report_allowed_after_previous_report_resolved(self):
+        report = ConversationReport.objects.create(
+            thread=self.thread,
+            reporter=self.client_profile,
+            reported_user=self.provider,
+            reason=ConversationReport.Reason.OTHER,
+            details="Earlier case",
+            status=ConversationReport.Status.DISMISSED,
+        )
+        self.assertEqual(report.status, ConversationReport.Status.DISMISSED)
+
+        response = self.client.post(
+            f"/api/marketplace/threads/{self.thread.id}/report/",
+            {"reason": "fraud", "details": "New incident after earlier case was resolved."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(ConversationReport.objects.filter(thread=self.thread, reporter=self.client_profile).count(), 2)
