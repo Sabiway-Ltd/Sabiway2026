@@ -1,3 +1,4 @@
+import os
 import re
 
 from django.conf import settings
@@ -25,6 +26,13 @@ from .models import (
 
 CONTACT_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)|(?:[\w.+-]+@[\w.-]+\.[A-Za-z]{2,})", re.I)
 ALLOWED_ATTACHMENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"}
+ALLOWED_ATTACHMENT_EXTENSIONS = {
+    "image/jpeg": {".jpg", ".jpeg"},
+    "image/png": {".png"},
+    "image/webp": {".webp"},
+    "application/pdf": {".pdf"},
+    "text/plain": {".txt"},
+}
 MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
 
@@ -126,10 +134,12 @@ class ThreadSerializer(serializers.ModelSerializer):
     job_response_id = serializers.PrimaryKeyRelatedField(source="job_response", queryset=JobResponse.objects.all(), write_only=True, required=False, allow_null=True)
     unread_count = serializers.SerializerMethodField()
     booking_id = serializers.SerializerMethodField()
+    is_blocked_by_me = serializers.SerializerMethodField()
+    is_blocked_by_other = serializers.SerializerMethodField()
 
     class Meta:
         model = MessageThread
-        fields = ["id", "client", "professional", "professional_id", "listing_id", "job", "job_response_id", "status", "last_message_at", "unread_count", "booking_id", "created_at", "updated_at"]
+        fields = ["id", "client", "professional", "professional_id", "listing_id", "job", "job_response_id", "status", "last_message_at", "unread_count", "booking_id", "is_blocked_by_me", "is_blocked_by_other", "created_at", "updated_at"]
         read_only_fields = ["id", "client", "job", "status", "last_message_at", "created_at", "updated_at"]
 
     def get_unread_count(self, obj):
@@ -143,6 +153,28 @@ class ThreadSerializer(serializers.ModelSerializer):
             return str(obj.booking.id)
         except BookingRequest.DoesNotExist:
             return None
+
+    def _participants(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None, None
+        me = request.user.profile
+        if me.pk not in obj.participant_ids():
+            return None, None
+        other = obj.professional if me.pk == obj.client_id else obj.client
+        return me, other
+
+    def get_is_blocked_by_me(self, obj):
+        me, other = self._participants(obj)
+        if not me or not other:
+            return False
+        return ConversationBlock.objects.filter(blocker=me, blocked=other, is_active=True).exists()
+
+    def get_is_blocked_by_other(self, obj):
+        me, other = self._participants(obj)
+        if not me or not other:
+            return False
+        return ConversationBlock.objects.filter(blocker=other, blocked=me, is_active=True).exists()
 
     def validate(self, attrs):
         request = self.context["request"]
@@ -191,6 +223,10 @@ class MessageSerializer(serializers.ModelSerializer):
         content_type = getattr(value, "content_type", "")
         if content_type not in ALLOWED_ATTACHMENT_TYPES:
             raise serializers.ValidationError("Unsupported attachment type.")
+        filename = os.path.basename(str(getattr(value, "name", "") or ""))
+        extension = os.path.splitext(filename)[1].lower()
+        if extension not in ALLOWED_ATTACHMENT_EXTENSIONS.get(content_type, set()):
+            raise serializers.ValidationError("Attachment filename does not match its declared file type.")
         return value
 
     def validate(self, attrs):
@@ -216,7 +252,8 @@ class MessageSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         attachment = validated_data.get("attachment")
         if attachment:
-            validated_data["attachment_name"] = attachment.name
+            safe_name = os.path.basename(str(attachment.name or "attachment"))[:255]
+            validated_data["attachment_name"] = safe_name
             validated_data["attachment_content_type"] = getattr(attachment, "content_type", "")
             validated_data["attachment_size"] = attachment.size
         return super().create(validated_data)
@@ -229,6 +266,20 @@ class ConversationReportSerializer(serializers.ModelSerializer):
         model = ConversationReport
         fields = ["id", "thread", "reporter", "reported_user", "message_id", "reason", "details", "status", "created_at"]
         read_only_fields = ["id", "thread", "reporter", "reported_user", "status", "created_at"]
+
+    def create(self, validated_data):
+        thread = validated_data.get("thread")
+        reporter = validated_data.get("reporter")
+        unresolved = ConversationReport.objects.filter(
+            thread=thread,
+            reporter=reporter,
+            status__in=[ConversationReport.Status.OPEN, ConversationReport.Status.REVIEWED],
+        )
+        if unresolved.exists():
+            raise serializers.ValidationError(
+                "You already have an unresolved report for this conversation."
+            )
+        return super().create(validated_data)
 
 
 class BookingRequestSerializer(serializers.ModelSerializer):

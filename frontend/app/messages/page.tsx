@@ -1,3 +1,5 @@
+import { AppShell } from "@/app/_components/v2/AppShell";
+
 import MessagesClient from "./MessagesClient";
 
 export const metadata = {
@@ -6,5 +8,9 @@ export const metadata = {
 };
 
 export default function MessagesPage() {
-  return <MessagesClient />;
+  return (
+    <AppShell>
+      <MessagesClient />
+    </AppShell>
+  );
 }

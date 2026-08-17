@@ -15,6 +15,8 @@ export type MessageThread = {
   unread_count: number;
   booking_id?: string | null;
   job?: string | null;
+  is_blocked_by_me: boolean;
+  is_blocked_by_other: boolean;
 };
 
 export type MarketplaceMessage = {

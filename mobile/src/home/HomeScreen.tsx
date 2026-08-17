@@ -11,6 +11,7 @@ type Props = {
   onOpenProfile: () => void;
   onOpenVerification: () => void;
   onOpenSabiPay: () => void;
+  onOpenNotifications: () => void;
 };
 
 type Action = {
@@ -28,6 +29,7 @@ export function HomeScreen({
   onOpenProfile,
   onOpenVerification,
   onOpenSabiPay,
+  onOpenNotifications,
 }: Props) {
   const firstName = session.user.full_name.trim().split(/\s+/)[0] || "there";
   const isProfessional = session.user.role === "professional";
@@ -73,6 +75,11 @@ export function HomeScreen({
       ];
 
   const secondaryActions: Action[] = [
+    {
+      title: "Notifications",
+      description: "See new SabiForum and connection activity in one place.",
+      onPress: onOpenNotifications,
+    },
     {
       title: "SabiForum",
       description: "Learn from the community and discover useful contributors.",
