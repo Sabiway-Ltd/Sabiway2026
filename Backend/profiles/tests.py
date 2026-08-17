@@ -63,6 +63,27 @@ class ProfileTrustBoundaryTests(APITestCase):
         self.assertEqual(self.professional.role, User.Role.PROFESSIONAL)
         self.assertEqual(response.data["role"], User.Role.PROFESSIONAL)
 
+    def test_profile_name_edit_updates_authoritative_account_and_mirror(self):
+        self.client.force_authenticate(self.professional)
+        response = self.client.patch(
+            "/api/profiles/me/",
+            {"full_name": "Updated Professional"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.professional.refresh_from_db()
+        self.professional.profile.refresh_from_db()
+        self.assertEqual(self.professional.full_name, "Updated Professional")
+        self.assertEqual(self.professional.profile.full_name, "Updated Professional")
+        self.assertEqual(response.data["full_name"], "Updated Professional")
+
+    def test_direct_profile_save_cannot_reintroduce_name_drift(self):
+        profile = self.professional.profile
+        profile.full_name = "Drifted Profile Name"
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.full_name, self.professional.full_name)
+
     def test_owner_can_see_private_profile_fields(self):
         self.client.force_authenticate(self.professional)
         response = self.client.get("/api/profiles/me/")
