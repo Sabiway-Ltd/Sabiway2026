@@ -1,7 +1,9 @@
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from accounts.models import User
+from verification.models import VerificationSubmission
 
 from .models import ServiceCategory, ServiceListing
 
@@ -16,6 +18,14 @@ class Phase4MarketplaceDiscoveryTests(TestCase):
             role=User.Role.PROFESSIONAL,
         )
         self.provider = self.provider_user.profile
+        now = timezone.now()
+        VerificationSubmission.objects.create(
+            professional=self.provider,
+            status=VerificationSubmission.Status.APPROVED,
+            identity_type=VerificationSubmission.IdentityType.NATIONAL_ID,
+            submitted_at=now,
+            decision_at=now,
+        )
         self.category, _ = ServiceCategory.objects.get_or_create(
             name="Phase 4 Test Services",
             defaults={"description": "Discovery regression fixtures"},
