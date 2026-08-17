@@ -1,3 +1,4 @@
+import os
 import re
 
 from django.conf import settings
@@ -25,6 +26,13 @@ from .models import (
 
 CONTACT_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)|(?:[\w.+-]+@[\w.-]+\.[A-Za-z]{2,})", re.I)
 ALLOWED_ATTACHMENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"}
+ALLOWED_ATTACHMENT_EXTENSIONS = {
+    "image/jpeg": {".jpg", ".jpeg"},
+    "image/png": {".png"},
+    "image/webp": {".webp"},
+    "application/pdf": {".pdf"},
+    "text/plain": {".txt"},
+}
 MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
 
@@ -191,6 +199,10 @@ class MessageSerializer(serializers.ModelSerializer):
         content_type = getattr(value, "content_type", "")
         if content_type not in ALLOWED_ATTACHMENT_TYPES:
             raise serializers.ValidationError("Unsupported attachment type.")
+        filename = os.path.basename(str(getattr(value, "name", "") or ""))
+        extension = os.path.splitext(filename)[1].lower()
+        if extension not in ALLOWED_ATTACHMENT_EXTENSIONS.get(content_type, set()):
+            raise serializers.ValidationError("Attachment filename does not match its declared file type.")
         return value
 
     def validate(self, attrs):
@@ -216,7 +228,8 @@ class MessageSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         attachment = validated_data.get("attachment")
         if attachment:
-            validated_data["attachment_name"] = attachment.name
+            safe_name = os.path.basename(str(attachment.name or "attachment"))[:255]
+            validated_data["attachment_name"] = safe_name
             validated_data["attachment_content_type"] = getattr(attachment, "content_type", "")
             validated_data["attachment_size"] = attachment.size
         return super().create(validated_data)
