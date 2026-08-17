@@ -1,7 +1,13 @@
 export default function Loading() {
   return (
-    <div className="flex items-center justify-center min-h-screen w-full">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-gray-700" />
-    </div>
+    <main className="flex min-h-[50vh] w-full items-center justify-center p-6" aria-busy="true" aria-live="polite">
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <span
+          className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary motion-reduce:animate-none"
+          aria-hidden="true"
+        />
+        <span className="text-sm font-medium">Loading SabiWay…</span>
+      </div>
+    </main>
   );
 }
