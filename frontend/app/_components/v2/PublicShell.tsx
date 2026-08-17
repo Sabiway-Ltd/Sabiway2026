@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, ArrowRight, ShieldCheck } from "lucide-react";
@@ -11,28 +12,35 @@ const navigation = [
   { href: "/helpcenter", label: "Help" },
 ];
 
+function BrandLockup({ footer = false }: { footer?: boolean }) {
+  return (
+    <span className={`inline-flex items-center rounded-2xl ${footer ? "bg-white/8 px-3 py-2" : "bg-primary px-3 py-2 shadow-sm"}`}>
+      <Image src="/Footerlogo.svg" alt="SabiWay" width={1600} height={519} className="h-7 w-auto sm:h-8" priority={!footer} />
+    </span>
+  );
+}
+
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex min-h-11 items-center gap-2 rounded-xl text-2xl font-black tracking-tight text-foreground" aria-label="SabiWay home">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground" aria-hidden="true">SW</span>
-          SabiWay
+      <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex min-h-11 items-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label="SabiWay home">
+          <BrandLockup />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="flex min-h-11 items-center rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-primary">
+            <Link key={item.href} href={item.href} className="flex min-h-11 items-center rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               {item.label}
             </Link>
           ))}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link href="/login" className="flex min-h-11 items-center rounded-xl px-4 py-2 text-sm font-extrabold text-foreground hover:bg-muted">Sign in</Link>
-          <Link href="/signup" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-black text-accent-foreground shadow-sm transition-transform hover:-translate-y-0.5 motion-reduce:transform-none">
+          <Link href="/login" className="flex min-h-11 items-center rounded-xl px-4 py-2 text-sm font-extrabold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Sign in</Link>
+          <Link href="/signup" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-black text-accent-foreground shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transform-none">
             Join SabiWay <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
@@ -40,7 +48,7 @@ export function PublicHeader() {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border text-foreground md:hidden"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
           aria-label={open ? "Close navigation" : "Open navigation"}
           aria-expanded={open}
           aria-controls="mobile-primary-navigation"
@@ -53,11 +61,11 @@ export function PublicHeader() {
         <div id="mobile-primary-navigation" className="border-t border-border bg-card px-4 py-4 md:hidden">
           <nav className="mx-auto grid max-w-7xl gap-1" aria-label="Mobile navigation">
             {navigation.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-3 font-bold text-foreground hover:bg-muted">{item.label}</Link>
+              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-3 font-bold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{item.label}</Link>
             ))}
             <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-3">
-              <Link href="/login" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl border border-border px-3 py-3 text-center font-extrabold">Sign in</Link>
-              <Link href="/signup" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 py-3 text-center font-black text-accent-foreground">Join</Link>
+              <Link href="/login" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl border border-border px-3 py-3 text-center font-extrabold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Sign in</Link>
+              <Link href="/signup" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 py-3 text-center font-black text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Join</Link>
             </div>
           </nav>
         </div>
@@ -71,7 +79,7 @@ export function PublicFooter() {
     <footer className="mt-auto bg-[var(--sabi-primary-strong)] text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_1fr_1fr] lg:px-8">
         <div>
-          <div className="flex items-center gap-2 text-2xl font-black"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-xs font-black text-accent-foreground" aria-hidden="true">SW</span>SabiWay</div>
+          <BrandLockup footer />
           <p className="mt-4 max-w-md text-sm leading-6 text-white/80">A Nigerian-led marketplace and community helping people discover trusted services, share useful knowledge and build stronger local connections.</p>
           <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck size={17} aria-hidden="true"/> Trust-led by design</p>
         </div>
