@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from notifications.models import Notification
 
 from .models import OperationsAudit, PlatformConfiguration, SupportCase
 from .roles import sync_operational_roles
@@ -43,13 +44,31 @@ class Phase9OperationsTests(APITestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(OperationsAudit.objects.filter(action="support_case_opened").count(), 1)
 
+    def test_user_support_payload_never_exposes_internal_handling_fields(self):
+        SupportCase.objects.create(
+            opened_by=self.user,
+            category="payment",
+            subject="Payment pending",
+            description="Payment remains pending and needs a support review.",
+            assigned_to=self.staff,
+            internal_note="Internal investigation note that must never reach the user API.",
+        )
+        self.client.force_authenticate(self.user)
+        response = self.client.get("/api/operations/support-cases/")
+        self.assertEqual(response.status_code, 200)
+        rows = response.data if isinstance(response.data, list) else response.data["results"]
+        self.assertEqual(len(rows), 1)
+        self.assertNotIn("internal_note", rows[0])
+        self.assertNotIn("assigned_to", rows[0])
+        self.assertNotIn("assigned_to_email", rows[0])
+
     def test_non_support_user_cannot_change_case_handling_fields(self):
         case = SupportCase.objects.create(opened_by=self.user, category="payment", subject="Payment pending", description="Payment is still pending after checkout.")
         self.client.force_authenticate(self.user)
         response = self.client.patch(f"/api/operations/support-cases/{case.id}/", {"status": "resolved"}, format="json")
         self.assertEqual(response.status_code, 403)
 
-    def test_authorised_support_can_see_and_update_all_cases_with_audit(self):
+    def test_authorised_support_can_see_and_update_all_cases_with_audit_and_notification(self):
         case = SupportCase.objects.create(opened_by=self.user, category="safety", subject="Safety issue", description="I need an urgent safety review for this transaction.")
         self.client.force_authenticate(self.staff)
         listing = self.client.get("/api/operations/support-cases/")
@@ -60,6 +79,9 @@ class Phase9OperationsTests(APITestCase):
         self.assertEqual(case.priority, SupportCase.Priority.URGENT)
         self.assertEqual(case.assigned_to, self.staff)
         self.assertTrue(OperationsAudit.objects.filter(action="support_case_updated", target_id=str(case.id)).exists())
+        notification = Notification.objects.get(user=self.user.profile, type="support")
+        self.assertEqual(notification.target_object_id, str(case.id))
+        self.assertIn("in progress", notification.message.lower())
 
     def test_platform_configuration_rejects_secret_storage(self):
         config = PlatformConfiguration(key="PAYSTACK_SECRET_KEY", value={"value": "should-not-live-here"})
