@@ -75,6 +75,9 @@
     "provider mobile home search-first opportunity hierarchy",
     "role-specific History versus Earning navigation label",
     "messages and notifications moved out of the five-item primary navigation hierarchy",
+    "mobile authentication changed from generic bordered card shell to exported full-canvas hierarchy",
+    "role selection changed to large two-option cards",
+    "sign-in and sign-up copy/action hierarchy aligned with exported states",
     "export-derived screen-by-screen audit evidence"
   ],
   "final_gate": {
