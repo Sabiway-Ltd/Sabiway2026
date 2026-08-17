@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   errorText: { color: colors.muted, lineHeight: 20 },
   inlineError: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 10, gap: 6 },
   retryText: { color: colors.brand, fontWeight: "800", fontSize: 13 },
-  sheetWrap: { ...StyleSheet.absoluteFillObject, zIndex: 20, justifyContent: "flex-end", alignItems: "center", backgroundColor: "rgba(0,0,0,0.38)" },
+  sheetWrap: { ...StyleSheet.absoluteFill, zIndex: 20, justifyContent: "flex-end", alignItems: "center", backgroundColor: "rgba(0,0,0,0.38)" },
   sheet: { maxWidth: 720, backgroundColor: colors.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 12 },
   sheetTitle: { color: colors.text, fontSize: 20, fontWeight: "900" },
   sheetCopy: { color: colors.muted, lineHeight: 20 },
