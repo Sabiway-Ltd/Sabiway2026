@@ -41,6 +41,10 @@ Deliver one SabiWay identity across Web + Android + iOS using the shared Django/
 - web/mobile loading, error and accessibility parity
 - cross-platform auth regression tests
 
+## Delivery sequencing
+
+Phase 3 may proceed as **stacked work-in-progress** from the Phase 2 branch to avoid idle time while working solo. This does **not** certify Phase 2 and does not allow Phase 3 to merge into `main` before its Phase 2 dependency is integrated and green.
+
 ## Deployment rule
 
 Do **not** add or change Vercel deployment during Phase 2, Phase 3 or Phase 4. Revisit deployment in Master Phase 5 after the preceding capability gates are merged and green.
