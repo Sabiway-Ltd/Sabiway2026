@@ -55,11 +55,13 @@ Deliver one SabiWay identity across Web + Android + iOS using the shared Django/
 - [x] Bring Android/iOS signup into role/phone/terms parity.
 - [x] Add backend regression tests for identity/onboarding state.
 - [ ] Final Platform CI green on current Phase 2 head.
-- [ ] Replace JavaScript-readable browser refresh-token persistence with the production session boundary before user-testing/production readiness. Current localStorage use is explicitly transitional and must not be treated as the final security design.
+- [ ] Production browser-session boundary: JavaScript-readable refresh-token persistence must be replaced before controlled user-testing readiness. This is tracked as a mandatory security-hardening gate rather than a blocker to integrating the Phase 2 domain model/API/client contract.
 
 ## Browser session security note
 
-The current web client still uses JavaScript-readable token persistence inherited from the existing implementation. Phase 2 has corrected consistency problems (refresh/user state is now stored and cleared coherently), but **this is not the desired production trust boundary**. The preferred production direction is an HttpOnly/Secure/SameSite server-issued browser session or equivalent BFF token boundary so refresh credentials are not readable by application JavaScript. This hardening is mandatory before controlled user-testing readiness and may be completed in the security-hardening phase if it would otherwise destabilise current auth flows prematurely.
+The current web client still uses JavaScript-readable token persistence inherited from the existing implementation. Phase 2 has corrected consistency problems (refresh/user state is now stored and cleared coherently), but **this is not the desired production trust boundary**. The preferred production direction is an HttpOnly/Secure/SameSite server-issued browser session or equivalent BFF token boundary so refresh credentials are not readable by application JavaScript.
+
+For sequencing, Phase 2 may be integrated once its functional/CI gate is green, while this security item remains mandatory before controlled user-testing readiness under the Master security-hardening phase. It is not waived for production.
 
 ## Delivery sequencing
 
