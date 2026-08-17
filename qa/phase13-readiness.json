@@ -1,0 +1,88 @@
+{
+  "phase": 13,
+  "name": "Controlled User-Testing Readiness",
+  "environments": [
+    {"name": "development", "required": true, "status": "configured"},
+    {"name": "qa-test", "required": true, "status": "configured-by-profile"},
+    {"name": "staging-uat", "required": true, "status": "configured-by-profile"},
+    {"name": "controlled-beta", "required": true, "status": "external-runtime-evidence-required"}
+  ],
+  "web": {
+    "stableUrl": "https://sabiway2026.vercel.app",
+    "latestKnownProductionCommit": "9296729d8c9e5b462321f55c7efae71ac8b7fec8",
+    "status": "production-deployment-ready-runtime-smoke-required"
+  },
+  "mobile": {
+    "sharedExpoCodebase": true,
+    "android": {
+      "qaProfile": "qa",
+      "uatProfile": "uat",
+      "betaProfile": "beta",
+      "requiredRuntimeEvidence": "installable Android build on physical devices"
+    },
+    "ios": {
+      "uatProfile": "uat",
+      "betaProfile": "beta",
+      "requiredRuntimeEvidence": "TestFlight or equivalent controlled distribution"
+    }
+  },
+  "testerCohorts": [
+    "android-users",
+    "iphone-users",
+    "mobile-web-users",
+    "desktop-users",
+    "lower-digital-confidence-users",
+    "higher-digital-confidence-users",
+    "different-age-groups",
+    "different-network-conditions",
+    "different-sabiway-roles",
+    "nigerian-users",
+    "diaspora-users-where-relevant"
+  ],
+  "tasks": [
+    {"id": "T01", "name": "Create an account without help", "critical": true},
+    {"id": "T02", "name": "Complete your profile", "critical": true},
+    {"id": "T03", "name": "Find a relevant user or service", "critical": true},
+    {"id": "T04", "name": "Perform an interaction", "critical": true},
+    {"id": "T05", "name": "Recover your password", "critical": true},
+    {"id": "T06", "name": "Report a problem", "critical": true},
+    {"id": "T07", "name": "Complete the core transaction journey", "critical": true},
+    {"id": "T08", "name": "Receive and act on a notification", "critical": false},
+    {"id": "T09", "name": "Complete payment where applicable", "critical": true},
+    {"id": "T10", "name": "Sign out and sign back in", "critical": true}
+  ],
+  "feedbackFields": [
+    "tester_id",
+    "task_id",
+    "task_completion",
+    "time_seconds",
+    "confusion",
+    "error",
+    "abandonment",
+    "trust_score",
+    "satisfaction_score",
+    "usefulness_score",
+    "device",
+    "platform",
+    "network_condition",
+    "severity",
+    "notes"
+  ],
+  "severity": {
+    "1": "Blocker — critical journey impossible, security issue or serious data risk",
+    "2": "Major — journey only possible with significant difficulty",
+    "3": "Moderate — usability affected but journey remains possible",
+    "4": "Minor — cosmetic or low-impact"
+  },
+  "releaseGate": {
+    "noSeverity1": true,
+    "criticalSeverity2Resolved": true,
+    "crossPlatformJourneysPassed": true,
+    "browserRuntimePassed": true,
+    "physicalDeviceRuntimePassed": true,
+    "stableBetaEnvironmentPassed": true,
+    "supportRouteDefined": true,
+    "rollbackPossible": true,
+    "releaseNotesAvailable": true
+  }
+}
