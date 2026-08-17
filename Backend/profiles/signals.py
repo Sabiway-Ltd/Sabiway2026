@@ -9,10 +9,10 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def create_or_sync_profile_for_user(sender, instance, created, **kwargs):
-    """Create the profile once, then keep legacy mirrored role aligned to User.role.
+    """Create a profile once, then keep compatibility mirrors aligned.
 
-    accounts.User.role is authoritative. Profile.role remains only as a
-    compatibility mirror while older marketplace/profile code is migrated.
+    accounts.User owns account identity and role. Profile.full_name and
+    Profile.role remain compatibility mirrors while older surfaces are migrated.
     """
     if created:
         full_name = getattr(instance, "full_name", None) or instance.email.split("@")[0]
@@ -39,22 +39,29 @@ def create_or_sync_profile_for_user(sender, instance, created, **kwargs):
         return
 
     profile = getattr(instance, "profile", None)
-    if profile and profile.role != instance.role:
-        Profile.objects.filter(pk=profile.pk).update(role=instance.role)
+    if profile:
+        updates = {}
+        if profile.role != instance.role:
+            updates["role"] = instance.role
+        if profile.full_name != instance.full_name:
+            updates["full_name"] = instance.full_name
+            updates["initials"] = generate_initials(instance.full_name)
+        if updates:
+            Profile.objects.filter(pk=profile.pk).update(**updates)
 
 
 @receiver(pre_save, sender=Profile)
 def ensure_profile_derived_fields(sender, instance, **kwargs):
+    if instance.user_id:
+        account = User.objects.filter(pk=instance.user_id).values("role", "full_name").first()
+        if account:
+            instance.role = account["role"]
+            instance.full_name = account["full_name"]
+
     if instance.full_name:
         instance.initials = generate_initials(instance.full_name)
     if instance.username and not instance.username.startswith("@"):
         instance.username = "@" + instance.username
-
-    # Never allow the compatibility mirror to become a second source of truth.
-    if instance.user_id:
-        account_role = User.objects.filter(pk=instance.user_id).values_list("role", flat=True).first()
-        if account_role:
-            instance.role = account_role
 
 
 def update_follow_counts(follower: Profile, following: Profile):
