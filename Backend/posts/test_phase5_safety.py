@@ -4,7 +4,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from accounts.models import User
-from .models import Comment, Post, Reply
+from .models import Comment, Post, PostReport, Reply
 
 
 class Phase5ForumSafetyTests(TestCase):
@@ -20,6 +20,13 @@ class Phase5ForumSafetyTests(TestCase):
             full_name="Phase Five Reader",
             password="StrongPassword123!",
             role=User.Role.CLIENT,
+        )
+        self.staff_user = User.objects.create_user(
+            email="phase5-staff@example.com",
+            full_name="Phase Five Staff",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+            is_staff=True,
         )
         self.author = self.author_user.profile
         self.reader = self.reader_user.profile
@@ -116,3 +123,70 @@ class Phase5ForumSafetyTests(TestCase):
         self.assertEqual(deleted.status_code, 204)
         self.post.refresh_from_db()
         self.assertEqual(self.post.comments_count, before - 1)
+
+    def _report(self):
+        return PostReport.objects.create(
+            post=self.post,
+            reported_by=self.reader_user,
+            reason="Needs moderation review",
+            post_url=f"https://www.sabiway.com/posts/{self.post.id}",
+        )
+
+    @patch("posts.views.broadcast_forum_event")
+    def test_moderation_lifecycle_only_allows_open_to_removed_to_restored(self, _broadcast):
+        report = self._report()
+        self.client.force_authenticate(self.staff_user)
+
+        invalid_restore = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "restore", "note": "Nothing has been removed yet."},
+            format="json",
+        )
+        self.assertEqual(invalid_restore.status_code, 409)
+        self.assertEqual(invalid_restore.data["allowed_actions"], ["dismiss", "remove"])
+
+        remove = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "remove", "note": "Violates the community rules."},
+            format="json",
+        )
+        self.assertEqual(remove.status_code, 200)
+        report.refresh_from_db()
+        self.assertEqual(report.status, PostReport.Status.REMOVED)
+
+        invalid_dismiss = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "dismiss", "note": "Too late to dismiss."},
+            format="json",
+        )
+        self.assertEqual(invalid_dismiss.status_code, 409)
+        self.assertEqual(invalid_dismiss.data["allowed_actions"], ["restore"])
+
+        restore = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "restore", "note": "Appeal accepted after review."},
+            format="json",
+        )
+        self.assertEqual(restore.status_code, 200)
+        report.refresh_from_db()
+        self.assertEqual(report.status, PostReport.Status.RESTORED)
+
+        terminal_remove = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "remove", "note": "A new report is required for a new decision."},
+            format="json",
+        )
+        self.assertEqual(terminal_remove.status_code, 409)
+        self.assertEqual(terminal_remove.data["allowed_actions"], [])
+
+    def test_moderation_decision_requires_note(self):
+        report = self._report()
+        self.client.force_authenticate(self.staff_user)
+        response = self.client.post(
+            f"/api/posts/moderation/reports/{report.id}/action/",
+            {"action": "dismiss", "note": "   "},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        report.refresh_from_db()
+        self.assertEqual(report.status, PostReport.Status.OPEN)
