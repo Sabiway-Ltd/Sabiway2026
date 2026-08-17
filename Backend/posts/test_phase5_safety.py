@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -81,3 +83,36 @@ class Phase5ForumSafetyTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(len(response.data["results"]), 50)
         self.assertIsNotNone(response.data["next"])
+
+    @patch("posts.views.broadcast_forum_event")
+    def test_owner_delete_repairs_profile_post_count_and_broadcasts(self, broadcast):
+        self.client.force_authenticate(self.author_user)
+        created = self.client.post("/api/posts/", {"content": "Delete me"}, format="json")
+        self.assertEqual(created.status_code, 201)
+        self.author.refresh_from_db()
+        before = self.author.posts_count
+        self.assertGreaterEqual(before, 1)
+        broadcast.reset_mock()
+
+        deleted = self.client.delete(f"/api/posts/{created.data['id']}/")
+        self.assertEqual(deleted.status_code, 204)
+        self.author.refresh_from_db()
+        self.assertEqual(self.author.posts_count, before - 1)
+        broadcast.assert_called_once_with({"action": "delete", "post_id": str(created.data["id"])})
+
+    def test_comment_delete_decrements_post_comment_count(self):
+        self.client.force_authenticate(self.author_user)
+        created = self.client.post(
+            f"/api/posts/{self.post.id}/comments/",
+            {"content": "Counted comment"},
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201)
+        self.post.refresh_from_db()
+        before = self.post.comments_count
+        self.assertGreaterEqual(before, 1)
+
+        deleted = self.client.delete(f"/api/posts/comments/{created.data['id']}/")
+        self.assertEqual(deleted.status_code, 204)
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.comments_count, before - 1)
