@@ -5,6 +5,16 @@ from rest_framework.views import APIView
 from .hardening import database_ready
 
 
+class LivenessView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        response = Response({"status": "ok"})
+        response["Cache-Control"] = "no-store, max-age=0"
+        return response
+
+
 class HealthCheckView(APIView):
     authentication_classes = []
     permission_classes = []
