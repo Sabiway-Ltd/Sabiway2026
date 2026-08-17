@@ -1,6 +1,12 @@
 from django.apps import AppConfig
 
 
+def _sync_roles_after_migrate(**kwargs):
+    from .roles import sync_operational_roles
+
+    sync_operational_roles()
+
+
 class OperationsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "operations"
@@ -12,11 +18,11 @@ class OperationsConfig(AppConfig):
 
         from . import signals  # noqa: F401
         from .dashboard import install_operations_dashboard
-        from .roles import sync_operational_roles
 
         post_migrate.connect(
-            lambda **kwargs: sync_operational_roles(),
+            _sync_roles_after_migrate,
             sender=self,
             dispatch_uid="operations.sync_operational_roles",
+            weak=False,
         )
         install_operations_dashboard(admin.site)
