@@ -12,6 +12,7 @@ from .models import (
     JobResponse,
     MessageThread,
     ServiceCategory,
+    ServiceListing,
 )
 
 
@@ -200,3 +201,126 @@ class Phase7JobResponseLifecycleTests(TestCase):
 
         self.assertEqual(thread.status_code, 400)
         self.assertFalse(MessageThread.objects.filter(job_response=self.response).exists())
+
+
+class Phase7MarketplaceProvenanceTests(TestCase):
+    def setUp(self):
+        self.client_user = User.objects.create_user(
+            email="phase7-provenance-client@example.com",
+            full_name="Phase Seven Provenance Client",
+            password="StrongPassword123!",
+            role=User.Role.CLIENT,
+        )
+        self.professional_user = User.objects.create_user(
+            email="phase7-provenance-professional@example.com",
+            full_name="Phase Seven Provenance Professional",
+            password="StrongPassword123!",
+            role=User.Role.PROFESSIONAL,
+        )
+        self.client_profile = self.client_user.profile
+        self.professional_profile = self.professional_user.profile
+        self.category = ServiceCategory.objects.create(name="Phase Seven Provenance")
+        self.listing = ServiceListing.objects.create(
+            provider=self.professional_profile,
+            category=self.category,
+            title="Original service scope",
+            description="Original service description",
+            price_from="12000.00",
+            currency="NGN",
+            moderation_status=ServiceListing.ModerationStatus.APPROVED,
+        )
+        self.job = JobPosting.objects.create(
+            client=self.client_profile,
+            category=self.category,
+            title="Original job scope",
+            description="Original job description",
+            budget_min="15000.00",
+            budget_max="30000.00",
+            currency="NGN",
+            status=JobPosting.Status.OPEN,
+            moderation_status=JobPosting.ModerationStatus.APPROVED,
+        )
+        self.client_api = APIClient()
+        self.client_api.force_authenticate(self.client_user)
+        self.professional_api = APIClient()
+        self.professional_api.force_authenticate(self.professional_user)
+
+    def test_listing_material_edit_and_delete_are_blocked_after_conversation(self):
+        MessageThread.objects.create(
+            client=self.client_profile,
+            professional=self.professional_profile,
+            listing=self.listing,
+        )
+
+        changed = self.professional_api.patch(
+            f"/api/marketplace/listings/{self.listing.id}/",
+            {"price_from": "20000.00"},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 400)
+        self.listing.refresh_from_db()
+        self.assertEqual(str(self.listing.price_from), "12000.00")
+
+        deleted = self.professional_api.delete(
+            f"/api/marketplace/listings/{self.listing.id}/"
+        )
+        self.assertEqual(deleted.status_code, 400)
+        self.assertTrue(ServiceListing.objects.filter(pk=self.listing.pk).exists())
+
+    def test_listing_operational_availability_can_change_after_conversation(self):
+        MessageThread.objects.create(
+            client=self.client_profile,
+            professional=self.professional_profile,
+            listing=self.listing,
+        )
+
+        changed = self.professional_api.patch(
+            f"/api/marketplace/listings/{self.listing.id}/",
+            {"available_now": True, "availability_text": "Available this week"},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200)
+        self.listing.refresh_from_db()
+        self.assertTrue(self.listing.available_now)
+        self.assertEqual(self.listing.moderation_status, ServiceListing.ModerationStatus.APPROVED)
+
+    def test_job_material_edit_and_delete_are_blocked_after_response(self):
+        JobResponse.objects.create(
+            job=self.job,
+            professional=self.professional_profile,
+            message="I can help",
+            proposed_price="20000.00",
+            currency="NGN",
+        )
+
+        changed = self.client_api.patch(
+            f"/api/marketplace/jobs/{self.job.id}/",
+            {"budget_max": "45000.00"},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 400)
+        self.job.refresh_from_db()
+        self.assertEqual(str(self.job.budget_max), "30000.00")
+
+        deleted = self.client_api.delete(f"/api/marketplace/jobs/{self.job.id}/")
+        self.assertEqual(deleted.status_code, 400)
+        self.assertTrue(JobPosting.objects.filter(pk=self.job.pk).exists())
+
+    def test_job_can_close_after_response_without_resetting_moderation(self):
+        JobResponse.objects.create(
+            job=self.job,
+            professional=self.professional_profile,
+            message="I can help",
+            proposed_price="20000.00",
+            currency="NGN",
+        )
+
+        changed = self.client_api.patch(
+            f"/api/marketplace/jobs/{self.job.id}/",
+            {"status": JobPosting.Status.CLOSED},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, JobPosting.Status.CLOSED)
+        self.assertEqual(self.job.moderation_status, JobPosting.ModerationStatus.APPROVED)
