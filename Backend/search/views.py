@@ -14,9 +14,14 @@ class SearchView(APIView):
     supported_types = {"posts", "profiles", "hashtags"}
     result_limit = 25
     minimum_query_length = 2
+    maximum_query_length = 120
 
     def _measure(self, request, search_type, query, count):
-        record_product_event("search_performed", actor=request.user, properties={"category": search_type, "query_length": len(query), "result_count": count})
+        record_product_event(
+            "search_performed",
+            actor=request.user,
+            properties={"category": search_type, "query_length": len(query), "result_count": count},
+        )
 
     def get(self, request):
         query = request.GET.get("q", "").strip()
@@ -25,6 +30,8 @@ class SearchView(APIView):
             return Response({"detail": "Invalid search type. Use posts, profiles or hashtags."}, status=status.HTTP_400_BAD_REQUEST)
         if len(query) < self.minimum_query_length:
             return Response({"detail": f"Search must contain at least {self.minimum_query_length} characters."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(query) > self.maximum_query_length:
+            return Response({"detail": f"Search must contain no more than {self.maximum_query_length} characters."}, status=status.HTTP_400_BAD_REQUEST)
 
         if search_type == "posts":
             posts = list(Post.objects.filter(content__icontains=query).order_by("-created_at")[: self.result_limit])
