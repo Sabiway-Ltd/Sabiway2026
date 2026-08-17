@@ -23,7 +23,10 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login(form);
-    if (success) window.location.href = "/community";
+    if (success) {
+      const next = new URLSearchParams(window.location.search).get("next");
+      window.location.href = next?.startsWith("/") ? next : "/home";
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -85,8 +88,8 @@ export default function Login() {
                   placeholder="Enter your password"
                   className="w-full border border-[#d6e2db] rounded-xl px-4 py-3 pr-10 text-sm focus:ring-2 focus:ring-[#008753]/20 focus:border-[#008753] focus:outline-none"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-[#68776f]">
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-[#68776f]" aria-label={showPassword ? "Hide password" : "Show password"}>
+                  {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
                 </button>
               </div>
               <div className="flex justify-end mt-2">
