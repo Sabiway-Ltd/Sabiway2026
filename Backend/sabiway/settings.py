@@ -33,11 +33,9 @@ EXPRESS_URL = env("EXPRESS_URL", default="http://localhost:5000")
 PREBOOKING_CONTACT_BLOCK_ENABLED = env.bool("PREBOOKING_CONTACT_BLOCK_ENABLED", default=True)
 VERIFICATION_GATE_ENABLED = env.bool("VERIFICATION_GATE_ENABLED", default=True)
 VERIFICATION_DOCUMENT_KEY = env("VERIFICATION_DOCUMENT_KEY", default="")
-# Operational defaults only. Product/privacy owners can change these without code changes.
 VERIFICATION_REVIEW_SLA_HOURS = env.int("VERIFICATION_REVIEW_SLA_HOURS", default=48)
 VERIFICATION_RETENTION_DAYS = env.int("VERIFICATION_RETENTION_DAYS", default=365)
 
-# Phase 7 Nigeria-pilot SabiPay controls. Cross-border/Stripe remains Phase 9.
 SABIPAY_ENABLED = env.bool("SABIPAY_ENABLED", default=True)
 SABIPAY_COMMISSION_RATE = env.float("SABIPAY_COMMISSION_RATE", default=0.10)
 SABIPAY_FREEZE_DAYS = env.int("SABIPAY_FREEZE_DAYS", default=7)
@@ -74,6 +72,7 @@ INSTALLED_APPS = [
     "marketplace",
     "verification.apps.VerificationConfig",
     "sabipay.apps.SabiPayConfig",
+    "operations.apps.OperationsConfig",
     "rest_framework",
     "drf_yasg",
     "rest_framework_simplejwt",
