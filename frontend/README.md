@@ -1,54 +1,253 @@
-# SabiWay Frontend (Next.js)
+# SabiWay Web Frontend
 
-**Founder & Product Owner**: Johnson Taiwo
+This directory contains the current SabiWay V2 web application built with Next.js, React and TypeScript.
 
-The SabiForum web app: landing page, auth flows, community feed, profiles, notifications. Next.js 15 (App Router), React 19, TypeScript. Runs on port 3000. See the root [README.md](../README.md) for how this fits into the four-service architecture, and [../Documentation/V1_Documentation.md](../Documentation/V1_Documentation.md) for the full technical documentation.
+It is no longer a SabiForum-only frontend. The web product includes public pages, authentication, marketplace/jobs/listings, messaging/booking context, SabiForum, profiles, notifications, verification, SabiPay, support/help/legal surfaces and responsive desktop/tablet/mobile-web layouts.
 
-## Setup
+Before changing this service, read root `AGENTS.md`, root `README.md`, `docs/PROJECT-MAP.md`, `docs/ARCHITECTURE.md`, `docs/DESIGN-SYSTEM.md` and `docs/REGRESSION_TESTING.md`.
+
+## 1. Responsibilities
+
+The web frontend is responsible for:
+- presenting the SabiWay product to unauthenticated and authenticated users;
+- rendering Client vs Professional navigation and role-aware experiences;
+- collecting user input and presenting backend validation/results;
+- calling the shared Django API;
+- consuming realtime updates from the Express/Socket.io service;
+- presenting marketplace, community, verification and SabiPay states;
+- adapting the supplied mobile/Figma product language to desktop/tablet appropriately.
+
+The web frontend is **not** authoritative for:
+- permissions;
+- payment state;
+- booking/work-state transitions;
+- verification decisions;
+- database truth.
+
+Those are backend responsibilities.
+
+## 2. Setup
 
 ```bash
 cd frontend
-npm install
+npm ci
+```
+
+Create `frontend/.env.local` using approved local values/environment names. Do not commit it.
+
+Start development server:
+
+```bash
 npm run dev
 ```
 
-## Backend URLs Are Hardcoded, Not Environment Variables
+Default local URL: `http://localhost:3000`.
 
-Before running locally, you need to edit `app/utils/MyConstants.ts` directly. This file currently exports `DJANGO_URL`, `EXPRESS_URL`, and `WAITLIST_URL` as hardcoded string constants, switched between local, VPS, and Render targets by commenting and uncommenting lines in the file itself:
+## 3. Required quality commands
 
-```ts
-// FOR RENDER
-export const EXPRESS_URL = "https://realtime.sabiway.com"
-export const DJANGO_URL = "https://backend.sabiway.com"
-export const WAITLIST_URL = "https://waitlist.sabiway.com"
+```bash
+npm run type-check
+npm run lint
+npm run build
 ```
 
-To run against a local backend, comment out the Render block and uncomment (or add) the localhost equivalents:
+A successful `npm run dev` is not sufficient release evidence. Material web changes must also pass the Production build.
 
-```ts
-export const DJANGO_URL = "http://localhost:8000"
-export const EXPRESS_URL = "http://localhost:5000"
-```
+## 4. Structure
 
-**Do not commit a change that points these at localhost.** This is flagged in the root README's Known Issues as worth fixing (moving these to `NEXT_PUBLIC_*` environment variables would remove the need to hand-edit and remember to revert this file), but as of this writing it has not been changed, so treat it as a manual step every time you set up a fresh clone.
+### `app/`
+Next.js App Router root.
 
-## Structure
+Contains:
+- route groups such as `(auth)/`;
+- public/product routes;
+- root `layout.tsx`;
+- `loading.tsx` and `error.tsx`;
+- global styling in `globals.css`;
+- route-level/shared components.
 
-- `app/`: Next.js App Router pages. Route groups like `(auth)/` hold the signup, login, password reset, and OAuth callback flows.
-- `app/services/`: one file per domain (`auth.ts`, `post.ts`, `profile.ts`, `notification.ts`), each wrapping the relevant Backend API calls via the shared `api.ts` axios instance.
-- `app/store/`: one Zustand store per domain, matching the services split above.
-- `app/_components/`: shared and feature-specific React components (`common/`, `feed/`, `landing_page/`, `profile/`).
-- `app/hooks/`: shared React hooks.
-- `app/utils/`: shared utilities, including the `MyConstants.ts` file described above.
+### `app/(auth)/`
+Authentication-related pages and callback handling, including login/signup/password/OAuth flows.
 
-New features should generally follow the existing services-plus-store split rather than fetching data directly inside components.
+Internal review controls may appear on login only when development review flags are enabled. Do not weaken backend review-mode guards.
 
-## Conventions
+### `app/_components/`
+Shared and route-specific UI components.
 
-- **State**: Zustand (`app/store/`) for client state.
-- **Data fetching**: TanStack React Query, layered on top of the axios calls in `app/services/`.
-- **Auth tokens**: stored in `localStorage` (`access` and `refresh` keys) and attached automatically to outgoing requests by an axios interceptor in `app/services/api.ts`, which also handles silent token refresh on a 401 response.
+Before adding a new component, search for an existing shared pattern. Avoid near-duplicate cards/buttons/forms that diverge from the design system.
 
-## Testing
+### `app/hooks/`
+Shared React hooks.
 
-There is no test setup (Jest, Playwright, or otherwise) configured in this project yet. Recommended tooling and priority order are in the external QA test plan.
+### `app/config/`
+Application configuration helpers.
+
+### `app/design/` and global styles
+Design-related implementation and shared styling. Canonical cross-platform tokens originate from `../design-system/` and are checked by CI.
+
+## 5. Product route families
+
+The exact route tree should be verified from `app/`, but major product areas include:
+- landing/home/public pages;
+- authentication;
+- marketplace/service/job discovery;
+- messaging;
+- community/SabiForum;
+- profiles;
+- notifications;
+- verification;
+- SabiPay/trust/support/help/legal.
+
+Do not rely on old V1 documentation as current route authority.
+
+## 6. Data/API rules
+
+Use the existing shared API/service patterns rather than issuing ad-hoc fetches everywhere.
+
+Rules:
+- backend validation is authoritative;
+- handle 401/403 distinctly from generic failure;
+- preserve loading/empty/error/retry states;
+- never expose backend/payment secrets in `NEXT_PUBLIC_*` variables;
+- avoid duplicating marketplace/payment state machines in client state;
+- after mutations, refresh/update the authoritative server-backed view consistently.
+
+## 7. Authentication
+
+The web consumes the backend authentication contract.
+
+Important current boundaries:
+- token/session changes must remain compatible with mobile;
+- server-side permissions remain authoritative;
+- OAuth callback handling must avoid unnecessary token leakage;
+- internal review mode is development-only;
+- hidden UI is not access control.
+
+Auth changes are RED scope.
+
+## 8. Internal review mode
+
+For development/internal UI review, frontend review UI can be enabled with the documented `NEXT_PUBLIC_INTERNAL_REVIEW_MODE` flag while backend review mode is safely enabled.
+
+Do not assume the frontend flag alone grants access: backend guards are authoritative.
+
+Review users must remain non-staff/non-superuser.
+
+## 9. UI/UX rules
+
+Use `../docs/DESIGN-SYSTEM.md` as the detailed source.
+
+Key rules:
+- use official SabiWay logo assets;
+- use canonical design tokens rather than repeated hard-coded brand values where possible;
+- preserve Client vs Professional product hierarchy;
+- adapt mobile/Figma hierarchy to desktop rather than stretching it;
+- consider loading/empty/error/permission states;
+- visible keyboard focus;
+- keyboard-operable controls;
+- accessible labels for icon-only controls;
+- no colour-only status;
+- target WCAG 2.2 AA.
+
+## 10. Responsive expectations
+
+Review representative widths including:
+- 320/360/390/430 mobile web;
+- 768 tablet;
+- 1024 tablet/desktop boundary;
+- 1280/1366/1440+ desktop.
+
+Check for:
+- horizontal overflow;
+- inaccessible nav/actions;
+- collapsed filter usability;
+- modal/drawer clipping;
+- long-text wrapping;
+- messaging pane behaviour;
+- payment/status context.
+
+## 11. Marketplace web patterns
+
+Desktop may use:
+- persistent filter sidebar;
+- wider results grid/list;
+- richer professional card context;
+- side-by-side comparison/details.
+
+Mobile web should remain compact and task-first.
+
+Backend marketplace state remains authoritative.
+
+## 12. Messaging web pattern
+
+Desktop can use a multi-pane layout:
+- conversation list;
+- active chat;
+- booking/profile/context rail.
+
+Participant isolation is enforced by backend, not layout.
+
+## 13. SabiForum web pattern
+
+Community surfaces should preserve:
+- feed/composer/detail hierarchy;
+- engagement actions;
+- moderation/report status behaviour;
+- notification side effects from backend.
+
+Do not rebuild community as a separate data silo.
+
+## 14. SabiPay/trust web pattern
+
+Before consequential financial actions, show:
+- amount;
+- current transaction status;
+- booking/counterparty context;
+- action consequence;
+- retry/support/dispute path as relevant.
+
+Never infer payment success from a button click alone.
+
+## 15. Error handling
+
+User-facing errors should:
+- explain what failed in plain language;
+- not leak raw server exceptions;
+- distinguish authentication/permission from server/network failure;
+- provide retry where safe;
+- prevent duplicate destructive/payment submissions.
+
+## 16. Environment configuration
+
+See `../docs/ENVIRONMENTS.md`.
+
+Client-visible environment variables must not contain secrets.
+
+When debugging a deployment mismatch, verify:
+- Vercel deployment Git SHA;
+- environment target;
+- API/realtime URLs;
+- Production vs preview branch.
+
+## 17. Testing and CI
+
+Platform CI runs:
+- `npm ci`;
+- typecheck;
+- lint;
+- Production build.
+
+It also runs design-system, UIUX, journey and release gates at repository level.
+
+For material visual work, add runtime screenshots/browser evidence where practical. CI build success is not pixel-perfect/browser certification.
+
+## 18. Before opening a PR
+
+Confirm:
+- success criteria/preservation boundaries written;
+- correct risk classification;
+- no backend business rules duplicated in client;
+- typecheck/lint/build pass;
+- responsive/accessibility reviewed;
+- relevant docs updated;
+- screenshots/evidence attached for material UI changes.

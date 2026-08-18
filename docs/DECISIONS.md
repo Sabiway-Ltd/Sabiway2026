@@ -34,3 +34,14 @@ Consequential decisions must record date, problem, root cause, fix, reasoning an
 **Reasoning:** One aggregate context simplifies branch protection and prevents partial-green interpretations. Keeping deployment verification separate preserves honesty while Vercel remains externally integrated.
 
 **Author/session/source:** Release-control hardening, 2026-08-18.
+
+## 2026-08-18 — Establish a detailed cold-start documentation hierarchy
+**Problem:** The first governance handbook was structurally correct but too concise to let a completely new developer or AI session understand the real project architecture, domain ownership, user journeys, environments, troubleshooting and service-specific workflow without relying on prior chat context.
+
+**Root cause:** Initial governance work prioritised getting the operating model into the repository quickly. Core documents described rules but did not yet provide enough project-specific implementation detail, repository navigation or failure-path guidance.
+
+**Fix:** Expand `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `docs/DEVELOPER-START-HERE.md`, architecture/design/CI/regression/onboarding/security documents and service READMEs. Add dedicated `PROJECT-MAP.md`, `USER-JOURNEYS.md`, `ENVIRONMENTS.md` and `TROUBLESHOOTING.md`. Define the authority order as live repository/runtime → current source/migrations → current handbook/decision log → historical `Documentation/` evidence → conversation memory.
+
+**Reasoning:** A repository should be understandable from a cold start. Detailed, specific operational documentation reduces accidental duplication, unsafe rewrites, false assumptions about old V1 architecture and over-reliance on one developer or AI conversation history.
+
+**Author/session/source:** Founder-directed documentation deepening pass, 2026-08-18.
