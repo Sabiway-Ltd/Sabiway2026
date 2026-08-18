@@ -35,6 +35,7 @@ interface AuthState {
   refresh: string | null;
   signup: (form: SignupForm) => Promise<boolean>;
   login: (form: { email: string; password: string }) => Promise<boolean>;
+  reviewLogin: (role: AccountRole) => Promise<boolean>;
   logout: () => Promise<void>;
   google_logged_in: (user: User) => void;
   loadUserFromStorage: () => void;
@@ -50,6 +51,15 @@ function firstApiError(data: unknown, fallback: string) {
     if (typeof value === "string") return value;
   }
   return fallback;
+}
+
+function storeSession(data: { access?: string; refresh?: string; user?: User }) {
+  if (data.access) {
+    document.cookie = `access=${data.access}; path=/; max-age=28800; SameSite=Strict; Secure`;
+    localStorage.setItem("access", data.access);
+  }
+  if (data.refresh) localStorage.setItem("refresh", data.refresh);
+  if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -100,19 +110,37 @@ export const useAuthStore = create<AuthState>((set) => ({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(firstApiError(data, "Login failed"));
 
-      // Transitional Phase 2 client storage. Full browser-token hardening remains
-      // tracked before production readiness; server-side auth remains authoritative.
-      if (data.access) {
-        document.cookie = `access=${data.access}; path=/; max-age=86400; SameSite=Strict; Secure`;
-        localStorage.setItem("access", data.access);
-      }
-      if (data.refresh) localStorage.setItem("refresh", data.refresh);
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      storeSession(data);
       set({ user: data.user, access: data.access || null, refresh: data.refresh || null });
       toast.success(`Welcome back ${data.user?.full_name?.split(" ")[0] || "User"}`);
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  reviewLogin: async (role) => {
+    try {
+      set({ loading: true });
+      const res = await fetch(`${API_URL}/auth/internal-review-login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(firstApiError(data, "Internal review access is not enabled."));
+
+      storeSession(data);
+      localStorage.setItem("internal_review_mode", "true");
+      set({ user: data.user, access: data.access || null, refresh: data.refresh || null });
+      toast.success(`Reviewing as ${role === "professional" ? "Professional" : "Client"}`);
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Internal review access failed");
       return false;
     } finally {
       set({ loading: false });
@@ -126,6 +154,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     localStorage.removeItem("user");
+    localStorage.removeItem("internal_review_mode");
     set({ user: null, access: null, refresh: null });
     window.location.href = "/";
   },
