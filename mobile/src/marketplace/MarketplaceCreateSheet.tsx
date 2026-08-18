@@ -30,7 +30,7 @@ export function MarketplaceCreateSheet({ access, role, categories, width, onClos
   const [submitting, setSubmitting] = useState(false);
 
   const isProfessional = role === "professional";
-  const heading = isProfessional ? "Create your service listing" : "Post a job";
+  const heading = isProfessional ? "Offer a service" : "Post a Job";
   const selectedCategory = useMemo(() => categories.find((item) => item.id === categoryId), [categories, categoryId]);
 
   const submit = async () => {
@@ -90,16 +90,19 @@ export function MarketplaceCreateSheet({ access, role, categories, width, onClos
     <View style={styles.overlay}>
       <View style={[styles.sheet, { width }]}> 
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.eyebrow}>{isProfessional ? "PROFESSIONAL" : "CLIENT"}</Text>
+          <View style={styles.headerTop}>
+            <Pressable accessibilityRole="button" onPress={onClose} style={styles.backButton}><Text style={styles.backText}>←</Text></Pressable>
             <Text style={styles.heading}>{heading}</Text>
-            <Text style={styles.help}>{isProfessional ? "Listings are reviewed before public discovery." : "Describe the work and let relevant professionals respond."}</Text>
+            <View style={styles.headerSpacer} />
           </View>
-          <Pressable onPress={onClose} style={styles.close}><Text style={styles.closeText}>Close</Text></Pressable>
+          <View style={styles.progress}><View style={[styles.step, styles.stepActive]} /><View style={[styles.step, styles.stepActive]} /><View style={styles.step} /><View style={styles.step} /></View>
         </View>
 
         <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Category</Text>
+          <FieldLabel>{isProfessional ? "Service Title" : "Job Title"}</FieldLabel>
+          <TextInput value={title} onChangeText={setTitle} placeholder={isProfessional ? "e.g. Home electrical repairs" : "e.g. Home cleaning for 2-bedroom apartment"} placeholderTextColor="#8A8A8A" style={styles.input} />
+
+          <FieldLabel>Categories</FieldLabel>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
             {categories.map((category) => (
               <Pressable key={category.id} onPress={() => setCategoryId(category.id)} style={[styles.category, category.id === categoryId && styles.categoryActive]}>
@@ -109,26 +112,26 @@ export function MarketplaceCreateSheet({ access, role, categories, width, onClos
           </ScrollView>
           {selectedCategory?.description ? <Text style={styles.categoryDescription}>{selectedCategory.description}</Text> : null}
 
-          <Text style={styles.label}>{isProfessional ? "Service title" : "What do you need done?"}</Text>
-          <TextInput value={title} onChangeText={setTitle} placeholder={isProfessional ? "e.g. Home electrical repairs" : "e.g. Fix faulty sockets"} placeholderTextColor="#7B8881" style={styles.input} />
+          <FieldLabel>Description</FieldLabel>
+          <TextInput value={description} onChangeText={setDescription} multiline placeholder={isProfessional ? "Describe what you offer and what is included" : "e.g. Clean living room, bedrooms, kitchen and bathrooms"} placeholderTextColor="#8A8A8A" style={[styles.input, styles.multiline]} />
 
-          <Text style={styles.label}>Description</Text>
-          <TextInput value={description} onChangeText={setDescription} multiline placeholder={isProfessional ? "Describe what you offer and what is included" : "Describe the problem, scope and expected outcome"} placeholderTextColor="#7B8881" style={[styles.input, styles.multiline]} />
+          <FieldLabel>Location</FieldLabel>
+          <TextInput value={area} onChangeText={setArea} placeholder="Area / neighbourhood" placeholderTextColor="#8A8A8A" style={styles.input} />
+          <View style={styles.row}><TextInput value={city} onChangeText={setCity} placeholder="City" placeholderTextColor="#8A8A8A" style={[styles.input, styles.flex]} /><TextInput value={stateValue} onChangeText={setStateValue} placeholder="State" placeholderTextColor="#8A8A8A" style={[styles.input, styles.flex]} /></View>
+          <TextInput value={country} onChangeText={setCountry} placeholder="Country" placeholderTextColor="#8A8A8A" style={styles.input} />
 
-          <Text style={styles.label}>{isProfessional ? "Starting price (NGN)" : "Budget range (NGN)"}</Text>
+          {isProfessional ? <><FieldLabel>Availability</FieldLabel><TextInput value={availability} onChangeText={setAvailability} placeholder="e.g. Weekdays 9am–6pm" placeholderTextColor="#8A8A8A" style={styles.input} /></> : null}
+
+          <FieldLabel>{isProfessional ? "Starting Price" : "Price"}</FieldLabel>
           <View style={styles.row}>
-            <TextInput value={priceOne} onChangeText={setPriceOne} keyboardType="numeric" placeholder={isProfessional ? "Starting price" : "Minimum"} placeholderTextColor="#7B8881" style={[styles.input, styles.flex]} />
-            {!isProfessional ? <TextInput value={priceTwo} onChangeText={setPriceTwo} keyboardType="numeric" placeholder="Maximum" placeholderTextColor="#7B8881" style={[styles.input, styles.flex]} /> : null}
+            <TextInput value={priceOne} onChangeText={setPriceOne} keyboardType="numeric" placeholder={isProfessional ? "NGN starting price" : "Minimum NGN"} placeholderTextColor="#8A8A8A" style={[styles.input, styles.flex]} />
+            {!isProfessional ? <TextInput value={priceTwo} onChangeText={setPriceTwo} keyboardType="numeric" placeholder="Maximum NGN" placeholderTextColor="#8A8A8A" style={[styles.input, styles.flex]} /> : null}
           </View>
 
-          {isProfessional ? <><Text style={styles.label}>Availability</Text><TextInput value={availability} onChangeText={setAvailability} placeholder="e.g. Weekdays 9am–6pm" placeholderTextColor="#7B8881" style={styles.input} /></> : null}
-
-          <Text style={styles.label}>Location</Text>
-          <View style={styles.row}><TextInput value={country} onChangeText={setCountry} placeholder="Country" placeholderTextColor="#7B8881" style={[styles.input, styles.flex]} /><TextInput value={stateValue} onChangeText={setStateValue} placeholder="State/region" placeholderTextColor="#7B8881" style={[styles.input, styles.flex]} /></View>
-          <View style={styles.row}><TextInput value={city} onChangeText={setCity} placeholder="City" placeholderTextColor="#7B8881" style={[styles.input, styles.flex]} /><TextInput value={area} onChangeText={setArea} placeholder="Area" placeholderTextColor="#7B8881" style={[styles.input, styles.flex]} /></View>
+          {!isProfessional ? <View style={styles.escrowNote}><Text style={styles.escrowTitle}>▣ ESCROW INFORMATION</Text><Text style={styles.escrowText}>When you agree a booking, SabiPay can hold payment securely until the agreed work is completed or resolved.</Text></View> : null}
 
           <Pressable disabled={submitting} onPress={submit} style={[styles.submit, submitting && styles.disabled]}>
-            <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit for review"}</Text>
+            <Text style={styles.submitText}>{submitting ? "Submitting…" : "Continue"}</Text>
           </Pressable>
         </ScrollView>
       </View>
@@ -136,28 +139,36 @@ export function MarketplaceCreateSheet({ access, role, categories, width, onClos
   );
 }
 
+function FieldLabel({ children }: { children: string }) { return <Text style={styles.label}>{children}</Text>; }
+
 const styles = StyleSheet.create({
-  overlay: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 20, backgroundColor: "rgba(23,49,38,0.42)", alignItems: "center", justifyContent: "flex-end", paddingBottom: 10 },
-  sheet: { maxHeight: "92%", backgroundColor: "#FFFFFF", borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: "#DDE7E1" },
-  header: { flexDirection: "row", gap: 12, padding: 18, borderBottomWidth: 1, borderBottomColor: "#EDF2EF" },
-  eyebrow: { color: colors.brand, fontSize: 11, fontWeight: "900", letterSpacing: 1.4 },
-  heading: { color: "#173126", fontSize: 22, fontWeight: "900", marginTop: 3 },
-  help: { color: "#68776F", lineHeight: 19, marginTop: 4 },
-  close: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, alignSelf: "flex-start" },
-  closeText: { color: "#173126", fontWeight: "800" },
-  form: { padding: 18, gap: 9, paddingBottom: 28 },
-  label: { color: "#173126", fontWeight: "800", marginTop: 4 },
+  overlay: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 20, backgroundColor: "rgba(0,0,0,.28)", alignItems: "center", justifyContent: "flex-end" },
+  sheet: { maxHeight: "95%", backgroundColor: "#F7F7F7", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" },
+  header: { backgroundColor: colors.brand, paddingHorizontal: 18, paddingTop: 15, paddingBottom: 18, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  backButton: { width: 42, height: 42, alignItems: "center", justifyContent: "center" },
+  backText: { color: "#FFFFFF", fontSize: 24, fontWeight: "700" },
+  headerSpacer: { width: 42 },
+  heading: { color: "#FFFFFF", fontSize: 17, fontWeight: "900" },
+  progress: { flexDirection: "row", justifyContent: "center", gap: 10, marginTop: 14 },
+  step: { width: 9, height: 9, borderRadius: 5, backgroundColor: "rgba(255,255,255,.38)" },
+  stepActive: { backgroundColor: "#FFFFFF" },
+  form: { padding: 18, gap: 9, paddingBottom: 30 },
+  label: { color: "#444444", fontSize: 12, fontWeight: "800", marginTop: 4 },
   categories: { gap: 8, paddingVertical: 2 },
-  category: { borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#FFFFFF" },
-  categoryActive: { backgroundColor: colors.brand, borderColor: colors.brand },
-  categoryText: { color: "#53645A", fontWeight: "800", fontSize: 12 },
-  categoryTextActive: { color: "#FFFFFF" },
-  categoryDescription: { color: "#718078", fontSize: 12, lineHeight: 18 },
-  input: { minHeight: 48, borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 12, paddingHorizontal: 13, backgroundColor: "#FFFFFF", color: "#173126" },
-  multiline: { minHeight: 105, textAlignVertical: "top", paddingTop: 12 },
+  category: { minHeight: 38, borderWidth: 1, borderColor: "#E0E0E0", borderRadius: 19, paddingHorizontal: 13, justifyContent: "center", backgroundColor: "#FFFFFF" },
+  categoryActive: { backgroundColor: "#E0F5EA", borderColor: colors.brand },
+  categoryText: { color: "#686868", fontWeight: "700", fontSize: 11 },
+  categoryTextActive: { color: colors.brand, fontWeight: "900" },
+  categoryDescription: { color: "#898989", fontSize: 11, lineHeight: 17 },
+  input: { minHeight: 48, borderWidth: 1, borderColor: "#E2E2E2", borderRadius: 7, paddingHorizontal: 12, backgroundColor: "#FFFFFF", color: "#222222" },
+  multiline: { minHeight: 96, textAlignVertical: "top", paddingTop: 12 },
   row: { flexDirection: "row", gap: 9 },
   flex: { flex: 1 },
-  submit: { minHeight: 50, borderRadius: 12, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center", marginTop: 8 },
+  escrowNote: { paddingVertical: 6, gap: 5 },
+  escrowTitle: { color: "#4D4D4D", fontSize: 10, fontWeight: "900" },
+  escrowText: { color: "#797979", fontSize: 10, lineHeight: 16 },
+  submit: { minHeight: 48, borderRadius: 7, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center", marginTop: 10 },
   submitText: { color: "#FFFFFF", fontWeight: "900" },
   disabled: { opacity: 0.6 },
 });
