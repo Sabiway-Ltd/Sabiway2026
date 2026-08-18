@@ -23,3 +23,14 @@ Consequential decisions must record date, problem, root cause, fix, reasoning an
 **Reasoning:** A merge or PR CI success alone does not satisfy the new baseline definition.
 
 **Author/session/source:** Repository readiness audit, 2026-08-18.
+
+## 2026-08-18 — Add aggregate Release Gate and deployment eligibility context
+**Problem:** Platform CI had strong individual checks but no single repository-owned context proving that every quality job passed before a revision was considered release-eligible.
+
+**Root cause:** CI evolved incrementally by phase, leaving parallel jobs without an aggregate dependency graph or explicit release decision.
+
+**Fix:** Add `Release Gate`, depending on every current Platform CI quality job and failing if any dependency is not successful. Add `Deployment Eligibility` after Release Gate to identify the exact Git SHA eligible for deployment verification, without claiming that Vercel has deployed it.
+
+**Reasoning:** One aggregate context simplifies branch protection and prevents partial-green interpretations. Keeping deployment verification separate preserves honesty while Vercel remains externally integrated.
+
+**Author/session/source:** Release-control hardening, 2026-08-18.

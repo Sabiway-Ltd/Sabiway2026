@@ -1,9 +1,9 @@
 # CI/CD and Release Policy
 
 ## Current CI
-The repository currently has one GitHub Actions workflow: `.github/workflows/phase-0-ci.yml` (`Platform CI`) triggered on pull requests and pushes to `main`.
+The repository has one GitHub Actions workflow: `.github/workflows/phase-0-ci.yml` (`Platform CI`) triggered on pull requests and pushes to `main`.
 
-Current jobs:
+Current quality jobs:
 - `repository-hygiene`: rejects tracked generated directories, `.env`, local DB files and common generated artefacts;
 - `design-system-check`: verifies canonical token sync;
 - `uiux-fidelity-audit-check`: verifies UI/UX audit evidence/honesty gate;
@@ -15,15 +15,26 @@ Current jobs:
 - `waitlist-syntax`: Python compile check;
 - `mobile-check`: npm install and React Native/Expo TypeScript check.
 
-## Current enforcement gap
-`main` is protected, but live branch protection currently requires only `backend-check`, `repository-hygiene`, `realtime-check` and `waitlist-syntax`. The frontend, mobile, design-system, journey, controlled-testing and UI/UX checks are not all branch-protection-required. Treat this as a P1 release-governance gap until deliberately corrected.
+## Aggregate Release Gate
+`release-gate` depends on every Platform CI quality job above and succeeds only when all of them succeed. It uses `always()` so a failed/skipped dependency cannot silently remove the aggregate result. This gives the repository one explicit release-quality decision for each workflow run.
 
-There is also no explicit aggregate `Release Gate` job and no GitHub-controlled `Deployment Gate` that waits for it.
+`deployment-eligibility` runs only after `release-gate` succeeds. It records that the exact Git SHA has passed repository release checks. It deliberately does **not** claim that Vercel deployed that SHA.
+
+## Branch-protection enforcement gap
+`main` is protected, but live branch protection currently requires only `backend-check`, `repository-hygiene`, `realtime-check` and `waitlist-syntax`. The preferred policy is to require the aggregate `Release Gate` context (and retain any additional contexts that are intentionally required). Until repository settings are updated, this remains a P1 release-governance gap.
+
+Do not weaken protection to make a merge easier. Branch-protection changes are RED-scope release-control changes and need explicit evidence.
 
 ## Deployment
-Vercel is connected directly to the GitHub repository. It creates preview deployments from branches/PRs and Production deployments from `main`. Because this integration is external to the current aggregate release workflow, a preview/deployment attempt can start before all release evidence is complete. A Vercel preview is evidence only; it is not release approval.
+Vercel is connected directly to the GitHub repository. It creates preview deployments from branches/PRs and Production deployments from `main`. Because this external Git integration can start independently of GitHub's aggregate gate, deployment *attempts* are not proof of release approval.
 
-Current audit found the latest deployment-verified Production revision behind current `main`, while a Vercel build-rate-limit status is failing on current `main`. Therefore current `main` must not automatically be called the Rolling Green Baseline.
+A Vercel preview or READY deployment is evidence only. Before advancing the Rolling Green Baseline, verify:
+1. exact resulting `main` SHA;
+2. Release Gate success for the relevant change head and/or resulting revision as available;
+3. Production deployment Git SHA equals intended `main` SHA;
+4. safe post-deployment smoke checks pass.
+
+If Vercel is blocked by plan/build-rate limits, the baseline does not advance. Do not repeatedly redeploy simply to force a green status.
 
 ## Desired release sequence
 change-scope classification
@@ -31,13 +42,13 @@ change-scope classification
 → unit/integration/regression/browser checks
 → backend/database E2E when required
 → aggregate Release Gate
-→ Deployment Gate
+→ Deployment Eligibility
 → deployment/promotion
 → deployed-revision verification
 → safe post-deployment smoke checks
 → Rolling Green Baseline advancement
 
-Until infrastructure enforces that order, the gap must remain in `docs/OPEN-ISSUES.md`.
+The repository now enforces the aggregate Release Gate and Deployment Eligibility ordering inside GitHub Actions. External Vercel Production promotion is not yet technically blocked on that GitHub job, so the remaining deployment-control gap stays recorded in `docs/OPEN-ISSUES.md`.
 
 ## Scope model
 **RED:** auth/authorisation/access control, Production data, canonical APIs, DB security, deployment controls, secrets, critical business/payment rules. Require the broadest relevant regression, security, backend/data and release evidence.
