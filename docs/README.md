@@ -6,7 +6,7 @@ This directory is the **current engineering operating handbook** for SabiWay. It
 
 ## 1. What belongs here
 
-`docs/` contains current operational guidance: architecture, workflow, design-system rules, CI/release policy, regression expectations, onboarding, current risks and decision records.
+`docs/` contains current operational guidance: architecture, workflow, design-system rules, environments, CI/release policy, regression expectations, onboarding, troubleshooting, current risks and decision records.
 
 `../Documentation/` contains historical project evidence such as phase completion reports, Figma-export matrices, deployment notes and controlled-user-testing readiness evidence.
 
@@ -27,29 +27,34 @@ Read these in sequence before material work:
 9. [`ENVIRONMENTS.md`](ENVIRONMENTS.md) — local/preview/UAT/Production separation and environment flags.
 10. [`CI-CD.md`](CI-CD.md) — release checks, deployment evidence and Rolling Green rules.
 11. [`REGRESSION_TESTING.md`](REGRESSION_TESTING.md) — test matrix by risk and system.
-12. [`OPEN-ISSUES.md`](OPEN-ISSUES.md) — unresolved technical/release risks.
-13. [`DECISIONS.md`](DECISIONS.md) — consequential engineering decisions and reasoning.
-14. Relevant evidence under `../Documentation/` for the feature/phase you are touching.
+12. [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) — cross-service diagnosis and common failure paths.
+13. [`OPEN-ISSUES.md`](OPEN-ISSUES.md) — unresolved technical/release risks.
+14. [`DECISIONS.md`](DECISIONS.md) — consequential engineering decisions and reasoning.
+15. Relevant evidence under `../Documentation/` for the feature/phase you are touching.
 
 ## 3. Role-specific reading paths
 
 ### New AI development session
 Read:
-`AGENTS.md` → `DEVELOPER-START-HERE.md` → `PROJECT-MAP.md` → `ARCHITECTURE.md` → `OPEN-ISSUES.md` → relevant source files.
+`AGENTS.md` → `DEVELOPER-START-HERE.md` → `PROJECT-MAP.md` → `ARCHITECTURE.md` → `USER-JOURNEYS.md` → `OPEN-ISSUES.md` → relevant source files.
 
 Then produce the Repository Readiness Brief before accepting implementation.
 
 ### New frontend developer
 Read:
-`README.md` → `PROJECT-MAP.md` → `DESIGN-SYSTEM.md` → `USER-JOURNEYS.md` → `REGRESSION_TESTING.md` → `frontend/README.md`.
+`README.md` → `PROJECT-MAP.md` → `DESIGN-SYSTEM.md` → `USER-JOURNEYS.md` → `ENVIRONMENTS.md` → `REGRESSION_TESTING.md` → `../frontend/README.md`.
 
 ### New mobile developer
 Read:
-`README.md` → `PROJECT-MAP.md` → `DESIGN-SYSTEM.md` → `USER-JOURNEYS.md` → `REGRESSION_TESTING.md` → `mobile/README.md`.
+`README.md` → `PROJECT-MAP.md` → `DESIGN-SYSTEM.md` → `USER-JOURNEYS.md` → `ENVIRONMENTS.md` → `REGRESSION_TESTING.md` → `../mobile/README.md`.
 
 ### New backend/database developer
 Read:
-`ARCHITECTURE.md` → `PROJECT-MAP.md` → `USER-JOURNEYS.md` → `REGRESSION_TESTING.md` → `Backend/README.md` → relevant models/permissions/signals/tests.
+`ARCHITECTURE.md` → `PROJECT-MAP.md` → `USER-JOURNEYS.md` → `ENVIRONMENTS.md` → `REGRESSION_TESTING.md` → `../Backend/README.md` → relevant models/permissions/signals/tests.
+
+### Realtime developer
+Read:
+`ARCHITECTURE.md` → `USER-JOURNEYS.md` messaging/notification sections → `ENVIRONMENTS.md` → `REGRESSION_TESTING.md` → `../ExpressJs/README.md`.
 
 ### Release/DevOps reviewer
 Read:
@@ -58,6 +63,10 @@ Read:
 ### UI/UX reviewer
 Read:
 `DESIGN-SYSTEM.md` → Figma-export evidence under `../Documentation/` → relevant web/mobile components → `USER-JOURNEYS.md`.
+
+### New contributor who is blocked
+Read:
+`ONBOARDING.md` → `TROUBLESHOOTING.md` → relevant service README.
 
 ## 4. Document catalogue
 
@@ -72,14 +81,22 @@ Read:
 - [`CI-CD.md`](CI-CD.md) — current CI jobs, Release Gate, Deployment Eligibility and Rolling Green advancement.
 - [`REGRESSION_TESTING.md`](REGRESSION_TESTING.md) — test levels, scope matrix and evidence expectations.
 - [`ONBOARDING.md`](ONBOARDING.md) — local setup and first-day developer workflow.
+- [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) — diagnosis for auth/API/data/realtime/payment/mobile/Vercel/CI issues.
 - [`OPEN-ISSUES.md`](OPEN-ISSUES.md) — P0/P1/P2 engineering issues and release blockers.
 - [`DECISIONS.md`](DECISIONS.md) — append-only decision log.
+
+### Service-specific operational docs
+- [`../frontend/README.md`](../frontend/README.md) — current V2 web architecture, setup, design and testing rules.
+- [`../mobile/README.md`](../mobile/README.md) — Android/iOS architecture, role navigation, Figma and build guidance.
+- [`../Backend/README.md`](../Backend/README.md) — Django domain ownership, auth/data/payment/verification and migration rules.
+- [`../ExpressJs/README.md`](../ExpressJs/README.md) — authenticated realtime delivery architecture and debugging.
+- [`../WaitList/README.md`](../WaitList/README.md) — separate historical waitlist service.
 
 ### Root documents
 - [`../AGENTS.md`](../AGENTS.md) — mandatory agent/developer rules.
 - [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — contribution and PR policy.
 - [`../README.md`](../README.md) — product/repository entry point.
-- [`../SECURITY.md`](../SECURITY.md) — security reporting/policy.
+- [`../SECURITY.md`](../SECURITY.md) — security and vulnerability/engineering policy.
 - [`../PORTS.md`](../PORTS.md) — local port reference.
 
 ## 5. Source-of-truth hierarchy
@@ -103,6 +120,7 @@ A document is not considered useful merely because it exists. Current operationa
 - what must be preserved;
 - what can safely change;
 - what dependencies/integrations exist;
+- how environments differ;
 - what tests prove the behaviour;
 - what common failure modes exist;
 - what evidence is still missing;
