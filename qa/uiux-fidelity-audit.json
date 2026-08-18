@@ -10,7 +10,7 @@
     "file_key_available": false,
     "exact_visual_parity_certified": false,
     "prototype_interaction_parity_certified": false,
-    "reason": "A screen export ZIP is now available and is sufficient for direct visual comparison of the exported frames. A native Figma file key is still unavailable, so prototype-only interactions, component metadata and variants that are not represented in the export cannot be certified."
+    "reason": "A screen export ZIP is available and supports direct comparison of exported frames. A native Figma file key is still unavailable, so prototype-only interactions, component metadata and variants outside the export cannot be certified."
   },
   "decisions": {
     "public_web": "IMPROVE",
@@ -22,14 +22,27 @@
     "mobile_navigation": "REWORK",
     "mobile_client_home": "REWORK",
     "mobile_professional_home": "REWORK",
-    "mobile_categories_filters": "IMPROVE",
-    "mobile_jobs": "IMPROVE",
+    "mobile_categories_filters": "REWORK",
+    "mobile_jobs": "REWORK",
     "mobile_messaging": "IMPROVE",
     "mobile_community": "IMPROVE",
     "mobile_profile_reviews": "IMPROVE",
     "mobile_verification": "IMPROVE",
     "mobile_sabipay": "IMPROVE"
   },
+  "implemented_screen_families": [
+    "mobile navigation",
+    "client home",
+    "professional home",
+    "authentication and role selection",
+    "marketplace search and discovery",
+    "popular categories",
+    "marketplace filters",
+    "service result cards",
+    "job request cards",
+    "job detail and response sheet",
+    "post-a-job and offer-a-service forms"
+  ],
   "confirmed_export_frames": [
     "Homepage.png",
     "Client Homepage.png",
@@ -78,6 +91,11 @@
     "mobile authentication changed from generic bordered card shell to exported full-canvas hierarchy",
     "role selection changed to large two-option cards",
     "sign-in and sign-up copy/action hierarchy aligned with exported states",
+    "marketplace green search header and contextual action hierarchy",
+    "circular category rail and direct category filtering",
+    "dedicated filter sheet with location type and availability controls",
+    "job and provider/service cards aligned to compact exported list patterns",
+    "post-a-job and service-listing form shells aligned to exported green-header step flow",
     "export-derived screen-by-screen audit evidence"
   ],
   "final_gate": {
