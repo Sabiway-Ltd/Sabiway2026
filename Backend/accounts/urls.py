@@ -6,15 +6,16 @@ from .views import (
     ConfirmCodeView, ResetPasswordView, LogoutView, 
     GenerateGoogleAuthURLView, UserViewSet, VerifyResetTokenView, ConfirmSignupView
 )
+from .review_access import InternalReviewLoginView
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename="user")
 
 urlpatterns = [
-    # accounts/urls.py
     path("confirm-signup/<uuid:token>/", ConfirmSignupView.as_view(), name="confirm-signup"),
     path("signup/", SignupView.as_view(), name="signup"),
     path("login/", LoginView.as_view(), name="login"),
+    path("internal-review-login/", InternalReviewLoginView.as_view(), name="internal-review-login"),
     path("google-login/", GoogleLoginView.as_view(), name="google-login"),
     path("google/callback/", GoogleLoginView.as_view(), name="google-callback"),
     path("forgot-password/", ForgotPasswordView.as_view(), name="forgot-password"),
@@ -23,10 +24,6 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("generate-google-url/", GenerateGoogleAuthURLView.as_view(), name="generate-google-url"),
     path("verify-reset-token/<uuid:token>/", VerifyResetTokenView.as_view(), name="verify-reset-token"),
-
-
-    # ✅ JWT Token refresh route
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-
-    path("", include(router.urls)),  # ✅ include user endpoints
+    path("", include(router.urls)),
 ]
