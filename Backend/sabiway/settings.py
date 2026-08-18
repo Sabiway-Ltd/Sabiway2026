@@ -18,6 +18,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 DEBUG = env("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+INTERNAL_REVIEW_MODE = env.bool("INTERNAL_REVIEW_MODE", default=False)
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
