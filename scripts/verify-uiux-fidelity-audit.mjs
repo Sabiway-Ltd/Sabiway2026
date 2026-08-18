@@ -32,7 +32,7 @@ const checks = [
   ["screen matrix includes provider home", matrix.includes("Provider Homepage.png")],
   ["screen matrix includes messaging", matrix.includes("Message.png")],
   ["screen matrix includes payments", matrix.includes("Payment method.png")],
-  ["screen matrix includes auth", matrix.includes("SIgnin active.png")],
+  ["screen matrix includes auth", matrix.includes("Signup .png") && matrix.includes("SIgnin")],
   ["screen matrix records web translation", matrix.includes("Web translation completed in this pass")],
 ];
 
