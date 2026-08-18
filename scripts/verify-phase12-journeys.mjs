@@ -25,7 +25,7 @@ requireText("Register · Mobile", "mobile/src/auth/AuthFlow.tsx", ["Create an ac
 requireText("Register · Backend", "Backend/accounts/urls.py", ['path("signup/"']);
 
 requirePath("Login · Web", "frontend/app/(auth)/login/page.tsx");
-requireText("Login · Mobile", "mobile/src/auth/AuthFlow.tsx", ["Welcome back", "submitSignIn"]);
+requireText("Login · Mobile", "mobile/src/auth/AuthFlow.tsx", ["screen === \"sign-in\"", "submitSignIn", "authApi.signIn"]);
 requireText("Login · Backend", "Backend/accounts/urls.py", ['path("login/"']);
 
 requirePath("Password recovery · Web", "frontend/app/(auth)/forgot-password/page.tsx");
@@ -71,8 +71,8 @@ requirePath("Support/report · Backend support", "Backend/operations");
 requireText("Logout · Web/backend route", "Backend/accounts/urls.py", ['path("logout/"']);
 requireText("Logout · Mobile", "mobile/App.tsx", ["const signOut", "setSession(null)"]);
 
-// Cross-device scenario ingredients. These checks certify shared contracts, not physical device execution.
-requireText("Scenario 1 · shared account/profile", "mobile/src/auth/AuthFlow.tsx", ["same SabiWay account"]);
+// Cross-device scenario ingredients. Verify shared account contracts rather than copy strings.
+requireText("Scenario 1 · shared account/profile", "mobile/src/api/auth.ts", ["apiRequest<AuthSession>", '"auth/login/"']);
 requirePath("Scenario 1 · web profile", "frontend/app/profile/MyProfile.tsx");
 requireText("Scenario 2 · content engagement/report", "mobile/src/community/api.ts", ["createPost", "likePost", "reportPost"]);
 requirePath("Scenario 2 · notifications", "mobile/src/notifications/NotificationsScreen.tsx");

@@ -1,276 +1,96 @@
 # SabiWay V2 — Final UI/UX & Figma Fidelity Audit
 
-Status: active correction pass
+Status: **implementation complete; runtime visual certification pending**
 
 ## Design authority
 
-This audit follows the founder instruction, approved V2 requirements, the Master Cross-Platform Playbook, the SabiWay design report, the current implementation and the available repository design assets.
+This audit follows founder instruction, approved V2 requirements, the Master Cross-Platform Playbook, the current implementation and the supplied `Sabiway Project (2).zip` export.
 
-The design report states that only selected key screens are shown in the PDF and that the complete client, provider and community flows live in the Figma file. The repository and connected Figma account currently do not expose the `Sabiway Project` file key or a node-specific Figma URL. Therefore this pass must not claim pixel-level or screen-level Figma parity until the actual frames are available.
+The export contains visible mobile frames for client/provider home, categories, filters, jobs, messages, community, payments, reviews, sign-up, role selection, verification entry and sign-in states. It is now the primary visible UI reference for this pass.
 
-## Product rule
+A native Figma file key is still unavailable. That does **not** block visible exported-screen alignment, but prototype-only transitions, hidden variants and Figma component metadata remain uncertified.
 
-- Preserve one SabiWay product identity across web, Android and iOS.
-- Mobile Figma is the visual/product foundation.
-- Web must translate the same identity and user logic into desktop/tablet patterns rather than stretching mobile layouts.
+## Product rules
+
+- Preserve one SabiWay identity across web, Android and iOS.
+- Mobile export is the product/visual foundation.
+- Web deliberately translates the same hierarchy and role logic rather than stretching mobile frames.
 - Functional parity does not equal visual parity.
-- Every user-facing surface is classified KEEP / IMPROVE / REWORK / REPLACE / REMOVE.
+- Decisions use KEEP / IMPROVE / REWORK / REPLACE / REMOVE.
+- Accessibility and business rules override decorative pixel matching where the source design would weaken usability or safety.
 
-## Current design-system assessment
+## Confirmed visual language
 
-| Area | Current state | Decision | Required action |
-|---|---|---|---|
-| Brand green/orange | Matches documented SabiWay direction | KEEP | Continue semantic-token usage |
-| Inter typography | Matches design report | KEEP | Keep typography hierarchy consistent |
-| Shared spacing/radius/elevation | Present across web/mobile tokens | KEEP | Remove hard-coded values gradually |
-| Public logo treatment | Temporary SW block was still visible | REWORK | Restore official SabiWay logo lockup |
-| Mobile bottom navigation | Functional but text-led and visually prototype-like | IMPROVE | Add visual destination cues, clearer selected state, preserve 44px+ targets |
-| Web responsive shell | Functional and accessible baseline exists | IMPROVE | Refine brand identity and desktop information density |
-| Mobile home | Correct role logic, card-heavy presentation | REWORK | Make client discovery more marketplace-led; make professional next actions clearer |
-| Empty/loading/error states | Implemented unevenly across feature screens | IMPROVE | Standardise visual treatment and copy |
-| Figma exact parity | Not provable without actual Figma frames | BLOCKED | Obtain file key/node URLs and run screen-by-screen comparison |
+- SabiWay green rounded header zones.
+- White/light-grey content canvas.
+- Orange used mainly as accent/promotion.
+- Large friendly marketplace typography.
+- Search-first discovery.
+- Circular category affordances.
+- Compact job/provider cards.
+- Role-specific client/professional homes.
+- Raised centre Home in the five-item mobile navigation.
+- Messages/notifications outside permanent bottom-tab priority.
+- Low-chrome authentication.
+- Status/amount-first payment presentation.
 
-## Screen-family audit
+## Mobile audit outcome
 
-### 1. Public web / landing
-Decision: IMPROVE
+| Surface | Decision | Implementation outcome |
+|---|---|---|
+| Navigation | REWORK | Role-specific five-item structure with raised Home implemented |
+| Client home | REWORK | Green header, search, category discovery and client action hierarchy implemented |
+| Professional home | REWORK | Opportunity/search/trust hierarchy implemented |
+| Authentication | REWORK | Full-canvas sign-in/sign-up and role-selection hierarchy implemented |
+| Marketplace | REWORK | Search, categories, filters, service/job cards, job detail and create flows implemented |
+| Messaging | REWORK | Searchable inbox, unread hierarchy, chat bubbles, composer, booking/schedule context implemented |
+| SabiForum | REWORK | Green search header, composer, feed, comments/replies and moderation actions implemented |
+| Profile/reputation | IMPROVE | Identity/trust-led profile presentation implemented; existing backend remains source of truth |
+| Verification | REWORK | Export-inspired intro plus secure evidence/status/review journey implemented |
+| SabiPay | REWORK | Summary, fee/escrow context, history, payout and dispute presentation implemented |
 
-Strengths:
-- clear value proposition
-- responsive layout
-- marketplace-first CTA
-- SabiForum differentiation
-- Nigerian positioning
+## Web audit outcome
 
-Gaps:
-- official brand lockup was not consistently used
-- too many generic rounded-card patterns reduce brand distinctiveness
-- several strings still described already-built V2 transaction capabilities as future work
-- hard-coded visual values remain alongside semantic tokens
+The web frontend has been deliberately translated from the app language:
 
-Correction in this pass:
-- official SabiWay logo asset restored in public header/footer
-- current V2 journey copy corrected
-- focus treatment strengthened
+| Surface | Decision | Desktop/tablet translation |
+|---|---|---|
+| Public shell/landing | IMPROVE | Official logo, SabiWay green/orange identity, marketplace-first structure |
+| Sign in / sign up | REWORK | Two-column brand/story + form layouts; Figma-derived role hierarchy |
+| Marketplace | REWORK | Green discovery header, category rail, persistent desktop filters, service/job result workspace and detail dialogs |
+| Messages | REWORK | Three-pane inbox + conversation + booking/schedule workspace |
+| SabiForum | REWORK | Green search header, centre feed, contextual side rails and lightweight composer |
+| Profile | IMPROVE | Green identity/reputation framing around shared profile functionality |
+| Verification | IMPROVE | Trust/status/evidence workspace retains secure manual-review behaviour |
+| SabiPay | IMPROVE | Amount/status/reconciliation/payout workspace retains complete financial controls |
+| Help/legal/about/notifications/shared pages | KEEP / IMPROVE | Existing V2 responsive shared shell retained; no V1 shell restored |
 
-### 2. Web marketplace
-Decision: IMPROVE
+## Accessibility and responsive gate
 
-Strengths:
-- clear search/location/category entry
-- service/job split
-- direct create/listing actions
-- strong responsive foundation
+Final implementation continues to require:
 
-Gaps:
-- high card density
-- form and result hierarchy should be checked directly against Figma marketplace frames
-- desktop layout can use more split-view/detail-panel behaviour where appropriate
-- hard-coded colour usage should migrate to semantic tokens
+- minimum 44px practical touch targets;
+- visible web keyboard focus;
+- sufficient contrast and no colour-only meaning;
+- readable large-text wrapping;
+- explicit loading, empty, error and recovery states;
+- no normal horizontal page scrolling;
+- responsive verification at 320, 360, 375, 390, 430, 768, 1024, 1280, 1366 and 1440+.
 
-Figma verification required: YES
+Desktop-specific patterns include persistent filters, wider search controls, multi-column discovery and split panes where they improve scanability. Mobile web collapses those patterns into stacked controls and single-column content.
 
-### 3. Web community / SabiForum
-Decision: IMPROVE
+## Implementation evidence
 
-Strengths:
-- full functional community exists
-- same identity and backend as marketplace
+The detailed frame mapping is in `Documentation/FIGMA-EXPORT-SCREEN-MATRIX.md`. Machine-readable audit state is in `qa/uiux-fidelity-audit.json`. Platform CI runs the UI/UX evidence gate alongside frontend production build, mobile TypeScript, journey contracts, design-system sync and regression checks.
 
-Gaps:
-- needs visual comparison against Figma feed, composer, post-detail and moderation states
-- desktop information density and side-context should be reviewed
+## Remaining certification boundary
 
-Figma verification required: YES
+Do **not** call the product pixel-perfect or fully Figma-certified yet. Final visual certification requires:
 
-### 4. Web messaging
-Decision: IMPROVE
+1. a green Platform CI run on the exact implementation head;
+2. Chrome, Edge, Safari and Firefox visual review;
+3. physical Android and iPhone review at representative sizes;
+4. large-text and constrained-network checks;
+5. resolution or explicit acceptance of differences discovered during runtime review.
 
-Strengths:
-- real transaction-linked conversations
-- responsive workspace
-
-Gaps:
-- must verify list/thread proportions, unread hierarchy, attachment treatment, booking context and mobile-web collapse behaviour against Figma
-
-Figma verification required: YES
-
-### 5. Web profile / verification / SabiPay / notifications
-Decision: IMPROVE
-
-Strengths:
-- complete product journeys exist
-- trust and payment states are integrated
-
-Gaps:
-- visual state hierarchy is not yet certified against the design source
-- status badges, progress states, empty states and action priority require Figma comparison
-
-Figma verification required: YES
-
-### 6. Mobile navigation shell
-Decision: IMPROVE
-
-Strengths:
-- five primary destinations are correctly prioritised
-- touch targets are safe
-- secondary destinations are correctly nested under primary areas
-
-Gaps:
-- previous navigation was text-only
-- active destination lacked enough visual identity
-- visual design read as engineering shell rather than finished consumer product
-
-Correction in this pass:
-- added icon-like visual destination cues without introducing a new dependency
-- reduced selected-state visual weight from a full green block to a more compact indicator
-- retained accessible tab semantics
-
-Figma verification required: YES — exact icon set must come from the real Figma file.
-
-### 7. Mobile client home
-Decision: REWORK
-
-Strengths:
-- role-aware content
-- direct marketplace and job actions
-- clear SabiWay-wide shortcuts
-
-Gaps:
-- discovery was too card-led
-- no fast service-category entry on home
-- too much vertical repetition
-
-Correction in this pass:
-- introduced quick popular-needs entry points
-- improved hierarchy between discovery, primary action and secondary product areas
-- changed secondary destinations to a denser two-column pattern
-
-Figma verification required: YES
-
-### 8. Mobile professional home
-Decision: IMPROVE
-
-Strengths:
-- open jobs, messages and verification are prioritised
-
-Next visual priorities after Figma access:
-- active bookings
-- earnings / payment state
-- new enquiries
-- review/reputation signal
-- service performance
-- verification status prominence
-
-Figma verification required: YES
-
-### 9. Mobile marketplace
-Decision: IMPROVE
-
-Required Figma comparison:
-- discovery/search
-- service cards
-- job cards
-- detail views
-- filters
-- post-job flow
-- offer-service flow
-- transaction entry
-- empty/loading/error states
-
-### 10. Mobile messaging
-Decision: IMPROVE
-
-Required Figma comparison:
-- thread list
-- conversation header
-- attachment actions
-- booking summary
-- schedule proposal/decision
-- blocked/reported states
-- offline/reconnect states
-
-### 11. Mobile SabiForum
-Decision: IMPROVE
-
-Required Figma comparison:
-- feed
-- composer
-- post detail
-- comments/replies
-- report flow
-- deleted/moderated state
-- empty/loading/error state
-
-### 12. Mobile profile / verification
-Decision: IMPROVE
-
-Required Figma comparison:
-- own profile
-- public professional profile
-- edit profile
-- verified badge/status
-- evidence upload
-- submitted/in-review/more-info/rejected/approved states
-
-### 13. Mobile SabiPay / disputes
-Decision: IMPROVE
-
-Required Figma comparison:
-- amount/fee explanation
-- payment initiation
-- pending/failed/retry
-- escrow status
-- release/refund/dispute
-- receipts/history
-
-## Accessibility review rules
-
-All final screens must maintain:
-- minimum 44px touch targets
-- visible keyboard focus on web
-- sufficient text/background contrast
-- readable hierarchy without colour alone
-- usable large-font wrapping
-- no normal horizontal scrolling
-- explicit loading, empty and error states
-- understandable recovery copy
-
-## Responsive web translation rules
-
-The final web design must support the documented widths: 320, 360, 375, 390, 430, 768, 1024, 1280, 1366 and 1440+.
-
-Desktop should deliberately use:
-- persistent top/secondary navigation
-- wider search/filter controls
-- split panes where a list/detail workflow benefits
-- multi-column cards only where scanability improves
-- tables for operational/transaction history where appropriate
-
-Mobile-web should deliberately use:
-- single-column content
-- stacked actions
-- collapsible/filter drawers
-- full-width forms
-- bottom-safe action spacing
-
-## Figma fidelity gate
-
-Exact visual certification remains BLOCKED until the actual SabiWay Figma file is accessible. Once a file key or node-specific URL is supplied, complete this matrix for every frame:
-
-| Figma frame | Current mobile | Current web | Decision | Fidelity issue | Accessibility issue | Fix |
-|---|---|---|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending | Pending | Pending |
-
-Do not label a screen "Figma matched" from the design-report thumbnail alone.
-
-## Current outcome of this pass
-
-Confirmed corrections completed:
-1. Public web brand lockup restored using the repository SabiWay logo asset.
-2. Homepage product copy updated to reflect messaging, booking, protected payments and support already built in V2.
-3. Mobile bottom navigation given stronger visual hierarchy while preserving accessibility.
-4. Client mobile home made more discovery-led with popular-needs shortcuts.
-5. Secondary mobile home actions compressed into a more useful two-column pattern.
-
-Remaining UI/UX work is not blocked technically, but exact Figma fidelity requires the `Sabiway Project` file key or node URLs. That evidence gap must remain visible rather than being silently guessed.
+The code-side Figma export alignment is complete when CI is green. Browser/device certification remains an external release gate rather than something CI can honestly manufacture.
