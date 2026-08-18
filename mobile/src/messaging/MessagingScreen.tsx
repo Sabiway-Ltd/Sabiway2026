@@ -45,7 +45,6 @@ type Props = {
 };
 
 type Panel = "conversation" | "agreement";
-
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 
 export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunity }: Props) {
@@ -70,6 +69,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   const [currency, setCurrency] = useState("NGN");
   const [scheduleText, setScheduleText] = useState("");
   const [scheduleNote, setScheduleNote] = useState("");
+  const [inboxQuery, setInboxQuery] = useState("");
   const threadRequestInFlight = useRef(false);
   const conversationRequestInFlight = useRef<string | null>(null);
 
@@ -78,6 +78,14 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
   const isProfessional = session.user.role === "professional";
   const messagingBlocked = Boolean(activeThread?.is_blocked_by_me || activeThread?.is_blocked_by_other);
+  const visibleThreads = useMemo(() => {
+    const q = inboxQuery.trim().toLowerCase();
+    if (!q) return threads;
+    return threads.filter((item) => {
+      const person = isProfessional ? item.client : item.professional;
+      return `${person.full_name} ${person.job ?? ""}`.toLowerCase().includes(q);
+    });
+  }, [inboxQuery, isProfessional, threads]);
 
   const loadThreads = useCallback(async () => {
     if (threadRequestInFlight.current) return;
@@ -87,7 +95,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
       const [nextThreads, nextBookings] = await Promise.all([getThreads(session.access), getBookings(session.access)]);
       setThreads(nextThreads);
       setBookings(nextBookings);
-      setActiveId((current) => current ?? nextThreads[0]?.id ?? null);
+      if (!compact) setActiveId((current) => current ?? nextThreads[0]?.id ?? null);
     } catch (error) {
       setInboxError(error instanceof Error ? error.message : "Could not load conversations. Please try again.");
     } finally {
@@ -95,7 +103,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
       setLoading(false);
       setRefreshing(false);
     }
-  }, [session.access]);
+  }, [compact, session.access]);
 
   const loadConversation = useCallback(async (threadId: string) => {
     if (conversationRequestInFlight.current === threadId) return;
@@ -118,10 +126,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   useEffect(() => { void loadThreads(); }, [loadThreads]);
   useEffect(() => {
     if (activeId) void loadConversation(activeId);
-    else {
-      setMessages([]);
-      setConversationError("");
-    }
+    else setMessages([]);
   }, [activeId, loadConversation]);
 
   useEffect(() => {
@@ -149,36 +154,23 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
 
   const pickDocument = async () => {
     if (messagingBlocked) return;
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"],
-      copyToCacheDirectory: true,
-      multiple: false,
-    });
+    const result = await DocumentPicker.getDocumentAsync({ type: ["image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"], copyToCacheDirectory: true, multiple: false });
     if (result.canceled) return;
     const asset = result.assets[0];
     if (!asset) return;
-    if (asset.size && asset.size > MAX_ATTACHMENT_SIZE) {
-      Alert.alert("File too large", "Attachments must be 10 MB or smaller.");
-      return;
-    }
+    if (asset.size && asset.size > MAX_ATTACHMENT_SIZE) return Alert.alert("File too large", "Attachments must be 10 MB or smaller.");
     setAttachment({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType || "application/octet-stream" });
   };
 
   const takePhoto = async () => {
     if (messagingBlocked) return;
     const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Camera permission required", "Allow camera access to attach a new photo.");
-      return;
-    }
+    if (!permission.granted) return Alert.alert("Camera permission required", "Allow camera access to attach a new photo.");
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (result.canceled) return;
     const asset = result.assets[0];
     if (!asset) return;
-    if (asset.fileSize && asset.fileSize > MAX_ATTACHMENT_SIZE) {
-      Alert.alert("Photo too large", "Attachments must be 10 MB or smaller.");
-      return;
-    }
+    if (asset.fileSize && asset.fileSize > MAX_ATTACHMENT_SIZE) return Alert.alert("Photo too large", "Attachments must be 10 MB or smaller.");
     setAttachment({ uri: asset.uri, name: asset.fileName || `photo-${Date.now()}.jpg`, mimeType: asset.mimeType || "image/jpeg" });
   };
 
@@ -200,10 +192,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   };
 
   const createAgreement = async () => {
-    if (!activeId || !scope.trim() || !price.trim()) {
-      Alert.alert("Agreement details required", "Add the agreed scope and price before creating the booking summary.");
-      return;
-    }
+    if (!activeId || !scope.trim() || !price.trim()) return Alert.alert("Agreement details required", "Add the agreed scope and price before creating the booking summary.");
     try {
       const created = await createBooking(session.access, activeId, scope.trim(), price.trim(), currency.trim().toUpperCase(), timezone);
       setBookings((current) => [created, ...current.filter((item) => item.id !== created.id)]);
@@ -226,10 +215,7 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
   const submitSchedule = async () => {
     if (!activeBooking || !scheduleText.trim()) return;
     const parsed = new Date(scheduleText.trim());
-    if (Number.isNaN(parsed.getTime())) {
-      Alert.alert("Check date and time", "Use a format such as 2026-08-20 10:30.");
-      return;
-    }
+    if (Number.isNaN(parsed.getTime())) return Alert.alert("Check date and time", "Use a format such as 2026-08-20 10:30.");
     try {
       await proposeSchedule(session.access, activeBooking.id, parsed.toISOString(), timezone, scheduleNote.trim());
       setScheduleText("");
@@ -252,191 +238,180 @@ export function MessagingScreen({ session, onBackToMarketplace, onBackToCommunit
 
   const safety = (action: "block" | "unblock" | "report") => {
     if (!activeId) return;
-    const title = action === "block" ? "Block this user?" : action === "unblock" ? "Unblock this user?" : "Report this conversation?";
-    const message = action === "block"
-      ? "Neither participant will be able to send new messages until you unblock them."
-      : action === "unblock"
-        ? "You can message again unless the other participant has also blocked you."
-        : "SabiWay support will receive the report metadata for review.";
-    Alert.alert(title, message, [
+    Alert.alert(action === "report" ? "Report this conversation?" : action === "block" ? "Block this user?" : "Unblock this user?", "SabiWay will keep the conversation history and audit trail.", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: action === "block" ? "Block" : action === "unblock" ? "Unblock" : "Report",
-        style: action === "block" ? "destructive" : "default",
-        onPress: async () => {
-          try {
-            if (action === "block") await blockThread(session.access, activeId);
-            else if (action === "unblock") await unblockThread(session.access, activeId);
-            else await reportThread(session.access, activeId);
-            await loadThreads();
-            Alert.alert(action === "block" ? "User blocked" : action === "unblock" ? "User unblocked" : "Report submitted");
-          } catch (error) {
-            Alert.alert("Action failed", error instanceof Error ? error.message : "Please try again.");
-          }
-        },
-      },
+      { text: action === "report" ? "Report" : action === "block" ? "Block" : "Unblock", style: action === "block" ? "destructive" : "default", onPress: async () => {
+        try {
+          if (action === "block") await blockThread(session.access, activeId);
+          else if (action === "unblock") await unblockThread(session.access, activeId);
+          else await reportThread(session.access, activeId);
+          await loadThreads();
+        } catch (error) {
+          Alert.alert("Action failed", error instanceof Error ? error.message : "Please try again.");
+        }
+      } },
     ]);
   };
 
   if (loading) return <View style={styles.center}><ActivityIndicator color={colors.brand} /></View>;
 
-  return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View style={[styles.header, { width: contentWidth }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Back to Marketplace" onPress={onBackToMarketplace} style={styles.headerButton}><Text style={styles.headerButtonText}>Marketplace</Text></Pressable>
-        <View style={{ flex: 1 }}><Text style={styles.eyebrow}>PRIVATE & AUDITABLE</Text><Text style={styles.title}>Messages & bookings</Text></View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Open SabiForum" onPress={onBackToCommunity} style={styles.headerButton}><Text style={styles.headerButtonText}>SabiForum</Text></Pressable>
+  const inbox = (
+    <View style={[styles.inboxPane, compact ? { width: "100%" } : { width: 300 }]}>
+      <View style={styles.inboxHeader}>
+        <View style={styles.headerRow}><Pressable onPress={onBackToMarketplace} style={styles.backButton}><Text style={styles.backText}>←</Text></Pressable><Text style={styles.inboxTitle}>Messages</Text><Pressable onPress={onBackToCommunity} style={styles.headerRound}><Text style={styles.headerRoundText}>◉</Text></Pressable></View>
+        <View style={styles.searchRow}><Text style={styles.searchGlyph}>⌕</Text><TextInput value={inboxQuery} onChangeText={setInboxQuery} placeholder="Search" placeholderTextColor="#6F8078" style={styles.searchInput} /><Text style={styles.filterGlyph}>≡</Text></View>
+      </View>
+      {inboxError ? <View style={styles.errorCard}><Text style={styles.errorText}>{inboxError}</Text><Pressable onPress={() => void loadThreads()}><Text style={styles.retryText}>Retry</Text></Pressable></View> : null}
+      <FlatList
+        data={visibleThreads}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadThreads(); }} />}
+        ListEmptyComponent={!inboxError ? <Text style={styles.empty}>No conversations yet.</Text> : null}
+        renderItem={({ item }) => {
+          const person = isProfessional ? item.client : item.professional;
+          const active = item.id === activeId;
+          return (
+            <Pressable onPress={() => { setActiveId(item.id); setPanel("conversation"); }} style={[styles.threadRow, active && !compact && styles.threadRowActive]}>
+              <View style={styles.avatar}><Text style={styles.avatarText}>{person.full_name.slice(0, 1).toUpperCase()}</Text></View>
+              <View style={styles.threadCopy}><View style={styles.rowBetween}><Text style={styles.threadName}>{person.full_name}</Text><Text style={styles.threadTime}>{item.last_message_at ? new Date(item.last_message_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</Text></View><View style={styles.rowBetween}><Text style={styles.threadPreview} numberOfLines={1}>{item.is_blocked_by_me ? "You blocked this user" : item.is_blocked_by_other ? "Messaging restricted" : person.job || (isProfessional ? "Client" : "SabiWay professional")}</Text>{item.unread_count > 0 ? <View style={styles.unread}><Text style={styles.unreadText}>{item.unread_count}</Text></View> : null}</View></View>
+            </Pressable>
+          );
+        }}
+      />
+    </View>
+  );
+
+  const conversation = activeThread ? (
+    <View style={[styles.conversationPane, compact ? { width: "100%" } : { flex: 1 }]}>
+      <View style={styles.conversationHeader}>
+        <View style={styles.headerRow}><Pressable onPress={() => compact ? setActiveId(null) : onBackToMarketplace()} style={styles.backButton}><Text style={styles.backText}>←</Text></Pressable><View style={styles.avatarSmall}><Text style={styles.avatarText}>{(isProfessional ? activeThread.client.full_name : activeThread.professional.full_name).slice(0, 1).toUpperCase()}</Text></View><View style={{ flex: 1 }}><Text style={styles.conversationName}>{isProfessional ? activeThread.client.full_name : activeThread.professional.full_name}</Text><Text style={styles.presence}>SabiWay conversation</Text></View><Pressable onPress={() => safety("report")} style={styles.menuButton}><Text style={styles.menuText}>⋮</Text></Pressable></View>
+        <View style={styles.panelTabs}><Pressable onPress={() => setPanel("conversation")} style={[styles.panelTab, panel === "conversation" && styles.panelTabActive]}><Text style={[styles.panelTabText, panel === "conversation" && styles.panelTabTextActive]}>Chat</Text></Pressable><Pressable onPress={() => setPanel("agreement")} style={[styles.panelTab, panel === "agreement" && styles.panelTabActive]}><Text style={[styles.panelTabText, panel === "agreement" && styles.panelTabTextActive]}>Booking</Text></Pressable></View>
       </View>
 
-      {compact && activeThread ? (
-        <View style={[styles.mobileTabs, { width: contentWidth }]} accessibilityRole="tablist">
-          <Pressable accessibilityRole="tab" accessibilityState={{ selected: panel === "conversation" }} onPress={() => setPanel("conversation")} style={[styles.mobileTab, panel === "conversation" && styles.mobileTabActive]}><Text style={[styles.mobileTabText, panel === "conversation" && styles.mobileTabTextActive]}>Conversation</Text></Pressable>
-          <Pressable accessibilityRole="tab" accessibilityState={{ selected: panel === "agreement" }} onPress={() => setPanel("agreement")} style={[styles.mobileTab, panel === "agreement" && styles.mobileTabActive]}><Text style={[styles.mobileTabText, panel === "agreement" && styles.mobileTabTextActive]}>Booking</Text></Pressable>
+      {panel === "conversation" ? <>
+        {conversationError ? <View style={styles.errorCard}><Text style={styles.errorText}>{conversationError}</Text></View> : null}
+        {conversationLoading && messages.length === 0 ? <View style={styles.center}><ActivityIndicator color={colors.brand} /></View> : <FlatList data={messages} keyExtractor={(item) => item.id} contentContainerStyle={styles.messageList} ListEmptyComponent={<Text style={styles.empty}>Start the conversation about the work, price or availability.</Text>} renderItem={({ item }) => { const mine = item.sender.user_id === session.user.id; return <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>{!mine ? <Text style={styles.sender}>{item.sender.full_name}</Text> : null}{item.body ? <Text style={styles.messageText}>{item.body}</Text> : null}{item.attachment_name ? <Text style={styles.attachmentText}>▣ {item.attachment_name}</Text> : null}<Text style={styles.timestamp}>{new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text></View>; }} />}
+        {messagingBlocked ? <View style={styles.blockNotice}><Text style={styles.blockText}>Messaging is restricted in this conversation.</Text><Pressable onPress={() => safety(activeThread.is_blocked_by_me ? "unblock" : "report")}><Text style={styles.link}>{activeThread.is_blocked_by_me ? "Unblock" : "Report"}</Text></Pressable></View> : null}
+        <View style={styles.composer}>
+          {attachment ? <View style={styles.attachmentChip}><Text numberOfLines={1} style={styles.attachmentChipText}>{attachment.name}</Text><Pressable onPress={() => setAttachment(null)}><Text style={styles.link}>Remove</Text></Pressable></View> : null}
+          <View style={styles.composerRow}><Pressable disabled={messagingBlocked} onPress={pickDocument} style={styles.composerIcon}><Text style={styles.composerIconText}>＋</Text></Pressable><Pressable disabled={messagingBlocked} onPress={takePhoto} style={styles.composerIcon}><Text style={styles.composerIconText}>◉</Text></Pressable><TextInput editable={!messagingBlocked} value={messageText} onChangeText={setMessageText} multiline placeholder={messagingBlocked ? "Messaging restricted" : "Leave a comment"} placeholderTextColor="#8A8A8A" style={styles.messageInput} /><Pressable disabled={sending || messagingBlocked || (!messageText.trim() && !attachment)} onPress={send} style={[styles.sendButton, (sending || messagingBlocked) && styles.disabledButton]}><Text style={styles.sendText}>➤</Text></Pressable></View>
         </View>
-      ) : null}
+      </> : <BookingPanel session={session} booking={activeBooking} scope={scope} setScope={setScope} price={price} setPrice={setPrice} currency={currency} setCurrency={setCurrency} scheduleText={scheduleText} setScheduleText={setScheduleText} scheduleNote={scheduleNote} setScheduleNote={setScheduleNote} timezone={timezone} onCreate={createAgreement} onChangeStatus={changeBooking} onSchedule={submitSchedule} onScheduleDecision={scheduleDecision} />}
+    </View>
+  ) : null;
 
+  return (
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={[styles.body, { width: contentWidth, flexDirection: compact ? "column" : "row" }]}>
-        <View style={[styles.threadPane, compact && activeThread ? styles.hidden : null, !compact ? { width: 270 } : { width: "100%" }]}>
-          <View style={styles.paneHeader}><Text style={styles.paneTitle}>Inbox</Text><Text style={styles.muted}>{threads.length} conversations</Text></View>
-          {inboxError ? <View style={styles.errorCard}><Text style={styles.errorText}>{inboxError}</Text><Pressable accessibilityRole="button" onPress={() => void loadThreads()} style={styles.retryButton}><Text style={styles.retryText}>Retry</Text></Pressable></View> : null}
-          <FlatList
-            data={threads}
-            keyExtractor={(item) => item.id}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { if (!threadRequestInFlight.current) { setRefreshing(true); void loadThreads(); } }} />}
-            ListEmptyComponent={!inboxError ? <Text style={styles.empty}>No conversations yet. Open a service or respond to a job from Marketplace.</Text> : null}
-            renderItem={({ item }) => (
-              <Pressable accessibilityRole="button" onPress={() => { setActiveId(item.id); setPanel("conversation"); }} style={[styles.threadRow, item.id === activeId && styles.threadRowActive]}>
-                <View style={styles.rowBetween}><Text style={styles.threadName}>{isProfessional ? item.client.full_name : item.professional.full_name}</Text>{item.unread_count > 0 ? <Text style={styles.unread}>{item.unread_count}</Text> : null}</View>
-                <Text style={styles.muted} numberOfLines={1}>{item.is_blocked_by_me ? "You blocked this user" : item.is_blocked_by_other ? "Messaging restricted" : isProfessional ? "Client conversation" : item.professional.job || "SabiWay professional"}</Text>
-              </Pressable>
-            )}
-          />
-        </View>
-
-        {activeThread && (!compact || panel === "conversation") ? (
-          <View style={[styles.conversationPane, !compact ? { flex: 1 } : { width: "100%" }]}>
-            <View style={styles.paneHeader}>
-              <View style={styles.rowBetween}><View style={{ flex: 1 }}><Text style={styles.paneTitle}>{isProfessional ? activeThread.client.full_name : activeThread.professional.full_name}</Text><Text style={styles.muted}>Private SabiWay conversation</Text></View><Pressable accessibilityRole="button" onPress={() => safety("report")} style={styles.safetyButton}><Text style={styles.safetyText}>Report</Text></Pressable><Pressable accessibilityRole="button" onPress={() => safety(activeThread.is_blocked_by_me ? "unblock" : "block")} style={styles.safetyButton}><Text style={activeThread.is_blocked_by_me ? styles.safetyText : styles.dangerText}>{activeThread.is_blocked_by_me ? "Unblock" : "Block"}</Text></Pressable></View>
-              {activeThread.is_blocked_by_other ? <Text style={styles.blockNotice}>This participant has blocked messaging. You can still view the conversation history.</Text> : activeThread.is_blocked_by_me ? <Text style={styles.blockNotice}>You blocked this participant. Unblock them to resume messaging, unless they have also blocked you.</Text> : null}
-              {compact ? <Pressable accessibilityRole="button" onPress={() => setActiveId(null)}><Text style={styles.link}>← All conversations</Text></Pressable> : null}
-            </View>
-            {conversationError ? <View style={styles.errorCard}><Text style={styles.errorText}>{conversationError}</Text><Pressable accessibilityRole="button" onPress={() => activeId && void loadConversation(activeId)} style={styles.retryButton}><Text style={styles.retryText}>Retry conversation</Text></Pressable></View> : null}
-            {conversationLoading && messages.length === 0 ? <View style={styles.conversationLoading}><ActivityIndicator color={colors.brand} /></View> : (
-              <FlatList
-                data={messages}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.messageList}
-                ListEmptyComponent={!conversationError ? <Text style={styles.empty}>Describe the work, expected outcome, budget or availability to start the conversation.</Text> : null}
-                renderItem={({ item }) => {
-                  const mine = item.sender.user_id === session.user.id;
-                  return <View style={[styles.messageBubble, mine ? styles.mine : styles.theirs]}><Text style={styles.sender}>{mine ? "You" : item.sender.full_name}</Text>{item.body ? <Text style={styles.messageText}>{item.body}</Text> : null}{item.attachment_name ? <Text style={styles.attachmentText}>Attachment: {item.attachment_name}</Text> : null}<Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text></View>;
-                }}
-              />
-            )}
-            <View style={[styles.composer, messagingBlocked && styles.composerDisabled]}>
-              <TextInput editable={!messagingBlocked} value={messageText} onChangeText={setMessageText} multiline placeholder={messagingBlocked ? "Messaging is currently restricted." : "Message securely. Contact details unlock after booking acceptance."} placeholderTextColor="#7A8880" style={[styles.input, styles.messageInput, messagingBlocked && styles.inputDisabled]} />
-              {attachment ? <View style={styles.attachmentChip}><Text style={styles.attachmentChipText} numberOfLines={1}>{attachment.name}</Text><Pressable onPress={() => setAttachment(null)}><Text style={styles.link}>Remove</Text></Pressable></View> : null}
-              <View style={styles.composerActions}><Pressable disabled={messagingBlocked} onPress={pickDocument} style={[styles.secondaryButton, messagingBlocked && styles.disabledButton]}><Text style={styles.secondaryText}>Attach file</Text></Pressable><Pressable disabled={messagingBlocked} onPress={takePhoto} style={[styles.secondaryButton, messagingBlocked && styles.disabledButton]}><Text style={styles.secondaryText}>Camera</Text></Pressable><Pressable disabled={sending || messagingBlocked} onPress={send} style={[styles.primaryButton, (sending || messagingBlocked) && styles.disabledButton]}><Text style={styles.primaryText}>{sending ? "Sending…" : "Send"}</Text></Pressable></View>
-            </View>
-          </View>
-        ) : null}
-
-        {activeThread && (!compact || panel === "agreement") ? (
-          <ScrollView style={[styles.bookingPane, !compact ? { width: 300 } : { width: "100%" }]} contentContainerStyle={styles.bookingContent} keyboardShouldPersistTaps="handled">
-            <Text style={styles.eyebrowDark}>AGREEMENT</Text><Text style={styles.paneTitle}>Booking & schedule</Text>
-            {activeBooking ? (
-              <>
-                <View style={styles.summaryCard}><Text style={styles.label}>Scope</Text><Text style={styles.summaryText}>{activeBooking.scope_summary}</Text><Text style={styles.label}>Agreed price</Text><Text style={styles.price}>{activeBooking.currency} {Number(activeBooking.agreed_price || 0).toLocaleString()}</Text><Text style={styles.status}>Status: {activeBooking.status.replace("_", " ")}</Text>{activeBooking.requested_for ? <Text style={styles.status}>Schedule: {new Date(activeBooking.requested_for).toLocaleString()} ({activeBooking.timezone})</Text> : null}</View>
-                {activeBooking.status === "pending" && isProfessional ? <View style={styles.row}><Pressable onPress={() => changeBooking("accepted")} style={[styles.primaryButton, styles.flex]}><Text style={styles.primaryText}>Accept</Text></Pressable><Pressable onPress={() => changeBooking("declined")} style={[styles.secondaryButton, styles.flex]}><Text style={styles.secondaryText}>Decline</Text></Pressable></View> : null}
-                {activeBooking.status === "accepted" ? <View style={styles.row}><Pressable onPress={() => changeBooking("in_progress")} style={[styles.primaryButton, styles.flex]}><Text style={styles.primaryText}>Start work</Text></Pressable><Pressable onPress={() => changeBooking("cancelled")} style={[styles.secondaryButton, styles.flex]}><Text style={styles.secondaryText}>Cancel</Text></Pressable></View> : null}
-                {activeBooking.status === "in_progress" ? <Pressable onPress={() => changeBooking("completed")} style={styles.primaryButton}><Text style={styles.primaryText}>Mark completed</Text></Pressable> : null}
-                <Text style={styles.sectionTitle}>Propose a schedule</Text><TextInput value={scheduleText} onChangeText={setScheduleText} placeholder="2026-08-20 10:30" placeholderTextColor="#7A8880" style={styles.input}/><Text style={styles.muted}>Displayed using {timezone}</Text><TextInput value={scheduleNote} onChangeText={setScheduleNote} placeholder="Optional note" placeholderTextColor="#7A8880" style={styles.input}/><Pressable onPress={submitSchedule} style={styles.secondaryButton}><Text style={styles.secondaryText}>Send proposal</Text></Pressable>
-                {activeBooking.schedule_proposals.filter((item) => item.status === "proposed").map((proposal) => {
-                  const mine = proposal.proposer.user_id === session.user.id;
-                  return <View key={proposal.id} style={styles.proposal}><Text style={styles.summaryText}>{new Date(proposal.proposed_for).toLocaleString()}</Text><Text style={styles.muted}>{proposal.timezone} · {mine ? "proposed by you" : `proposed by ${proposal.proposer.full_name}`}</Text>{!mine ? <View style={styles.row}><Pressable onPress={() => scheduleDecision(proposal.id, "accepted")} style={[styles.primaryButton, styles.flex]}><Text style={styles.primaryText}>Accept</Text></Pressable><Pressable onPress={() => scheduleDecision(proposal.id, "declined")} style={[styles.secondaryButton, styles.flex]}><Text style={styles.secondaryText}>Change</Text></Pressable></View> : null}</View>;
-                })}
-              </>
-            ) : session.user.role === "client" ? (
-              <><Text style={styles.help}>Create this summary only after the scope and price have been agreed in the conversation.</Text><Text style={styles.label}>Agreed scope</Text><TextInput value={scope} onChangeText={setScope} multiline placeholder="Describe the agreed service outcome" placeholderTextColor="#7A8880" style={[styles.input, styles.scopeInput]}/><Text style={styles.label}>Agreed price</Text><TextInput value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="18000" placeholderTextColor="#7A8880" style={styles.input}/><Text style={styles.label}>Currency</Text><TextInput value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} style={styles.input}/><Pressable onPress={createAgreement} style={styles.amberButton}><Text style={styles.amberText}>Create booking summary</Text></Pressable></>
-            ) : <Text style={styles.help}>The client creates the booking summary after you agree the scope and price in chat.</Text>}
-          </ScrollView>
-        ) : null}
+        {compact ? (activeThread ? conversation : inbox) : <>{inbox}{conversation ?? <View style={styles.emptyPane}><Text style={styles.emptyTitle}>Select a conversation</Text><Text style={styles.empty}>Your messages and booking context will appear here.</Text></View>}</>}
       </View>
     </KeyboardAvoidingView>
   );
 }
 
+function BookingPanel({ session, booking, scope, setScope, price, setPrice, currency, setCurrency, scheduleText, setScheduleText, scheduleNote, setScheduleNote, timezone, onCreate, onChangeStatus, onSchedule, onScheduleDecision }: {
+  session: AuthSession; booking: Booking | null; scope: string; setScope: (value: string) => void; price: string; setPrice: (value: string) => void; currency: string; setCurrency: (value: string) => void; scheduleText: string; setScheduleText: (value: string) => void; scheduleNote: string; setScheduleNote: (value: string) => void; timezone: string; onCreate: () => void; onChangeStatus: (status: Booking["status"]) => void; onSchedule: () => void; onScheduleDecision: (id: string, status: "accepted" | "declined") => void;
+}) {
+  const isProfessional = session.user.role === "professional";
+  return <ScrollView contentContainerStyle={styles.bookingContent} keyboardShouldPersistTaps="handled">
+    <Text style={styles.bookingEyebrow}>JOB SUMMARY</Text>
+    {booking ? <>
+      <View style={styles.summaryCard}><Text style={styles.summaryTitle}>{booking.scope_summary}</Text><View style={styles.summaryRow}><Text style={styles.summaryLabel}>Agreed Price</Text><Text style={styles.summaryValue}>{booking.currency} {Number(booking.agreed_price || 0).toLocaleString()}</Text></View><View style={styles.summaryRow}><Text style={styles.summaryLabel}>Status</Text><Text style={styles.statusPill}>{booking.status.replace("_", " ")}</Text></View>{booking.requested_for ? <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Schedule</Text><Text style={styles.summaryValueSmall}>{new Date(booking.requested_for).toLocaleString()}</Text></View> : null}</View>
+      {booking.status === "pending" && isProfessional ? <View style={styles.actionRow}><Pressable onPress={() => onChangeStatus("accepted")} style={styles.primaryAction}><Text style={styles.primaryActionText}>Accept</Text></Pressable><Pressable onPress={() => onChangeStatus("declined")} style={styles.secondaryAction}><Text style={styles.secondaryActionText}>Decline</Text></Pressable></View> : null}
+      {booking.status === "accepted" ? <View style={styles.actionRow}><Pressable onPress={() => onChangeStatus("in_progress")} style={styles.primaryAction}><Text style={styles.primaryActionText}>Start work</Text></Pressable><Pressable onPress={() => onChangeStatus("cancelled")} style={styles.secondaryAction}><Text style={styles.secondaryActionText}>Cancel</Text></Pressable></View> : null}
+      {booking.status === "in_progress" ? <Pressable onPress={() => onChangeStatus("completed")} style={styles.primaryAction}><Text style={styles.primaryActionText}>Mark completed</Text></Pressable> : null}
+      <Text style={styles.formLabel}>Propose schedule</Text><TextInput value={scheduleText} onChangeText={setScheduleText} placeholder="2026-08-20 10:30" placeholderTextColor="#8A8A8A" style={styles.formInput} /><Text style={styles.timezone}>Times use {timezone}</Text><TextInput value={scheduleNote} onChangeText={setScheduleNote} placeholder="Optional note" placeholderTextColor="#8A8A8A" style={styles.formInput} /><Pressable onPress={onSchedule} style={styles.secondaryAction}><Text style={styles.secondaryActionText}>Send proposal</Text></Pressable>
+      {booking.schedule_proposals.filter((item) => item.status === "proposed").map((proposal) => { const mine = proposal.proposer.user_id === session.user.id; return <View key={proposal.id} style={styles.proposalCard}><Text style={styles.summaryValue}>{new Date(proposal.proposed_for).toLocaleString()}</Text><Text style={styles.timezone}>{proposal.timezone} · {mine ? "proposed by you" : proposal.proposer.full_name}</Text>{!mine ? <View style={styles.actionRow}><Pressable onPress={() => onScheduleDecision(proposal.id, "accepted")} style={styles.primaryAction}><Text style={styles.primaryActionText}>Accept</Text></Pressable><Pressable onPress={() => onScheduleDecision(proposal.id, "declined")} style={styles.secondaryAction}><Text style={styles.secondaryActionText}>Change</Text></Pressable></View> : null}</View>; })}
+    </> : session.user.role === "client" ? <>
+      <Text style={styles.bookingHelp}>Create the booking summary after you and the professional agree the scope and price.</Text><Text style={styles.formLabel}>Agreed scope</Text><TextInput value={scope} onChangeText={setScope} multiline placeholder="Describe the agreed service outcome" placeholderTextColor="#8A8A8A" style={[styles.formInput, styles.scopeInput]} /><Text style={styles.formLabel}>Price</Text><TextInput value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="18000" placeholderTextColor="#8A8A8A" style={styles.formInput} /><Text style={styles.formLabel}>Currency</Text><TextInput value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} style={styles.formInput} /><Pressable onPress={onCreate} style={styles.primaryAction}><Text style={styles.primaryActionText}>Create booking summary</Text></Pressable>
+    </> : <Text style={styles.bookingHelp}>The client creates the booking summary once the scope and price are agreed.</Text>}
+  </ScrollView>;
+}
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: "center", backgroundColor: "#F7FAF8" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#F7FAF8" },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.brand, borderRadius: 18, padding: 13, marginTop: 8 },
-  headerButton: { backgroundColor: "#FFB800", borderRadius: 9, paddingHorizontal: 9, paddingVertical: 7 },
-  headerButtonText: { color: "#173126", fontSize: 11, fontWeight: "900" },
-  eyebrow: { color: "#D7F6E7", fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
-  title: { color: "#FFFFFF", fontSize: 21, fontWeight: "900" },
-  body: { flex: 1, gap: 10, paddingVertical: 10 },
-  threadPane: { flex: 1, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16, overflow: "hidden" },
-  conversationPane: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16, overflow: "hidden" },
-  bookingPane: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 16 },
-  bookingContent: { padding: 14, gap: 10 },
-  hidden: { display: "none" },
-  paneHeader: { borderBottomWidth: 1, borderBottomColor: "#EDF2EF", padding: 13, gap: 5 },
-  paneTitle: { color: "#173126", fontWeight: "900", fontSize: 18 },
-  muted: { color: "#718078", fontSize: 11, lineHeight: 16 },
-  empty: { color: "#718078", padding: 20, textAlign: "center", lineHeight: 20 },
-  errorCard: { margin: 10, borderWidth: 1, borderColor: "#F0C7C9", borderRadius: 12, backgroundColor: "#FFF4F4", padding: 11, gap: 8 },
-  errorText: { color: "#8C1F26", fontSize: 11, lineHeight: 17, fontWeight: "700" },
-  retryButton: { alignSelf: "flex-start", borderRadius: 8, backgroundColor: colors.brand, paddingHorizontal: 11, paddingVertical: 7 },
-  retryText: { color: "#FFFFFF", fontSize: 10, fontWeight: "900" },
-  conversationLoading: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 160 },
-  threadRow: { padding: 13, borderBottomWidth: 1, borderBottomColor: "#EDF2EF" },
-  threadRowActive: { backgroundColor: "#EEF8F3" },
-  threadName: { color: "#173126", fontWeight: "900", flex: 1 },
-  unread: { backgroundColor: colors.brand, color: "#FFFFFF", borderRadius: 999, minWidth: 22, textAlign: "center", paddingHorizontal: 6, paddingVertical: 2, fontSize: 10, fontWeight: "900" },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  safetyButton: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
-  safetyText: { color: "#58675F", fontSize: 10, fontWeight: "800" },
-  dangerText: { color: "#A51D25", fontSize: 10, fontWeight: "900" },
-  blockNotice: { color: "#7A4D00", backgroundColor: "#FFF7DE", borderRadius: 8, padding: 8, fontSize: 10, lineHeight: 15, fontWeight: "700" },
-  link: { color: colors.brand, fontWeight: "900", fontSize: 11 },
-  messageList: { flexGrow: 1, padding: 12, gap: 8, backgroundColor: "#F9FBFA" },
-  messageBubble: { maxWidth: "84%", borderRadius: 15, padding: 10, borderWidth: 1 },
-  mine: { alignSelf: "flex-end", backgroundColor: "#E8F7F0", borderColor: "#CBE8D9" },
-  theirs: { alignSelf: "flex-start", backgroundColor: "#FFFFFF", borderColor: "#DDE7E1" },
-  sender: { color: colors.brand, fontSize: 10, fontWeight: "900" },
-  messageText: { color: "#263B31", lineHeight: 19, marginTop: 2 },
-  timestamp: { color: "#819087", fontSize: 9, marginTop: 5 },
-  attachmentText: { color: colors.brand, fontWeight: "800", fontSize: 11, marginTop: 5 },
-  composer: { padding: 10, borderTopWidth: 1, borderTopColor: "#EDF2EF", gap: 7 },
-  composerDisabled: { backgroundColor: "#F5F6F5" },
-  input: { minHeight: 44, borderWidth: 1, borderColor: "#D9E4DD", borderRadius: 11, paddingHorizontal: 11, backgroundColor: "#FFFFFF", color: "#173126" },
-  inputDisabled: { backgroundColor: "#F0F2F1", color: "#718078" },
-  messageInput: { minHeight: 70, textAlignVertical: "top", paddingTop: 10 },
-  composerActions: { flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "flex-end" },
-  attachmentChip: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderRadius: 10, backgroundColor: "#EEF8F3", padding: 8 },
-  attachmentChipText: { color: "#40544A", fontSize: 11, flex: 1 },
-  primaryButton: { backgroundColor: colors.brand, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, alignItems: "center" },
-  primaryText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
-  secondaryButton: { borderWidth: 1, borderColor: "#CAD8D0", backgroundColor: "#FFFFFF", borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, alignItems: "center" },
-  secondaryText: { color: "#173126", fontWeight: "900", fontSize: 11 },
-  disabledButton: { opacity: 0.45 },
-  amberButton: { backgroundColor: "#FFB800", borderRadius: 10, padding: 12, alignItems: "center" },
-  amberText: { color: "#173126", fontWeight: "900" },
-  eyebrowDark: { color: colors.brand, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
-  summaryCard: { backgroundColor: "#F3F8F5", borderRadius: 12, padding: 11, gap: 4 },
-  label: { color: "#65756C", fontSize: 10, fontWeight: "900", marginTop: 4 },
-  summaryText: { color: "#263B31", fontSize: 12, fontWeight: "700", lineHeight: 18 },
-  price: { color: "#173126", fontWeight: "900", fontSize: 17 },
-  status: { color: "#5D6E64", fontSize: 11, marginTop: 3 },
-  sectionTitle: { color: "#173126", fontWeight: "900", marginTop: 5 },
-  proposal: { borderWidth: 1, borderColor: "#DDE7E1", borderRadius: 11, padding: 10, gap: 6 },
-  help: { color: "#68776F", fontSize: 12, lineHeight: 18 },
-  scopeInput: { minHeight: 85, textAlignVertical: "top", paddingTop: 9 },
-  row: { flexDirection: "row", gap: 7 },
-  flex: { flex: 1 },
-  mobileTabs: { flexDirection: "row", backgroundColor: "#EAF4EF", borderRadius: 11, padding: 3, marginTop: 8 },
-  mobileTab: { flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 8 },
-  mobileTabActive: { backgroundColor: "#FFFFFF" },
-  mobileTabText: { color: "#607168", fontSize: 11, fontWeight: "900" },
-  mobileTabTextActive: { color: colors.brand },
+  screen: { flex: 1, alignItems: "center", backgroundColor: "#F5F5F5" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  body: { flex: 1, gap: 10, paddingVertical: 8 },
+  inboxPane: { flex: 1, backgroundColor: "#FFFFFF", overflow: "hidden", borderRadius: 14 },
+  inboxHeader: { backgroundColor: colors.brand, padding: 14, paddingBottom: 18, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  backButton: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  backText: { color: "#FFFFFF", fontSize: 22, fontWeight: "700" },
+  inboxTitle: { flex: 1, color: "#FFFFFF", fontSize: 20, fontWeight: "900" },
+  headerRound: { width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(255,255,255,.16)", alignItems: "center", justifyContent: "center" },
+  headerRoundText: { color: "#FFFFFF", fontWeight: "900" },
+  searchRow: { marginTop: 12, minHeight: 44, backgroundColor: "#FFFFFF", borderRadius: 10, flexDirection: "row", alignItems: "center", paddingHorizontal: 11 },
+  searchGlyph: { fontSize: 18, marginRight: 7, color: "#404040" },
+  searchInput: { flex: 1, minHeight: 44, color: "#222222" },
+  filterGlyph: { color: colors.brand, fontWeight: "900", fontSize: 20 },
+  threadRow: { flexDirection: "row", gap: 11, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#EEEEEE" },
+  threadRowActive: { backgroundColor: "#EFF9F4" },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#D9E4DD", alignItems: "center", justifyContent: "center" },
+  avatarSmall: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#DDF6E9", alignItems: "center", justifyContent: "center" },
+  avatarText: { color: colors.brand, fontWeight: "900", fontSize: 16 },
+  threadCopy: { flex: 1, gap: 4 },
+  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  threadName: { color: "#222222", fontWeight: "900", fontSize: 13 },
+  threadTime: { color: "#8A8A8A", fontSize: 9 },
+  threadPreview: { flex: 1, color: "#777777", fontSize: 10 },
+  unread: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
+  unreadText: { color: "#FFFFFF", fontSize: 9, fontWeight: "900" },
+  conversationPane: { backgroundColor: "#F7F7F7", borderRadius: 14, overflow: "hidden" },
+  conversationHeader: { backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: "#ECECEC", paddingHorizontal: 12, paddingTop: 8 },
+  conversationName: { color: "#222222", fontSize: 14, fontWeight: "900" },
+  presence: { color: "#8A8A8A", fontSize: 9, marginTop: 2 },
+  menuButton: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  menuText: { color: "#333333", fontSize: 22 },
+  panelTabs: { flexDirection: "row", marginTop: 8 },
+  panelTab: { flex: 1, alignItems: "center", paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: "transparent" },
+  panelTabActive: { borderBottomColor: colors.brand },
+  panelTabText: { color: "#888888", fontSize: 11, fontWeight: "700" },
+  panelTabTextActive: { color: colors.brand, fontWeight: "900" },
+  messageList: { padding: 14, gap: 9, flexGrow: 1, justifyContent: "flex-end" },
+  bubble: { maxWidth: "78%", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 14, gap: 4 },
+  bubbleMine: { alignSelf: "flex-end", backgroundColor: "#DFF4E9", borderBottomRightRadius: 4 },
+  bubbleOther: { alignSelf: "flex-start", backgroundColor: "#FFFFFF", borderBottomLeftRadius: 4 },
+  sender: { color: colors.brand, fontSize: 9, fontWeight: "900" },
+  messageText: { color: "#333333", fontSize: 12, lineHeight: 18 },
+  attachmentText: { color: colors.brand, fontSize: 10, fontWeight: "800" },
+  timestamp: { alignSelf: "flex-end", color: "#999999", fontSize: 8 },
+  composer: { backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#ECECEC", padding: 9, gap: 7 },
+  composerRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
+  composerIcon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  composerIconText: { color: "#666666", fontSize: 18, fontWeight: "800" },
+  messageInput: { flex: 1, minHeight: 40, maxHeight: 96, borderRadius: 20, borderWidth: 1, borderColor: "#E4E4E4", backgroundColor: "#FAFAFA", paddingHorizontal: 13, paddingVertical: 9, color: "#222222" },
+  sendButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
+  sendText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
+  attachmentChip: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, backgroundColor: "#EEF8F3", borderRadius: 8, padding: 8 },
+  attachmentChipText: { flex: 1, color: "#53645A", fontSize: 10 },
+  blockNotice: { flexDirection: "row", justifyContent: "space-between", gap: 10, padding: 10, backgroundColor: "#FFF4D8" },
+  blockText: { flex: 1, color: "#6B5A2C", fontSize: 10 },
+  link: { color: colors.brand, fontWeight: "900", fontSize: 10 },
+  errorCard: { margin: 10, padding: 10, borderRadius: 10, backgroundColor: "#FFF1F0" },
+  errorText: { color: "#8F2119", fontWeight: "700", fontSize: 11 },
+  retryText: { color: "#8F2119", fontWeight: "900", marginTop: 5 },
+  empty: { color: "#8A8A8A", textAlign: "center", padding: 20, lineHeight: 18, fontSize: 11 },
+  emptyPane: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 14, alignItems: "center", justifyContent: "center", padding: 24 },
+  emptyTitle: { color: "#333333", fontSize: 18, fontWeight: "900" },
+  bookingContent: { padding: 16, gap: 10, paddingBottom: 30 },
+  bookingEyebrow: { color: colors.brand, fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
+  summaryCard: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#E6E6E6", padding: 14, gap: 10 },
+  summaryTitle: { color: "#222222", fontSize: 16, fontWeight: "900" },
+  summaryRow: { flexDirection: "row", justifyContent: "space-between", gap: 10, alignItems: "center" },
+  summaryLabel: { color: "#777777", fontSize: 10, fontWeight: "700" },
+  summaryValue: { color: "#222222", fontSize: 12, fontWeight: "900" },
+  summaryValueSmall: { color: "#222222", fontSize: 10, fontWeight: "800", textAlign: "right", flex: 1 },
+  statusPill: { color: colors.brand, backgroundColor: "#E4F8EE", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, fontSize: 9, fontWeight: "900", textTransform: "capitalize" },
+  actionRow: { flexDirection: "row", gap: 8 },
+  primaryAction: { flex: 1, minHeight: 46, borderRadius: 7, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  primaryActionText: { color: "#FFFFFF", fontWeight: "900" },
+  secondaryAction: { flex: 1, minHeight: 46, borderRadius: 7, borderWidth: 1, borderColor: "#C9D3CD", backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  secondaryActionText: { color: colors.brand, fontWeight: "900" },
+  formLabel: { color: "#555555", fontSize: 10, fontWeight: "800", marginTop: 3 },
+  formInput: { minHeight: 46, borderRadius: 7, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E4E4E4", paddingHorizontal: 12, color: "#222222" },
+  scopeInput: { minHeight: 96, textAlignVertical: "top", paddingTop: 11 },
+  timezone: { color: "#8A8A8A", fontSize: 9 },
+  proposalCard: { backgroundColor: "#FFFFFF", borderRadius: 10, padding: 10, gap: 7, borderWidth: 1, borderColor: "#E7E7E7" },
+  bookingHelp: { color: "#757575", fontSize: 11, lineHeight: 18 },
+  disabledButton: { opacity: 0.5 },
 });
