@@ -3,28 +3,29 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Globe2, Menu, ShieldCheck, X } from "lucide-react";
 
 const navigation = [
   { href: "/services", label: "Find services" },
+  { href: "/for-clients", label: "For clients" },
   { href: "/for-professionals", label: "For professionals" },
+  { href: "/diaspora", label: "Diaspora" },
   { href: "/how-it-works", label: "How it works" },
-  { href: "/sabiforum", label: "SabiForum" },
-  { href: "/trust-and-safety", label: "Trust & safety" },
 ];
 
 const footerGroups = [
   {
-    title: "Explore",
+    title: "Discover",
     links: [
-      { href: "/services", label: "Find services" },
-      { href: "/marketplace", label: "Marketplace" },
-      { href: "/sabiforum", label: "SabiForum" },
+      { href: "/services", label: "Browse services" },
+      { href: "/locations", label: "Browse locations" },
+      { href: "/diaspora", label: "For the diaspora" },
+      { href: "/sabiforum", label: "Discover SabiForum" },
       { href: "/download", label: "Download the app" },
     ],
   },
   {
-    title: "Using SabiWay",
+    title: "How SabiWay helps",
     links: [
       { href: "/for-clients", label: "For clients" },
       { href: "/for-professionals", label: "For professionals" },
@@ -44,9 +45,9 @@ const footerGroups = [
     ],
   },
   {
-    title: "Company",
+    title: "SabiWay",
     links: [
-      { href: "/about-us", label: "About SabiWay" },
+      { href: "/about-us", label: "About us" },
       { href: "/partners", label: "Partnerships" },
       { href: "/careers", label: "Careers" },
       { href: "/privacy-policy", label: "Privacy Policy" },
@@ -88,14 +89,7 @@ export function PublicHeader() {
           </Link>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary xl:hidden"
-          aria-label={open ? "Close navigation" : "Open navigation"}
-          aria-expanded={open}
-          aria-controls="mobile-primary-navigation"
-        >
+        <button type="button" onClick={() => setOpen((value) => !value)} className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary xl:hidden" aria-label={open ? "Close navigation" : "Open navigation"} aria-expanded={open} aria-controls="mobile-primary-navigation">
           {open ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
         </button>
       </div>
@@ -103,12 +97,11 @@ export function PublicHeader() {
       {open ? (
         <div id="mobile-primary-navigation" className="border-t border-border bg-card px-4 py-4 xl:hidden">
           <nav className="mx-auto grid max-w-7xl gap-1" aria-label="Mobile navigation">
-            {navigation.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-3 font-bold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{item.label}</Link>
-            ))}
+            {navigation.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-3 font-bold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{item.label}</Link>)}
+            <Link href="/sabiforum" onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 py-3 font-bold text-foreground hover:bg-muted">SabiForum</Link>
             <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-3 md:hidden">
-              <Link href="/login" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl border border-border px-3 py-3 text-center font-extrabold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Sign in</Link>
-              <Link href="/signup" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 py-3 text-center font-black text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Join</Link>
+              <Link href="/login" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl border border-border px-3 py-3 text-center font-extrabold">Sign in</Link>
+              <Link href="/signup" onClick={() => setOpen(false)} className="flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 py-3 text-center font-black text-accent-foreground">Join</Link>
             </div>
           </nav>
         </div>
@@ -121,11 +114,14 @@ export function PublicFooter() {
   return (
     <footer className="mt-auto bg-[var(--sabi-primary-strong)] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 border-b border-white/15 pb-10 lg:grid-cols-[1.35fr_2.65fr]">
+        <div className="grid gap-10 border-b border-white/15 pb-10 lg:grid-cols-[1.2fr_2.8fr]">
           <div>
             <BrandLockup footer />
-            <p className="mt-4 max-w-md text-sm leading-6 text-white/80">A Nigerian-led marketplace and community helping people find useful services, build professional reputation and move work forward with clearer trust and transaction support.</p>
-            <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck size={17} aria-hidden="true" /> Trust-led by design</p>
+            <p className="mt-4 max-w-md text-sm leading-6 text-white/80">SabiWay connects Nigerians at home and across the diaspora around trusted services, professional opportunity and community — with clearer identity, communication and transaction support.</p>
+            <div className="mt-5 grid gap-2 text-sm font-bold text-white/90">
+              <p className="inline-flex items-center gap-2"><Globe2 size={17} aria-hidden="true" /> Nigeria-first. Diaspora-connected.</p>
+              <p className="inline-flex items-center gap-2"><ShieldCheck size={17} aria-hidden="true" /> Trust-led by design.</p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-4">
             {footerGroups.map((group) => (
@@ -139,8 +135,8 @@ export function PublicFooter() {
           </div>
         </div>
         <div className="flex flex-col gap-2 pt-5 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} SabiWay. Built for Nigerians at home and across the diaspora.</p>
-          <p>Marketplace · Community · Safer service journeys</p>
+          <p>© {new Date().getFullYear()} SabiWay. Connecting Nigeria and its global diaspora.</p>
+          <p>Services · Opportunity · Community · Trust</p>
         </div>
       </div>
     </footer>
