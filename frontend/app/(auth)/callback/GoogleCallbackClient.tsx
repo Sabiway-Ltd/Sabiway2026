@@ -3,6 +3,8 @@
 
 import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { consumeAuthIntent } from "@/app/auth/session";
+import { safeInternalNext } from "@/app/config/accessPolicy";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
@@ -13,9 +15,8 @@ export default function GoogleCallbackClient() {
   const { google_logged_in } = useAuthStore();
 
   useEffect(() => {
+    const intent = consumeAuthIntent();
     const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    // Query fallback is kept temporarily so a callback already in flight before
-    // deployment does not strand the user.
     const access = fragment.get("access") ?? searchParams.get("access");
     const refresh = fragment.get("refresh") ?? searchParams.get("refresh");
 
@@ -29,19 +30,15 @@ export default function GoogleCallbackClient() {
             ? "Complete SabiWay onboarding before using Google sign-in."
             : "Google authentication could not be completed.",
       );
-      router.replace("/login");
+      const roleSuffix = intent.role ? `?role=${intent.role}` : "";
+      router.replace(onboardingRequired ? `/signup${roleSuffix}` : "/login");
       return;
     }
 
-    // Remove credentials from browser history before making any further request.
     window.history.replaceState(null, "", "/callback");
 
     const fetchUserProfile = async () => {
       try {
-        localStorage.setItem("access", access);
-        localStorage.setItem("refresh", refresh);
-        document.cookie = `access=${access}; path=/; max-age=1800; SameSite=Strict; Secure`;
-
         const response = await fetch(`${DJANGO_URL}/api/profiles/me/`, {
           headers: { Authorization: `Bearer ${access}` },
           cache: "no-store",
@@ -62,16 +59,11 @@ export default function GoogleCallbackClient() {
           onboarding_complete: data.onboarding_complete,
         };
 
-        localStorage.setItem("user", JSON.stringify(normalizedUser));
-        google_logged_in(normalizedUser);
-        router.replace("/home");
+        google_logged_in(normalizedUser, access, refresh);
+        router.replace(safeInternalNext(intent.next, "/home"));
       } catch (error) {
         console.error("Profile fetch error:", error);
         toast.error("Failed to load your SabiWay profile");
-        localStorage.removeItem("access");
-        localStorage.removeItem("refresh");
-        localStorage.removeItem("user");
-        document.cookie = "access=; path=/; max-age=0; SameSite=Strict; Secure";
         router.replace("/login");
       }
     };
