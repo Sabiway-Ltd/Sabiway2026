@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { BriefcaseBusiness, UserRound } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,6 +23,7 @@ function roleFromQuery(value: string | null): AccountRole {
 export default function Signup() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const termsId = useId();
   const [googleLoading, setGoogleLoading] = useState(false);
   const { signup, loading } = useAuthStore();
   const [form, setForm] = useState(() => ({
@@ -99,7 +100,7 @@ export default function Signup() {
                     <label
                       key={role}
                       className={clsx(
-                        "cursor-pointer rounded-[var(--sabi-radius-lg)] border p-5 text-center transition-colors",
+                        "cursor-pointer rounded-[var(--sabi-radius-lg)] border p-5 text-center transition-colors focus-within:ring-[var(--sabi-focus-ring-width)] focus-within:ring-ring focus-within:ring-offset-2",
                         selected ? "border-primary bg-[var(--sabi-surface-selected)] shadow-[var(--sabi-shadow-sm)]" : "border-border bg-card hover:bg-muted",
                       )}
                     >
@@ -157,15 +158,18 @@ export default function Signup() {
               autoComplete="new-password"
             />
 
-            <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-[var(--sabi-radius-md)] py-2 text-sm leading-6">
+            <div className="flex min-h-11 items-start gap-3 rounded-[var(--sabi-radius-md)] py-2 text-sm leading-6">
               <input
+                id={termsId}
                 type="checkbox"
                 checked={form.terms_accepted}
                 onChange={(event) => setForm((current) => ({ ...current, terms_accepted: event.target.checked }))}
                 className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--sabi-primary)]"
               />
-              <span>I acknowledge that I have read and agree to the <Link href="/terms-of-use" className="font-bold text-[var(--sabi-link)] hover:underline">SabiWay Agreements</Link> and <Link href="/privacy-policy" className="font-bold text-[var(--sabi-link)] hover:underline">Privacy Policy</Link>.</span>
-            </label>
+              <label htmlFor={termsId}>
+                I acknowledge that I have read and agree to the <Link href="/terms-of-use" className="font-bold text-[var(--sabi-link)] hover:underline">SabiWay Agreements</Link> and <Link href="/privacy-policy" className="font-bold text-[var(--sabi-link)] hover:underline">Privacy Policy</Link>.
+              </label>
+            </div>
 
             <Button type="submit" variant="primary" size="lg" className="w-full" loading={loading} loadingLabel="Creating account…">
               Sign Up as {form.role === "professional" ? "Professional" : "Client"}
