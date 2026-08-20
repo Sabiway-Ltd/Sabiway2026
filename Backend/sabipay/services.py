@@ -1,5 +1,4 @@
 import hashlib
-import json
 import uuid
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
@@ -9,13 +8,15 @@ from django.db import IntegrityError, transaction as db_transaction
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
+from marketplace.markets import default_currency_for_country, normalise_country_code
 from marketplace.models import BookingRequest
 from verification.services import is_professional_verified
 
-from . import gateway
+from . import gateway, orchestration
 from .models import (
     Dispute,
     DisputeEvidence,
+    FxQuote,
     GatewayWebhookEvent,
     PaymentAttempt,
     PayoutDestination,
@@ -49,17 +50,7 @@ def amount_to_subunit(amount):
 
 def audit(tx, event, *, actor=None, source="system", old="", new="", reason="", metadata=None, event_key=None):
     try:
-        return TransactionAudit.objects.create(
-            transaction=tx,
-            actor=actor,
-            source=source,
-            event=event,
-            from_state=old,
-            to_state=new,
-            reason=reason,
-            metadata=metadata or {},
-            event_key=event_key,
-        )
+        return TransactionAudit.objects.create(transaction=tx, actor=actor, source=source, event=event, from_state=old, to_state=new, reason=reason, metadata=metadata or {}, event_key=event_key)
     except IntegrityError:
         return TransactionAudit.objects.filter(event_key=event_key).first() if event_key else None
 
@@ -101,38 +92,83 @@ def _participant_profile(tx, user):
     raise PermissionDenied("You are not a participant in this SabiPay transaction.")
 
 
+def _profile_market(profile, *, fallback_country_code=""):
+    return normalise_country_code(getattr(profile, "country_code", "") or getattr(profile, "country", "") or fallback_country_code)
+
+
+def _booking_service_market(booking):
+    source = booking.listing or booking.job
+    if source:
+        return normalise_country_code(getattr(source, "country_code", "") or getattr(source, "country", ""))
+    return ""
+
+
 def create_or_get_transaction(booking, actor):
     if booking.client.user_id != actor.id:
         raise PermissionDenied("Only the booking client can fund this booking.")
     if booking.status != BookingRequest.Status.ACCEPTED:
         raise ValidationError("The professional must accept the booking before payment.")
-    if booking.currency.upper() != "NGN":
-        raise ValidationError("SabiPay currently supports NGN Nigeria-pilot bookings only.")
     if booking.agreed_price is None or booking.agreed_price <= 0:
         raise ValidationError("A positive agreed booking price is required.")
     if not booking.professional or not is_professional_verified(booking.professional):
         raise ValidationError("The professional must be verified before this booking can be funded.")
+
+    service_currency = (booking.currency or "").upper()
+    service_market = _booking_service_market(booking)
+    client_market = _profile_market(booking.client, fallback_country_code=service_market)
+    professional_market = _profile_market(booking.professional, fallback_country_code=service_market)
+    payer_currency = default_currency_for_country(client_market) or service_currency
+    payout_currency = default_currency_for_country(professional_market) or service_currency
     fee, provider_amount = split_amount(booking.agreed_price)
+
     tx, created = Transaction.objects.get_or_create(
         booking=booking,
         defaults={
             "client": booking.client,
             "professional": booking.professional,
             "amount": money(booking.agreed_price),
-            "currency": "NGN",
+            "currency": service_currency,
+            "service_amount": money(booking.agreed_price),
+            "service_currency": service_currency,
+            "payer_currency": payer_currency,
+            "payout_currency": payout_currency,
+            "payment_market": client_market,
+            "payout_market": professional_market,
             "commission_rate": commission_rate(),
             "commission_amount": fee,
             "provider_amount": provider_amount,
+            "payout_amount": provider_amount if payout_currency == service_currency else None,
             "receipt_number": _receipt_number(),
         },
     )
     if not created:
         expected = money(booking.agreed_price)
-        if tx.amount != expected or tx.currency != "NGN":
-            raise ValidationError("The booking price changed after SabiPay was created. Contact support before paying.")
+        if tx.amount != expected or tx.currency != service_currency:
+            raise ValidationError("The booking price or service currency changed after SabiPay was created. Contact support before paying.")
     else:
-        audit(tx, "transaction_created", actor=actor, source="client", new=tx.state, metadata={"booking_id": str(booking.id)})
+        audit(tx, "transaction_created", actor=actor, source="client", new=tx.state, metadata={"booking_id": str(booking.id), "service_currency": service_currency, "payer_currency": payer_currency, "payout_currency": payout_currency, "payment_market": client_market, "payout_market": professional_market})
     return tx
+
+
+def _prepare_fx_and_markets(tx):
+    payment_market = orchestration.require_payment_market(tx.payment_market, tx.payer_currency)
+    orchestration.require_payout_market(tx.payout_market, tx.payout_currency)
+    if tx.payout_currency != tx.service_currency:
+        raise orchestration.PaymentCapabilityError({"payout_currency": "Cross-currency provider settlement is not enabled yet. Professionals must currently settle in the service currency."})
+
+    active_quote = tx.fx_quotes.filter(status=FxQuote.Status.ACTIVE, expires_at__gt=timezone.now(), source_currency=tx.service_currency, target_currency=tx.payer_currency).first()
+    quote = active_quote or orchestration.get_fx_quote(source_currency=tx.service_currency, target_currency=tx.payer_currency, source_amount=tx.service_amount or tx.amount, transaction=tx)
+    tx.payer_amount = money(quote.target_amount)
+    tx.fx_rate = quote.rate
+    tx.fx_provider = quote.provider
+    tx.fx_quote_reference = quote.reference
+    tx.fx_quoted_at = quote.quoted_at
+    tx.fx_expires_at = quote.expires_at
+    tx.fx_fee = money(quote.fee_amount)
+    tx.payout_amount = tx.provider_amount
+    tx.gateway = payment_market.provider
+    tx.save(update_fields=["payer_amount", "fx_rate", "fx_provider", "fx_quote_reference", "fx_quoted_at", "fx_expires_at", "fx_fee", "payout_amount", "gateway", "updated_at"])
+    return payment_market, quote
 
 
 def initialize_checkout(*, booking, actor, idempotency_key=None, return_url=None):
@@ -141,6 +177,7 @@ def initialize_checkout(*, booking, actor, idempotency_key=None, return_url=None
         tx = create_or_get_transaction(booking, actor)
         if tx.state != Transaction.State.PENDING_PAYMENT:
             raise ValidationError("This booking is no longer awaiting payment.")
+        payment_market, quote = _prepare_fx_and_markets(tx)
         if idempotency_key:
             existing = PaymentAttempt.objects.select_related("transaction").filter(idempotency_key=idempotency_key).first()
             if existing:
@@ -155,14 +192,15 @@ def initialize_checkout(*, booking, actor, idempotency_key=None, return_url=None
         tx.last_payment_checked_at = timezone.now()
         tx.save(update_fields=["payment_status", "last_payment_error", "last_payment_checked_at", "updated_at"])
     try:
-        data = gateway.initialize_payment(
+        data = orchestration.initialize_payment(
+            market=payment_market,
             email=booking.client.user.email,
-            amount_subunit=amount_to_subunit(tx.amount),
+            amount_subunit=amount_to_subunit(tx.payer_amount),
             reference=reference,
             callback_url=callback_url,
-            metadata={"sabipay_transaction_id": str(tx.id), "booking_id": str(booking.id)},
+            metadata={"sabipay_transaction_id": str(tx.id), "booking_id": str(booking.id), "service_amount": str(tx.service_amount), "service_currency": tx.service_currency, "payer_currency": tx.payer_currency, "fx_quote_reference": quote.reference},
         )
-    except gateway.PaystackError as exc:
+    except (gateway.PaystackError, orchestration.PaymentCapabilityError) as exc:
         attempt.status = PaymentAttempt.Status.FAILED
         attempt.failure_reason = str(exc)
         attempt.completed_at = timezone.now()
@@ -176,7 +214,9 @@ def initialize_checkout(*, booking, actor, idempotency_key=None, return_url=None
     attempt.authorization_url = data.get("authorization_url", "")
     attempt.access_code = data.get("access_code", "")
     attempt.save(update_fields=["authorization_url", "access_code"])
-    audit(tx, "checkout_initialized", actor=actor, source="client", metadata={"reference": reference})
+    quote.status = FxQuote.Status.USED
+    quote.save(update_fields=["status"])
+    audit(tx, "checkout_initialized", actor=actor, source="client", metadata={"reference": reference, "payer_amount": str(tx.payer_amount), "payer_currency": tx.payer_currency, "fx_quote_reference": quote.reference})
     return tx, attempt
 
 
@@ -187,8 +227,10 @@ def _fund_attempt(attempt, verified_data, *, source="gateway", event_key=None):
         attempt = PaymentAttempt.objects.select_for_update().get(pk=attempt.pk)
         amount = int(verified_data.get("amount") or 0)
         currency = (verified_data.get("currency") or "").upper()
-        if amount != amount_to_subunit(tx.amount) or currency != tx.currency:
-            reason = "Gateway verification did not match the expected payment amount/currency."
+        expected_amount = tx.payer_amount or tx.amount
+        expected_currency = tx.payer_currency or tx.currency
+        if amount != amount_to_subunit(expected_amount) or currency != expected_currency:
+            reason = "Gateway verification did not match the expected payer amount/currency."
             attempt.status = PaymentAttempt.Status.FAILED
             attempt.failure_reason = reason
             attempt.completed_at = timezone.now()
@@ -226,10 +268,10 @@ def _fund_attempt(attempt, verified_data, *, source="gateway", event_key=None):
         tx.gateway_transaction_id = attempt.gateway_transaction_id
         tx.funded_at = timezone.now()
         tx.reconciliation_status = Transaction.ReconciliationStatus.MATCHED
-        tx.reconciliation_note = "Funding amount, currency and gateway status verified."
+        tx.reconciliation_note = "Funding payer amount, payer currency and gateway status verified."
         tx.reconciled_at = timezone.now()
         tx.save()
-        audit(tx, "escrow_funded", source=source, old=old, new=tx.state, metadata={"reference": attempt.reference}, event_key=event_key)
+        audit(tx, "escrow_funded", source=source, old=old, new=tx.state, metadata={"reference": attempt.reference, "service_amount": str(tx.service_amount), "service_currency": tx.service_currency, "payer_amount": str(tx.payer_amount), "payer_currency": tx.payer_currency, "payout_amount": str(tx.payout_amount or ""), "payout_currency": tx.payout_currency, "fx_rate": str(tx.fx_rate or "")}, event_key=event_key)
         return tx
 
 
@@ -266,10 +308,14 @@ def apply_payment_verification(attempt, data, *, source="client", event_key=None
         return tx
 
 
+def _tx_payment_market(tx):
+    return orchestration.require_payment_market(tx.payment_market, tx.payer_currency or tx.currency)
+
+
 def verify_attempt(attempt, *, source="client"):
     try:
-        data = gateway.verify_payment(attempt.reference)
-    except gateway.PaystackError as exc:
+        data = orchestration.verify_payment(market=_tx_payment_market(attempt.transaction), reference=attempt.reference)
+    except (gateway.PaystackError, orchestration.PaymentCapabilityError) as exc:
         tx = attempt.transaction
         tx.payment_status = Transaction.PaymentStatus.PENDING
         tx.last_payment_checked_at = timezone.now()
@@ -322,41 +368,29 @@ def mark_delivered(tx, actor):
         return locked
 
 
-def create_payout_destination(*, professional, actor, account_number, bank_code, bank_name=""):
+def create_payout_destination(*, professional, actor, account_number, bank_code, bank_name="", country_code="", currency=""):
     if professional.user_id != actor.id:
         raise PermissionDenied("You can only configure your own payout destination.")
     if not is_professional_verified(professional):
         raise ValidationError("Provider verification approval is required before payout setup.")
+    market_code = normalise_country_code(country_code or professional.country_code or professional.country)
+    payout_currency = (currency or default_currency_for_country(market_code)).upper()
+    market = orchestration.require_payout_market(market_code, payout_currency)
+    if market.provider != "paystack" or market_code != "NG":
+        raise ValidationError("Bank payout setup is not configured for this market yet.")
     digits = "".join(ch for ch in str(account_number) if ch.isdigit())
     if len(digits) != 10:
         raise ValidationError({"account_number": "Enter a valid 10-digit Nigerian account number."})
     try:
         resolved = gateway.resolve_account(digits, bank_code)
         account_name = resolved.get("account_name") or professional.full_name
-        recipient = gateway.create_transfer_recipient(
-            name=account_name,
-            account_number=digits,
-            bank_code=bank_code,
-            metadata={"sabiway_professional_id": professional.pk},
-        )
+        recipient = gateway.create_transfer_recipient(name=account_name, account_number=digits, bank_code=bank_code, currency=payout_currency, metadata={"sabiway_professional_id": professional.pk})
     except gateway.PaystackError as exc:
         raise ValidationError(str(exc)) from exc
     recipient_code = recipient.get("recipient_code")
     if not recipient_code:
-        raise ValidationError("Paystack did not return a payout recipient code.")
-    destination, _ = PayoutDestination.objects.update_or_create(
-        professional=professional,
-        defaults={
-            "gateway": "paystack",
-            "recipient_code": recipient_code,
-            "account_name": account_name,
-            "bank_code": bank_code,
-            "bank_name": bank_name,
-            "account_last4": digits[-4:],
-            "is_active": True,
-            "verified_at": timezone.now(),
-        },
-    )
+        raise ValidationError("The payout provider did not return a recipient code.")
+    destination, _ = PayoutDestination.objects.update_or_create(professional=professional, defaults={"gateway": market.provider, "country_code": market_code, "currency": payout_currency, "recipient_code": recipient_code, "account_name": account_name, "bank_code": bank_code, "bank_name": bank_name, "account_last4": digits[-4:], "is_active": True, "verified_at": timezone.now()})
     return destination
 
 
@@ -383,10 +417,12 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
             raise ValidationError("The professional must configure a verified payout destination before release.") from exc
         if not destination.is_active:
             raise ValidationError("The professional payout destination is inactive.")
-        payout, created = PayoutRecord.objects.get_or_create(
-            transaction=locked,
-            defaults={"destination": destination, "amount": locked.provider_amount, "currency": locked.currency, "reference": _payout_reference()},
-        )
+        payout_market = orchestration.require_payout_market(destination.country_code or locked.payout_market, destination.currency or locked.payout_currency)
+        payout_amount = locked.payout_amount or locked.provider_amount
+        payout_currency = locked.payout_currency or locked.currency
+        if destination.currency != payout_currency:
+            raise ValidationError("The payout destination currency does not match the transaction payout currency.")
+        payout, created = PayoutRecord.objects.get_or_create(transaction=locked, defaults={"destination": destination, "amount": payout_amount, "currency": payout_currency, "reference": _payout_reference()})
         if not created and payout.status not in {PayoutRecord.Status.FAILED, PayoutRecord.Status.MANUAL_REVIEW}:
             return locked, payout
         if not created:
@@ -397,13 +433,8 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
             payout.save()
         reference = payout.reference
         try:
-            data = gateway.initiate_transfer(
-                amount_subunit=amount_to_subunit(locked.provider_amount),
-                recipient_code=destination.recipient_code,
-                reference=reference,
-                reason=f"SabiWay payout {locked.receipt_number}",
-            )
-        except gateway.PaystackError as exc:
+            data = orchestration.create_payout(market=payout_market, amount_subunit=amount_to_subunit(payout_amount), recipient_code=destination.recipient_code, reference=reference, reason=f"SabiWay payout {locked.receipt_number}")
+        except (gateway.PaystackError, orchestration.PaymentCapabilityError) as exc:
             payout.status = PayoutRecord.Status.FAILED
             payout.failure_reason = str(exc)
             payout.save(update_fields=["status", "failure_reason", "updated_at"])
@@ -420,7 +451,7 @@ def release_transaction(tx, *, actor=None, source="scheduler", client_confirmed=
         if client_confirmed:
             fields.append("client_confirmed_at")
         locked.save(update_fields=fields)
-        audit(locked, "escrow_released_to_payout", actor=actor, source=source, old=old, new=locked.state, metadata={"payout_reference": reference, "commission": str(locked.commission_amount), "provider_amount": str(locked.provider_amount)})
+        audit(locked, "escrow_released_to_payout", actor=actor, source=source, old=old, new=locked.state, metadata={"payout_reference": reference, "commission": str(locked.commission_amount), "payout_amount": str(payout_amount), "payout_currency": payout_currency})
         return locked, payout
 
 
@@ -454,12 +485,8 @@ def request_refund(tx, *, actor, reason):
         if locked.refund_status == Transaction.RefundStatus.PENDING:
             return locked
         try:
-            data = gateway.initiate_refund(
-                transaction_reference=locked.funding_reference,
-                amount_subunit=amount_to_subunit(locked.amount),
-                reason=reason or "Approved SabiWay refund",
-            )
-        except gateway.PaystackError as exc:
+            data = orchestration.refund_payment(market=_tx_payment_market(locked), transaction_reference=locked.funding_reference, amount_subunit=amount_to_subunit(locked.payer_amount or locked.amount), reason=reason or "Approved SabiWay refund")
+        except (gateway.PaystackError, orchestration.PaymentCapabilityError) as exc:
             locked.refund_status = Transaction.RefundStatus.FAILED
             locked.refund_reason = str(exc)
             locked.save(update_fields=["refund_status", "refund_reason", "updated_at"])
@@ -469,7 +496,7 @@ def request_refund(tx, *, actor, reason):
         locked.refund_gateway_id = str(data.get("id") or "")
         locked.refund_reason = reason
         locked.save(update_fields=["refund_status", "refund_gateway_id", "refund_reason", "updated_at"])
-        audit(locked, "refund_initiated", actor=actor, source="admin", reason=reason, metadata={"gateway_refund_id": locked.refund_gateway_id})
+        audit(locked, "refund_initiated", actor=actor, source="admin", reason=reason, metadata={"gateway_refund_id": locked.refund_gateway_id, "refund_currency": locked.payer_currency or locked.currency, "original_fx_quote": locked.fx_quote_reference})
         if str(data.get("status") or "").lower() in {"processed", "success"}:
             return mark_refunded(locked, source="gateway")
         return locked
@@ -487,7 +514,7 @@ def mark_refunded(tx, *, source="gateway", event_key=None):
         locked.refund_status = Transaction.RefundStatus.PROCESSED
         locked.refunded_at = timezone.now()
         locked.save(update_fields=["state", "refund_status", "refunded_at", "updated_at"])
-        audit(locked, "refund_processed", source=source, old=old, new=locked.state, event_key=event_key)
+        audit(locked, "refund_processed", source=source, old=old, new=locked.state, metadata={"original_payer_amount": str(locked.payer_amount or locked.amount), "payer_currency": locked.payer_currency or locked.currency, "fx_quote_reference": locked.fx_quote_reference}, event_key=event_key)
         return locked
 
 
@@ -503,17 +530,10 @@ def open_dispute(tx, *, actor, reason, details):
         if Dispute.objects.filter(transaction=locked, status__in=ACTIVE_DISPUTE_STATUSES).exists():
             raise ValidationError("This transaction already has an active dispute.")
         prior_state = locked.state
-        dispute = Dispute.objects.create(
-            transaction=locked,
-            opened_by=actor,
-            opened_by_profile=profile,
-            reason=reason,
-            details=details,
-            transaction_state_at_open=prior_state,
-        )
+        dispute = Dispute.objects.create(transaction=locked, opened_by=actor, opened_by_profile=profile, reason=reason, details=details, transaction_state_at_open=prior_state)
         locked.state = Transaction.State.DISPUTED
         locked.save(update_fields=["state", "updated_at"])
-        audit(locked, "dispute_opened", actor=actor, source="participant", old=prior_state, new=locked.state, reason=reason, metadata={"dispute_id": str(dispute.id)})
+        audit(locked, "dispute_opened", actor=actor, source="participant", old=prior_state, new=locked.state, reason=reason, metadata={"dispute_id": str(dispute.id), "service_currency": locked.service_currency, "payer_currency": locked.payer_currency, "payout_currency": locked.payout_currency})
         return dispute
 
 
@@ -524,12 +544,7 @@ def add_dispute_evidence(dispute, *, actor, note, reference_url=""):
     note = (note or "").strip()
     if len(note) < 3:
         raise ValidationError({"note": "Add a short description of this evidence."})
-    evidence = DisputeEvidence.objects.create(
-        dispute=dispute,
-        submitted_by=profile,
-        note=note,
-        reference_url=(reference_url or "").strip(),
-    )
+    evidence = DisputeEvidence.objects.create(dispute=dispute, submitted_by=profile, note=note, reference_url=(reference_url or "").strip())
     audit(dispute.transaction, "dispute_evidence_added", actor=actor, source="participant", metadata={"dispute_id": str(dispute.id), "evidence_id": str(evidence.id)})
     return evidence
 
@@ -559,15 +574,12 @@ def resolve_dispute(dispute, *, actor, outcome, resolution):
     restore_state = dispute.transaction_state_at_open
     if restore_state not in DISPUTABLE_STATES:
         raise ValidationError("The transaction state captured when this dispute opened cannot be safely restored.")
-
-    # Close the dispute first so controlled release/refund services no longer see an active freeze.
     dispute.status = Dispute.Status.RESOLVED
     dispute.outcome = outcome
     dispute.resolution = resolution
     dispute.resolved_by = actor
     dispute.resolved_at = timezone.now()
     dispute.save(update_fields=["status", "outcome", "resolution", "resolved_by", "resolved_at"])
-
     locked = Transaction.objects.get(pk=tx.pk)
     old = locked.state
     if outcome in {Dispute.Outcome.RESUME, Dispute.Outcome.CLOSED_NO_ACTION}:
@@ -575,7 +587,6 @@ def resolve_dispute(dispute, *, actor, outcome, resolution):
         locked.save(update_fields=["state", "updated_at"])
         audit(locked, "dispute_resolved_resume", actor=actor, source="admin", old=old, new=locked.state, reason=resolution, metadata={"dispute_id": str(dispute.id), "outcome": outcome})
     elif outcome == Dispute.Outcome.REFUND:
-        # Keep the transaction frozen until the gateway accepts the controlled refund request.
         request_refund(locked, actor=actor, reason=resolution)
         audit(locked, "dispute_resolved_refund", actor=actor, source="admin", old=old, new=locked.state, reason=resolution, metadata={"dispute_id": str(dispute.id)})
     elif outcome == Dispute.Outcome.RELEASE:
@@ -609,7 +620,7 @@ def process_webhook(raw_body, payload):
         if event_name == "charge.success":
             attempt = PaymentAttempt.objects.select_related("transaction").filter(reference=reference).first()
             if attempt:
-                verified = gateway.verify_payment(reference)
+                verified = orchestration.verify_payment(market=_tx_payment_market(attempt.transaction), reference=reference)
                 apply_payment_verification(attempt, verified, source="gateway", event_key=f"webhook:{digest}")
                 note = "funding processed"
             else:
@@ -617,11 +628,7 @@ def process_webhook(raw_body, payload):
         elif event_name.startswith("transfer."):
             payout = PayoutRecord.objects.select_related("transaction").filter(reference=reference).first()
             if payout:
-                status_map = {
-                    "transfer.success": PayoutRecord.Status.PAID,
-                    "transfer.failed": PayoutRecord.Status.FAILED,
-                    "transfer.reversed": PayoutRecord.Status.REVERSED,
-                }
+                status_map = {"transfer.success": PayoutRecord.Status.PAID, "transfer.failed": PayoutRecord.Status.FAILED, "transfer.reversed": PayoutRecord.Status.REVERSED}
                 next_status = status_map.get(event_name)
                 if next_status:
                     payout.status = next_status
@@ -661,9 +668,8 @@ def reconcile_transaction(tx):
         tx.save(update_fields=["payment_status", "last_payment_checked_at", "reconciliation_status", "reconciliation_note", "reconciled_at", "updated_at"])
         return tx
     try:
-        data = gateway.verify_payment(latest_attempt.reference)
-    except gateway.PaystackError as exc:
-        # A slow/unreachable gateway is not evidence that the ledger mismatches.
+        data = orchestration.verify_payment(market=_tx_payment_market(tx), reference=latest_attempt.reference)
+    except (gateway.PaystackError, orchestration.PaymentCapabilityError) as exc:
         tx.reconciliation_status = Transaction.ReconciliationStatus.PENDING
         tx.reconciliation_note = f"Gateway confirmation pending: {exc}"
         tx.last_payment_checked_at = now
@@ -674,7 +680,9 @@ def reconcile_transaction(tx):
     gateway_status = str(data.get("status") or "").lower()
     if tx.state == Transaction.State.PENDING_PAYMENT:
         return apply_payment_verification(latest_attempt, data, source="reconciliation")
-    gateway_success = gateway_status == "success" and int(data.get("amount") or 0) == amount_to_subunit(tx.amount) and (data.get("currency") or "").upper() == tx.currency
+    expected_amount = tx.payer_amount or tx.amount
+    expected_currency = tx.payer_currency or tx.currency
+    gateway_success = gateway_status == "success" and int(data.get("amount") or 0) == amount_to_subunit(expected_amount) and (data.get("currency") or "").upper() == expected_currency
     expected_funded = tx.state not in {Transaction.State.PENDING_PAYMENT, Transaction.State.CANCELLED}
     tx.payment_status = Transaction.PaymentStatus.SUCCEEDED if gateway_success else Transaction.PaymentStatus.MISMATCH
     tx.reconciliation_status = Transaction.ReconciliationStatus.MATCHED if gateway_success == expected_funded else Transaction.ReconciliationStatus.MISMATCH
