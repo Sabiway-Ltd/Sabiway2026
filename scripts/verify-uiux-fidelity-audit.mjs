@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 const root = process.cwd();
 const auditPath = path.join(root, "qa/uiux-fidelity-audit.json");
@@ -38,3 +39,7 @@ const checks = [
 
 for (const [label, pass] of checks) console.log(`${pass ? "PASS" : "FAIL"}  ${label}`);
 if (checks.some(([, pass]) => !pass)) process.exit(1);
+
+if (fs.existsSync(path.join(root, "scripts/verify-phase3-homepage.mjs"))) {
+  execFileSync(process.execPath, ["scripts/verify-phase3-homepage.mjs"], { cwd: root, stdio: "inherit" });
+}
