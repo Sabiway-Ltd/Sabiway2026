@@ -7,9 +7,10 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from marketplace.markets import default_currency_for_country, normalise_country_code
 from verification.services import is_professional_verified
 
-from . import gateway
+from . import gateway, orchestration
 from .models import Dispute, PayoutDestination, Transaction
 from .permissions import IsSabiPayOperator
 from .serializers import (
@@ -48,9 +49,7 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 
     def get_queryset(self):
         user = self.request.user
-        qs = Transaction.objects.select_related(
-            "booking", "client__user", "professional__user", "payout__destination"
-        ).prefetch_related("payment_attempts", "audit_events__actor", "disputes__evidence__submitted_by")
+        qs = Transaction.objects.select_related("booking", "client__user", "professional__user", "payout__destination").prefetch_related("payment_attempts", "fx_quotes", "audit_events__actor", "disputes__evidence__submitted_by")
         if user.is_staff and (user.is_superuser or user.has_perm("sabipay.manage_sabipay")):
             state_filter = self.request.query_params.get("state", "").strip()
             payment_filter = self.request.query_params.get("payment_status", "").strip()
@@ -67,20 +66,8 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
         serializer = InitializePaymentSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         booking = serializer.context["booking"]
-        tx, attempt = initialize_checkout(
-            booking=booking,
-            actor=request.user,
-            idempotency_key=request.headers.get("Idempotency-Key"),
-            return_url=serializer.validated_data.get("return_url"),
-        )
-        return Response(
-            {
-                "transaction": TransactionSerializer(tx, context={"request": request}).data,
-                "checkout_url": attempt.authorization_url,
-                "reference": attempt.reference,
-            },
-            status=status.HTTP_200_OK,
-        )
+        tx, attempt = initialize_checkout(booking=booking, actor=request.user, idempotency_key=request.headers.get("Idempotency-Key"), return_url=serializer.validated_data.get("return_url"))
+        return Response({"transaction": TransactionSerializer(tx, context={"request": request}).data, "checkout_url": attempt.authorization_url, "reference": attempt.reference}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
     def verify(self, request, pk=None):
@@ -98,18 +85,15 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 
     @action(detail=True, methods=["post"], url_path="refresh-status")
     def refresh_status(self, request, pk=None):
-        tx = reconcile_transaction(self.get_object())
-        return Response(TransactionSerializer(tx, context={"request": request}).data)
+        return Response(TransactionSerializer(reconcile_transaction(self.get_object()), context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="start-service")
     def start_service_action(self, request, pk=None):
-        tx = start_service(self.get_object(), request.user)
-        return Response(TransactionSerializer(tx, context={"request": request}).data)
+        return Response(TransactionSerializer(start_service(self.get_object(), request.user), context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="mark-delivered")
     def mark_delivered_action(self, request, pk=None):
-        tx = mark_delivered(self.get_object(), request.user)
-        return Response(TransactionSerializer(tx, context={"request": request}).data)
+        return Response(TransactionSerializer(mark_delivered(self.get_object(), request.user), context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="confirm-satisfaction")
     def confirm_satisfaction(self, request, pk=None):
@@ -130,8 +114,7 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, IsSabiPayOperator])
     def reconcile(self, request, pk=None):
-        tx = reconcile_transaction(self.get_object())
-        return Response(TransactionSerializer(tx, context={"request": request}).data)
+        return Response(TransactionSerializer(reconcile_transaction(self.get_object()), context={"request": request}).data)
 
 
 class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -139,9 +122,7 @@ class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
 
     def get_queryset(self):
         user = self.request.user
-        qs = Dispute.objects.select_related(
-            "transaction__client__user", "transaction__professional__user", "opened_by_profile__user", "assigned_to", "resolved_by"
-        ).prefetch_related("evidence__submitted_by__user")
+        qs = Dispute.objects.select_related("transaction__client__user", "transaction__professional__user", "opened_by_profile__user", "assigned_to", "resolved_by").prefetch_related("evidence__submitted_by__user")
         if user.is_staff and (user.is_superuser or user.has_perm("sabipay.manage_sabipay")):
             status_filter = self.request.query_params.get("status", "").strip()
             return qs.filter(status=status_filter) if status_filter else qs
@@ -154,18 +135,10 @@ class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
     def create(self, request, *args, **kwargs):
         serializer = OpenDisputeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        tx = Transaction.objects.select_related("client__user", "professional__user").filter(
-            Q(client=request.user.profile) | Q(professional=request.user.profile),
-            pk=serializer.validated_data["transaction_id"],
-        ).first()
+        tx = Transaction.objects.select_related("client__user", "professional__user").filter(Q(client=request.user.profile) | Q(professional=request.user.profile), pk=serializer.validated_data["transaction_id"]).first()
         if not tx:
             raise PermissionDenied("This transaction is not available to your account.")
-        dispute = open_dispute(
-            tx,
-            actor=request.user,
-            reason=serializer.validated_data["reason"],
-            details=serializer.validated_data["details"],
-        )
+        dispute = open_dispute(tx, actor=request.user, reason=serializer.validated_data["reason"], details=serializer.validated_data["details"])
         return Response(DisputeSerializer(dispute, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
@@ -178,8 +151,7 @@ class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
 
     @action(detail=True, methods=["post"], url_path="start-review", permission_classes=[permissions.IsAuthenticated, IsSabiPayOperator])
     def start_review(self, request, pk=None):
-        dispute = start_dispute_review(self.get_object(), actor=request.user)
-        return Response(DisputeSerializer(dispute, context={"request": request}).data)
+        return Response(DisputeSerializer(start_dispute_review(self.get_object(), actor=request.user), context={"request": request}).data)
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, IsSabiPayOperator])
     def resolve(self, request, pk=None):
@@ -215,10 +187,16 @@ class BankListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if request.user.profile.role != "professional":
+        profile = request.user.profile
+        if profile.role != "professional":
             raise PermissionDenied("Bank payout setup is available to professional profiles.")
+        country_code = normalise_country_code(request.query_params.get("country_code") or profile.country_code or profile.country)
+        currency = (request.query_params.get("currency") or default_currency_for_country(country_code)).upper()
+        market = orchestration.require_payout_market(country_code, currency)
+        if market.provider != "paystack" or country_code != "NG":
+            raise ValidationError("Bank discovery is not configured for this payout market yet.")
         try:
-            banks = gateway.list_banks()
+            banks = gateway.list_banks(country="nigeria", currency=currency)
         except gateway.PaystackError as exc:
             raise ValidationError(str(exc)) from exc
         return Response(banks)
