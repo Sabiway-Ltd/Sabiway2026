@@ -175,7 +175,10 @@ jobs:
         run: |
           set -euo pipefail
           location=$(curl --silent --head 'http://127.0.0.1:3100/home?source=browser-regression' | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
-          test "$location" = '/login?next=%2Fhome%3Fsource%3Dbrowser-regression'
+          case "$location" in
+            */login?next=%2Fhome%3Fsource%3Dbrowser-regression) ;;
+            *) echo "Unexpected redirect location: $location"; exit 1 ;;
+          esac
       - name: Run headless Chromium access regression
         run: node scripts/browser-access-regression.mjs
 
