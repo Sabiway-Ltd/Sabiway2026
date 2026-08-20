@@ -7,6 +7,18 @@ export type MarketplaceCategory = {
   subcategories?: Array<{ id: number; name: string; slug: string }>;
 };
 
+export type ServiceArea = {
+  id?: string;
+  country_code: string;
+  state?: string;
+  city?: string;
+  area?: string;
+  postcode?: string;
+  latitude?: string | null;
+  longitude?: string | null;
+  radius_km?: string | null;
+};
+
 export type MarketplaceListing = {
   id: string;
   title: string;
@@ -16,9 +28,16 @@ export type MarketplaceListing = {
   pricing_note?: string;
   delivery_mode: "in_person" | "remote" | "both";
   country?: string;
-  state: string;
+  country_code?: string;
+  state?: string;
   city?: string;
-  area: string;
+  area?: string;
+  postcode?: string;
+  latitude?: string | null;
+  longitude?: string | null;
+  service_radius_km?: string | null;
+  distance_km?: number | null;
+  service_areas?: ServiceArea[];
   availability_text?: string;
   available_now?: boolean;
   moderation_status?: string;
@@ -41,9 +60,15 @@ export type MarketplaceJob = {
   currency: string;
   delivery_mode: "in_person" | "remote" | "both";
   country?: string;
+  country_code?: string;
   state?: string;
   city?: string;
   area?: string;
+  postcode?: string;
+  latitude?: string | null;
+  longitude?: string | null;
+  search_radius_km?: string | null;
+  distance_km?: number | null;
   needed_by?: string | null;
   response_count: number;
   client: {
