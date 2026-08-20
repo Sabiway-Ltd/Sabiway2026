@@ -1,6 +1,6 @@
 export const ACCESS_COOKIE_MAX_AGE_SECONDS = 60 * 30;
 
-export type BrowserSessionUser = Record<string, unknown>;
+export type BrowserSessionUser = object;
 export type PendingAccountRole = "client" | "professional";
 
 type SessionPayload = {
@@ -53,7 +53,9 @@ export function readBrowserSession() {
 
   if (rawUser) {
     try {
-      user = JSON.parse(rawUser) as BrowserSessionUser;
+      const parsed = JSON.parse(rawUser) as unknown;
+      user = parsed && typeof parsed === "object" ? (parsed as BrowserSessionUser) : null;
+      if (!user) window.localStorage.removeItem("user");
     } catch {
       window.localStorage.removeItem("user");
     }
