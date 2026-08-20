@@ -8,8 +8,12 @@ export const serviceCategories = [
 ] as const;
 
 export const locations = [
-  { slug: "lagos", name: "Lagos", description: "Explore SabiWay service discovery and professional opportunities across Lagos." },
-  { slug: "abuja", name: "Abuja", description: "Explore SabiWay service discovery and professional opportunities across Abuja." },
-  { slug: "ibadan", name: "Ibadan", description: "Explore SabiWay service discovery and professional opportunities across Ibadan." },
-  { slug: "port-harcourt", name: "Port Harcourt", description: "Explore SabiWay service discovery and professional opportunities across Port Harcourt." },
+  { slug: "london", name: "London", country: "United Kingdom", countryCode: "GB", description: "Explore SabiWay services and Professional opportunities across London, with location-aware discovery for local work." },
+  { slug: "manchester", name: "Manchester", country: "United Kingdom", countryCode: "GB", description: "Find Professionals serving Manchester or publish work that needs to happen across Greater Manchester." },
+  { slug: "birmingham", name: "Birmingham", country: "United Kingdom", countryCode: "GB", description: "Explore services and Professional availability across Birmingham and nearby areas." },
+  { slug: "preston", name: "Preston", country: "United Kingdom", countryCode: "GB", description: "Discover local SabiWay services and Professionals serving Preston and surrounding Lancashire areas." },
+  { slug: "lagos", name: "Lagos", country: "Nigeria", countryCode: "NG", description: "Explore SabiWay service discovery and Professional opportunities across Lagos." },
+  { slug: "abuja", name: "Abuja", country: "Nigeria", countryCode: "NG", description: "Explore SabiWay service discovery and Professional opportunities across Abuja." },
+  { slug: "ibadan", name: "Ibadan", country: "Nigeria", countryCode: "NG", description: "Explore SabiWay service discovery and Professional opportunities across Ibadan." },
+  { slug: "port-harcourt", name: "Port Harcourt", country: "Nigeria", countryCode: "NG", description: "Explore SabiWay service discovery and Professional opportunities across Port Harcourt." },
 ] as const;

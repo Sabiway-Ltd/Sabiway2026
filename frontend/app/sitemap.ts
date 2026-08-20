@@ -4,7 +4,6 @@ export default function sitemap() {
   const lastModified = new Date();
   const routes = [
     "",
-    "/marketplace",
     "/services",
     "/locations",
     "/for-clients",
@@ -28,8 +27,5 @@ export default function sitemap() {
     ...locations.map(({ slug }) => `/locations/${slug}`),
   ];
 
-  return routes.map((route) => ({
-    url: `https://www.sabiway.com${route}`,
-    lastModified,
-  }));
+  return routes.map((route) => ({ url: `https://www.sabiway.com${route}`, lastModified }));
 }

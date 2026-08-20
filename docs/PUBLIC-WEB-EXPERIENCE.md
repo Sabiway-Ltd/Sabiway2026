@@ -1,152 +1,168 @@
 # SabiWay Public Web Experience
 
-This document defines the public-facing information architecture introduced by the public web experience redesign. It is a product/UX contract for logged-out visitors and must stay aligned with the implemented routes.
+This document is the product and UX contract for SabiWay's logged-out public website.
 
-## Purpose
+## Core positioning
 
-The public website must answer five questions before asking somebody to create an account:
+SabiWay is a **location-based global services marketplace**.
+
+The product should primarily help people discover relevant professionals near the location where a service is needed. A user may also deliberately change the search location and find professionals in another city or country. Nigeria and the United Kingdom are the first markets being optimised operationally, but they are not architectural boundaries.
+
+Examples:
+
+- a user in Manchester can find professionals around Manchester;
+- a user in Lagos can find professionals around Lagos;
+- a user in Manchester can deliberately search Lagos when the work needs to happen there;
+- a user in Lagos can deliberately search London;
+- a professional in another country can register and become discoverable where they operate;
+- remote services can be discovered across markets when the service does not require physical proximity.
+
+Nationality and diaspora identity must never be used as the marketplace's routing model. The relevant concepts are **account location, preferred search location, service location, professional service area and remote availability**.
+
+## Public-before-authentication rule
+
+A logged-out visitor must be able to understand SabiWay before creating an account. Public navigation and footer links must not unexpectedly send a visitor to `/login`.
+
+Authentication is reserved for actions that genuinely require identity or account state, including messaging, posting, booking, payment, verification submission, SabiForum participation and profile/account management.
+
+## Questions the public site must answer
 
 1. What is SabiWay?
-2. Is SabiWay useful for me as a Client or Professional?
-3. How does the service journey work?
-4. Why should I trust the platform and the people I meet through it?
-5. What should I do next?
+2. How do I find a service near me?
+3. Can I search another city or country?
+4. How do local and remote services differ?
+5. How does SabiWay help professionals become discoverable?
+6. What trust signals exist and what do they mean?
+7. Which payment features are supported in my market?
+8. When do I need an account?
 
-The public site is not a duplicate of the authenticated product. It explains, routes and builds confidence; authenticated application surfaces perform the actual account, marketplace, messaging, verification and transaction operations.
+## Primary public navigation
 
-## Primary navigation
+- `/services` — find services
+- `/locations` — browse/search locations
+- `/for-clients` — client journey
+- `/for-professionals` — professional journey
+- `/how-it-works` — how SabiWay works
+- `/login` — sign in
+- `/signup` — join SabiWay
 
-The public header deliberately prioritises high-intent user decisions:
-
-- `/services` — Find services
-- `/for-professionals` — For professionals
-- `/how-it-works` — How it works
-- `/sabiforum` — SabiForum explanation
-- `/trust-and-safety` — Trust & safety
-- `/login` — Sign in
-- `/signup` — Join SabiWay
-
-Lower-frequency company, legal and support destinations belong primarily in the footer so the header does not become a sitemap.
+SabiForum remains available in public discovery and the footer without crowding the primary desktop navigation.
 
 ## Public page inventory
 
-### Core acquisition and explanation
+### Discovery and audience journeys
 
-- `/` — public homepage and role-aware entry point
+- `/` — public homepage
 - `/services` — service category index
-- `/services/[slug]` — public service-category landing pages
-- `/locations` — location discovery index
-- `/locations/[slug]` — public location landing pages
-- `/for-clients` — Client value proposition and journey
-- `/for-professionals` — Professional value proposition and journey
-- `/how-it-works` — end-to-end service journey explanation
-- `/sabiforum` — public explanation of the community layer
+- `/services/[slug]` — public service-category pages
+- `/locations` — public location discovery
+- `/locations/[slug]` — market/location landing pages where meaningful supply exists
+- `/for-clients` — Client journey
+- `/for-professionals` — Professional journey
+- `/how-it-works` — end-to-end explanation
+- `/sabiforum` — public SabiForum explanation
 
-### Trust, payment and transparency
+### Trust, money and transparency
 
-- `/trust-and-safety` — trust model, safety expectations and support routes
-- `/sabipay-explained` — public SabiPay explanation; distinct from authenticated `/sabipay`
-- `/verification-info` — public verification explanation; distinct from authenticated `/verification`
-- `/fees` — public fees and charges explanation
-- `/accessibility` — accessibility commitment and issue-reporting route
+- `/trust-and-safety`
+- `/sabipay-explained`
+- `/verification-info`
+- `/fees`
+- `/accessibility`
 
-### Product and company
+### Product, support and company
 
-- `/download` — mobile-app availability and expectations
-- `/contact` — contact/support routing
-- `/partners` — partnership proposition
-- `/careers` — careers/employment information
-- `/about-us` — company/product story
-- `/helpcenter` — help content
-- `/privacy-policy` and `/terms-of-use` — legal
+- `/download`
+- `/contact`
+- `/partners`
+- `/careers`
+- `/about-us`
+- `/helpcenter`
+- `/privacy-policy`
+- `/terms-of-use`
 
-## Authenticated route separation
+## Operational routes are not generic public footer destinations
 
-Do not replace these authenticated product routes with marketing pages:
+The following remain product/application routes and may require authentication depending on the action:
 
-- `/sabipay` remains the operational SabiPay application.
-- `/verification` remains the Professional verification workflow.
-- `/community` remains the operational SabiForum/community experience.
-- `/marketplace` remains the operational marketplace.
+- `/marketplace`
+- `/community`
+- `/sabipay`
+- `/verification`
+- `/messages`
+- `/notifications`
+- `/profile`
 
-Public explanation routes use different URLs where necessary so a visitor can understand a feature without accidentally entering a protected workflow.
+The public website explains these systems and asks the user to sign in only when they choose an account-dependent action.
 
 ## Homepage UX hierarchy
 
-The homepage follows this sequence:
+The homepage should use concrete situations rather than generic platform copy:
 
-1. Clear value proposition in plain language.
-2. Immediate service-search entry point.
-3. Popular service shortcuts.
-4. Explicit Client vs Professional journey choice.
-5. Four-step explanation of how work moves through SabiWay.
-6. Trust/verification/payment explanation.
-7. SabiForum differentiation.
-8. Location discovery.
-9. Web/mobile continuity.
+1. local-first/global-by-design positioning;
+2. service-location explanation;
+3. Nigeria + UK as initial priority markets without country-locking the product;
+4. three obvious user routes: near me, somewhere else, offer a service;
+5. simple end-to-end service journey;
+6. trust, verification and SabiPay explanation;
+7. clear next actions.
 
-This sequence should be preserved unless user evidence supports a better hierarchy.
+## Discovery model communicated publicly
 
-## Responsive rules
+The website must be consistent with the product architecture:
 
-Public pages must work at minimum across:
+- **account location** personalises discovery;
+- **preferred search location** controls where the user wants to browse;
+- **service location** describes where work needs to happen;
+- **professional base location** describes where a professional is based;
+- **service areas** describe where an in-person professional operates;
+- **remote availability** allows location-independent services;
+- local relevance should rank suitable nearby in-person services before distant in-person services;
+- users must always be able to change the search location.
 
-- small mobile around 320 px;
-- common mobile around 375–430 px;
-- tablet around 768 px;
-- small desktop around 1024 px;
-- standard desktop around 1280–1440 px.
+## Payments and market availability
 
-Rules:
+Marketplace availability and payment availability are separate concepts. A professional may be discoverable in a market before SabiPay has fully supported payment, FX and payout rails there. Public copy must never imply otherwise.
 
-- never require horizontal scrolling for page layout;
-- touch targets should be at least 44 px where practical;
-- mobile navigation must expose every primary destination and authentication action;
-- multi-column content must collapse in reading order;
-- important CTAs must remain visible without relying on hover;
-- focus states must remain visible for keyboard users;
-- motion-based hover effects must respect reduced-motion behaviour where transform is used.
+Nigeria and the UK are the first optimised markets. Additional countries can become discoverable as professionals register, while payment capability is enabled only when the required market configuration and providers are supported.
 
-## Copy and trust rules
+## Design quality standard
 
-Public pages must not overclaim:
+Every public page must feel like a deliberate product page, not a placeholder or login gate. Minimum expectations include clear hierarchy, responsive layout, useful content, visible next steps, 44px practical touch targets, keyboard-visible focus, no critical hover-only content and consistent SabiWay green/orange visual language.
 
-- verification is a trust signal, not a guarantee of service quality or safety;
-- SabiPay/protected payment language must match actual supported transaction behaviour;
-- app-store/download claims must match real distribution status;
-- location pages must not imply supply exists where marketplace inventory does not support it;
-- fees must remain consistent with backend policy/configuration;
-- public content must not expose internal-review or development-only mechanisms.
+Review at minimum at 320, 375–430, 768, 1024, 1280 and 1440 px.
 
-## SEO and route strategy
+## Trust and copy rules
 
-Service and location landing pages exist to improve discovery and user orientation, not to generate thin pages at scale. Add new categories/locations only when there is a meaningful product reason or marketplace supply.
+Do not overclaim:
 
-The Next.js sitemap includes the public page inventory plus current service and location slugs. Keep the sitemap aligned when routes are added, renamed or removed.
+- verification is a trust signal, not a guarantee;
+- SabiPay wording must match supported market/payment behaviour;
+- location pages must not imply supply that does not exist;
+- app-store availability must match real distribution status;
+- fees and FX wording must match actual policy/configuration;
+- estimated currency conversion must be labelled as estimated until checkout locks a quote.
+
+## SEO and metadata
+
+Metadata should describe SabiWay as a location-based services marketplace, with Nigeria and the UK as initial focus markets. Do not describe the product as a Nigeria-only marketplace or a dedicated diaspora service.
+
+The sitemap should contain true public-information routes. Protected operational application routes should not be included merely for acquisition SEO.
 
 ## Preservation boundary
 
-Future public-web work must not casually change:
-
-- authenticated marketplace behaviour;
-- authentication/authorisation;
-- SabiPay lifecycle;
-- verification workflow;
-- backend APIs or database schema;
-- realtime messaging;
-- mobile application behaviour.
-
-Public UX can route into those systems, but must not silently redefine their contracts.
+Public-web work must not silently redefine backend APIs, authentication/authorisation, payment lifecycle, verification, realtime messaging, database schema or mobile behaviour.
 
 ## Review checklist
 
-Before merging a public-web change, verify:
+Before merging:
 
-- primary and footer navigation links resolve;
-- mobile menu is keyboard/touch usable;
-- homepage CTAs route to the intended Client/Professional journey;
-- service/location dynamic routes render valid slugs and 404 invalid slugs;
-- public SabiPay and verification pages do not replace authenticated workflows;
-- metadata/sitemap stay current;
-- frontend TypeScript, lint and production build pass;
-- key pages are manually checked at mobile, tablet and desktop widths when a runtime preview is available.
+- every header/footer public link resolves without unexpected authentication;
+- homepage copy represents the local-first global model accurately;
+- Nigeria and UK are presented as priority markets, not hard boundaries;
+- no dedicated diaspora marketplace mode is implied;
+- location and remote-service concepts are understandable;
+- public payment copy distinguishes marketplace availability from SabiPay availability;
+- metadata/sitemap match the current model;
+- TypeScript, lint, production build and full Platform CI pass;
+- runtime visual review is completed separately when preview infrastructure is available.

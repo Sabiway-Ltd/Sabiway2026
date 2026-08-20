@@ -7,6 +7,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from markets.payment_orchestration import initialize_market_checkout
 from verification.services import is_professional_verified
 
 from . import gateway
@@ -28,7 +29,6 @@ from .serializers import (
 from .services import (
     add_dispute_evidence,
     create_payout_destination,
-    initialize_checkout,
     mark_delivered,
     open_dispute,
     reconcile_transaction,
@@ -67,7 +67,7 @@ class TransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
         serializer = InitializePaymentSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         booking = serializer.context["booking"]
-        tx, attempt = initialize_checkout(
+        tx, attempt = initialize_market_checkout(
             booking=booking,
             actor=request.user,
             idempotency_key=request.headers.get("Idempotency-Key"),
@@ -181,8 +181,10 @@ class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         dispute = start_dispute_review(self.get_object(), actor=request.user)
         return Response(DisputeSerializer(dispute, context={"request": request}).data)
 
-    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, IsSabiPayOperator])
+    @action(detail=True, methods=["post"])
     def resolve(self, request, pk=None):
+        if not (request.user.is_staff and (request.user.is_superuser or request.user.has_perm("sabipay.manage_sabipay"))):
+            raise PermissionDenied("SabiPay operator permission is required.")
         serializer = DisputeResolutionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         dispute = resolve_dispute(self.get_object(), actor=request.user, **serializer.validated_data)

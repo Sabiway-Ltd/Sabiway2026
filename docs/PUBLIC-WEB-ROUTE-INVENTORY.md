@@ -1,11 +1,12 @@
 # Public Web Route Inventory
 
-Use this list during review of the public-web redesign.
+Use this list when reviewing the logged-out SabiWay website.
 
 ## Primary public routes
 
 - `/`
 - `/services`
+- `/locations`
 - `/for-clients`
 - `/for-professionals`
 - `/how-it-works`
@@ -19,11 +20,12 @@ Use this list during review of the public-web redesign.
 - `/partners`
 - `/careers`
 - `/accessibility`
-- `/locations`
 - `/about-us`
 - `/helpcenter`
 - `/privacy-policy`
 - `/terms-of-use`
+
+These routes are public-information destinations. A logged-out visitor should not be redirected to `/login` merely for opening them.
 
 ## Service landing pages
 
@@ -34,14 +36,18 @@ Use this list during review of the public-web redesign.
 - `/services/hair-beauty`
 - `/services/tech-support`
 
-## Location landing pages
+## Initial location landing pages
+
+Current static landing pages include:
 
 - `/locations/lagos`
 - `/locations/abuja`
 - `/locations/ibadan`
 - `/locations/port-harcourt`
 
-## Existing operational routes intentionally preserved
+These are initial content pages, not architectural limits. Nigeria and the UK are the first priority markets; additional location pages should only be added when supply/content justify them. Marketplace search itself must remain location-driven and global by design.
+
+## Operational routes intentionally preserved
 
 - `/marketplace`
 - `/community`
@@ -54,4 +60,8 @@ Use this list during review of the public-web redesign.
 - `/notifications`
 - `/profile`
 
-The public explanation routes must not replace or weaken the authenticated operational routes.
+Operational routes may require authentication depending on the action. They must not be used as generic footer information links.
+
+## Public footer rule
+
+Footer navigation should point to public explanation and discovery pages. Authentication should begin only when a visitor deliberately chooses an account-dependent action such as messaging, posting, booking, paying, verifying or participating.

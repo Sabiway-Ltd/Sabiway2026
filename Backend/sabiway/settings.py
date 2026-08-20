@@ -45,6 +45,13 @@ PAYSTACK_PUBLIC_KEY = env("PAYSTACK_PUBLIC_KEY", default="")
 PAYSTACK_BASE_URL = env("PAYSTACK_BASE_URL", default="https://api.paystack.co")
 PAYSTACK_TIMEOUT_SECONDS = env.int("PAYSTACK_TIMEOUT_SECONDS", default=12)
 
+# Multi-country / FX foundation. Cross-currency checkout fails closed unless an FX provider is configured.
+FX_PROVIDER = env("FX_PROVIDER", default="disabled")
+FX_STATIC_RATES = env("FX_STATIC_RATES", default="")
+FX_ALLOW_STATIC_IN_PRODUCTION = env.bool("FX_ALLOW_STATIC_IN_PRODUCTION", default=False)
+FX_QUOTE_TTL_MINUTES = env.int("FX_QUOTE_TTL_MINUTES", default=10)
+FX_FEE_RATE = env.float("FX_FEE_RATE", default=0.0)
+
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/auth/google-login/"
 
 CORS_ALLOWED_ORIGINS = list(dict.fromkeys(env.list("CORS_ALLOWED_ORIGINS", default=[FRONTEND_URL, EXPRESS_URL, "http://localhost:3000", "http://127.0.0.1:3000", "https://sabiway2025.vercel.app"])))
@@ -53,7 +60,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [
     "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes","django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
-    "accounts","docs","profiles","posts","search","notifications","health","marketplace","verification.apps.VerificationConfig","sabipay.apps.SabiPayConfig","operations.apps.OperationsConfig",
+    "accounts","docs","profiles","posts","search","notifications","health","marketplace","verification.apps.VerificationConfig","sabipay.apps.SabiPayConfig","markets.apps.MarketsConfig","operations.apps.OperationsConfig",
     "rest_framework","drf_yasg","rest_framework_simplejwt","rest_framework_simplejwt.token_blacklist","cloudinary","cloudinary_storage","corsheaders",
 ]
 
