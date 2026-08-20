@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from .models import FxQuote, UserLocationPreference
 from .catalog import normalise_country
+from .models import FxQuote, ListingServiceArea, UserLocationPreference
 
 
 class UserLocationPreferenceSerializer(serializers.ModelSerializer):
@@ -25,6 +25,35 @@ class UserLocationPreferenceSerializer(serializers.ModelSerializer):
         longitude = attrs.get("longitude")
         if (latitude is None) != (longitude is None):
             raise serializers.ValidationError("Latitude and longitude must be provided together.")
+        return attrs
+
+
+class ListingServiceAreaSerializer(serializers.ModelSerializer):
+    listing_id = serializers.UUIDField(source="listing.id", read_only=True)
+
+    class Meta:
+        model = ListingServiceArea
+        fields = [
+            "listing_id", "country_code", "country_name", "state", "city", "area", "postal_code",
+            "latitude", "longitude", "service_radius_km", "updated_at",
+        ]
+        read_only_fields = ["listing_id", "updated_at"]
+
+    def validate(self, attrs):
+        country_input = attrs.get("country_code") or attrs.get("country_name")
+        if country_input:
+            code, name = normalise_country(country_input)
+            if code:
+                attrs["country_code"] = code
+            if name:
+                attrs["country_name"] = name
+        latitude = attrs.get("latitude", getattr(self.instance, "latitude", None))
+        longitude = attrs.get("longitude", getattr(self.instance, "longitude", None))
+        if (latitude is None) != (longitude is None):
+            raise serializers.ValidationError("Latitude and longitude must be provided together.")
+        radius = attrs.get("service_radius_km", getattr(self.instance, "service_radius_km", 25))
+        if radius < 1 or radius > 250:
+            raise serializers.ValidationError({"service_radius_km": "Choose a radius between 1 and 250 km."})
         return attrs
 
 
