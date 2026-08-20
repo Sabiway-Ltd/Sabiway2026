@@ -7,7 +7,6 @@ Use this list when reviewing the logged-out SabiWay website.
 - `/`
 - `/services`
 - `/locations`
-- `/diaspora`
 - `/for-clients`
 - `/for-professionals`
 - `/how-it-works`
@@ -37,14 +36,16 @@ These routes are public-information destinations. A logged-out visitor should no
 - `/services/hair-beauty`
 - `/services/tech-support`
 
-## Nigeria location landing pages
+## Initial location landing pages
+
+Current static landing pages include:
 
 - `/locations/lagos`
 - `/locations/abuja`
 - `/locations/ibadan`
 - `/locations/port-harcourt`
 
-Location pages describe Nigeria-first service supply. The `/diaspora` route explains the global audience and cross-border relationship without implying marketplace supply exists in every diaspora city.
+These are initial content pages, not architectural limits. Nigeria and the UK are the first priority markets; additional location pages should only be added when supply/content justify them. Marketplace search itself must remain location-driven and global by design.
 
 ## Operational routes intentionally preserved
 
