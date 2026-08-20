@@ -42,8 +42,27 @@ class Transaction(models.Model):
     booking = models.OneToOneField(BookingRequest, on_delete=models.PROTECT, related_name="sabipay_transaction")
     client = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="sabipay_client_transactions")
     professional = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="sabipay_provider_transactions")
+
+    # Legacy contract amount/currency retained for compatibility. These mirror service_amount/service_currency.
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=3, default="NGN")
+    service_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    service_currency = models.CharField(max_length=3, blank=True)
+    payer_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    payer_currency = models.CharField(max_length=3, blank=True)
+    payout_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    payout_currency = models.CharField(max_length=3, blank=True)
+    payment_market = models.CharField(max_length=2, blank=True, db_index=True)
+    payout_market = models.CharField(max_length=2, blank=True, db_index=True)
+
+    fx_rate = models.DecimalField(max_digits=24, decimal_places=10, null=True, blank=True)
+    fx_provider = models.CharField(max_length=80, blank=True)
+    fx_quote_reference = models.CharField(max_length=120, blank=True, db_index=True)
+    fx_quoted_at = models.DateTimeField(null=True, blank=True)
+    fx_expires_at = models.DateTimeField(null=True, blank=True)
+    fx_fee = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    payment_processing_fee = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+
     commission_rate = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal("0.1000"))
     commission_amount = models.DecimalField(max_digits=12, decimal_places=2)
     provider_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -79,11 +98,51 @@ class Transaction(models.Model):
             models.Index(fields=["client", "state"], name="sabipay_client_state_idx"),
             models.Index(fields=["professional", "state"], name="sabipay_prof_state_idx"),
             models.Index(fields=["payment_status", "updated_at"], name="sabipay_payment_state_idx"),
+            models.Index(fields=["service_currency", "payer_currency", "payout_currency"], name="sabipay_currency_idx"),
         ]
         permissions = [("manage_sabipay", "Can manage SabiPay transactions and payouts")]
 
+    def save(self, *args, **kwargs):
+        self.currency = (self.currency or "").upper()
+        self.service_currency = (self.service_currency or self.currency or "").upper()
+        self.payer_currency = (self.payer_currency or self.service_currency or "").upper()
+        self.payout_currency = (self.payout_currency or self.service_currency or "").upper()
+        self.payment_market = (self.payment_market or "").upper()
+        self.payout_market = (self.payout_market or "").upper()
+        if self.service_amount is None:
+            self.service_amount = self.amount
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.receipt_number} — {self.amount} {self.currency} — {self.state}"
+
+
+class FxQuote(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        USED = "used", "Used"
+        EXPIRED = "expired", "Expired"
+        CANCELLED = "cancelled", "Cancelled"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name="fx_quotes", null=True, blank=True)
+    provider = models.CharField(max_length=80)
+    reference = models.CharField(max_length=120, unique=True)
+    source_currency = models.CharField(max_length=3)
+    target_currency = models.CharField(max_length=3)
+    source_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    target_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    rate = models.DecimalField(max_digits=24, decimal_places=10)
+    fee_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    quoted_at = models.DateTimeField()
+    expires_at = models.DateTimeField()
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.ACTIVE)
+    raw_reference = models.CharField(max_length=240, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-quoted_at"]
+        indexes = [models.Index(fields=["source_currency", "target_currency", "status"], name="sabipay_fx_pair_idx")]
 
 
 class PaymentAttempt(models.Model):
@@ -117,6 +176,8 @@ class PayoutDestination(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     professional = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="sabipay_payout_destination")
     gateway = models.CharField(max_length=24, default="paystack")
+    country_code = models.CharField(max_length=2, blank=True, db_index=True)
+    currency = models.CharField(max_length=3, default="NGN")
     recipient_code = models.CharField(max_length=120, unique=True)
     account_name = models.CharField(max_length=180)
     bank_code = models.CharField(max_length=32)
@@ -126,6 +187,11 @@ class PayoutDestination(models.Model):
     verified_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        self.country_code = (self.country_code or "").upper()
+        self.currency = (self.currency or "").upper()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.professional.username} — {self.bank_name or self.bank_code} ••••{self.account_last4}"
