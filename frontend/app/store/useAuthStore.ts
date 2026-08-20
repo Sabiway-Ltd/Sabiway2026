@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
 
 const API_URL = `${DJANGO_URL}/api`;
+const FRONTEND_DEMO_ACCESS = "sabiway-frontend-demo";
 
 export type AccountRole = "client" | "professional";
 
@@ -36,6 +37,7 @@ interface AuthState {
   signup: (form: SignupForm) => Promise<boolean>;
   login: (form: { email: string; password: string }) => Promise<boolean>;
   reviewLogin: (role: AccountRole) => Promise<boolean>;
+  demoLogin: () => void;
   logout: () => Promise<void>;
   google_logged_in: (user: User) => void;
   loadUserFromStorage: () => void;
@@ -145,6 +147,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       set({ loading: false });
     }
+  },
+
+  demoLogin: () => {
+    const demoUser: User = {
+      id: "frontend-demo-client",
+      full_name: "SabiWay Demo Client",
+      email: "demo-client@preview.sabiway.local",
+      role: "client",
+      onboarding_complete: true,
+    };
+
+    localStorage.setItem("access", FRONTEND_DEMO_ACCESS);
+    localStorage.setItem("user", JSON.stringify(demoUser));
+    localStorage.setItem("internal_review_mode", "frontend-demo");
+    set({ user: demoUser, access: FRONTEND_DEMO_ACCESS, refresh: null });
+    toast.success("Demo access enabled");
   },
 
   google_logged_in: (user) => set({ user }),
