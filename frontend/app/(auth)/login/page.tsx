@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff, ShieldCheck, UsersRound } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
+import { safeInternalNext } from "@/app/config/accessPolicy";
 import { useAuthStore, type AccountRole } from "@/app/store/useAuthStore";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
 import Link from "next/link";
@@ -18,8 +19,27 @@ export default function Login() {
   const reviewModeEnabled = process.env.NEXT_PUBLIC_INTERNAL_REVIEW_MODE === "true";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleSubmit = async (e: React.FormEvent) => { e.preventDefault(); const success = await login(form); if (success) { const next = new URLSearchParams(window.location.search).get("next"); window.location.href = next?.startsWith("/") ? next : "/home"; } };
-  const handleGoogleLogin = async () => { setGoogleLoading(true); try { const res = await fetch(`${DJANGO_URL}/api/auth/generate-google-url`); const data = await res.json(); if (data?.auth_url) window.location.href = data.auth_url; else toast.error("Failed to load Google login."); } catch { toast.error("Error initializing Google login"); } finally { setGoogleLoading(false); } };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await login(form);
+    if (success) {
+      const requested = new URLSearchParams(window.location.search).get("next");
+      window.location.href = safeInternalNext(requested, "/home");
+    }
+  };
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      const res = await fetch(`${DJANGO_URL}/api/auth/generate-google-url`);
+      const data = await res.json();
+      if (data?.auth_url) window.location.href = data.auth_url;
+      else toast.error("Failed to load Google login.");
+    } catch {
+      toast.error("Error initializing Google login");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
   const handleReviewLogin = async (role: AccountRole) => {
     setReviewingRole(role);
     const success = await reviewLogin(role);
