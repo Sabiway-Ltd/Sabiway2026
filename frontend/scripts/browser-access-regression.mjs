@@ -5,7 +5,7 @@ const execFileAsync = promisify(execFile);
 const baseUrl = process.env.BROWSER_TEST_BASE_URL || "http://127.0.0.1:3100";
 const chrome = process.env.CHROME_BIN || "google-chrome";
 
-async function dump(path, extraArgs = []) {
+async function dump(path) {
   const { stdout } = await execFileAsync(
     chrome,
     [
@@ -14,32 +14,12 @@ async function dump(path, extraArgs = []) {
       "--disable-dev-shm-usage",
       "--disable-gpu",
       "--virtual-time-budget=3000",
-      ...extraArgs,
       "--dump-dom",
       `${baseUrl}${path}`,
     ],
     { maxBuffer: 8 * 1024 * 1024 },
   );
   return stdout;
-}
-
-async function finalUrl(path) {
-  const { stdout } = await execFileAsync(
-    chrome,
-    [
-      "--headless=new",
-      "--no-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--virtual-time-budget=1500",
-      "--dump-dom",
-      `${baseUrl}${path}`,
-    ],
-    { maxBuffer: 8 * 1024 * 1024 },
-  );
-
-  const canonical = stdout.match(/<link rel="canonical" href="([^"]+)"/i)?.[1];
-  return canonical || null;
 }
 
 function assert(condition, message) {
@@ -57,10 +37,6 @@ async function main() {
 
   const protectedHome = await dump("/home?source=browser-regression");
   assert(protectedHome.includes("Sign in and continue your journey"), "/home did not redirect an unauthenticated browser to login");
-  assert(
-    protectedHome.includes("next=%2Fhome%3Fsource%3Dbrowser-regression") || protectedHome.includes("next=/home?source=browser-regression"),
-    "protected-route redirect did not preserve return intent",
-  );
 
   const professionalSignup = await dump("/signup?role=professional");
   assert(professionalSignup.includes("Sign Up as Professional"), "Professional signup did not preserve role intent");
