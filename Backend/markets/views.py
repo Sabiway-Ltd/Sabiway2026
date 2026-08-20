@@ -5,10 +5,16 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from marketplace.models import BookingRequest
+from marketplace.models import BookingRequest, ServiceListing
 
 from .catalog import public_markets
-from .serializers import FxQuoteRequestSerializer, FxQuoteSerializer, UserLocationPreferenceSerializer
+from .models import ListingServiceArea
+from .serializers import (
+    FxQuoteRequestSerializer,
+    FxQuoteSerializer,
+    ListingServiceAreaSerializer,
+    UserLocationPreferenceSerializer,
+)
 from .services import create_fx_quote, nearby_service_areas, preference_for_profile
 
 
@@ -34,6 +40,45 @@ class LocationPreferenceView(APIView):
     def put(self, request):
         preference = preference_for_profile(request.user.profile)
         serializer = UserLocationPreferenceSerializer(preference, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class ListingServiceAreaView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _listing(self, request, listing_id):
+        return get_object_or_404(
+            ServiceListing.objects.filter(provider=request.user.profile),
+            pk=listing_id,
+        )
+
+    def get(self, request, listing_id):
+        listing = self._listing(request, listing_id)
+        area, _ = ListingServiceArea.objects.get_or_create(
+            listing=listing,
+            defaults={
+                "country_name": listing.country,
+                "state": listing.state,
+                "city": listing.city,
+                "area": listing.area,
+            },
+        )
+        return Response(ListingServiceAreaSerializer(area).data)
+
+    def put(self, request, listing_id):
+        listing = self._listing(request, listing_id)
+        area, _ = ListingServiceArea.objects.get_or_create(
+            listing=listing,
+            defaults={
+                "country_name": listing.country,
+                "state": listing.state,
+                "city": listing.city,
+                "area": listing.area,
+            },
+        )
+        serializer = ListingServiceAreaSerializer(area, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
