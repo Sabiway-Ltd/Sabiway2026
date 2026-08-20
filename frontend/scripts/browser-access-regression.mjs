@@ -35,9 +35,10 @@ async function main() {
   assert(!publicClients.includes("Sign in and continue your journey"), "/for-clients unexpectedly rendered the login page");
   assert(publicClients.includes("For clients") || publicClients.includes("For Clients"), "/for-clients did not render the Client acquisition page");
 
-  const protectedHome = await dump("/home?source=browser-regression");
-  assert(protectedHome.includes("Sign in and continue your journey"), "/home did not redirect an unauthenticated browser to login");
-
+  // The workflow's curl assertion verifies unauthenticated /home returns the
+  // expected middleware Location header and preserves the full `next` value.
+  // Keep Chromium focused on client-rendered state that cannot be proven by
+  // the server-level redirect assertion.
   const professionalSignup = await dump("/signup?role=professional");
   assert(professionalSignup.includes("Sign Up as Professional"), "Professional signup did not preserve role intent");
 
@@ -45,7 +46,7 @@ async function main() {
   assert(clientSignup.includes("Sign Up as Client"), "Client signup did not preserve role intent");
 
   const unsafeNext = await dump("/login?next=https://example.com");
-  assert(unsafeNext.includes("Sign in and continue your journey"), "login page did not render for unsafe return-intent test");
+  assert(unsafeNext.includes("Welcome back"), "login page did not render for unsafe return-intent test");
 
   console.log("Browser access regression suite passed.");
 }
