@@ -27,6 +27,12 @@ function assert(condition, message) {
 }
 
 async function main() {
+  const homepage = await dump("/");
+  assert(homepage.includes("Find the right professional for the job"), "homepage discovery-first headline did not render");
+  assert(homepage.includes('action="/marketplace"'), "homepage marketplace search form did not render");
+  assert(homepage.includes("Browse services"), "homepage public browse CTA did not render");
+  assert(!homepage.includes("Your location is not the same thing as the service location"), "old architecture-heavy homepage content returned");
+
   const publicServices = await dump("/services");
   assert(!publicServices.includes("Sign in and continue your journey"), "/services unexpectedly rendered the login page");
   assert(publicServices.toLowerCase().includes("service"), "/services did not render service discovery content");
@@ -37,8 +43,6 @@ async function main() {
 
   // The workflow's curl assertion verifies unauthenticated /home returns the
   // expected middleware Location header and preserves the full `next` value.
-  // Keep Chromium focused on client-rendered state that cannot be proven by
-  // the server-level redirect assertion.
   const professionalSignup = await dump("/signup?role=professional");
   assert(professionalSignup.includes("Sign Up as Professional"), "Professional signup did not preserve role intent");
 
@@ -48,7 +52,7 @@ async function main() {
   const unsafeNext = await dump("/login?next=https://example.com");
   assert(unsafeNext.includes("Welcome back"), "login page did not render for unsafe return-intent test");
 
-  console.log("Browser access regression suite passed.");
+  console.log("Browser access and homepage regression suite passed.");
 }
 
 main().catch((error) => {
