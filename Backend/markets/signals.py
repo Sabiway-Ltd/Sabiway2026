@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from marketplace.models import JobPosting, ServiceListing
+from marketplace.models import BookingRequest, JobPosting, JobResponse, ServiceListing
 
 from .catalog import currency_for_country, normalise_country
 from .models import ListingServiceArea
@@ -25,6 +25,22 @@ def normalise_service_listing(sender, instance, **kwargs):
 @receiver(pre_save, sender=JobPosting)
 def normalise_job_posting(sender, instance, **kwargs):
     _normalise_marketplace_instance(instance)
+
+
+@receiver(pre_save, sender=JobResponse)
+def normalise_job_response_currency(sender, instance, **kwargs):
+    if instance.job_id:
+        job = instance.job
+        if job.currency:
+            instance.currency = job.currency.upper()
+
+
+@receiver(pre_save, sender=BookingRequest)
+def normalise_booking_currency(sender, instance, **kwargs):
+    if instance.listing_id and instance.listing.currency:
+        instance.currency = instance.listing.currency.upper()
+    elif instance.job_id and instance.job.currency:
+        instance.currency = instance.job.currency.upper()
 
 
 @receiver(post_save, sender=ServiceListing)
