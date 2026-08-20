@@ -16,12 +16,17 @@ def initialize_market_checkout(*, booking, actor, idempotency_key=None, return_u
 
     The legacy Paystack implementation remains the active Nigeria/NGN adapter.
     Other markets fail closed until a payment+payout provider is explicitly enabled.
+
+    Backward compatibility: legacy NGN bookings created before service-country
+    normalisation may have no listing/job country attached. Those bookings still
+    use the existing Nigeria Paystack adapter so retries and existing transaction
+    tests remain valid while location data is migrated forward.
     """
     service_country = _service_country(booking)
-    market = market_for_country(service_country)
     currency = (booking.currency or "").upper()
+    market = market_for_country(service_country)
 
-    if market and market.code == "NG" and currency == "NGN":
+    if currency == "NGN" and (not service_country or (market and market.code == "NG")):
         from sabipay.services import initialize_checkout
 
         return initialize_checkout(
