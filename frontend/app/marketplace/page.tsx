@@ -2,11 +2,16 @@ import { environment } from "@/app/config/environment";
 import MarketplaceClient, { type MarketplaceCategory, type MarketplaceJob, type MarketplaceListing } from "./MarketplaceClient";
 import { MarketplaceShell } from "./MarketplaceShell";
 
-async function getMarketplaceData(): Promise<{ listings: MarketplaceListing[]; jobs: MarketplaceJob[]; categories: MarketplaceCategory[] }> {
+async function getMarketplaceData(params: { q?: string; location?: string; category?: string }): Promise<{ listings: MarketplaceListing[]; jobs: MarketplaceJob[]; categories: MarketplaceCategory[] }> {
   try {
+    const query = new URLSearchParams();
+    if (params.q) query.set("q", params.q);
+    if (params.location) query.set("location", params.location);
+    if (params.category) query.set("category", params.category);
+    const suffix = query.size ? `?${query.toString()}` : "";
     const [listingResponse, jobResponse, categoryResponse] = await Promise.all([
-      fetch(`${environment.djangoUrl}/api/marketplace/listings/`, { next: { revalidate: 60 } }),
-      fetch(`${environment.djangoUrl}/api/marketplace/jobs/`, { next: { revalidate: 30 } }),
+      fetch(`${environment.djangoUrl}/api/marketplace/listings/${suffix}`, { next: { revalidate: 60 } }),
+      fetch(`${environment.djangoUrl}/api/marketplace/jobs/${suffix}`, { next: { revalidate: 30 } }),
       fetch(`${environment.djangoUrl}/api/marketplace/categories/`, { next: { revalidate: 300 } }),
     ]);
 
@@ -29,17 +34,11 @@ export const metadata = {
 };
 
 export default async function MarketplacePage({ searchParams }: { searchParams: Promise<{ q?: string; location?: string; category?: string }> }) {
-  const [{ listings, jobs, categories }, params] = await Promise.all([getMarketplaceData(), searchParams]);
+  const params = await searchParams;
+  const { listings, jobs, categories } = await getMarketplaceData(params);
   return (
     <MarketplaceShell>
-      <MarketplaceClient
-        initialListings={listings}
-        initialJobs={jobs}
-        categories={categories}
-        initialQuery={params.q || ""}
-        initialLocation={params.location || ""}
-        initialCategory={params.category || ""}
-      />
+      <MarketplaceClient initialListings={listings} initialJobs={jobs} categories={categories} />
     </MarketplaceShell>
   );
 }
