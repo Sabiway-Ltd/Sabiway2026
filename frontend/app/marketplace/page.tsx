@@ -24,15 +24,22 @@ async function getMarketplaceData(): Promise<{ listings: MarketplaceListing[]; j
 }
 
 export const metadata = {
-  title: "SabiWay Marketplace | Find trusted Nigerian professionals",
-  description: "Search services, discover trusted Nigerian professionals by location, or post a job and receive professional responses.",
+  title: "SabiWay Marketplace | Find trusted Professionals by location",
+  description: "Search services by where the work needs to happen, discover relevant Professionals or post a job for a specific service location.",
 };
 
-export default async function MarketplacePage() {
-  const { listings, jobs, categories } = await getMarketplaceData();
+export default async function MarketplacePage({ searchParams }: { searchParams: Promise<{ q?: string; location?: string; category?: string }> }) {
+  const [{ listings, jobs, categories }, params] = await Promise.all([getMarketplaceData(), searchParams]);
   return (
     <MarketplaceShell>
-      <MarketplaceClient initialListings={listings} initialJobs={jobs} categories={categories} />
+      <MarketplaceClient
+        initialListings={listings}
+        initialJobs={jobs}
+        categories={categories}
+        initialQuery={params.q || ""}
+        initialLocation={params.location || ""}
+        initialCategory={params.category || ""}
+      />
     </MarketplaceShell>
   );
 }
