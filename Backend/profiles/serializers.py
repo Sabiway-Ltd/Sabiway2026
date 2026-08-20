@@ -23,13 +23,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             "user_id", "full_name", "initials", "email", "username", "profile_picture",
             "followers_count", "following_count", "posts_count",
             "phone_number", "gender", "date_of_birth",
-            "country", "state", "area", "street",
+            "country", "country_code", "state", "city", "area", "postcode", "street",
+            "latitude", "longitude",
+            "preferred_country_code", "preferred_state", "preferred_city", "preferred_area", "preferred_postcode",
+            "preferred_latitude", "preferred_longitude",
             "role", "job", "bio", "is_following", "address",
             "is_verified", "verification_status",
         ]
         read_only_fields = (
-            "email", "role", "initials", "followers_count", "following_count",
-            "posts_count", "is_following", "address", "is_verified", "verification_status",
+            "email", "role", "initials", "followers_count", "following_count", "posts_count",
+            "is_following", "address", "is_verified", "verification_status",
         )
 
     def _verification_state(self, instance):
@@ -59,9 +62,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         request_user = getattr(request, "user", None)
         is_owner = bool(request_user and request_user.is_authenticated and instance.user_id == request_user.id)
         is_staff = bool(request_user and request_user.is_authenticated and request_user.is_staff)
-
         if not (is_owner or is_staff):
-            for field in ("email", "phone_number", "gender", "date_of_birth", "area", "street", "address"):
+            for field in (
+                "email", "phone_number", "gender", "date_of_birth", "area", "postcode", "street", "address",
+                "latitude", "longitude", "preferred_country_code", "preferred_state", "preferred_city",
+                "preferred_area", "preferred_postcode", "preferred_latitude", "preferred_longitude",
+            ):
                 data.pop(field, None)
         return data
 
@@ -76,6 +82,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         if queryset.exists():
             raise serializers.ValidationError("This username is taken.")
         return candidate
+
+    def validate_country_code(self, value):
+        value = (value or "").strip().upper()
+        if value and (len(value) != 2 or not value.isalpha()):
+            raise serializers.ValidationError("Use a two-letter ISO country code, for example GB or NG.")
+        return value
+
+    def validate_preferred_country_code(self, value):
+        return self.validate_country_code(value)
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
