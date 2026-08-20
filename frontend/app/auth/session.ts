@@ -1,12 +1,16 @@
 export const ACCESS_COOKIE_MAX_AGE_SECONDS = 60 * 30;
 
 export type BrowserSessionUser = Record<string, unknown>;
+export type PendingAccountRole = "client" | "professional";
 
 type SessionPayload = {
   access?: string | null;
   refresh?: string | null;
   user?: BrowserSessionUser | null;
 };
+
+const PENDING_NEXT_KEY = "sabiway_pending_auth_next";
+const PENDING_ROLE_KEY = "sabiway_pending_auth_role";
 
 function browserAvailable() {
   return typeof window !== "undefined" && typeof document !== "undefined";
@@ -56,4 +60,21 @@ export function readBrowserSession() {
   }
 
   return { access, refresh, user };
+}
+
+export function rememberAuthIntent(next: string, role?: PendingAccountRole) {
+  if (!browserAvailable()) return;
+  window.sessionStorage.setItem(PENDING_NEXT_KEY, next);
+  if (role) window.sessionStorage.setItem(PENDING_ROLE_KEY, role);
+  else window.sessionStorage.removeItem(PENDING_ROLE_KEY);
+}
+
+export function consumeAuthIntent() {
+  if (!browserAvailable()) return { next: null, role: null as PendingAccountRole | null };
+  const next = window.sessionStorage.getItem(PENDING_NEXT_KEY);
+  const rawRole = window.sessionStorage.getItem(PENDING_ROLE_KEY);
+  const role: PendingAccountRole | null = rawRole === "client" || rawRole === "professional" ? rawRole : null;
+  window.sessionStorage.removeItem(PENDING_NEXT_KEY);
+  window.sessionStorage.removeItem(PENDING_ROLE_KEY);
+  return { next, role };
 }
