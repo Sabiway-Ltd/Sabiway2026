@@ -71,9 +71,14 @@ class ServiceListing(models.Model):
     pricing_note = models.CharField(max_length=160, blank=True)
     delivery_mode = models.CharField(max_length=20, choices=DeliveryMode.choices, default=DeliveryMode.IN_PERSON)
     country = models.CharField(max_length=100, blank=True)
+    country_code = models.CharField(max_length=2, blank=True, db_index=True)
     state = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=120, blank=True)
     area = models.CharField(max_length=120, blank=True)
+    postcode = models.CharField(max_length=32, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    service_radius_km = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     availability_text = models.CharField(max_length=160, blank=True)
     available_now = models.BooleanField(default=False)
     moderation_status = models.CharField(max_length=20, choices=ModerationStatus.choices, default=ModerationStatus.PENDING)
@@ -87,11 +92,40 @@ class ServiceListing(models.Model):
         indexes = [
             models.Index(fields=["category", "moderation_status", "is_active"], name="mkt_list_cat_mod_idx"),
             models.Index(fields=["country", "state", "city"], name="mkt_list_location_idx"),
+            models.Index(fields=["country_code", "state", "city"], name="mkt_list_cc_loc_idx"),
             models.Index(fields=["provider", "is_active"], name="mkt_list_provider_idx"),
         ]
 
+    def save(self, *args, **kwargs):
+        self.country_code = (self.country_code or "").strip().upper()
+        self.currency = (self.currency or "").strip().upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.title} — {self.provider.username}"
+
+
+class ServiceArea(models.Model):
+    """Additional physical areas served by one listing. Remote delivery does not require service areas."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    listing = models.ForeignKey(ServiceListing, on_delete=models.CASCADE, related_name="service_areas")
+    country_code = models.CharField(max_length=2, db_index=True)
+    state = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+    area = models.CharField(max_length=120, blank=True)
+    postcode = models.CharField(max_length=32, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    radius_km = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["country_code", "state", "city", "area"]
+        indexes = [models.Index(fields=["country_code", "state", "city"], name="mkt_area_location_idx")]
+
+    def save(self, *args, **kwargs):
+        self.country_code = (self.country_code or "").strip().upper()
+        super().save(*args, **kwargs)
 
 
 class JobPosting(models.Model):
@@ -119,9 +153,14 @@ class JobPosting(models.Model):
     currency = models.CharField(max_length=3, default="NGN")
     delivery_mode = models.CharField(max_length=20, choices=ServiceListing.DeliveryMode.choices, default=ServiceListing.DeliveryMode.IN_PERSON)
     country = models.CharField(max_length=100, blank=True)
+    country_code = models.CharField(max_length=2, blank=True, db_index=True)
     state = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=120, blank=True)
     area = models.CharField(max_length=120, blank=True)
+    postcode = models.CharField(max_length=32, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    search_radius_km = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     needed_by = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
     moderation_status = models.CharField(max_length=20, choices=ModerationStatus.choices, default=ModerationStatus.PENDING)
@@ -133,8 +172,14 @@ class JobPosting(models.Model):
         indexes = [
             models.Index(fields=["status", "moderation_status"], name="mkt_job_status_mod_idx"),
             models.Index(fields=["country", "state", "city"], name="mkt_job_location_idx"),
+            models.Index(fields=["country_code", "state", "city"], name="mkt_job_cc_loc_idx"),
             models.Index(fields=["category", "status"], name="mkt_job_category_idx"),
         ]
+
+    def save(self, *args, **kwargs):
+        self.country_code = (self.country_code or "").strip().upper()
+        self.currency = (self.currency or "").strip().upper()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -183,10 +228,7 @@ class MessageThread(models.Model):
 
     class Meta:
         ordering = ["-last_message_at", "-created_at"]
-        indexes = [
-            models.Index(fields=["client", "status"], name="mkt_thread_client_idx"),
-            models.Index(fields=["professional", "status"], name="mkt_thread_prof_idx"),
-        ]
+        indexes = [models.Index(fields=["client", "status"], name="mkt_thread_client_idx"), models.Index(fields=["professional", "status"], name="mkt_thread_prof_idx")]
 
     def __str__(self):
         return f"{self.client.username} ↔ {self.professional.username}"
@@ -211,10 +253,7 @@ class Message(models.Model):
 
     class Meta:
         ordering = ["created_at"]
-        indexes = [
-            models.Index(fields=["thread", "created_at"], name="mkt_msg_thread_time_idx"),
-            models.Index(fields=["thread", "is_read"], name="mkt_msg_read_idx"),
-        ]
+        indexes = [models.Index(fields=["thread", "created_at"], name="mkt_msg_thread_time_idx"), models.Index(fields=["thread", "is_read"], name="mkt_msg_read_idx")]
 
     def __str__(self):
         return f"Message {self.id} in {self.thread_id}"
@@ -304,11 +343,7 @@ class BookingRequest(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["client", "status"], name="mkt_book_client_status_idx"),
-            models.Index(fields=["listing", "status"], name="mkt_book_list_status_idx"),
-            models.Index(fields=["professional", "status"], name="mkt_book_prof_status_idx"),
-        ]
+        indexes = [models.Index(fields=["client", "status"], name="mkt_book_client_status_idx"), models.Index(fields=["listing", "status"], name="mkt_book_list_status_idx"), models.Index(fields=["professional", "status"], name="mkt_book_prof_status_idx")]
 
     def __str__(self):
         provider = self.professional or (self.listing.provider if self.listing_id else None)
