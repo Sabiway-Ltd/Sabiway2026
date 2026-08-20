@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
+import { clearBrowserSession, persistBrowserSession, readBrowserSession } from "@/app/auth/session";
 
 const API_URL = `${DJANGO_URL}/api`;
 
@@ -37,7 +38,7 @@ interface AuthState {
   login: (form: { email: string; password: string }) => Promise<boolean>;
   reviewLogin: (role: AccountRole) => Promise<boolean>;
   logout: () => Promise<void>;
-  google_logged_in: (user: User) => void;
+  google_logged_in: (user: User, access?: string, refresh?: string) => void;
   loadUserFromStorage: () => void;
 }
 
@@ -51,15 +52,6 @@ function firstApiError(data: unknown, fallback: string) {
     if (typeof value === "string") return value;
   }
   return fallback;
-}
-
-function storeSession(data: { access?: string; refresh?: string; user?: User }) {
-  if (data.access) {
-    document.cookie = `access=${data.access}; path=/; max-age=28800; SameSite=Strict; Secure`;
-    localStorage.setItem("access", data.access);
-  }
-  if (data.refresh) localStorage.setItem("refresh", data.refresh);
-  if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -110,7 +102,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(firstApiError(data, "Login failed"));
 
-      storeSession(data);
+      persistBrowserSession({ access: data.access, refresh: data.refresh, user: data.user });
       set({ user: data.user, access: data.access || null, refresh: data.refresh || null });
       toast.success(`Welcome back ${data.user?.full_name?.split(" ")[0] || "User"}`);
       return true;
@@ -134,7 +126,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(firstApiError(data, "Internal review access is not enabled."));
 
-      storeSession(data);
+      persistBrowserSession({ access: data.access, refresh: data.refresh, user: data.user });
       localStorage.setItem("internal_review_mode", "true");
       set({ user: data.user, access: data.access || null, refresh: data.refresh || null });
       toast.success(`Reviewing as ${role === "professional" ? "Professional" : "Client"}`);
@@ -147,24 +139,37 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  google_logged_in: (user) => set({ user }),
+  google_logged_in: (user, access, refresh) => {
+    persistBrowserSession({ access, refresh, user });
+    set({ user, access: access || null, refresh: refresh || null });
+  },
 
   logout: async () => {
-    document.cookie = "access=; path=/; max-age=0; SameSite=Strict; Secure";
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user");
-    localStorage.removeItem("internal_review_mode");
-    set({ user: null, access: null, refresh: null });
-    window.location.href = "/";
+    const { refresh } = readBrowserSession();
+    try {
+      if (refresh) {
+        await fetch(`${API_URL}/auth/logout/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ refresh }),
+        });
+      }
+    } catch {
+      // Local sign-out must still succeed if the backend is unavailable.
+    } finally {
+      clearBrowserSession();
+      set({ user: null, access: null, refresh: null });
+      window.location.href = "/";
+    }
   },
 
   loadUserFromStorage: () => {
-    const user = localStorage.getItem("user");
-    const access = localStorage.getItem("access");
-    const refresh = localStorage.getItem("refresh");
+    const { user, access, refresh } = readBrowserSession();
     if (user && access) {
-      set({ user: JSON.parse(user), access, refresh });
+      set({ user: user as User, access, refresh });
+      return;
     }
+    set({ user: null, access: null, refresh: null });
   },
 }));
