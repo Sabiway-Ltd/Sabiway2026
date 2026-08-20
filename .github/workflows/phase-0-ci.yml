@@ -36,6 +36,8 @@ jobs:
           node-version: "22"
       - name: Verify canonical design tokens are synced
         run: node scripts/sync-design-tokens.mjs --check
+      - name: Verify Phase 2 design-system adoption
+        run: node scripts/verify-phase2-design-system-adoption.mjs
 
   uiux-fidelity-audit-check:
     runs-on: ubuntu-latest

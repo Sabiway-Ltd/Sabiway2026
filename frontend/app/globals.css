@@ -45,16 +45,28 @@
 }
 
 :root {
+  /* Phase 2 semantic aliases. These deliberately derive from the canonical
+     generated SabiWay tokens so web surfaces stop inventing local hex values. */
+  --sabi-surface-elevated: var(--sabi-surface);
+  --sabi-surface-selected: color-mix(in srgb, var(--sabi-primary) 8%, var(--sabi-surface));
+  --sabi-primary-soft: color-mix(in srgb, var(--sabi-primary) 10%, var(--sabi-surface));
+  --sabi-success-soft: color-mix(in srgb, var(--sabi-success) 12%, var(--sabi-surface));
+  --sabi-warning-soft: color-mix(in srgb, var(--sabi-warning) 18%, var(--sabi-surface));
+  --sabi-danger-soft: color-mix(in srgb, var(--sabi-danger) 10%, var(--sabi-surface));
+  --sabi-info-soft: color-mix(in srgb, var(--sabi-info) 10%, var(--sabi-surface));
+  --sabi-text-inverse: var(--sabi-on-primary);
+  --sabi-link: var(--sabi-primary-strong);
+
   --radius: var(--sabi-radius-md);
   --background: var(--sabi-background);
   --foreground: var(--sabi-text);
-  --card: var(--sabi-surface);
+  --card: var(--sabi-surface-elevated);
   --card-foreground: var(--sabi-text);
-  --popover: var(--sabi-surface);
+  --popover: var(--sabi-surface-elevated);
   --popover-foreground: var(--sabi-text);
   --primary: var(--sabi-primary);
   --primary-foreground: var(--sabi-on-primary);
-  --secondary: #E8F7F0;
+  --secondary: var(--sabi-primary-soft);
   --secondary-foreground: var(--sabi-primary-strong);
   --muted: var(--sabi-surface-subtle);
   --muted-foreground: var(--sabi-text-muted);
@@ -67,27 +79,27 @@
   --chart-1: var(--sabi-primary);
   --chart-2: var(--sabi-accent);
   --chart-3: var(--sabi-info);
-  --chart-4: #6BCF9B;
+  --chart-4: color-mix(in srgb, var(--sabi-primary) 55%, white);
   --chart-5: var(--sabi-text);
-  --sidebar: var(--sabi-surface);
+  --sidebar: var(--sabi-surface-elevated);
   --sidebar-foreground: var(--sabi-text);
   --sidebar-primary: var(--sabi-primary);
   --sidebar-primary-foreground: var(--sabi-on-primary);
-  --sidebar-accent: #E8F7F0;
+  --sidebar-accent: var(--sabi-surface-selected);
   --sidebar-accent-foreground: var(--sabi-primary-strong);
   --sidebar-border: var(--sabi-border);
   --sidebar-ring: var(--sabi-focus);
 }
 
 .dark {
-  --secondary: #183C2A;
-  --secondary-foreground: #DFF7EB;
+  --secondary: var(--sabi-primary-soft);
+  --secondary-foreground: var(--sabi-primary-strong);
   --muted: var(--sabi-surface-subtle);
   --muted-foreground: var(--sabi-text-muted);
   --input: var(--sabi-border);
-  --chart-4: #6BCF9B;
-  --sidebar-accent: var(--sabi-surface-subtle);
-  --sidebar-accent-foreground: #DFF7EB;
+  --chart-4: color-mix(in srgb, var(--sabi-primary) 65%, var(--sabi-surface));
+  --sidebar-accent: var(--sabi-surface-selected);
+  --sidebar-accent-foreground: var(--sabi-primary-strong);
 }
 
 @layer base {
@@ -111,8 +123,8 @@
   }
 
   ::selection {
-    background: #BCEBD4;
-    color: #17211B;
+    background: var(--sabi-primary-soft);
+    color: var(--sabi-text);
   }
 }
 
