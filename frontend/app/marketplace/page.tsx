@@ -1,5 +1,6 @@
 import { environment } from "@/app/config/environment";
 import MarketplaceClient, { type MarketplaceCategory, type MarketplaceJob, type MarketplaceListing } from "./MarketplaceClient";
+import MarketplaceDefaultLocation from "./MarketplaceDefaultLocation";
 import { MarketplaceShell } from "./MarketplaceShell";
 
 async function getMarketplaceData(params: { q?: string; location?: string; category?: string }): Promise<{ listings: MarketplaceListing[]; jobs: MarketplaceJob[]; categories: MarketplaceCategory[] }> {
@@ -38,6 +39,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
   const { listings, jobs, categories } = await getMarketplaceData(params);
   return (
     <MarketplaceShell>
+      <MarketplaceDefaultLocation hasExplicitLocation={Boolean(params.location)} />
       <MarketplaceClient initialListings={listings} initialJobs={jobs} categories={categories} />
     </MarketplaceShell>
   );
