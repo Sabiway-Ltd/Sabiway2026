@@ -4,61 +4,49 @@ This document is the product and UX contract for SabiWay's logged-out public web
 
 ## Core positioning
 
-SabiWay is **Nigeria-first and diaspora-connected**.
+SabiWay is a **location-based global services marketplace**.
 
-The service network and initial marketplace supply are centred on Nigeria, but the audience is not limited to people physically in Nigeria. The public experience must make it clear that SabiWay connects:
+The product should primarily help people discover relevant professionals near the location where a service is needed. A user may also deliberately change the search location and find professionals in another city or country. Nigeria and the United Kingdom are the first markets being optimised operationally, but they are not architectural boundaries.
 
-- people in Nigeria who need trusted services;
-- Nigerian professionals building reputation and opportunity;
-- Nigerians abroad arranging services, support, property or projects back home;
-- Nigerian communities across the diaspora who want a stronger connection to services, people and opportunity in Nigeria.
+Examples:
 
-Public copy must not make SabiWay sound like a Nigeria-only local directory.
+- a user in Manchester can find professionals around Manchester;
+- a user in Lagos can find professionals around Lagos;
+- a user in Manchester can deliberately search Lagos when the work needs to happen there;
+- a user in Lagos can deliberately search London;
+- a professional in another country can register and become discoverable where they operate;
+- remote services can be discovered across markets when the service does not require physical proximity.
+
+Nationality and diaspora identity must never be used as the marketplace's routing model. The relevant concepts are **account location, preferred search location, service location, professional service area and remote availability**.
 
 ## Public-before-authentication rule
 
-A logged-out visitor must be able to understand SabiWay before creating an account.
+A logged-out visitor must be able to understand SabiWay before creating an account. Public navigation and footer links must not unexpectedly send a visitor to `/login`.
 
-**Public navigation and footer links must not unexpectedly send a visitor to `/login`.**
-
-Authentication is reserved for actions that genuinely require identity or account state, including:
-
-- messaging;
-- posting a job or service;
-- booking/scheduling;
-- SabiPay/payment actions;
-- verification submission;
-- SabiForum participation;
-- profile/account management.
-
-Public explanation pages must remain directly accessible without authentication.
+Authentication is reserved for actions that genuinely require identity or account state, including messaging, posting, booking, payment, verification submission, SabiForum participation and profile/account management.
 
 ## Questions the public site must answer
 
-Before asking somebody to join, the site should make these clear:
-
-1. What problem does SabiWay solve in real life?
-2. How does it help me if I am in Nigeria?
-3. How does it help me if I live abroad but still need things done in Nigeria?
-4. How does it help me as a professional?
-5. What can I browse publicly?
-6. What trust signals exist and what do they actually mean?
-7. When will I need to sign in?
-8. What should I do next?
+1. What is SabiWay?
+2. How do I find a service near me?
+3. Can I search another city or country?
+4. How do local and remote services differ?
+5. How does SabiWay help professionals become discoverable?
+6. What trust signals exist and what do they mean?
+7. Which payment features are supported in my market?
+8. When do I need an account?
 
 ## Primary public navigation
 
-The public header prioritises user intent:
+- `/services` — find services
+- `/locations` — browse/search locations
+- `/for-clients` — client journey
+- `/for-professionals` — professional journey
+- `/how-it-works` — how SabiWay works
+- `/login` — sign in
+- `/signup` — join SabiWay
 
-- `/services` — Find services
-- `/for-clients` — For clients
-- `/for-professionals` — For professionals
-- `/diaspora` — For Nigerians abroad
-- `/how-it-works` — How SabiWay works
-- `/login` — Sign in
-- `/signup` — Join SabiWay
-
-SabiForum remains available in mobile/public discovery and the footer without crowding the desktop primary navigation.
+SabiForum remains available in public discovery and the footer without crowding the primary desktop navigation.
 
 ## Public page inventory
 
@@ -67,11 +55,10 @@ SabiForum remains available in mobile/public discovery and the footer without cr
 - `/` — public homepage
 - `/services` — service category index
 - `/services/[slug]` — public service-category pages
-- `/locations` — Nigeria location index
-- `/locations/[slug]` — public Nigeria location pages
+- `/locations` — public location discovery
+- `/locations/[slug]` — market/location landing pages where meaningful supply exists
 - `/for-clients` — Client journey
 - `/for-professionals` — Professional journey
-- `/diaspora` — dedicated diaspora journey
 - `/how-it-works` — end-to-end explanation
 - `/sabiforum` — public SabiForum explanation
 
@@ -94,9 +81,9 @@ SabiForum remains available in mobile/public discovery and the footer without cr
 - `/privacy-policy`
 - `/terms-of-use`
 
-## Operational routes are not public footer destinations
+## Operational routes are not generic public footer destinations
 
-These remain product/application routes and must not be used as generic public-information links:
+The following remain product/application routes and may require authentication depending on the action:
 
 - `/marketplace`
 - `/community`
@@ -106,88 +93,76 @@ These remain product/application routes and must not be used as generic public-i
 - `/notifications`
 - `/profile`
 
-The public website can explain these systems and then explicitly ask the user to sign in when they choose an authenticated action.
+The public website explains these systems and asks the user to sign in only when they choose an account-dependent action.
 
 ## Homepage UX hierarchy
 
-The homepage must lead with recognisable human situations rather than generic platform language.
+The homepage should use concrete situations rather than generic platform copy:
 
-Required hierarchy:
+1. local-first/global-by-design positioning;
+2. service-location explanation;
+3. Nigeria + UK as initial priority markets without country-locking the product;
+4. three obvious user routes: near me, somewhere else, offer a service;
+5. simple end-to-end service journey;
+6. trust, verification and SabiPay explanation;
+7. clear next actions.
 
-1. Nigeria + diaspora connection stated immediately.
-2. Real-life problem framing, including arranging things back home from abroad.
-3. Clear public routes for browsing services and understanding the diaspora journey.
-4. Situation-based paths: abroad, client, professional.
-5. Cross-border connection section explaining Nigeria-first supply and global relationships.
-6. Simple end-to-end service journey.
-7. Trust, verification and SabiPay explanation.
-8. Clear final statement that public browsing comes before sign-in.
+## Discovery model communicated publicly
 
-Avoid generic phrases such as “all-in-one platform” unless supported by concrete user outcomes.
+The website must be consistent with the product architecture:
 
-## Design quality standard for public pages
+- **account location** personalises discovery;
+- **preferred search location** controls where the user wants to browse;
+- **service location** describes where work needs to happen;
+- **professional base location** describes where a professional is based;
+- **service areas** describe where an in-person professional operates;
+- **remote availability** allows location-independent services;
+- local relevance should rank suitable nearby in-person services before distant in-person services;
+- users must always be able to change the search location.
 
-Every public page must feel like a deliberate product page, not a placeholder or a login gate.
+## Payments and market availability
 
-Minimum expectations:
+Marketplace availability and payment availability are separate concepts. A professional may be discoverable in a market before SabiPay has fully supported payment, FX and payout rails there. Public copy must never imply otherwise.
 
-- clear hero with audience-specific value;
-- readable content hierarchy;
-- useful information cards or sections;
-- visible next step;
-- mobile-first spacing and touch targets;
-- desktop layouts that use available width without stretching mobile patterns;
-- consistent SabiWay green/orange visual identity;
-- keyboard-visible focus states;
-- no critical information hidden behind hover;
-- no authentication redirect merely to read public information.
+Nigeria and the UK are the first optimised markets. Additional countries can become discoverable as professionals register, while payment capability is enabled only when the required market configuration and providers are supported.
 
-Shared components are encouraged, but pages must still contain specific content for their purpose.
+## Design quality standard
 
-## Responsive rules
+Every public page must feel like a deliberate product page, not a placeholder or login gate. Minimum expectations include clear hierarchy, responsive layout, useful content, visible next steps, 44px practical touch targets, keyboard-visible focus, no critical hover-only content and consistent SabiWay green/orange visual language.
 
-Review at minimum:
-
-- 320 px;
-- 375–430 px;
-- 768 px;
-- 1024 px;
-- 1280 px;
-- 1440 px.
-
-No horizontal page scrolling. Multi-column sections must collapse in logical reading order. Important controls should meet a 44 px practical touch target.
+Review at minimum at 320, 375–430, 768, 1024, 1280 and 1440 px.
 
 ## Trust and copy rules
 
 Do not overclaim:
 
 - verification is a trust signal, not a guarantee;
-- SabiPay wording must match supported transaction behaviour;
-- service availability must not be implied outside supported locations;
-- diaspora copy must distinguish global audience from Nigeria-first service supply;
+- SabiPay wording must match supported market/payment behaviour;
+- location pages must not imply supply that does not exist;
 - app-store availability must match real distribution status;
-- fees must match actual policy/configuration.
+- fees and FX wording must match actual policy/configuration;
+- estimated currency conversion must be labelled as estimated until checkout locks a quote.
 
 ## SEO and metadata
 
-Global metadata should describe SabiWay as connecting Nigeria and the Nigerian diaspora, not only as a local Nigerian marketplace.
+Metadata should describe SabiWay as a location-based services marketplace, with Nigeria and the UK as initial focus markets. Do not describe the product as a Nigeria-only marketplace or a dedicated diaspora service.
 
 The sitemap should contain true public-information routes. Protected operational application routes should not be included merely for acquisition SEO.
 
 ## Preservation boundary
 
-Public-web work must not silently change backend APIs, auth/authorisation, SabiPay lifecycle, verification workflow, realtime messaging, database schema or mobile application behaviour.
+Public-web work must not silently redefine backend APIs, authentication/authorisation, payment lifecycle, verification, realtime messaging, database schema or mobile behaviour.
 
 ## Review checklist
 
 Before merging:
 
-- every header and footer public link resolves without unexpected authentication;
-- homepage language clearly includes both Nigeria and the diaspora;
-- `/diaspora` renders publicly;
-- footer contains public explanation routes rather than protected operational routes;
-- public-page design is deliberate and responsive;
-- metadata and sitemap reflect current positioning;
-- TypeScript, lint and production build pass;
-- full Platform CI passes;
-- runtime review is completed separately when preview infrastructure is available.
+- every header/footer public link resolves without unexpected authentication;
+- homepage copy represents the local-first global model accurately;
+- Nigeria and UK are presented as priority markets, not hard boundaries;
+- no dedicated diaspora marketplace mode is implied;
+- location and remote-service concepts are understandable;
+- public payment copy distinguishes marketplace availability from SabiPay availability;
+- metadata/sitemap match the current model;
+- TypeScript, lint, production build and full Platform CI pass;
+- runtime visual review is completed separately when preview infrastructure is available.
