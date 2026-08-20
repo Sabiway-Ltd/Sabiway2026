@@ -8,13 +8,19 @@ import { PublicShell } from "@/app/_components/v2/PublicShell";
 import { readBrowserSession } from "@/app/auth/session";
 import VerificationClient from "./VerificationClient";
 
+function roleFromStoredUser(user: object | null): string | null {
+  if (!user || !("role" in user)) return null;
+  const value = (user as { role?: unknown }).role;
+  return typeof value === "string" ? value : null;
+}
+
 export default function VerificationAccessGate() {
   const [role, setRole] = useState<string | null>(null);
   const [resolved, setResolved] = useState(false);
 
   useEffect(() => {
     const { user } = readBrowserSession();
-    setRole(typeof user?.role === "string" ? user.role : null);
+    setRole(roleFromStoredUser(user));
     setResolved(true);
   }, []);
 
