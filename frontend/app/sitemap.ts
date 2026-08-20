@@ -6,7 +6,6 @@ export default function sitemap() {
     "",
     "/services",
     "/locations",
-    "/diaspora",
     "/for-clients",
     "/for-professionals",
     "/how-it-works",
@@ -28,8 +27,5 @@ export default function sitemap() {
     ...locations.map(({ slug }) => `/locations/${slug}`),
   ];
 
-  return routes.map((route) => ({
-    url: `https://www.sabiway.com${route}`,
-    lastModified,
-  }));
+  return routes.map((route) => ({ url: `https://www.sabiway.com${route}`, lastModified }));
 }
