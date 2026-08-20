@@ -9,22 +9,22 @@ export type MarketplaceDiscoveryFilters = {
   availableNow?: boolean;
   location?: string;
   country?: string;
+  countryCode?: string;
   state?: string;
   city?: string;
   area?: string;
+  postcode?: string;
+  nearLat?: number;
+  nearLng?: number;
+  radiusKm?: number;
   page?: number;
   pageSize?: number;
 };
 
 export type MarketplaceThread = { id: string };
 
-function authHeaders(access: string) {
-  return { Authorization: `Bearer ${access}` };
-}
-
-function unwrap<T>(payload: T[] | { results: T[] }): T[] {
-  return Array.isArray(payload) ? payload : payload.results;
-}
+function authHeaders(access: string) { return { Authorization: `Bearer ${access}` }; }
+function unwrap<T>(payload: T[] | { results: T[] }): T[] { return Array.isArray(payload) ? payload : payload.results; }
 
 function discoveryQuery(filters: MarketplaceDiscoveryFilters = {}) {
   const params = new URLSearchParams();
@@ -36,63 +36,27 @@ function discoveryQuery(filters: MarketplaceDiscoveryFilters = {}) {
   if (filters.availableNow) params.set("available_now", "true");
   if (filters.location?.trim()) params.set("location", filters.location.trim());
   if (filters.country?.trim()) params.set("country", filters.country.trim());
+  if (filters.countryCode?.trim()) params.set("country_code", filters.countryCode.trim().toUpperCase());
   if (filters.state?.trim()) params.set("state", filters.state.trim());
   if (filters.city?.trim()) params.set("city", filters.city.trim());
   if (filters.area?.trim()) params.set("area", filters.area.trim());
+  if (filters.postcode?.trim()) params.set("postcode", filters.postcode.trim());
+  if (filters.nearLat != null && filters.nearLng != null) { params.set("near_lat", String(filters.nearLat)); params.set("near_lng", String(filters.nearLng)); if (filters.radiusKm) params.set("radius_km", String(filters.radiusKm)); }
   if (filters.page && filters.page > 1) params.set("page", String(filters.page));
   if (filters.pageSize) params.set("page_size", String(filters.pageSize));
   const query = params.toString();
   return query ? `?${query}` : "";
 }
 
-export async function getMarketplaceCategories(): Promise<MarketplaceCategory[]> {
-  return unwrap(await apiRequest<MarketplaceCategory[] | { results: MarketplaceCategory[] }>("marketplace/categories/"));
+export async function getMarketplaceCategories(): Promise<MarketplaceCategory[]> { return unwrap(await apiRequest<MarketplaceCategory[] | { results: MarketplaceCategory[] }>("marketplace/categories/")); }
+export async function getMarketplaceListings(filters: MarketplaceDiscoveryFilters = {}): Promise<MarketplaceListing[]> { return unwrap(await apiRequest<MarketplaceListing[] | { results: MarketplaceListing[] }>(`marketplace/listings/${discoveryQuery(filters)}`)); }
+export async function getMarketplaceJobs(filters: MarketplaceDiscoveryFilters = {}): Promise<MarketplaceJob[]> { return unwrap(await apiRequest<MarketplaceJob[] | { results: MarketplaceJob[] }>(`marketplace/jobs/${discoveryQuery(filters)}`)); }
+export async function createMarketplaceJob(access: string, payload: Record<string, unknown>): Promise<MarketplaceJob> { return apiRequest<MarketplaceJob>("marketplace/jobs/", { method: "POST", headers: authHeaders(access), body: JSON.stringify(payload) }); }
+export async function createServiceListing(access: string, payload: Record<string, unknown>): Promise<MarketplaceListing> { return apiRequest<MarketplaceListing>("marketplace/listings/", { method: "POST", headers: authHeaders(access), body: JSON.stringify(payload) }); }
+
+export async function respondToMarketplaceJob(access: string, jobId: string, message: string, proposedPrice?: string, currency?: string): Promise<JobResponse> {
+  return apiRequest<JobResponse>("marketplace/job-responses/", { method: "POST", headers: authHeaders(access), body: JSON.stringify({ job_id: jobId, message, proposed_price: proposedPrice || null, ...(currency ? { currency: currency.toUpperCase() } : {}) }) });
 }
 
-export async function getMarketplaceListings(filters: MarketplaceDiscoveryFilters = {}): Promise<MarketplaceListing[]> {
-  return unwrap(await apiRequest<MarketplaceListing[] | { results: MarketplaceListing[] }>(`marketplace/listings/${discoveryQuery(filters)}`));
-}
-
-export async function getMarketplaceJobs(filters: MarketplaceDiscoveryFilters = {}): Promise<MarketplaceJob[]> {
-  return unwrap(await apiRequest<MarketplaceJob[] | { results: MarketplaceJob[] }>(`marketplace/jobs/${discoveryQuery(filters)}`));
-}
-
-export async function createMarketplaceJob(access: string, payload: Record<string, unknown>): Promise<MarketplaceJob> {
-  return apiRequest<MarketplaceJob>("marketplace/jobs/", {
-    method: "POST",
-    headers: authHeaders(access),
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function createServiceListing(access: string, payload: Record<string, unknown>): Promise<MarketplaceListing> {
-  return apiRequest<MarketplaceListing>("marketplace/listings/", {
-    method: "POST",
-    headers: authHeaders(access),
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function respondToMarketplaceJob(access: string, jobId: string, message: string, proposedPrice?: string): Promise<JobResponse> {
-  return apiRequest<JobResponse>("marketplace/job-responses/", {
-    method: "POST",
-    headers: authHeaders(access),
-    body: JSON.stringify({ job_id: jobId, message, proposed_price: proposedPrice || null, currency: "NGN" }),
-  });
-}
-
-export async function startServiceConversation(access: string, listingId: string): Promise<MarketplaceThread> {
-  return apiRequest<MarketplaceThread>("marketplace/threads/", {
-    method: "POST",
-    headers: authHeaders(access),
-    body: JSON.stringify({ listing_id: listingId }),
-  });
-}
-
-export async function startJobResponseConversation(access: string, jobResponseId: string): Promise<MarketplaceThread> {
-  return apiRequest<MarketplaceThread>("marketplace/threads/", {
-    method: "POST",
-    headers: authHeaders(access),
-    body: JSON.stringify({ job_response_id: jobResponseId }),
-  });
-}
+export async function startServiceConversation(access: string, listingId: string): Promise<MarketplaceThread> { return apiRequest<MarketplaceThread>("marketplace/threads/", { method: "POST", headers: authHeaders(access), body: JSON.stringify({ listing_id: listingId }) }); }
+export async function startJobResponseConversation(access: string, jobResponseId: string): Promise<MarketplaceThread> { return apiRequest<MarketplaceThread>("marketplace/threads/", { method: "POST", headers: authHeaders(access), body: JSON.stringify({ job_response_id: jobResponseId }) }); }
