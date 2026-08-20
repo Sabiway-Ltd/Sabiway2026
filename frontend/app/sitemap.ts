@@ -4,9 +4,9 @@ export default function sitemap() {
   const lastModified = new Date();
   const routes = [
     "",
-    "/marketplace",
     "/services",
     "/locations",
+    "/diaspora",
     "/for-clients",
     "/for-professionals",
     "/how-it-works",
