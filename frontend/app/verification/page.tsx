@@ -1,4 +1,4 @@
-import VerificationClient from "./VerificationClient";
+import VerificationAccessGate from "./VerificationAccessGate";
 
 export const metadata = {
   title: "Professional verification | SabiWay",
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function VerificationPage() {
-  return <VerificationClient />;
+  return <VerificationAccessGate />;
 }

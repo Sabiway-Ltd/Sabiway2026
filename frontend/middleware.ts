@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = [
-  "/", 
-  "/login", 
-  "/signup", 
-  "/check-email", 
-  "/confirm-signup", 
-  "/forgot-password",
-  "/terms-of-use",
-  "/helpcenter",
-  "/privacy-policy",
-  "/about-us"
-];
+import { accessClassForPath, isAuthEntryPath, requiresAuthentication } from "./app/config/accessPolicy";
 
 const PUBLIC_ASSETS = [
   "/favicon.ico",
@@ -25,30 +14,24 @@ const PUBLIC_ASSETS = [
 ];
 
 export function middleware(req: NextRequest) {
-  
   const path = req.nextUrl.pathname;
 
-
-  if (PUBLIC_ASSETS.includes(path)) {
-    return NextResponse.next();
-  }
+  if (PUBLIC_ASSETS.includes(path)) return NextResponse.next();
 
   const token = req.cookies.get("access")?.value;
+  const accessClass = accessClassForPath(path);
 
-  const isPublic =
-    PUBLIC_ROUTES.includes(path) ||
-    path.startsWith("/callback") || // covers /callback and /callback/google
-    path.startsWith("/change-password/") ||
-    path.startsWith("/confirm-signup");
-
-  // ⛔ Not logged in & not visiting a public route
-  if (!token && !isPublic) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  if (!token && requiresAuthentication(accessClass)) {
+    const loginUrl = new URL("/login", req.url);
+    const requested = `${req.nextUrl.pathname}${req.nextUrl.search}`;
+    loginUrl.searchParams.set("next", requested);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // ✅ Logged in & visiting login/signup pages
-  if (token && ["/login", "/signup"].includes(path)) {
-    return NextResponse.redirect(new URL("/community", req.url));
+  // Route role/object authorization remains a backend/API responsibility.
+  // Middleware only establishes guest vs authenticated route boundaries.
+  if (token && isAuthEntryPath(path)) {
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   return NextResponse.next();
@@ -59,4 +42,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|site.webmanifest|apple-touch-icon.png|android-chrome-192x192.png|android-chrome-512x512.png|favicon-16x16.png|favicon-32x32.png|images|uploads|fonts|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|pdf)$).*)",
   ],
 };
-
