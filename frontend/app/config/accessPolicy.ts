@@ -17,8 +17,8 @@ type RouteRule = {
 
 const ROUTE_RULES: RouteRule[] = [
   { prefix: "/", access: "PUBLIC", exact: true },
-  { prefix: "/login", access: "PUBLIC", exact: true },
-  { prefix: "/signup", access: "PUBLIC", exact: true },
+  { prefix: "/login", access: "PUBLIC" },
+  { prefix: "/signup", access: "PUBLIC" },
   { prefix: "/forgot-password", access: "PUBLIC", exact: true },
   { prefix: "/check-email", access: "PUBLIC", exact: true },
   { prefix: "/confirm-signup", access: "PUBLIC" },
@@ -72,7 +72,7 @@ export function requiresAuthentication(access: AccessClass): boolean {
 }
 
 export function isAuthEntryPath(pathname: string): boolean {
-  return pathname === "/login" || pathname === "/signup";
+  return pathname === "/login" || pathname.startsWith("/login/") || pathname === "/signup" || pathname.startsWith("/signup/");
 }
 
 export function safeInternalNext(value: string | null | undefined, fallback = "/home"): string {

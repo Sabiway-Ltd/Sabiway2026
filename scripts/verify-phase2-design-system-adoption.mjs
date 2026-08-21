@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 
 const targets = [
-  "frontend/app/(auth)/login/page.tsx",
-  "frontend/app/(auth)/signup/page.tsx",
+  "frontend/app/(auth)/_components/LoginExperience.tsx",
+  "frontend/app/(auth)/_components/SignupExperience.tsx",
   "frontend/app/(auth)/_components/AuthPasswordField.tsx",
   "frontend/app/_components/v2/AppShell.tsx",
   "frontend/app/_components/common/Button.tsx",
@@ -35,16 +35,16 @@ for (const path of targets) {
   }
 }
 
-const login = sourceByPath.get("frontend/app/(auth)/login/page.tsx") || "";
-const signup = sourceByPath.get("frontend/app/(auth)/signup/page.tsx") || "";
+const login = sourceByPath.get("frontend/app/(auth)/_components/LoginExperience.tsx") || "";
+const signup = sourceByPath.get("frontend/app/(auth)/_components/SignupExperience.tsx") || "";
 const shell = sourceByPath.get("frontend/app/_components/v2/AppShell.tsx") || "";
 const primitives = sourceByPath.get("frontend/app/_components/common/DesignPrimitives.tsx") || "";
 const dialog = sourceByPath.get("frontend/app/_components/common/ConfirmDialog.tsx") || "";
 const globals = await readFile("frontend/app/globals.css", "utf8");
 
 for (const [name, source, required] of [
-  ["login", login, ["Button", "Field", "AuthPasswordField"]],
-  ["signup", signup, ["Button", "Field", "AuthPasswordField"]],
+  ["LoginExperience", login, ["Button", "Field", "AuthPasswordField"]],
+  ["SignupExperience", signup, ["Button", "Field", "AuthPasswordField"]],
   ["AppShell", shell, ["Button", "Avatar", "Skeleton"]],
 ]) {
   for (const symbol of required) {

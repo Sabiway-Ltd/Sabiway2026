@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../app/config/accessPolicy.ts", import.meta.url), "utf8");
 
@@ -45,20 +45,57 @@ const expected = [
 ];
 
 const failures = [];
-for (const [prefix, access] of expected) {
+for (const [prefix, routeAccess] of expected) {
   const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`prefix:\\s*["']${escaped}["'][^}]*access:\\s*["']${access}["']`);
-  if (!pattern.test(source)) failures.push(`${prefix} -> ${access}`);
+  const pattern = new RegExp(`prefix:\\s*["']${escaped}["'][^}]*access:\\s*["']${routeAccess}["']`);
+  if (!pattern.test(source)) failures.push(`${prefix} -> ${routeAccess}`);
 }
 
-if (!source.includes('return rule?.access ?? "AUTHENTICATED_SHARED"')) {
-  failures.push("unknown-route fallback contract");
+if (!source.includes('return rule?.access ?? "AUTHENTICATED_SHARED"')) failures.push("unknown-route fallback contract");
+if (!source.includes('pathname.startsWith("/login/")')) failures.push("nested login auth-entry contract");
+if (!source.includes('pathname.startsWith("/signup/")')) failures.push("nested signup auth-entry contract");
+
+const roleEntryFiles = [
+  "../app/(auth)/login/client/page.tsx",
+  "../app/(auth)/login/professional/page.tsx",
+  "../app/(auth)/signup/client/page.tsx",
+  "../app/(auth)/signup/professional/page.tsx",
+];
+for (const relativePath of roleEntryFiles) {
+  try {
+    await access(new URL(relativePath, import.meta.url));
+  } catch {
+    failures.push(`missing role entry file ${relativePath}`);
+  }
+}
+
+const professionalAcquisition = await readFile(new URL("../app/for-professionals/page.tsx", import.meta.url), "utf8");
+if (!professionalAcquisition.includes('href: "/signup/professional"')) failures.push("Professional acquisition must use dedicated signup route");
+
+const loginExperience = await readFile(new URL("../app/(auth)/_components/LoginExperience.tsx", import.meta.url), "utf8");
+const signupExperience = await readFile(new URL("../app/(auth)/_components/SignupExperience.tsx", import.meta.url), "utf8");
+
+for (const expectedLabel of ["Sign in as {activeRole === \"professional\" ? \"Professional\" : \"Client\"}", "Continue with Google as {activeRole === \"professional\" ? \"Professional\" : \"Client\"}"]) {
+  if (!loginExperience.includes(expectedLabel)) failures.push(`login: missing role-specific action label ${expectedLabel}`);
+}
+for (const expectedLabel of ["Create Client account", "Create Professional account", "Continue with Google as {activeRole === \"professional\" ? \"Professional\" : \"Client\"}"]) {
+  if (!signupExperience.includes(expectedLabel)) failures.push(`signup: missing role-specific action label ${expectedLabel}`);
+}
+
+for (const [name, authSource] of [["login", loginExperience], ["signup", signupExperience]]) {
+  for (const eventName of ["role_entry_viewed", "role_intent_selected", "role_auth_started", "role_auth_succeeded"]) {
+    if (!authSource.includes(`"${eventName}"`)) failures.push(`${name}: missing analytics event ${eventName}`);
+  }
+  for (const sensitiveKey of ["email:", "password:", "phone_number:"]) {
+    const analyticsCalls = authSource.match(/trackProductEvent\([^;]+/g) || [];
+    if (analyticsCalls.some((call) => call.includes(sensitiveKey))) failures.push(`${name}: analytics must not include ${sensitiveKey.replace(":", "")}`);
+  }
 }
 
 if (failures.length) {
-  console.error("Access policy contract failed for:");
+  console.error("Access and role-entry policy contract failed for:");
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
 
-console.log(`Access policy contract passed for ${expected.length} route families.`);
+console.log(`Access policy contract passed for ${expected.length} route families plus dedicated Client/Professional role entry, action labels and funnel analytics.`);

@@ -17,5 +17,5 @@ export default function Page() {
     { title: "Strengthen trust", text: "Use verification and profile evidence where applicable." },
     { title: "Connect to relevant demand", text: "Appear in searches for the places you serve, or broader searches when your service is remote." },
     { title: "Deliver and build reputation", text: "Complete work professionally, get paid where supported and grow a review history that improves future discovery." },
-  ]} primaryCta={{ href: "/signup?role=professional", label: "Become a SabiWay Professional" }} secondaryCta={{ href: "/verification-info", label: "How verification works" }} note="Nigeria and the UK are the first optimised markets. The marketplace itself is designed so Professionals in other countries can still register and be found where they operate." />;
+  ]} primaryCta={{ href: "/signup/professional", label: "Become a SabiWay Professional" }} secondaryCta={{ href: "/verification-info", label: "How verification works" }} note="Nigeria and the UK are the first optimised markets. The marketplace itself is designed so Professionals in other countries can still register and be found where they operate." />;
 }
