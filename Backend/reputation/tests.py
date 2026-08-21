@@ -1,8 +1,11 @@
+from decimal import Decimal
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
 from marketplace.models import BookingRequest, MessageThread
+from sabipay.models import Transaction
 from verification.models import VerificationSubmission
 
 from .models import ProfessionalReview
@@ -46,8 +49,31 @@ class ProfessionalReviewAuthorityTests(APITestCase):
             scope_summary="Completed SabiWay work",
             agreed_price="100.00",
             currency="GBP",
-            status=BookingRequest.Status.IN_PROGRESS,
+            status=BookingRequest.Status.ACCEPTED,
         )
+        self.transaction = Transaction.objects.create(
+            booking=self.booking,
+            client=self.client_user.profile,
+            professional=self.professional_user.profile,
+            amount=Decimal("100.00"),
+            currency="GBP",
+            commission_rate=Decimal("0.1000"),
+            commission_amount=Decimal("10.00"),
+            provider_amount=Decimal("90.00"),
+            state=Transaction.State.FUNDED,
+            payment_status=Transaction.PaymentStatus.SUCCEEDED,
+            receipt_number=f"REVIEW-{self.booking.id}",
+        )
+
+    def complete_booking(self):
+        self.booking.status = BookingRequest.Status.IN_PROGRESS
+        self.booking.save(update_fields=["status", "updated_at"])
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.state, Transaction.State.IN_PROGRESS)
+        self.booking.status = BookingRequest.Status.COMPLETED
+        self.booking.save(update_fields=["status", "updated_at"])
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.state, Transaction.State.DELIVERED)
 
     def review_payload(self, **overrides):
         payload = {
@@ -65,16 +91,14 @@ class ProfessionalReviewAuthorityTests(APITestCase):
         self.assertEqual(ProfessionalReview.objects.count(), 0)
 
     def test_only_booking_client_can_review(self):
-        self.booking.status = BookingRequest.Status.COMPLETED
-        self.booking.save(update_fields=["status", "updated_at"])
+        self.complete_booking()
         self.client.force_authenticate(self.other_client)
         response = self.client.post("/api/reputation/reviews/", self.review_payload(), format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(ProfessionalReview.objects.count(), 0)
 
     def test_completed_booking_allows_one_review(self):
-        self.booking.status = BookingRequest.Status.COMPLETED
-        self.booking.save(update_fields=["status", "updated_at"])
+        self.complete_booking()
         self.client.force_authenticate(self.client_user)
         first = self.client.post("/api/reputation/reviews/", self.review_payload(), format="json")
         second = self.client.post("/api/reputation/reviews/", self.review_payload(rating=4), format="json")
@@ -86,16 +110,14 @@ class ProfessionalReviewAuthorityTests(APITestCase):
         self.assertEqual(review.professional, self.professional_user.profile)
 
     def test_rating_must_be_between_one_and_five(self):
-        self.booking.status = BookingRequest.Status.COMPLETED
-        self.booking.save(update_fields=["status", "updated_at"])
+        self.complete_booking()
         self.client.force_authenticate(self.client_user)
         response = self.client.post("/api/reputation/reviews/", self.review_payload(rating=6), format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(ProfessionalReview.objects.count(), 0)
 
     def test_public_profile_exposes_only_approved_verification_and_reputation(self):
-        self.booking.status = BookingRequest.Status.COMPLETED
-        self.booking.save(update_fields=["status", "updated_at"])
+        self.complete_booking()
         ProfessionalReview.objects.create(
             booking=self.booking,
             client=self.client_user.profile,
