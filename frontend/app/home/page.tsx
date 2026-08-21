@@ -8,6 +8,7 @@ import { AppShell } from "@/app/_components/v2/AppShell";
 import { InlineAlert, Skeleton, StatusBadge } from "@/app/_components/common/DesignPrimitives";
 import { environment } from "@/app/config/environment";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import ProfessionalHomeDashboard from "./ProfessionalHome";
 
 type Paginated<T> = T[] | { results?: T[] };
 type ClientJob = { id: string; title: string; status: string; moderation_status: string; response_count: number; category?: { name?: string } };
@@ -122,23 +123,7 @@ function ClientHome() {
   );
 }
 
-function ProfessionalHome() {
-  const user = useAuthStore((state) => state.user);
-  const firstName = user?.full_name?.trim().split(/\s+/)[0] || "there";
-  const actions = [
-    { href: "/marketplace", label: "Find open jobs", text: "Browse Client needs that match your skills.", icon: Search },
-    { href: "/profile", label: "Strengthen your profile", text: "Keep your service information and trust details current.", icon: UserRound },
-    { href: "/messages", label: "Open messages", text: "Continue conversations with potential Clients.", icon: MessageCircle },
-  ];
-  return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-      <section className="overflow-hidden rounded-[var(--sabi-radius-xl)] bg-primary px-5 py-8 text-primary-foreground shadow-[var(--sabi-shadow-md)] sm:px-8 lg:px-10 lg:py-10"><p className="text-xs font-black uppercase tracking-[.16em] text-white/80">Your SabiWay</p><div className="mt-2 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end"><div><h1 className="text-3xl font-black tracking-tight sm:text-4xl">Welcome, {firstName}.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-white/85 sm:text-base">Manage your Professional presence, discover relevant jobs and keep Client conversations moving.</p></div><Link href="/marketplace" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-black text-accent-foreground">Explore marketplace <ArrowRight size={17} aria-hidden="true" /></Link></div></section>
-      <section className="mt-8"><p className="text-xs font-black uppercase tracking-[.14em] text-primary">Start here</p><h2 className="mt-1 text-2xl font-black">What would you like to do?</h2><div className="mt-4 grid gap-4 md:grid-cols-3">{actions.map(({ href, label, text, icon: Icon }) => <Link key={label} href={href} className="group rounded-2xl border border-border bg-card p-5 shadow-[var(--sabi-shadow-sm)] transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--sabi-primary-soft)] text-primary"><Icon size={21} aria-hidden="true" /></div><h3 className="mt-4 text-lg font-black">{label}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p><span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-primary">Open <ArrowRight size={15} aria-hidden="true" /></span></Link>)}</div></section>
-    </main>
-  );
-}
-
 export default function HomePage() {
   const role = useAuthStore((state) => state.user?.role);
-  return <AppShell>{role === "professional" ? <ProfessionalHome /> : <ClientHome />}</AppShell>;
+  return <AppShell>{role === "professional" ? <ProfessionalHomeDashboard /> : <ClientHome />}</AppShell>;
 }
