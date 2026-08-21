@@ -30,6 +30,11 @@ class ProfessionalReviewAuthorityTests(APITestCase):
         )
         self.professional_user.profile.username = "@review-professional"
         self.professional_user.profile.save()
+        self.verification = VerificationSubmission.objects.create(
+            professional=self.professional_user.profile,
+            status=VerificationSubmission.Status.APPROVED,
+            identity_type=VerificationSubmission.IdentityType.PASSPORT,
+        )
         self.thread = MessageThread.objects.create(
             client=self.client_user.profile,
             professional=self.professional_user.profile,
@@ -98,13 +103,9 @@ class ProfessionalReviewAuthorityTests(APITestCase):
             rating=5,
             comment="Strong completed-work experience.",
         )
-        submission = VerificationSubmission.objects.create(
-            professional=self.professional_user.profile,
-            status=VerificationSubmission.Status.APPROVED,
-            identity_type=VerificationSubmission.IdentityType.PASSPORT,
-            decision_reason="Private reviewer reasoning",
-            more_info_request="Private request",
-        )
+        self.verification.decision_reason = "Private reviewer reasoning"
+        self.verification.more_info_request = "Private request"
+        self.verification.save(update_fields=["decision_reason", "more_info_request", "updated_at"])
         response = self.client.get("/api/profiles/public/review-professional/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["trust"]["verification"]["is_verified"])
@@ -113,5 +114,5 @@ class ProfessionalReviewAuthorityTests(APITestCase):
         self.assertEqual(reputation["review_count"], 1)
         self.assertEqual(reputation["reviews"][0]["comment"], "Strong completed-work experience.")
         body = str(response.data)
-        self.assertNotIn(submission.decision_reason, body)
-        self.assertNotIn(submission.more_info_request, body)
+        self.assertNotIn(self.verification.decision_reason, body)
+        self.assertNotIn(self.verification.more_info_request, body)
