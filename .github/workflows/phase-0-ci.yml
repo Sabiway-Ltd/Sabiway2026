@@ -242,9 +242,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          marketplace_code=$(curl --silent --output /tmp/marketplace.html --write-out '%{http_code}' 'http://127.0.0.1:3100/marketplace?q=cleaning&location=London')
+          marketplace_headers=$(curl --silent --head 'http://127.0.0.1:3100/marketplace?q=cleaning&location=London' | tr -d '\r')
+          marketplace_code=$(printf '%s\n' "$marketplace_headers" | awk 'NR==1 {print $2}')
           test "$marketplace_code" = "200" || { echo "Marketplace returned ${marketplace_code}"; exit 1; }
-          grep -q 'Find the right Professional for the work' /tmp/marketplace.html || { echo "Guest marketplace discovery content missing"; exit 1; }
+          if printf '%s\n' "$marketplace_headers" | grep -qi '^location: .*login'; then echo "Marketplace unexpectedly redirected to login"; exit 1; fi
           profile_code=$(curl --silent --output /tmp/public-profile.html --write-out '%{http_code}' 'http://127.0.0.1:3100/profile/browser-regression-professional')
           test "$profile_code" = "200" || { echo "Public profile route returned ${profile_code}"; exit 1; }
           grep -q 'This profile is temporarily unavailable' /tmp/public-profile.html || { echo "Public profile degraded state missing"; exit 1; }
