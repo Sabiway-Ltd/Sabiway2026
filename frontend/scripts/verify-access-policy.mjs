@@ -11,6 +11,7 @@ const expected = [
   ["/confirm-signup", "PUBLIC"],
   ["/change-password", "PUBLIC"],
   ["/callback", "PUBLIC"],
+  ["/demo", "PUBLIC"],
   ["/about-us", "PUBLIC"],
   ["/accessibility", "PUBLIC"],
   ["/careers", "PUBLIC"],
@@ -100,4 +101,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Access policy contract passed for ${expected.length} route families plus dedicated role entry and role-specific onboarding access.`);
+console.log(`Access policy contract passed for ${expected.length} route families plus dedicated role entry, onboarding and controlled demo access.`);
