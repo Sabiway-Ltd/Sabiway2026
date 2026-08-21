@@ -50,6 +50,7 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/hashtag", access: "GUEST_CAPABLE" },
   { prefix: "/profile/", access: "GUEST_CAPABLE" },
 
+  { prefix: "/onboarding/client", access: "CLIENT_ONLY" },
   { prefix: "/community/moderation", access: "STAFF_ONLY" },
   { prefix: "/community", access: "AUTHENTICATED_SHARED" },
   { prefix: "/home", access: "AUTHENTICATED_SHARED" },
