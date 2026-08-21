@@ -11,6 +11,7 @@ import clsx from "clsx";
 import { AuthPasswordField } from "@/app/(auth)/_components/AuthPasswordField";
 import Button from "@/app/_components/common/Button";
 import { Field, InlineAlert } from "@/app/_components/common/DesignPrimitives";
+import { postAuthDestination } from "@/app/auth/destination";
 import { rememberAuthIntent } from "@/app/auth/session";
 import { safeInternalNext } from "@/app/config/accessPolicy";
 import { useAuthStore, type AccountRole } from "@/app/store/useAuthStore";
@@ -55,7 +56,7 @@ export function LoginExperience({ lockedRole }: { lockedRole?: AccountRole }) {
     const success = await login(form);
     if (success) {
       void trackProductEvent("role_auth_succeeded", { flow: "login", role: activeRole, entry_type: entryType, method: "password" });
-      window.location.href = requestedNext();
+      window.location.href = postAuthDestination(useAuthStore.getState().user, requestedNext());
     }
   };
 
@@ -64,7 +65,7 @@ export function LoginExperience({ lockedRole }: { lockedRole?: AccountRole }) {
     void trackProductEvent("role_auth_started", { flow: "login", role: activeRole, entry_type: entryType, method: "google" });
     try {
       rememberAuthIntent(requestedNext(), activeRole);
-      const response = await fetch(`${DJANGO_URL}/api/auth/generate-google-url`);
+      const response = await fetch(`${DJANGO_URL}/api/auth/generate-google-url/`);
       const data = await response.json();
       if (data?.auth_url) window.location.href = data.auth_url;
       else toast.error("Failed to load Google login.");
