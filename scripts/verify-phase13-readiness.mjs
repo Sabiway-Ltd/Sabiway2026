@@ -19,6 +19,12 @@ function requireText(label, relativePath, markers) {
   const missing = markers.filter((marker) => !content.includes(marker));
   check(label, missing.length === 0, missing.length ? `${relativePath}: missing ${missing.join(", ")}` : relativePath);
 }
+function rejectText(label, relativePath, markers) {
+  if (!exists(relativePath)) return check(label, false, `${relativePath} missing`);
+  const content = read(relativePath);
+  const present = markers.filter((marker) => content.includes(marker));
+  check(label, present.length === 0, present.length ? `${relativePath}: contains ${present.join(", ")}` : relativePath);
+}
 
 requirePath("Phase 12 certification evidence retained", "qa/phase12-certification.json");
 requirePath("Phase 13 readiness contract", "qa/phase13-readiness.json");
@@ -91,6 +97,17 @@ check("Stable web URL is HTTPS", /^https:\/\//.test(readiness.web?.stableUrl ?? 
 requireText("Support route remains available", "frontend/app/helpcenter/page.tsx", ["Help"]);
 requireText("Phase 12 regression gate remains in CI", ".github/workflows/phase-0-ci.yml", ["journey-contract-check", "Production build"]);
 
+// Canonical Phase 13 Messaging & Notifications product contract.
+requirePath("Phase 13 product audit", "docs/PHASE-13-MESSAGING-NOTIFICATIONS-AUDIT.md");
+requirePath("Phase 13 static product contract", "frontend/scripts/verify-phase13-messaging-notifications.mjs");
+requireText("Notifications use shared application shell", "frontend/app/notifications/page.tsx", ["AppShell", "Activity centre", "AllNotifications"]);
+requireText("Notifications use shared authenticated API", "frontend/app/store/useAllNotificationsStore.ts", ["import { api }", "api.get<NotificationResponse>", "api.patch"]);
+rejectText("Notifications avoid page/store credential duplication", "frontend/app/store/useAllNotificationsStore.ts", ['localStorage.getItem("access")', 'localStorage.setItem("access")', "document.cookie"]);
+requireText("Notification contextual routing", "frontend/app/notifications/AllNotifications.tsx", ["safeNotificationLink", 'return "/messages"', 'return "/bookings"', 'return "/sabipay"']);
+requireText("Messages remain in shared app shell", "frontend/app/messages/page.tsx", ["AppShell", "MessagesClient"]);
+requireText("Messaging participant and booking authority preserved", "Backend/marketplace/serializers.py", ["if me.pk not in thread.participant_ids()", "Only the client can create the booking agreement.", "Contact details cannot be shared before a booking is accepted."]);
+requireText("Notifications promoted to shared role navigation", "frontend/app/config/accessPolicy.ts", ['{ href: "/notifications", label: "Notifications" }', '{ prefix: "/notifications", access: "AUTHENTICATED_SHARED" }', '{ prefix: "/messages", access: "PARTICIPANT_SCOPED" }']);
+
 const releaseGateKeys = [
   "noSeverity1",
   "criticalSeverity2Resolved",
@@ -110,6 +127,6 @@ const failed = checks.filter((item) => !item.pass);
 for (const item of checks) {
   console.log(`${item.pass ? "PASS" : "FAIL"}  ${item.label} — ${item.detail}`);
 }
-console.log(`\nPhase 13 repository readiness contract: ${checks.length - failed.length}/${checks.length} checks passed.`);
+console.log(`\nPhase 13 repository readiness and Messaging & Notifications contract: ${checks.length - failed.length}/${checks.length} checks passed.`);
 console.log("External browser, physical-device, TestFlight/store and controlled-beta runtime execution are evidence gates, not CI assumptions.");
 if (failed.length) process.exit(1);
