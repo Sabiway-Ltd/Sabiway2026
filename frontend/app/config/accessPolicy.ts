@@ -24,6 +24,7 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/confirm-signup", access: "PUBLIC" },
   { prefix: "/change-password", access: "PUBLIC" },
   { prefix: "/callback", access: "PUBLIC" },
+  { prefix: "/demo", access: "PUBLIC" },
 
   { prefix: "/about-us", access: "PUBLIC" },
   { prefix: "/accessibility", access: "PUBLIC" },

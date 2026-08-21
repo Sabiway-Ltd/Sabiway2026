@@ -138,6 +138,8 @@ jobs:
         run: node scripts/verify-phase5-client-onboarding.mjs
       - name: Verify Phase 6 Professional onboarding contract
         run: node scripts/verify-phase6-professional-onboarding.mjs
+      - name: Verify Phase 7 controlled demo isolation contract
+        run: node scripts/verify-phase7-demo-environment.mjs
       - name: TypeScript
         run: npm run type-check
       - name: Lint
@@ -154,6 +156,7 @@ jobs:
       NEXT_PUBLIC_DJANGO_URL: http://127.0.0.1:3999
       NEXT_PUBLIC_REALTIME_URL: http://127.0.0.1:3998
       NEXT_PUBLIC_WAITLIST_URL: http://127.0.0.1:3997
+      NEXT_PUBLIC_DEMO_MODE: "true"
       BROWSER_TEST_BASE_URL: http://127.0.0.1:3100
     steps:
       - uses: actions/checkout@v4
@@ -204,6 +207,19 @@ jobs:
           case "$location" in
             */login?next=%2Fonboarding%2Fprofessional%3Fnext%3D%252Fmarketplace) ;;
             *) echo "Unexpected Professional onboarding redirect: $location"; exit 1 ;;
+          esac
+      - name: Verify controlled demo routes remain public while production app stays protected
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in /demo /demo/client /demo/professional; do
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:3100${route}")
+            test "$code" = "200" || { echo "Demo route ${route} returned ${code}"; exit 1; }
+          done
+          location=$(curl --silent --head 'http://127.0.0.1:3100/home' | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
+          case "$location" in
+            */login?next=%2Fhome) ;;
+            *) echo "Demo mode weakened protected /home: $location"; exit 1 ;;
           esac
       - name: Run headless Chromium access regression
         run: node scripts/browser-access-regression.mjs
