@@ -61,14 +61,16 @@ for (const contract of [
   "/api/profiles/public/",
   "Approved services",
   "Trust context",
-  "Verification is one signal",
+  "Verified Professional",
+  "Completed-work reputation",
+  "No completed-work reviews yet",
   "ServiceContactButton",
   "SabiForum activity",
   "Community posts can help",
 ]) {
   if (!publicProfile.includes(contract)) failures.push(`public Professional storefront missing ${contract}`);
 }
-for (const forbidden of ["phone_number", "date_of_birth", "street", "address", "followers_count", "star rating", "★★★★★"]) {
+for (const forbidden of ["phone_number", "date_of_birth", "street", "address", "followers_count", "★★★★★"]) {
   if (publicProfile.includes(forbidden)) failures.push(`public Professional storefront must not expose/invent ${forbidden}`);
 }
 
@@ -87,6 +89,8 @@ for (const contract of [
   "ProfileSerializer(profile, context={\"request\": request})",
   "ServiceListing.ModerationStatus.APPROVED",
   "is_active=True",
+  "VerificationSubmission.Status.APPROVED",
+  "PublicProfessionalReviewSerializer",
 ]) {
   if (!backendView.includes(contract)) failures.push(`public marketplace profile backend missing ${contract}`);
 }
@@ -106,5 +110,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 10 marketplace discovery and public Professional profile contract passed.");
+console.log("Phase 10 marketplace discovery and public Professional profile contract passed while allowing Phase 14 to evolve trust evidence into backend-derived verification and completed-work reputation.");
 await import("./verify-phase11-jobs-leads-proposals.mjs");

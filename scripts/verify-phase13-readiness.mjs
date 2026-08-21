@@ -108,6 +108,20 @@ requireText("Messages remain in shared app shell", "frontend/app/messages/page.t
 requireText("Messaging participant and booking authority preserved", "Backend/marketplace/serializers.py", ["if me.pk not in thread.participant_ids()", "Only the client can create the booking agreement.", "Contact details cannot be shared before a booking is accepted."]);
 requireText("Notifications promoted to shared role navigation", "frontend/app/config/accessPolicy.ts", ['{ href: "/notifications", label: "Notifications" }', '{ prefix: "/notifications", access: "AUTHENTICATED_SHARED" }', '{ prefix: "/messages", access: "PARTICIPANT_SCOPED" }']);
 
+// Phase 14 Trust, Verification, Reputation & Reviews contract.
+requirePath("Phase 14 trust audit", "docs/PHASE-14-TRUST-VERIFICATION-REPUTATION-AUDIT.md");
+requirePath("Phase 14 reputation model", "Backend/reputation/models.py");
+requirePath("Phase 14 reputation authority tests", "Backend/marketplace/test_phase14_reputation.py");
+requireText("Completed-work review authority", "Backend/reputation/serializers.py", ["BookingRequest.Status.COMPLETED", "Only the Client on this booking can review the Professional.", "A completed-work review already exists for this booking."]);
+requireText("Public trust read model is backend-derived", "Backend/profiles/public_views.py", ["VerificationSubmission.Status.APPROVED", "average_rating=Avg", "PublicProfessionalReviewSerializer", '"trust"']);
+requireText("Verification uses authenticated app shell", "frontend/app/verification/page.tsx", ["AppShell", "VerificationAccessGate"]);
+requireText("Verification uses shared authenticated API", "frontend/app/verification/VerificationClient.tsx", ["import { api }", 'api.get<Submission>("/verification/submissions/me/")', "api.post<Submission>", "responseType: \"blob\""]);
+rejectText("Verification avoids page-level credential duplication", "frontend/app/verification/VerificationClient.tsx", ['localStorage.getItem("access")', "Authorization: `Bearer", "PublicShell"]);
+requireText("Public Professional profile separates trust signals", "frontend/app/profile/[username]/page.tsx", ["Completed-work reputation", "Verified Professional", "No completed-work reviews yet", "trust.reputation"]);
+requireText("Completed booking exposes Client review action", "frontend/app/bookings/page.tsx", ["booking.status === \"completed\"", 'api.post<Review>("/reputation/reviews/"', "Submit completed-work review"]);
+rejectText("Production profile does not contain fake review fixtures", "frontend/app/profile/[username]/page.tsx", ["fakeReview", "mockReview", "sampleReview"]);
+requireText("Verification remains Professional-only", "frontend/app/config/accessPolicy.ts", ['{ prefix: "/verification", access: "PROFESSIONAL_ONLY" }']);
+
 const releaseGateKeys = [
   "noSeverity1",
   "criticalSeverity2Resolved",
@@ -127,6 +141,6 @@ const failed = checks.filter((item) => !item.pass);
 for (const item of checks) {
   console.log(`${item.pass ? "PASS" : "FAIL"}  ${item.label} — ${item.detail}`);
 }
-console.log(`\nPhase 13 repository readiness and Messaging & Notifications contract: ${checks.length - failed.length}/${checks.length} checks passed.`);
+console.log(`\nPhase 14 repository readiness, trust, verification and reputation contract: ${checks.length - failed.length}/${checks.length} checks passed.`);
 console.log("External browser, physical-device, TestFlight/store and controlled-beta runtime execution are evidence gates, not CI assumptions.");
 if (failed.length) process.exit(1);

@@ -15,6 +15,7 @@ urlpatterns = [
     path("api/marketplace/", include("marketplace.urls")),
     path("api/markets/", include("markets.urls")),
     path("api/verification/", include("verification.urls")),
+    path("api/reputation/", include("reputation.urls")),
     path("api/sabipay/", include("sabipay.urls")),
     path("api/operations/", include("operations.urls")),
     path("api/v1/health/", include("health.urls")),
@@ -26,6 +27,7 @@ urlpatterns = [
     path("api/v1/marketplace/", include("marketplace.urls")),
     path("api/v1/markets/", include("markets.urls")),
     path("api/v1/verification/", include("verification.urls")),
+    path("api/v1/reputation/", include("reputation.urls")),
     path("api/v1/sabipay/", include("sabipay.urls")),
     path("api/v1/operations/", include("operations.urls")),
 ]
