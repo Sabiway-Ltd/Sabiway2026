@@ -6,6 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from marketplace.models import ServiceCategory, ServiceListing
 from profiles.models import Profile
 
 from .models import PasswordReset, PendingSignup, User
@@ -188,6 +189,114 @@ class IdentityJourneyTests(APITestCase):
         self.assertEqual(profile.area, "Preston")
         self.assertTrue(response.data["user"]["onboarding_complete"])
         self.assertTrue(response.data["profile"]["onboarding_complete"])
+
+    def test_professional_onboarding_requires_authentication_and_rejects_clients(self):
+        anonymous = self.client.post(reverse("professional-onboarding"), {}, format="json")
+        self.assertEqual(anonymous.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        client_user = User.objects.create_user(
+            email="client-denied@example.com",
+            full_name="Client Denied",
+            password="StrongPass123!",
+            role=User.Role.CLIENT,
+        )
+        self.client.force_authenticate(client_user)
+        denied = self.client.get(reverse("professional-onboarding"))
+        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
+        client_user.refresh_from_db()
+        self.assertIsNone(client_user.onboarding_completed_at)
+
+    def test_professional_onboarding_creates_private_draft_service_and_completes_account(self):
+        category = ServiceCategory.objects.create(name="Electrical Services", slug="electrical-services")
+        user = User.objects.create_user(
+            email="pro-onboarding@example.com",
+            full_name="Professional User",
+            password="StrongPass123!",
+            role=User.Role.PROFESSIONAL,
+        )
+        profile = Profile.objects.get(user=user)
+        self.client.force_authenticate(user)
+
+        response = self.client.post(
+            reverse("professional-onboarding"),
+            {
+                "full_name": "Professional Person",
+                "phone_number": "+447700900123",
+                "professional_summary": "Experienced electrician supporting residential repairs and installations across local homes.",
+                "category_id": category.id,
+                "service_title": "Residential electrical repairs",
+                "service_description": "Electrical fault finding, socket replacement and safe residential installation support for local Clients.",
+                "price_from": "75.00",
+                "currency": "GBP",
+                "delivery_mode": "in_person",
+                "country": "United Kingdom",
+                "state": "Lancashire",
+                "city": "Preston",
+                "area": "Fulwood",
+                "availability_text": "Weekdays after 5pm and Saturdays",
+                "available_now": True,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        profile.refresh_from_db()
+        listing = ServiceListing.objects.get(provider=profile)
+        self.assertIsNotNone(user.onboarding_completed_at)
+        self.assertEqual(profile.bio, "Experienced electrician supporting residential repairs and installations across local homes.")
+        self.assertEqual(profile.job, "Electrical Services")
+        self.assertEqual(listing.title, "Residential electrical repairs")
+        self.assertEqual(listing.currency, "GBP")
+        self.assertEqual(listing.moderation_status, ServiceListing.ModerationStatus.DRAFT)
+        self.assertTrue(listing.is_active)
+        self.assertTrue(response.data["user"]["onboarding_complete"])
+        self.assertEqual(response.data["draft_service"]["moderation_status"], ServiceListing.ModerationStatus.DRAFT)
+
+    def test_professional_onboarding_updates_existing_draft_instead_of_creating_duplicates(self):
+        category = ServiceCategory.objects.create(name="Cleaning", slug="cleaning")
+        user = User.objects.create_user(
+            email="pro-draft@example.com",
+            full_name="Professional Draft",
+            password="StrongPass123!",
+            role=User.Role.PROFESSIONAL,
+        )
+        profile = Profile.objects.get(user=user)
+        existing = ServiceListing.objects.create(
+            provider=profile,
+            category=category,
+            title="Old cleaning service",
+            description="An existing private draft service description that is long enough for the model.",
+            price_from="20.00",
+            currency="GBP",
+            delivery_mode=ServiceListing.DeliveryMode.REMOTE,
+            moderation_status=ServiceListing.ModerationStatus.DRAFT,
+        )
+        self.client.force_authenticate(user)
+        response = self.client.post(
+            reverse("professional-onboarding"),
+            {
+                "full_name": "Professional Draft",
+                "professional_summary": "Professional cleaning coordinator providing reliable household cleaning support and scheduling.",
+                "category_id": category.id,
+                "service_title": "Household cleaning coordination",
+                "service_description": "Reliable household cleaning coordination with clear scope, scheduling and service expectations for Clients.",
+                "price_from": "30.00",
+                "currency": "GBP",
+                "delivery_mode": "remote",
+                "country": "",
+                "state": "",
+                "city": "",
+                "area": "",
+                "availability_text": "Weekdays",
+                "available_now": False,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(ServiceListing.objects.filter(provider=profile).count(), 1)
+        existing.refresh_from_db()
+        self.assertEqual(existing.title, "Household cleaning coordination")
+        self.assertEqual(existing.moderation_status, ServiceListing.ModerationStatus.DRAFT)
 
     @patch("accounts.serializers.send_resend_email")
     def test_forgot_password_does_not_reveal_unknown_accounts(self, send_email):

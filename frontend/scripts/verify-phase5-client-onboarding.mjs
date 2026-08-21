@@ -12,12 +12,12 @@ const page = await read("../app/onboarding/client/page.tsx");
 const store = await read("../app/store/useAuthStore.ts");
 
 for (const contract of [
-  'user?.role === "client"',
-  "user.onboarding_complete === false",
+  "user?.onboarding_complete === false",
+  'user.role === "client"',
   "/onboarding/client?next=",
   "safeInternalNext",
 ]) {
-  if (!destination.includes(contract)) failures.push(`destination: missing ${contract}`);
+  if (!destination.includes(contract)) failures.push(`destination: missing Client behavior ${contract}`);
 }
 
 if (!login.includes("postAuthDestination(useAuthStore.getState().user, requestedNext())")) {
@@ -37,11 +37,11 @@ if (!callback.includes("postAuthDestination(normalizedUser, intent.next)")) fail
 if (!callback.includes("`/signup/${intent.role}`")) failures.push("callback: missing dedicated role signup recovery");
 
 for (const contract of [
-  'currentUser?.role === "client"',
-  "currentUser.onboarding_complete === false",
+  "currentUser?.onboarding_complete === false",
+  'currentUser.role === "client"',
   "/onboarding/client?next=",
 ]) {
-  if (!shell.includes(contract)) failures.push(`AppShell: missing ${contract}`);
+  if (!shell.includes(contract)) failures.push(`AppShell: missing Client behavior ${contract}`);
 }
 
 for (const contract of [
@@ -71,4 +71,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 5 Client onboarding contract passed.");
+console.log("Phase 5 Client onboarding contract passed with shared Client/Professional destination resolver.");
