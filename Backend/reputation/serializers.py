@@ -6,6 +6,7 @@ from .models import ProfessionalReview
 
 
 class ProfessionalReviewSerializer(serializers.ModelSerializer):
+    booking = serializers.UUIDField(source="booking.id", read_only=True)
     booking_id = serializers.PrimaryKeyRelatedField(
         source="booking",
         queryset=BookingRequest.objects.select_related("client", "professional").all(),
@@ -18,6 +19,7 @@ class ProfessionalReviewSerializer(serializers.ModelSerializer):
         model = ProfessionalReview
         fields = [
             "id",
+            "booking",
             "booking_id",
             "client_name",
             "professional_username",
@@ -28,6 +30,7 @@ class ProfessionalReviewSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "booking",
             "client_name",
             "professional_username",
             "created_at",
