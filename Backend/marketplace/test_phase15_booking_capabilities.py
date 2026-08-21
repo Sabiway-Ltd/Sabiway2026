@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from sabipay.models import Transaction
+from verification.models import VerificationSubmission
 
 from .models import BookingRequest, MessageThread, ScheduleProposal
 
@@ -30,6 +31,11 @@ class Phase15BookingCapabilityTests(APITestCase):
             full_name="Phase 15 Outsider",
             password="StrongPass123!",
             role=User.Role.CLIENT,
+        )
+        VerificationSubmission.objects.create(
+            professional=self.professional_user.profile,
+            status=VerificationSubmission.Status.APPROVED,
+            identity_type=VerificationSubmission.IdentityType.PASSPORT,
         )
         self.thread = MessageThread.objects.create(
             client=self.client_user.profile,
