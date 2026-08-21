@@ -9,18 +9,19 @@ const access = await read("../app/config/accessPolicy.ts");
 const page = await read("../app/onboarding/professional/page.tsx");
 
 for (const contract of [
-  'user?.role === "professional"',
-  "user.onboarding_complete === false",
+  "user?.onboarding_complete === false",
+  'user.role === "professional"',
   "/onboarding/professional?next=",
 ]) {
-  if (!destination.includes(contract)) failures.push(`destination: missing ${contract}`);
+  if (!destination.includes(contract)) failures.push(`destination: missing Professional behavior ${contract}`);
 }
 
 for (const contract of [
+  "currentUser?.onboarding_complete === false",
   'currentUser.role === "professional"',
   "/onboarding/professional?next=",
 ]) {
-  if (!shell.includes(contract)) failures.push(`AppShell: missing ${contract}`);
+  if (!shell.includes(contract)) failures.push(`AppShell: missing Professional behavior ${contract}`);
 }
 
 if (!access.includes('{ prefix: "/onboarding/professional", access: "PROFESSIONAL_ONLY" }')) {
@@ -67,4 +68,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 6 Professional onboarding contract passed.");
+console.log("Phase 6 Professional onboarding contract passed with shared Client/Professional destination resolver.");
