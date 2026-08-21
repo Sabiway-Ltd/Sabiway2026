@@ -2,10 +2,11 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    SignupView, LoginView, GoogleLoginView, ForgotPasswordView, 
-    ConfirmCodeView, ResetPasswordView, LogoutView, 
+    SignupView, LoginView, GoogleLoginView, ForgotPasswordView,
+    ConfirmCodeView, ResetPasswordView, LogoutView,
     GenerateGoogleAuthURLView, UserViewSet, VerifyResetTokenView, ConfirmSignupView
 )
+from .onboarding import ClientOnboardingView
 from .review_access import InternalReviewLoginView
 
 router = DefaultRouter()
@@ -15,6 +16,7 @@ urlpatterns = [
     path("confirm-signup/<uuid:token>/", ConfirmSignupView.as_view(), name="confirm-signup"),
     path("signup/", SignupView.as_view(), name="signup"),
     path("login/", LoginView.as_view(), name="login"),
+    path("onboarding/client/", ClientOnboardingView.as_view(), name="client-onboarding"),
     path("internal-review-login/", InternalReviewLoginView.as_view(), name="internal-review-login"),
     path("google-login/", GoogleLoginView.as_view(), name="google-login"),
     path("google/callback/", GoogleLoginView.as_view(), name="google-callback"),
