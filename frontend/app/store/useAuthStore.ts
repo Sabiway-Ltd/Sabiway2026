@@ -39,6 +39,7 @@ interface AuthState {
   reviewLogin: (role: AccountRole) => Promise<boolean>;
   logout: () => Promise<void>;
   google_logged_in: (user: User, access?: string, refresh?: string) => void;
+  updateSessionUser: (user: User) => void;
   loadUserFromStorage: () => void;
 }
 
@@ -142,6 +143,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   google_logged_in: (user, access, refresh) => {
     persistBrowserSession({ access, refresh, user });
     set({ user, access: access || null, refresh: refresh || null });
+  },
+
+  updateSessionUser: (user) => {
+    persistBrowserSession({ user });
+    set({ user });
   },
 
   logout: async () => {

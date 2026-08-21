@@ -34,6 +34,7 @@ const expected = [
   ["/posts", "GUEST_CAPABLE"],
   ["/hashtag", "GUEST_CAPABLE"],
   ["/profile/", "GUEST_CAPABLE"],
+  ["/onboarding/client", "CLIENT_ONLY"],
   ["/community/moderation", "STAFF_ONLY"],
   ["/community", "AUTHENTICATED_SHARED"],
   ["/home", "AUTHENTICATED_SHARED"],
@@ -98,4 +99,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Access policy contract passed for ${expected.length} route families plus dedicated Client/Professional role entry, action labels and funnel analytics.`);
+console.log(`Access policy contract passed for ${expected.length} route families plus dedicated role entry and Client onboarding access.`);

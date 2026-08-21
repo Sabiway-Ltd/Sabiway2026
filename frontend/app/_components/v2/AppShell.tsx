@@ -31,9 +31,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [loadUserFromStorage]);
 
   useEffect(() => {
-    if (hydrated && !useAuthStore.getState().user && !window.localStorage.getItem("access")) {
+    if (!hydrated) return;
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser && !window.localStorage.getItem("access")) {
       const next = safeInternalNext(pathname || "/home");
       window.location.href = `/login?next=${encodeURIComponent(next)}`;
+      return;
+    }
+    if (currentUser?.role === "client" && currentUser.onboarding_complete === false) {
+      const next = safeInternalNext(pathname || "/home");
+      window.location.href = `/onboarding/client?next=${encodeURIComponent(next)}`;
     }
   }, [hydrated, pathname]);
 
