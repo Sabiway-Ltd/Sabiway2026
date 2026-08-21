@@ -43,16 +43,29 @@ async function main() {
 
   // The workflow's curl assertion verifies unauthenticated /home returns the
   // expected middleware Location header and preserves the full `next` value.
-  const professionalSignup = await dump("/signup?role=professional");
-  assert(professionalSignup.includes("Sign Up as Professional"), "Professional signup did not preserve role intent");
+  const genericLogin = await dump("/login");
+  assert(genericLogin.includes("Choose sign-in journey"), "generic login did not expose the Client/Professional choice");
 
-  const clientSignup = await dump("/signup?role=client");
-  assert(clientSignup.includes("Sign Up as Client"), "Client signup did not preserve role intent");
+  const professionalLogin = await dump("/login/professional");
+  assert(professionalLogin.includes("Continue as a Professional"), "Professional login route did not render role-specific context");
+  assert(professionalLogin.includes("Sign in as Professional"), "Professional login action was not role-specific");
 
-  const unsafeNext = await dump("/login?next=https://example.com");
-  assert(unsafeNext.includes("Welcome back"), "login page did not render for unsafe return-intent test");
+  const clientLogin = await dump("/login/client");
+  assert(clientLogin.includes("Continue as a Client"), "Client login route did not render role-specific context");
+  assert(clientLogin.includes("Sign in as Client"), "Client login action was not role-specific");
 
-  console.log("Browser access and homepage regression suite passed.");
+  const professionalSignup = await dump("/signup/professional");
+  assert(professionalSignup.includes("Create your Professional account"), "Professional signup route did not preserve role intent");
+  assert(professionalSignup.includes("Create Professional account"), "Professional signup action was not role-specific");
+
+  const clientSignup = await dump("/signup/client");
+  assert(clientSignup.includes("Create your Client account"), "Client signup route did not preserve role intent");
+  assert(clientSignup.includes("Create Client account"), "Client signup action was not role-specific");
+
+  const unsafeNext = await dump("/login/client?next=https://example.com");
+  assert(unsafeNext.includes("Continue as a Client"), "role-specific login page did not render for unsafe return-intent test");
+
+  console.log("Browser access, homepage and role-entry regression suite passed.");
 }
 
 main().catch((error) => {
