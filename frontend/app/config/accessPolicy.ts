@@ -103,7 +103,7 @@ export const appNavigation: Record<AccountRole, Array<{ href: string; label: str
     { href: "/messages", label: "Messages" },
     { href: "/bookings", label: "Bookings" },
     { href: "/sabipay", label: "SabiPay" },
-    { href: "/community", label: "SabiForum" },
+    { href: "/sabiforum", label: "SabiForum" },
     { href: "/profile", label: "Profile" },
   ],
   professional: [
@@ -115,7 +115,7 @@ export const appNavigation: Record<AccountRole, Array<{ href: string; label: str
     { href: "/bookings", label: "Bookings" },
     { href: "/earnings", label: "Earnings" },
     { href: "/verification", label: "Verification" },
-    { href: "/community", label: "SabiForum" },
+    { href: "/sabiforum", label: "SabiForum" },
     { href: "/profile", label: "Profile" },
   ],
 };
