@@ -8,6 +8,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="user.full_name")
     email = serializers.EmailField(source="user.email", read_only=True)
     role = serializers.CharField(source="user.role", read_only=True)
+    onboarding_complete = serializers.SerializerMethodField()
     initials = serializers.CharField(read_only=True)
     followers_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
@@ -24,13 +25,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             "followers_count", "following_count", "posts_count",
             "phone_number", "gender", "date_of_birth",
             "country", "state", "area", "street",
-            "role", "job", "bio", "is_following", "address",
+            "role", "job", "bio", "is_following", "address", "onboarding_complete",
             "is_verified", "verification_status",
         ]
         read_only_fields = (
             "email", "role", "initials", "followers_count", "following_count",
-            "posts_count", "is_following", "address", "is_verified", "verification_status",
+            "posts_count", "is_following", "address", "onboarding_complete", "is_verified", "verification_status",
         )
+
+    def get_onboarding_complete(self, obj):
+        return bool(obj.user.onboarding_completed_at)
 
     def _verification_state(self, instance):
         if instance.user.role != "professional":
@@ -61,7 +65,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         is_staff = bool(request_user and request_user.is_authenticated and request_user.is_staff)
 
         if not (is_owner or is_staff):
-            for field in ("email", "phone_number", "gender", "date_of_birth", "area", "street", "address"):
+            for field in ("email", "phone_number", "gender", "date_of_birth", "area", "street", "address", "onboarding_complete"):
                 data.pop(field, None)
         return data
 
