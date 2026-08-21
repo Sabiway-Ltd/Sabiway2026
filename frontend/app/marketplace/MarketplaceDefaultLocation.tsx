@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { environment } from "@/app/config/environment";
+import { useAuthStore } from "@/app/store/useAuthStore";
 
 type LocationPreference = {
   country_name?: string;
@@ -17,10 +18,10 @@ function preferredSearchLabel(preference: LocationPreference) {
 }
 
 export default function MarketplaceDefaultLocation({ hasExplicitLocation }: { hasExplicitLocation: boolean }) {
+  const access = useAuthStore((state) => state.access);
+
   useEffect(() => {
-    if (hasExplicitLocation || typeof window === "undefined") return;
-    const access = window.localStorage.getItem("access");
-    if (!access) return;
+    if (hasExplicitLocation || !access) return;
 
     let cancelled = false;
     void fetch(`${environment.djangoUrl}/api/markets/location-preference/`, {
@@ -40,7 +41,7 @@ export default function MarketplaceDefaultLocation({ hasExplicitLocation }: { ha
       .catch(() => undefined);
 
     return () => { cancelled = true; };
-  }, [hasExplicitLocation]);
+  }, [access, hasExplicitLocation]);
 
   return null;
 }

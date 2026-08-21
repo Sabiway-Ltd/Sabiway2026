@@ -38,16 +38,25 @@ def create_or_sync_profile_for_user(sender, instance, created, **kwargs):
         )
         return
 
-    profile = getattr(instance, "profile", None)
+    # Never decide whether repair is needed from the reverse OneToOne cache:
+    # historical drift may exist in the database while instance.profile still
+    # carries an older in-memory value. Accounts.User is authoritative, so every
+    # account save reasserts the compatibility mirrors directly in the database.
+    profile = Profile.objects.filter(user=instance).first()
     if profile:
-        updates = {}
-        if profile.role != instance.role:
-            updates["role"] = instance.role
-        if profile.full_name != instance.full_name:
-            updates["full_name"] = instance.full_name
-            updates["initials"] = generate_initials(instance.full_name)
-        if updates:
-            Profile.objects.filter(pk=profile.pk).update(**updates)
+        authoritative = {
+            "role": instance.role,
+            "full_name": instance.full_name,
+            "initials": generate_initials(instance.full_name),
+        }
+        Profile.objects.filter(pk=profile.pk).update(**authoritative)
+
+        # If this User already has a cached reverse Profile relation, align it
+        # too so the current request cannot observe stale compatibility data.
+        cached_profile = instance._state.fields_cache.get("profile")
+        if cached_profile is not None:
+            for field, value in authoritative.items():
+                setattr(cached_profile, field, value)
 
 
 @receiver(pre_save, sender=Profile)

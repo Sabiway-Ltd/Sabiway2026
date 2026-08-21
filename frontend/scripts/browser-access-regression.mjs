@@ -41,6 +41,15 @@ async function main() {
   assert(!publicClients.includes("Sign in and continue your journey"), "/for-clients unexpectedly rendered the login page");
   assert(publicClients.includes("For clients") || publicClients.includes("For Clients"), "/for-clients did not render the Client acquisition page");
 
+  const marketplace = await dump("/marketplace?q=cleaning&location=London");
+  assert(!marketplace.includes("Sign in and continue your journey"), "/marketplace unexpectedly rendered the login page");
+  assert(marketplace.includes("Find the right Professional for the work"), "hydrated guest marketplace discovery headline did not render");
+  assert(marketplace.includes("Live marketplace results were unavailable when this page loaded"), "marketplace degraded-data state did not render when backend was unavailable");
+
+  const publicProfile = await dump("/profile/browser-regression-professional");
+  assert(!publicProfile.includes("Sign in and continue your journey"), "public Professional profile unexpectedly rendered the login page");
+  assert(publicProfile.includes("This profile is temporarily unavailable"), "public Professional profile degraded state did not render");
+
   // The workflow's curl assertion verifies unauthenticated /home returns the
   // expected middleware Location header and preserves the full `next` value.
   const genericLogin = await dump("/login");
@@ -61,7 +70,7 @@ async function main() {
   const unsafeNext = await dump("/login/client?next=https://example.com");
   assert(unsafeNext.includes("Continue as a Client"), "role-specific login page did not render for unsafe return-intent test");
 
-  console.log("Browser access, homepage and role-entry regression suite passed.");
+  console.log("Browser access, homepage, role-entry and Phase 10 guest discovery regression suite passed.");
 }
 
 main().catch((error) => {

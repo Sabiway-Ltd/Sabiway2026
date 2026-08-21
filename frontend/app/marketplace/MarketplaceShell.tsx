@@ -4,21 +4,25 @@ import { useEffect, useState } from "react";
 
 import { AppShell } from "@/app/_components/v2/AppShell";
 import { PublicShell } from "@/app/_components/v2/PublicShell";
+import { useAuthStore } from "@/app/store/useAuthStore";
 
 export function MarketplaceShell({ children }: { children: React.ReactNode }) {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const access = useAuthStore((state) => state.access);
+  const loadUserFromStorage = useAuthStore((state) => state.loadUserFromStorage);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setAuthenticated(Boolean(window.localStorage.getItem("access")));
-  }, []);
+    loadUserFromStorage();
+    setHydrated(true);
+  }, [loadUserFromStorage]);
 
-  if (authenticated === null) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4" aria-live="polite">
-        <p className="text-sm font-semibold text-muted-foreground">Loading SabiWay marketplace…</p>
-      </main>
-    );
+  // Marketplace is intentionally guest-capable. Render the useful public
+  // discovery surface immediately, then upgrade to the authenticated AppShell
+  // after the existing browser session has been hydrated. Authentication still
+  // controls protected actions and routes; hydration must not blank public UX.
+  if (!hydrated || !access) {
+    return <PublicShell>{children}</PublicShell>;
   }
 
-  return authenticated ? <AppShell>{children}</AppShell> : <PublicShell>{children}</PublicShell>;
+  return <AppShell>{children}</AppShell>;
 }

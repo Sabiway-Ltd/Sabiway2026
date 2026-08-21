@@ -102,7 +102,7 @@ jobs:
       - name: Migration drift
         run: python manage.py makemigrations --check --dry-run
       - name: Backend journeys
-        run: python manage.py test health accounts search posts notifications marketplace verification sabipay operations
+        run: python manage.py test health accounts profiles search posts notifications marketplace verification sabipay operations
 
   realtime-check:
     runs-on: ubuntu-latest
@@ -144,6 +144,8 @@ jobs:
         run: node scripts/verify-phase8-client-shell-home.mjs
       - name: Verify Phase 9 Professional shell and home contract
         run: node scripts/verify-phase9-professional-shell-home.mjs
+      - name: Verify Phase 10 marketplace and public Professional profile contract
+        run: node scripts/verify-phase10-marketplace-profiles.mjs
       - name: TypeScript
         run: npm run type-check
       - name: Lint
@@ -236,6 +238,17 @@ jobs:
               *) echo "Unexpected /${route} redirect: $location"; exit 1 ;;
             esac
           done
+      - name: Verify Phase 10 guest discovery routes stay public under backend degradation
+        shell: bash
+        run: |
+          set -euo pipefail
+          marketplace_headers=$(curl --silent --head 'http://127.0.0.1:3100/marketplace?q=cleaning&location=London' | tr -d '\r')
+          marketplace_code=$(printf '%s\n' "$marketplace_headers" | awk 'NR==1 {print $2}')
+          test "$marketplace_code" = "200" || { echo "Marketplace returned ${marketplace_code}"; exit 1; }
+          if printf '%s\n' "$marketplace_headers" | grep -qi '^location: .*login'; then echo "Marketplace unexpectedly redirected to login"; exit 1; fi
+          profile_code=$(curl --silent --output /tmp/public-profile.html --write-out '%{http_code}' 'http://127.0.0.1:3100/profile/browser-regression-professional')
+          test "$profile_code" = "200" || { echo "Public profile route returned ${profile_code}"; exit 1; }
+          grep -q 'This profile is temporarily unavailable' /tmp/public-profile.html || { echo "Public profile degraded state missing"; exit 1; }
       - name: Verify controlled demo routes remain public while production app stays protected
         shell: bash
         run: |
