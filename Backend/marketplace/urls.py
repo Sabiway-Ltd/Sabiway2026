@@ -1,5 +1,7 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from .booking_capabilities import BookingCapabilitiesView
 from .views import (
     BookingRequestViewSet,
     JobPostingViewSet,
@@ -21,4 +23,7 @@ router.register(r"messages", MessageViewSet, basename="message")
 router.register(r"bookings", BookingRequestViewSet, basename="booking-request")
 router.register(r"schedule-proposals", ScheduleProposalViewSet, basename="schedule-proposal")
 
-urlpatterns = router.urls
+urlpatterns = [
+    path("booking-capabilities/", BookingCapabilitiesView.as_view(), name="booking-capabilities"),
+    *router.urls,
+]
