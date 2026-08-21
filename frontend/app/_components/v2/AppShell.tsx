@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BadgeCheck, BriefcaseBusiness, CalendarDays, FileText, Home, LogOut, MessageCircle, Search, Store, UserRound, UsersRound, WalletCards } from "lucide-react";
+import { BadgeCheck, Bell, BriefcaseBusiness, CalendarDays, FileText, Home, LogOut, MessageCircle, Search, Store, UserRound, UsersRound, WalletCards } from "lucide-react";
 
 import Button from "@/app/_components/common/Button";
 import { Avatar, Skeleton } from "@/app/_components/common/DesignPrimitives";
@@ -19,6 +19,7 @@ const icons = {
   "My Services": Store,
   Proposals: FileText,
   Messages: MessageCircle,
+  Notifications: Bell,
   Bookings: CalendarDays,
   SabiPay: WalletCards,
   Earnings: WalletCards,
@@ -132,9 +133,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/home" className="flex min-h-11 items-center" aria-label="SabiWay home">
               <Image src="/Footerlogo.svg" alt="SabiWay" width={108} height={35} priority />
             </Link>
-            <Link href="/profile" className="rounded-full focus-visible:outline-none" aria-label="Open profile">
-              <Avatar src={user.profile_pic} name={displayName} size={40} />
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/notifications" className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none" aria-label="Open notifications">
+                <Bell size={20} aria-hidden="true" />
+              </Link>
+              <Link href="/profile" className="rounded-full focus-visible:outline-none" aria-label="Open profile">
+                <Avatar src={user.profile_pic} name={displayName} size={40} />
+              </Link>
+            </div>
           </div>
         </header>
         {children}
