@@ -20,7 +20,7 @@ for (const contract of [
   '{ href: "/messages", label: "Messages" }',
   '{ href: "/bookings", label: "Bookings" }',
   '{ href: "/sabipay", label: "SabiPay" }',
-  '{ href: "/community", label: "SabiForum" }',
+  '{ href: "/sabiforum", label: "SabiForum" }',
   '{ href: "/profile", label: "Profile" }',
   '{ prefix: "/jobs", access: "CLIENT_ONLY" }',
   '{ prefix: "/bookings", access: "PARTICIPANT_SCOPED" }',
@@ -78,4 +78,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 8 Client shell, home, jobs and bookings contract passed while allowing the Professional Phase 9 implementation to evolve independently.");
+console.log("Phase 8 Client shell, home, jobs and bookings contract passed while allowing later canonical SabiForum routing to evolve independently.");
