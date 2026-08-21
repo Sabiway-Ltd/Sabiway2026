@@ -6,7 +6,7 @@ from .views import (
     ConfirmCodeView, ResetPasswordView, LogoutView,
     GenerateGoogleAuthURLView, UserViewSet, VerifyResetTokenView, ConfirmSignupView
 )
-from .onboarding import ClientOnboardingView
+from .onboarding import ClientOnboardingView, ProfessionalOnboardingView
 from .review_access import InternalReviewLoginView
 
 router = DefaultRouter()
@@ -17,6 +17,7 @@ urlpatterns = [
     path("signup/", SignupView.as_view(), name="signup"),
     path("login/", LoginView.as_view(), name="login"),
     path("onboarding/client/", ClientOnboardingView.as_view(), name="client-onboarding"),
+    path("onboarding/professional/", ProfessionalOnboardingView.as_view(), name="professional-onboarding"),
     path("internal-review-login/", InternalReviewLoginView.as_view(), name="internal-review-login"),
     path("google-login/", GoogleLoginView.as_view(), name="google-login"),
     path("google/callback/", GoogleLoginView.as_view(), name="google-callback"),
