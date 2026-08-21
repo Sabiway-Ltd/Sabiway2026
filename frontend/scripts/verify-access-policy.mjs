@@ -72,10 +72,22 @@ for (const relativePath of roleEntryFiles) {
 const professionalAcquisition = await readFile(new URL("../app/for-professionals/page.tsx", import.meta.url), "utf8");
 if (!professionalAcquisition.includes('href: "/signup/professional"')) failures.push("Professional acquisition must use dedicated signup route");
 
+const loginExperience = await readFile(new URL("../app/(auth)/_components/LoginExperience.tsx", import.meta.url), "utf8");
+const signupExperience = await readFile(new URL("../app/(auth)/_components/SignupExperience.tsx", import.meta.url), "utf8");
+for (const [name, authSource] of [["login", loginExperience], ["signup", signupExperience]]) {
+  for (const eventName of ["role_entry_viewed", "role_intent_selected", "role_auth_started", "role_auth_succeeded"]) {
+    if (!authSource.includes(`"${eventName}"`)) failures.push(`${name}: missing analytics event ${eventName}`);
+  }
+  for (const sensitiveKey of ["email:", "password:", "phone_number:"]) {
+    const analyticsCalls = authSource.match(/trackProductEvent\([^;]+/g) || [];
+    if (analyticsCalls.some((call) => call.includes(sensitiveKey))) failures.push(`${name}: analytics must not include ${sensitiveKey.replace(":", "")}`);
+  }
+}
+
 if (failures.length) {
   console.error("Access and role-entry policy contract failed for:");
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
 
-console.log(`Access policy contract passed for ${expected.length} route families plus dedicated Client/Professional role entry.`);
+console.log(`Access policy contract passed for ${expected.length} route families plus dedicated Client/Professional role entry and funnel analytics.`);
