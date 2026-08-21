@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BriefcaseBusiness, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ import { Field, InlineAlert } from "@/app/_components/common/DesignPrimitives";
 import { rememberAuthIntent } from "@/app/auth/session";
 import { safeInternalNext } from "@/app/config/accessPolicy";
 import { useAuthStore, type AccountRole } from "@/app/store/useAuthStore";
+import { trackProductEvent } from "@/app/utils/analytics";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
 
 const roleCopy: Record<AccountRole, { title: string; description: string }> = {
@@ -36,6 +37,11 @@ export function LoginExperience({ lockedRole }: { lockedRole?: AccountRole }) {
   const reviewModeEnabled = process.env.NEXT_PUBLIC_INTERNAL_REVIEW_MODE === "true";
   const activeRole = lockedRole ?? role;
   const activeCopy = roleCopy[activeRole];
+  const entryType = lockedRole ? "dedicated" : "generic";
+
+  useEffect(() => {
+    void trackProductEvent("role_entry_viewed", { flow: "login", role: activeRole, entry_type: entryType });
+  }, [activeRole, entryType]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -45,12 +51,17 @@ export function LoginExperience({ lockedRole }: { lockedRole?: AccountRole }) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    void trackProductEvent("role_auth_started", { flow: "login", role: activeRole, entry_type: entryType, method: "password" });
     const success = await login(form);
-    if (success) window.location.href = requestedNext();
+    if (success) {
+      void trackProductEvent("role_auth_succeeded", { flow: "login", role: activeRole, entry_type: entryType, method: "password" });
+      window.location.href = requestedNext();
+    }
   };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
+    void trackProductEvent("role_auth_started", { flow: "login", role: activeRole, entry_type: entryType, method: "google" });
     try {
       rememberAuthIntent(requestedNext(), activeRole);
       const response = await fetch(`${DJANGO_URL}/api/auth/generate-google-url`);
@@ -62,6 +73,11 @@ export function LoginExperience({ lockedRole }: { lockedRole?: AccountRole }) {
     } finally {
       setGoogleLoading(false);
     }
+  };
+
+  const handleRoleSelection = (candidate: AccountRole) => {
+    setRole(candidate);
+    void trackProductEvent("role_intent_selected", { flow: "login", role: candidate, entry_type: "generic" });
   };
 
   const handleReviewLogin = async (reviewRole: AccountRole) => {
@@ -112,7 +128,7 @@ export function LoginExperience({ lockedRole }: { lockedRole?: AccountRole }) {
                   <button
                     key={candidate}
                     type="button"
-                    onClick={() => setRole(candidate)}
+                    onClick={() => handleRoleSelection(candidate)}
                     aria-pressed={selected}
                     className={clsx(
                       "flex min-h-12 items-center justify-center gap-2 rounded-[var(--sabi-radius-md)] border px-3 text-sm font-black",
