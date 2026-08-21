@@ -53,6 +53,8 @@ const ROUTE_RULES: RouteRule[] = [
 
   { prefix: "/onboarding/client", access: "CLIENT_ONLY" },
   { prefix: "/onboarding/professional", access: "PROFESSIONAL_ONLY" },
+  { prefix: "/jobs", access: "CLIENT_ONLY" },
+  { prefix: "/bookings", access: "PARTICIPANT_SCOPED" },
   { prefix: "/community/moderation", access: "STAFF_ONLY" },
   { prefix: "/community", access: "AUTHENTICATED_SHARED" },
   { prefix: "/home", access: "AUTHENTICATED_SHARED" },
@@ -94,7 +96,10 @@ export const appNavigation: Record<AccountRole, Array<{ href: string; label: str
   client: [
     { href: "/home", label: "Home" },
     { href: "/marketplace", label: "Find services" },
+    { href: "/jobs", label: "My Jobs" },
     { href: "/messages", label: "Messages" },
+    { href: "/bookings", label: "Bookings" },
+    { href: "/sabipay", label: "SabiPay" },
     { href: "/community", label: "SabiForum" },
     { href: "/profile", label: "Profile" },
   ],
