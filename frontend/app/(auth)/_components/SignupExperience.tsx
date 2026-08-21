@@ -71,11 +71,20 @@ export function SignupExperience({ lockedRole }: { lockedRole?: AccountRole }) {
   };
 
   const handleGoogleLogin = async () => {
+    if (!form.terms_accepted) {
+      toast.error("Accept the SabiWay Terms and Privacy Notice before continuing with Google.");
+      return;
+    }
     setGoogleLoading(true);
     void trackProductEvent("role_auth_started", { flow: "signup", role: activeRole, entry_type: entryType, method: "google" });
     try {
       rememberAuthIntent("/home", activeRole);
-      const response = await fetch(`${DJANGO_URL}/api/auth/generate-google-url/`);
+      const query = new URLSearchParams({
+        intent: "signup",
+        role: activeRole,
+        terms_accepted: "true",
+      });
+      const response = await fetch(`${DJANGO_URL}/api/auth/generate-google-url/?${query.toString()}`);
       const data = await response.json();
       if (data?.auth_url) window.location.href = data.auth_url;
       else toast.error("Failed to load Google login.");
