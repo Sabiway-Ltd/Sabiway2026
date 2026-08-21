@@ -74,6 +74,14 @@ if (!professionalAcquisition.includes('href: "/signup/professional"')) failures.
 
 const loginExperience = await readFile(new URL("../app/(auth)/_components/LoginExperience.tsx", import.meta.url), "utf8");
 const signupExperience = await readFile(new URL("../app/(auth)/_components/SignupExperience.tsx", import.meta.url), "utf8");
+
+for (const expectedLabel of ["Sign in as {activeRole === \"professional\" ? \"Professional\" : \"Client\"}", "Continue with Google as {activeRole === \"professional\" ? \"Professional\" : \"Client\"}"]) {
+  if (!loginExperience.includes(expectedLabel)) failures.push(`login: missing role-specific action label ${expectedLabel}`);
+}
+for (const expectedLabel of ["Create Client account", "Create Professional account", "Continue with Google as {activeRole === \"professional\" ? \"Professional\" : \"Client\"}"]) {
+  if (!signupExperience.includes(expectedLabel)) failures.push(`signup: missing role-specific action label ${expectedLabel}`);
+}
+
 for (const [name, authSource] of [["login", loginExperience], ["signup", signupExperience]]) {
   for (const eventName of ["role_entry_viewed", "role_intent_selected", "role_auth_started", "role_auth_succeeded"]) {
     if (!authSource.includes(`"${eventName}"`)) failures.push(`${name}: missing analytics event ${eventName}`);
@@ -90,4 +98,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Access policy contract passed for ${expected.length} route families plus dedicated Client/Professional role entry and funnel analytics.`);
+console.log(`Access policy contract passed for ${expected.length} route families plus dedicated Client/Professional role entry, action labels and funnel analytics.`);
