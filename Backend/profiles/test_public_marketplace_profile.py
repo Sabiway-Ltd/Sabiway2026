@@ -3,6 +3,7 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from marketplace.models import ServiceCategory, ServiceListing
+from verification.models import VerificationSubmission
 
 
 class PublicMarketplaceProfileTests(APITestCase):
@@ -23,6 +24,13 @@ class PublicMarketplaceProfileTests(APITestCase):
         profile.bio = "Reliable local and remote support."
         profile.job = "Data Consultant"
         profile.save()
+
+        VerificationSubmission.objects.create(
+            professional=profile,
+            status=VerificationSubmission.Status.APPROVED,
+            identity_type=VerificationSubmission.IdentityType.PASSPORT,
+            credential_summary="Approved test verification",
+        )
 
         category = ServiceCategory.objects.create(name="Data Services")
         self.approved = ServiceListing.objects.create(
