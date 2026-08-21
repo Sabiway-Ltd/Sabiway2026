@@ -60,7 +60,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [
     "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes","django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
-    "accounts","docs","profiles","posts","search","notifications","health","marketplace","verification.apps.VerificationConfig","sabipay.apps.SabiPayConfig","markets.apps.MarketsConfig","operations.apps.OperationsConfig",
+    "accounts","docs","profiles","posts","search","notifications","health","marketplace","verification.apps.VerificationConfig","reputation.apps.ReputationConfig","sabipay.apps.SabiPayConfig","markets.apps.MarketsConfig","operations.apps.OperationsConfig",
     "rest_framework","drf_yasg","rest_framework_simplejwt","rest_framework_simplejwt.token_blacklist","cloudinary","cloudinary_storage","corsheaders",
 ]
 
