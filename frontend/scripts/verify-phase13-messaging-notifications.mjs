@@ -44,7 +44,7 @@ for (const forbidden of ['localStorage.getItem("access")', 'localStorage.setItem
   if ((notificationsPage + notifications + notificationStore).includes(forbidden)) failures.push(`notification flow must not use ${forbidden}`);
 }
 
-for (const contract of ["import { api }", "api.get<NotificationResponse>", "api.patch", "Optimistic", "Notifications are temporarily unavailable."]) {
+for (const contract of ["import { api }", "api.get<NotificationResponse>", "api.patch", "const previous = get().notifications", "Notifications are temporarily unavailable."]) {
   if (!notificationStore.includes(contract)) failures.push(`notification shared API contract missing ${contract}`);
 }
 
