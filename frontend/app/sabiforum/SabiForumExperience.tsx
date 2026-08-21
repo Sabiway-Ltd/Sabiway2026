@@ -23,6 +23,7 @@ export default function SabiForumExperience() {
   const [showPostBox, setShowPostBox] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchActive, setSearchActive] = useState(false);
   const {
     posts,
     getAllPosts,
@@ -81,6 +82,7 @@ export default function SabiForumExperience() {
   }, [access]);
 
   useEffect(() => {
+    if (searchActive) return;
     let timeout: ReturnType<typeof setTimeout>;
     const handleScroll = () => {
       clearTimeout(timeout);
@@ -94,16 +96,22 @@ export default function SabiForumExperience() {
       clearTimeout(timeout);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [nextPage, hasMore, loading, getAllPosts]);
+  }, [nextPage, hasMore, loading, getAllPosts, searchActive]);
 
-  const displayPosts = useMemo(() => filteredPosts?.length ? filteredPosts : posts, [filteredPosts, posts]);
+  const displayPosts = useMemo(() => searchActive ? (filteredPosts || []) : posts, [searchActive, filteredPosts, posts]);
   const runSearch = () => {
     const term = searchQuery.trim();
-    if (term) void filterBySearch(term, "posts");
-    else resetFilteredPosts();
+    if (!term) {
+      setSearchActive(false);
+      resetFilteredPosts();
+      return;
+    }
+    setSearchActive(true);
+    void filterBySearch(term, "posts");
   };
   const resetSearch = () => {
     setSearchQuery("");
+    setSearchActive(false);
     resetFilteredPosts();
     void getAllPosts(1);
   };
@@ -143,8 +151,9 @@ export default function SabiForumExperience() {
             {firstLoad && loading ? <div className="space-y-3 pb-6" aria-label="Loading SabiForum posts">{[...Array(5)].map((_, i) => <PostSkeleton key={i} />)}</div> : null}
             {!firstLoad && loading ? <div className="flex items-center justify-center gap-2 py-4" aria-live="polite"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /><p className="text-sm text-muted-foreground">Refreshing posts…</p></div> : null}
             {displayPosts.length > 0 ? <div className="space-y-3"><RenderPostList posts={displayPosts} emptyMessage="No posts match your current search." reloadFn={getAllPosts} clickable /></div> : null}
+            {searchActive && !loading && !error && displayPosts.length === 0 ? <StatePanel title="No matching posts" description="Try a broader phrase or reset search to return to the latest SabiForum posts." tone="empty" /> : null}
             {error ? <InlineAlert tone="error" className="my-6"><p className="font-black">{error}</p><Button variant="ghost" size="sm" className="mt-2" onClick={() => void getAllPosts(1)}>Try again</Button></InlineAlert> : null}
-            {!loading && !error && posts.length === 0 ? <StatePanel title="No posts yet" description="Be the first to share something useful with the SabiWay community." tone="empty" action={<Button size="sm" onClick={() => setShowPostBox(true)}>Create the first post</Button>} /> : null}
+            {!searchActive && !loading && !error && posts.length === 0 ? <StatePanel title="No posts yet" description="Be the first to share something useful with the SabiWay community." tone="empty" action={<Button size="sm" onClick={() => setShowPostBox(true)}>Create the first post</Button>} /> : null}
             <div className="mt-3 flex justify-end"><Button variant="ghost" size="sm" leadingIcon={<RotateCcw size={14} aria-hidden="true" />} onClick={resetSearch}>Reset search</Button></div>
           </section>
           <aside className="hidden lg:block"><div className="sticky top-4"><Aside /></div></aside>
