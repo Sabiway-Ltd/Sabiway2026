@@ -63,7 +63,7 @@ for (const contract of [
 
 for (const contract of [
   "Bookings",
-  "/api/marketplace/bookings/",
+  'api.get<Paginated<Booking>>("/marketplace/bookings/")',
   "No bookings yet",
   "Agreed price",
   "Payment status",
@@ -78,4 +78,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 8 Client shell, home, jobs and bookings contract passed while allowing later canonical SabiForum routing to evolve independently.");
+console.log("Phase 8 Client shell, home, jobs and bookings contract passed while allowing later phases to evolve data adapters without removing Client capability.");
