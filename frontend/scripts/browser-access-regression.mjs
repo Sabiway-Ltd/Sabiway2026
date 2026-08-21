@@ -55,9 +55,10 @@ async function main() {
   assert(sabiForum.includes("Useful community context around people, places and services"), "guest SabiForum discovery experience did not render");
   assert(sabiForum.includes("Reading the public SabiForum does not require an account"), "guest participation boundary copy did not render");
 
-  const legacyCommunity = await dump("/community");
-  assert(legacyCommunity.includes("Useful community context around people, places and services"), "legacy /community did not resolve to canonical SabiForum");
-  assert(!legacyCommunity.includes("Ask, share, learn and connect with people across SabiForum"), "legacy Community implementation is still being rendered");
+  const legacyCommunity = await fetch(`${baseUrl}/community`, { redirect: "manual" });
+  assert([307, 308].includes(legacyCommunity.status), `legacy /community returned ${legacyCommunity.status} instead of a redirect`);
+  const legacyLocation = legacyCommunity.headers.get("location") || "";
+  assert(legacyLocation === "/sabiforum" || legacyLocation.endsWith("/sabiforum"), `legacy /community redirected to unexpected location: ${legacyLocation}`);
 
   const genericLogin = await dump("/login");
   assert(genericLogin.includes("Choose sign-in journey"), "generic login did not expose the Client/Professional choice");
