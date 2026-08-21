@@ -23,7 +23,7 @@ for (const contract of [
   '{ href: "/bookings", label: "Bookings" }',
   '{ href: "/earnings", label: "Earnings" }',
   '{ href: "/verification", label: "Verification" }',
-  '{ href: "/community", label: "SabiForum" }',
+  '{ href: "/sabiforum", label: "SabiForum" }',
   '{ href: "/profile", label: "Profile" }',
   '{ prefix: "/professional/services", access: "PROFESSIONAL_ONLY" }',
   '{ prefix: "/proposals", access: "PROFESSIONAL_ONLY" }',
@@ -76,4 +76,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 9 Professional shell, home, services, proposals and earnings contract passed while preserving Client Phase 8 scope.");
+console.log("Phase 9 Professional shell, home, services, proposals and earnings contract passed while preserving Client Phase 8 scope and allowing canonical SabiForum routing to evolve.");

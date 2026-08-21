@@ -43,7 +43,7 @@ const expected = [
   ["/earnings", "PROFESSIONAL_ONLY"],
   ["/bookings", "PARTICIPANT_SCOPED"],
   ["/community/moderation", "STAFF_ONLY"],
-  ["/community", "AUTHENTICATED_SHARED"],
+  ["/community", "GUEST_CAPABLE"],
   ["/home", "AUTHENTICATED_SHARED"],
   ["/notifications", "AUTHENTICATED_SHARED"],
   ["/profile", "AUTHENTICATED_SHARED"],
