@@ -26,6 +26,14 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+async function assertProtected(path) {
+  const response = await fetch(`${baseUrl}${path}`, { redirect: "manual" });
+  assert([307, 308].includes(response.status), `${path} returned ${response.status} instead of an auth redirect`);
+  const location = response.headers.get("location") || "";
+  assert(location.includes("/login?next="), `${path} did not redirect to login: ${location}`);
+  assert(location.includes(encodeURIComponent(path)), `${path} did not preserve return intent: ${location}`);
+}
+
 async function main() {
   const homepage = await dump("/");
   assert(homepage.includes("Find the right professional for the job"), "homepage discovery-first headline did not render");
@@ -60,6 +68,9 @@ async function main() {
   const legacyLocation = legacyCommunity.headers.get("location") || "";
   assert(legacyLocation === "/sabiforum" || legacyLocation.endsWith("/sabiforum"), `legacy /community redirected to unexpected location: ${legacyLocation}`);
 
+  await assertProtected("/messages");
+  await assertProtected("/notifications");
+
   const genericLogin = await dump("/login");
   assert(genericLogin.includes("Choose sign-in journey"), "generic login did not expose the Client/Professional choice");
 
@@ -78,7 +89,7 @@ async function main() {
   const unsafeNext = await dump("/login/client?next=https://example.com");
   assert(unsafeNext.includes("Continue as a Client"), "role-specific login page did not render for unsafe return-intent test");
 
-  console.log("Browser access, homepage, role-entry, marketplace and canonical SabiForum regression suite passed.");
+  console.log("Browser access, homepage, role-entry, marketplace, SabiForum, messaging and notifications regression suite passed.");
 }
 
 main().catch((error) => {
