@@ -136,6 +136,8 @@ jobs:
         run: node scripts/verify-access-policy.mjs
       - name: Verify Phase 5 Client onboarding contract
         run: node scripts/verify-phase5-client-onboarding.mjs
+      - name: Verify Phase 6 Professional onboarding contract
+        run: node scripts/verify-phase6-professional-onboarding.mjs
       - name: TypeScript
         run: npm run type-check
       - name: Lint
@@ -193,6 +195,15 @@ jobs:
           case "$location" in
             */login?next=%2Fonboarding%2Fclient%3Fnext%3D%252Fmarketplace) ;;
             *) echo "Unexpected Client onboarding redirect: $location"; exit 1 ;;
+          esac
+      - name: Verify Professional onboarding requires authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          location=$(curl --silent --head 'http://127.0.0.1:3100/onboarding/professional?next=%2Fmarketplace' | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
+          case "$location" in
+            */login?next=%2Fonboarding%2Fprofessional%3Fnext%3D%252Fmarketplace) ;;
+            *) echo "Unexpected Professional onboarding redirect: $location"; exit 1 ;;
           esac
       - name: Run headless Chromium access regression
         run: node scripts/browser-access-regression.mjs
