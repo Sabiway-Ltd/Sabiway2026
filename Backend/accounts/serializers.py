@@ -115,6 +115,35 @@ class GoogleAuthSerializer(serializers.Serializer):
         return normalise_phone_number(value)
 
 
+class ClientOnboardingSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=255)
+    phone_number = serializers.CharField(required=False, allow_blank=True, max_length=32)
+    country = serializers.CharField(max_length=100)
+    state = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    area = serializers.CharField(required=False, allow_blank=True, max_length=255)
+
+    def validate_full_name(self, value):
+        normalized = value.strip()
+        if len(normalized) < 2:
+            raise serializers.ValidationError("Enter your full name.")
+        return normalized
+
+    def validate_phone_number(self, value):
+        return normalise_phone_number(value)
+
+    def validate_country(self, value):
+        normalized = value.strip()
+        if len(normalized) < 2:
+            raise serializers.ValidationError("Choose or enter your country.")
+        return normalized
+
+    def validate_state(self, value):
+        return value.strip()
+
+    def validate_area(self, value):
+        return value.strip()
+
+
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
