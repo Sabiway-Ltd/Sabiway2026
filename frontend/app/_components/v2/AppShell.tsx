@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, CalendarDays, Home, LogOut, MessageCircle, Search, UserRound, UsersRound, WalletCards } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, CalendarDays, FileText, Home, LogOut, MessageCircle, Search, Store, UserRound, UsersRound, WalletCards } from "lucide-react";
 
 import Button from "@/app/_components/common/Button";
 import { Avatar, Skeleton } from "@/app/_components/common/DesignPrimitives";
@@ -16,14 +16,19 @@ const icons = {
   "Find services": Search,
   "My Jobs": BriefcaseBusiness,
   Opportunities: BriefcaseBusiness,
+  "My Services": Store,
+  Proposals: FileText,
   Messages: MessageCircle,
   Bookings: CalendarDays,
   SabiPay: WalletCards,
+  Earnings: WalletCards,
+  Verification: BadgeCheck,
   SabiForum: UsersRound,
   Profile: UserRound,
 };
 
 const clientMobileLabels = new Set(["Home", "Find services", "My Jobs", "Messages", "Profile"]);
+const professionalMobileLabels = new Set(["Home", "Opportunities", "Proposals", "Messages", "Profile"]);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -68,7 +73,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const role: AccountRole = user.role === "professional" ? "professional" : "client";
   const navigation = appNavigation[role];
-  const mobileNavigation = role === "client" ? navigation.filter(({ label }) => clientMobileLabels.has(label)) : navigation;
+  const mobileNavigation = navigation.filter(({ label }) =>
+    role === "client" ? clientMobileLabels.has(label) : professionalMobileLabels.has(label),
+  );
   const displayName = user.full_name || "SabiWay member";
 
   return (
@@ -96,12 +103,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {role === "client" ? (
-          <div className="mt-5 rounded-[var(--sabi-radius-lg)] bg-muted p-3">
-            <p className="text-xs font-black uppercase tracking-[.1em] text-muted-foreground">Client workspace</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">Jobs, bookings and protected payments stay connected to the same SabiWay account.</p>
-          </div>
-        ) : null}
+        <div className="mt-5 rounded-[var(--sabi-radius-lg)] bg-muted p-3">
+          <p className="text-xs font-black uppercase tracking-[.1em] text-muted-foreground">{role === "client" ? "Client workspace" : "Professional workspace"}</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {role === "client"
+              ? "Jobs, bookings and protected payments stay connected to the same SabiWay account."
+              : "Services, proposals, bookings, earnings and verification stay connected without mixing their status meanings."}
+          </p>
+        </div>
 
         <div className="mt-auto border-t border-border pt-4">
           <div className="flex items-center gap-3 px-3">

@@ -142,6 +142,8 @@ jobs:
         run: node scripts/verify-phase7-demo-environment.mjs
       - name: Verify Phase 8 Client shell and home contract
         run: node scripts/verify-phase8-client-shell-home.mjs
+      - name: Verify Phase 9 Professional shell and home contract
+        run: node scripts/verify-phase9-professional-shell-home.mjs
       - name: TypeScript
         run: npm run type-check
       - name: Lint
@@ -217,6 +219,18 @@ jobs:
           for route in jobs bookings; do
             location=$(curl --silent --head "http://127.0.0.1:3100/${route}" | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
             expected="%2F${route}"
+            case "$location" in
+              */login?next=$expected) ;;
+              *) echo "Unexpected /${route} redirect: $location"; exit 1 ;;
+            esac
+          done
+      - name: Verify Professional workspace routes require authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in professional/services proposals earnings; do
+            location=$(curl --silent --head "http://127.0.0.1:3100/${route}" | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
+            expected=$(node -p "encodeURIComponent('/${route}')")
             case "$location" in
               */login?next=$expected) ;;
               *) echo "Unexpected /${route} redirect: $location"; exit 1 ;;

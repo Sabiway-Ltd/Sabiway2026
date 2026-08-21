@@ -32,18 +32,10 @@ for (const label of ["Home", "Find services", "My Jobs", "Messages", "Profile"])
   if (!shell.includes(`"${label}"`)) failures.push(`Client mobile navigation missing ${label}`);
 }
 if (!shell.includes("clientMobileLabels")) failures.push("Client mobile navigation must be intentionally reduced from desktop IA");
-if (!shell.includes('role === "client" ? navigation.filter')) failures.push("Client-only mobile navigation translation missing");
-
-for (const professionalContract of [
-  '{ href: "/marketplace", label: "Opportunities" }',
-  'role === "professional" ? "Professional" : "Client"',
-]) {
-  if (!policy.includes(professionalContract) && !shell.includes(professionalContract)) failures.push(`Professional preservation missing ${professionalContract}`);
-}
+if (!shell.includes('role === "client" ? clientMobileLabels.has(label)')) failures.push("Client-only mobile navigation translation missing");
 
 for (const contract of [
   "function ClientHome()",
-  "function ProfessionalHome()",
   "What needs your attention",
   "/api/marketplace/jobs/?mine=1",
   "/api/marketplace/bookings/",
@@ -86,4 +78,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 8 Client shell, home, jobs and bookings contract passed while preserving Professional Phase 9 scope.");
+console.log("Phase 8 Client shell, home, jobs and bookings contract passed while allowing the Professional Phase 9 implementation to evolve independently.");
