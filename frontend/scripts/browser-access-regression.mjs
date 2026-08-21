@@ -50,8 +50,15 @@ async function main() {
   assert(!publicProfile.includes("Sign in and continue your journey"), "public Professional profile unexpectedly rendered the login page");
   assert(publicProfile.includes("This profile is temporarily unavailable"), "public Professional profile degraded state did not render");
 
-  // The workflow's curl assertion verifies unauthenticated /home returns the
-  // expected middleware Location header and preserves the full `next` value.
+  const sabiForum = await dump("/sabiforum");
+  assert(!sabiForum.includes("Sign in and continue your journey"), "/sabiforum unexpectedly rendered the login page");
+  assert(sabiForum.includes("Useful community context around people, places and services"), "guest SabiForum discovery experience did not render");
+  assert(sabiForum.includes("Reading the public SabiForum does not require an account"), "guest participation boundary copy did not render");
+
+  const legacyCommunity = await dump("/community");
+  assert(legacyCommunity.includes("Useful community context around people, places and services"), "legacy /community did not resolve to canonical SabiForum");
+  assert(!legacyCommunity.includes("Ask, share, learn and connect with people across SabiForum"), "legacy Community implementation is still being rendered");
+
   const genericLogin = await dump("/login");
   assert(genericLogin.includes("Choose sign-in journey"), "generic login did not expose the Client/Professional choice");
 
@@ -70,7 +77,7 @@ async function main() {
   const unsafeNext = await dump("/login/client?next=https://example.com");
   assert(unsafeNext.includes("Continue as a Client"), "role-specific login page did not render for unsafe return-intent test");
 
-  console.log("Browser access, homepage, role-entry and Phase 10 guest discovery regression suite passed.");
+  console.log("Browser access, homepage, role-entry, marketplace and canonical SabiForum regression suite passed.");
 }
 
 main().catch((error) => {
