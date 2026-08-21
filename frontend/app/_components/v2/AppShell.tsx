@@ -38,9 +38,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       window.location.href = `/login?next=${encodeURIComponent(next)}`;
       return;
     }
-    if (currentUser?.role === "client" && currentUser.onboarding_complete === false) {
+    if (currentUser?.onboarding_complete === false) {
       const next = safeInternalNext(pathname || "/home");
-      window.location.href = `/onboarding/client?next=${encodeURIComponent(next)}`;
+      if (currentUser.role === "client") {
+        window.location.href = `/onboarding/client?next=${encodeURIComponent(next)}`;
+        return;
+      }
+      if (currentUser.role === "professional") {
+        window.location.href = `/onboarding/professional?next=${encodeURIComponent(next)}`;
+      }
     }
   }, [hydrated, pathname]);
 
