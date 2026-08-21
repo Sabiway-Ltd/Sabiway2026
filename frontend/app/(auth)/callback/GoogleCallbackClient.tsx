@@ -3,8 +3,8 @@
 
 import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { postAuthDestination } from "@/app/auth/destination";
 import { consumeAuthIntent } from "@/app/auth/session";
-import { safeInternalNext } from "@/app/config/accessPolicy";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import toast from "react-hot-toast";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
@@ -27,11 +27,11 @@ export default function GoogleCallbackClient() {
         suspended
           ? "This account is suspended."
           : onboardingRequired
-            ? "Complete SabiWay onboarding before using Google sign-in."
+            ? "Choose your SabiWay account journey before continuing with Google."
             : "Google authentication could not be completed.",
       );
-      const roleSuffix = intent.role ? `?role=${intent.role}` : "";
-      router.replace(onboardingRequired ? `/signup${roleSuffix}` : "/login");
+      const signupDestination = intent.role ? `/signup/${intent.role}` : "/signup";
+      router.replace(onboardingRequired ? signupDestination : "/login");
       return;
     }
 
@@ -60,7 +60,7 @@ export default function GoogleCallbackClient() {
         };
 
         google_logged_in(normalizedUser, access, refresh);
-        router.replace(safeInternalNext(intent.next, "/home"));
+        router.replace(postAuthDestination(normalizedUser, intent.next));
       } catch (error) {
         console.error("Profile fetch error:", error);
         toast.error("Failed to load your SabiWay profile");
@@ -71,5 +71,5 @@ export default function GoogleCallbackClient() {
     void fetchUserProfile();
   }, [searchParams, router, google_logged_in]);
 
-  return <div className="flex h-screen items-center justify-center text-gray-600" aria-live="polite">Redirecting with Google…</div>;
+  return <div className="flex h-screen items-center justify-center text-muted-foreground" aria-live="polite">Redirecting with Google…</div>;
 }
