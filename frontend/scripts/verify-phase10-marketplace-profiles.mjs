@@ -107,3 +107,4 @@ if (failures.length) {
 }
 
 console.log("Phase 10 marketplace discovery and public Professional profile contract passed.");
+await import("./verify-phase11-jobs-leads-proposals.mjs");
