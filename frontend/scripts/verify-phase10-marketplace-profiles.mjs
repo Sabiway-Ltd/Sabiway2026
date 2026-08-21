@@ -37,10 +37,10 @@ if (marketplacePage.includes("MarketplaceClient")) failures.push("rendered marke
 
 for (const contract of [
   'role === "professional"',
+  'const endpoint = professionalMode ? "jobs" : "listings"',
+  "/api/marketplace/${endpoint}/",
   "Find the right Professional for the work.",
   "Find work that fits your services.",
-  "/api/marketplace/listings/",
-  "/api/marketplace/jobs/",
   "/api/marketplace/job-responses/",
   "View Professional profile",
   "ServiceContactButton",
