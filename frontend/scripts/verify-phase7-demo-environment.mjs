@@ -50,6 +50,8 @@ for (const contract of [
   "not a production account",
   '(["default", "empty", "error"] as DemoScenario[])',
   "Deterministic fixture view",
+  '["Payments", WalletCards, "payments"]',
+  '["Community", UsersRound, "community"]',
 ]) {
   if (!workspace.includes(contract)) failures.push(`demo workspace: missing ${contract}`);
 }
@@ -61,6 +63,9 @@ for (const contract of [
   "Simulated error state",
   "Amina Bello",
   "David Okafor",
+  "payments: [",
+  "community: [",
+  "completed-work review",
 ]) {
   if (!fixtures.includes(contract)) failures.push(`demo fixtures: missing ${contract}`);
 }
@@ -82,4 +87,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Phase 7 controlled demo isolation contract passed.");
+console.log("Phase 7 controlled demo isolation and fixture-coverage contract passed.");
