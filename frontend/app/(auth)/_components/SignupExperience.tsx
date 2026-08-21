@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { BriefcaseBusiness, UserRound } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import Button from "@/app/_components/common/Button";
 import { Field } from "@/app/_components/common/DesignPrimitives";
 import { rememberAuthIntent } from "@/app/auth/session";
 import { useAuthStore, type AccountRole } from "@/app/store/useAuthStore";
+import { trackProductEvent } from "@/app/utils/analytics";
 import { DJANGO_URL } from "@/app/utils/MyConstants";
 
 const roleCopy: Record<AccountRole, { title: string; description: string; submit: string }> = {
@@ -37,6 +38,7 @@ export function SignupExperience({ lockedRole }: { lockedRole?: AccountRole }) {
   const { signup, loading } = useAuthStore();
   const activeRole = lockedRole ?? role;
   const activeCopy = roleCopy[activeRole];
+  const entryType = lockedRole ? "dedicated" : "generic";
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -44,6 +46,10 @@ export function SignupExperience({ lockedRole }: { lockedRole?: AccountRole }) {
     phone_number: "",
     terms_accepted: false,
   });
+
+  useEffect(() => {
+    void trackProductEvent("role_entry_viewed", { flow: "signup", role: activeRole, entry_type: entryType });
+  }, [activeRole, entryType]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -56,12 +62,17 @@ export function SignupExperience({ lockedRole }: { lockedRole?: AccountRole }) {
       toast.error("Accept the SabiWay Terms and Privacy Notice to continue.");
       return;
     }
+    void trackProductEvent("role_auth_started", { flow: "signup", role: activeRole, entry_type: entryType, method: "password" });
     const success = await signup({ ...form, role: activeRole });
-    if (success) router.push("/check-email");
+    if (success) {
+      void trackProductEvent("role_auth_succeeded", { flow: "signup", role: activeRole, entry_type: entryType, method: "password" });
+      router.push("/check-email");
+    }
   };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
+    void trackProductEvent("role_auth_started", { flow: "signup", role: activeRole, entry_type: entryType, method: "google" });
     try {
       rememberAuthIntent("/home", activeRole);
       const response = await fetch(`${DJANGO_URL}/api/auth/generate-google-url/`);
@@ -73,6 +84,11 @@ export function SignupExperience({ lockedRole }: { lockedRole?: AccountRole }) {
     } finally {
       setGoogleLoading(false);
     }
+  };
+
+  const handleRoleSelection = (candidate: AccountRole) => {
+    setRole(candidate);
+    void trackProductEvent("role_intent_selected", { flow: "signup", role: candidate, entry_type: "generic" });
   };
 
   return (
@@ -104,7 +120,7 @@ export function SignupExperience({ lockedRole }: { lockedRole?: AccountRole }) {
                   const Icon = candidate === "client" ? UserRound : BriefcaseBusiness;
                   return (
                     <label key={candidate} className={clsx("cursor-pointer rounded-[var(--sabi-radius-lg)] border p-4 text-center transition-colors focus-within:ring-[var(--sabi-focus-ring-width)] focus-within:ring-ring focus-within:ring-offset-2", selected ? "border-primary bg-[var(--sabi-surface-selected)] shadow-[var(--sabi-shadow-sm)]" : "border-border bg-card hover:bg-muted")}>
-                      <input type="radio" name="account-role" value={candidate} checked={selected} onChange={() => setRole(candidate)} className="sr-only" />
+                      <input type="radio" name="account-role" value={candidate} checked={selected} onChange={() => handleRoleSelection(candidate)} className="sr-only" />
                       <span className={clsx("mx-auto flex h-11 w-11 items-center justify-center rounded-full", selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}><Icon size={20} aria-hidden="true" /></span>
                       <span className="mt-2 block text-sm font-black">{candidate === "client" ? "Client" : "Professional"}</span>
                     </label>
