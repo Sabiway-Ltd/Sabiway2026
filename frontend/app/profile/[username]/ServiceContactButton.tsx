@@ -61,7 +61,7 @@ export default function ServiceContactButton({ listingId, profilePath }: { listi
 
   return (
     <div>
-      <Button type="button" onClick={() => void startConversation()} loading={loading} leftIcon={<MessageCircle size={17} aria-hidden="true" />}>
+      <Button type="button" variant="primary" onClick={() => void startConversation()} loading={loading} leadingIcon={<MessageCircle size={17} aria-hidden="true" />}>
         Message about this service
       </Button>
       {error ? <InlineAlert tone="error" className="mt-3">{error}</InlineAlert> : null}
