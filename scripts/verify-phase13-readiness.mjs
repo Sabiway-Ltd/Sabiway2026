@@ -122,6 +122,18 @@ requireText("Completed booking exposes Client review action", "frontend/app/book
 rejectText("Production profile does not contain fake review fixtures", "frontend/app/profile/[username]/page.tsx", ["fakeReview", "mockReview", "sampleReview"]);
 requireText("Verification remains Professional-only", "frontend/app/config/accessPolicy.ts", ['{ prefix: "/verification", access: "PROFESSIONAL_ONLY" }']);
 
+// Phase 15 Booking, Scheduling & Service Management contract.
+requirePath("Phase 15 service-management audit", "docs/PHASE-15-BOOKING-SCHEDULING-SERVICE-MANAGEMENT-AUDIT.md");
+requirePath("Phase 15 capability authority", "Backend/marketplace/booking_capabilities.py");
+requirePath("Phase 15 capability tests", "Backend/marketplace/test_phase15_booking_capabilities.py");
+requirePath("Phase 15 static contract", "scripts/verify-phase15-booking-service.mjs");
+requireText("Booking capabilities are SabiPay-aware", "Backend/marketplace/booking_capabilities.py", ["Transaction.State.FUNDED", "Transaction.State.IN_PROGRESS", '"payment_state"', '"available_status_transitions"']);
+requireText("Bookings is canonical service-management workspace", "frontend/app/bookings/page.tsx", ['api.get<BookingCapability[]>("/marketplace/booking-capabilities/")', "available_status_transitions", "can_propose_schedule", "can_respond_to_active_schedule", "Bookings & schedules"]);
+requireText("Messages hands existing bookings to canonical workspace", "frontend/app/messages/MessagesClient.tsx", ['href="/bookings"', "Open Bookings & schedules", "After creation, manage its lifecycle in Bookings & schedules."]);
+rejectText("Messages no longer owns status or schedule transitions", "frontend/app/messages/MessagesClient.tsx", ["async function updateBooking", "async function proposeSchedule", "async function decideSchedule"]);
+requireText("Phase 15 backend preserves future-only schedule negotiation", "Backend/marketplace/serializers.py", ["The booking must be accepted before scheduling.", "Schedule must be in the future."]);
+requireText("Phase 15 backend preserves other-participant decision authority", "Backend/marketplace/views.py", ["The other participant must respond to this proposal.", "This proposal is no longer active."]);
+
 const releaseGateKeys = [
   "noSeverity1",
   "criticalSeverity2Resolved",
@@ -141,6 +153,6 @@ const failed = checks.filter((item) => !item.pass);
 for (const item of checks) {
   console.log(`${item.pass ? "PASS" : "FAIL"}  ${item.label} — ${item.detail}`);
 }
-console.log(`\nPhase 14 repository readiness, trust, verification and reputation contract: ${checks.length - failed.length}/${checks.length} checks passed.`);
+console.log(`\nPhase 15 repository readiness, trust and service-management contract: ${checks.length - failed.length}/${checks.length} checks passed.`);
 console.log("External browser, physical-device, TestFlight/store and controlled-beta runtime execution are evidence gates, not CI assumptions.");
 if (failed.length) process.exit(1);
