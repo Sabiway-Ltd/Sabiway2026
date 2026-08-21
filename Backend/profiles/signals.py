@@ -47,7 +47,13 @@ def create_or_sync_profile_for_user(sender, instance, created, **kwargs):
             updates["full_name"] = instance.full_name
             updates["initials"] = generate_initials(instance.full_name)
         if updates:
+            # QuerySet.update avoids re-triggering Profile save hooks. Keep the
+            # already-cached related Profile object aligned with the same
+            # authoritative account values so subsequent reads in this request
+            # cannot observe a stale compatibility mirror.
             Profile.objects.filter(pk=profile.pk).update(**updates)
+            for field, value in updates.items():
+                setattr(profile, field, value)
 
 
 @receiver(pre_save, sender=Profile)
