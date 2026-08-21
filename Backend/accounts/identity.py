@@ -9,12 +9,12 @@ NIGERIAN_MOBILE_PREFIXES = {
 
 
 def normalise_phone_number(value: str | None) -> str:
-    """Return a canonical E.164-style Nigerian mobile number.
+    """Return a canonical mobile number for SabiWay's supported launch markets.
 
-    Phone is optional. Nigerian local mobile formats such as 080..., 081... and
-    090... are normalised to +234.... International +234/234 forms are also
-    accepted. Other country formats are rejected until SabiWay explicitly adds
-    international phone support rather than guessing their numbering rules.
+    Phone is optional. Nigerian local mobile formats such as 080... and +234...
+    are normalised to +234. UK mobile formats such as 07... and +44 7... are
+    normalised to +44. Other country formats remain rejected until their
+    numbering rules are explicitly supported rather than guessed.
     """
     if value is None:
         return ""
@@ -24,22 +24,27 @@ def normalise_phone_number(value: str | None) -> str:
         return ""
 
     compact = re.sub(r"[\s().-]", "", raw)
-    if compact.startswith("+"):
-        digits = compact[1:]
-    else:
-        digits = compact
-
+    digits = compact[1:] if compact.startswith("+") else compact
     if not digits.isdigit():
-        raise serializers.ValidationError("Enter a valid Nigerian mobile number.")
+        raise serializers.ValidationError("Enter a valid Nigeria or UK mobile number.")
 
     if digits.startswith("234"):
         national = "0" + digits[3:]
-    elif digits.startswith("0"):
-        national = digits
-    else:
-        raise serializers.ValidationError("Use a Nigerian number beginning 0 or +234.")
+        if len(national) == 11 and national[:3] in NIGERIAN_MOBILE_PREFIXES:
+            return "+234" + national[1:]
+        raise serializers.ValidationError("Enter a valid Nigerian mobile number.")
 
-    if len(national) != 11 or national[:3] not in NIGERIAN_MOBILE_PREFIXES:
-        raise serializers.ValidationError("Enter a valid 11-digit Nigerian mobile number.")
+    if digits.startswith("44"):
+        national = "0" + digits[2:]
+        if len(national) == 11 and national.startswith("07"):
+            return "+44" + national[1:]
+        raise serializers.ValidationError("Enter a valid UK mobile number.")
 
-    return "+234" + national[1:]
+    if digits.startswith("0"):
+        if len(digits) == 11 and digits[:3] in NIGERIAN_MOBILE_PREFIXES:
+            return "+234" + digits[1:]
+        if len(digits) == 11 and digits.startswith("07"):
+            return "+44" + digits[1:]
+        raise serializers.ValidationError("Enter a valid Nigeria or UK mobile number.")
+
+    raise serializers.ValidationError("Use a mobile number beginning 0, +234 or +44.")
