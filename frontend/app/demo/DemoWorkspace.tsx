@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Bell, BriefcaseBusiness, CalendarDays, LogOut, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
+import { AlertTriangle, Bell, BriefcaseBusiness, CalendarDays, LogOut, MessageCircle, ShieldCheck, UserRound, UsersRound, WalletCards } from "lucide-react";
 
 import Button from "@/app/_components/common/Button";
 import { InlineAlert, StatePanel, StatusBadge } from "@/app/_components/common/DesignPrimitives";
@@ -13,6 +13,8 @@ const sections = [
   ["Work", BriefcaseBusiness, "primary"],
   ["Messages", MessageCircle, "messages"],
   ["Bookings", CalendarDays, "bookings"],
+  ["Payments", WalletCards, "payments"],
+  ["Community", UsersRound, "community"],
   ["Notifications", Bell, "notifications"],
   ["Trust", ShieldCheck, "trust"],
 ] as const;
@@ -72,17 +74,17 @@ export function DemoWorkspace({ role }: { role: DemoRole }) {
       <div className="mx-auto grid max-w-7xl lg:grid-cols-[240px_1fr]">
         <aside className="border-b border-border bg-card p-4 lg:min-h-[calc(100vh-33px)] lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3 rounded-[var(--sabi-radius-lg)] bg-muted p-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground"><UserRound size={20} /></span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground"><UserRound size={20} aria-hidden="true" /></span>
             <div className="min-w-0">
               <p className="truncate font-black">{workspace.persona.name}</p>
               <p className="text-xs font-bold text-muted-foreground">{roleLabel} demo</p>
             </div>
           </div>
 
-          <nav className="mt-5 grid grid-cols-5 gap-1 lg:grid-cols-1" aria-label={`${roleLabel} demo navigation`}>
+          <nav className="mt-5 grid grid-cols-4 gap-1 sm:grid-cols-7 lg:grid-cols-1" aria-label={`${roleLabel} demo navigation`}>
             {sections.map(([label, Icon, key]) => (
-              <button key={key} type="button" onClick={() => setActiveSection(key)} className={`flex min-h-12 items-center justify-center gap-2 rounded-[var(--sabi-radius-md)] px-2 text-xs font-bold lg:justify-start lg:text-sm ${activeSection === key ? "bg-[var(--sabi-surface-selected)] text-primary" : "text-muted-foreground hover:bg-muted"}`}>
-                <Icon size={18} aria-hidden="true" /><span>{label}</span>
+              <button key={key} type="button" onClick={() => setActiveSection(key)} className={`flex min-h-12 items-center justify-center gap-1 rounded-[var(--sabi-radius-md)] px-1 text-[11px] font-bold sm:text-xs lg:justify-start lg:gap-2 lg:px-2 lg:text-sm ${activeSection === key ? "bg-[var(--sabi-surface-selected)] text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+                <Icon size={18} aria-hidden="true" /><span className="truncate">{label}</span>
               </button>
             ))}
           </nav>
