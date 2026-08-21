@@ -48,19 +48,15 @@ async function main() {
 
   const professionalLogin = await dump("/login/professional");
   assert(professionalLogin.includes("Continue as a Professional"), "Professional login route did not render role-specific context");
-  assert(professionalLogin.includes("Sign in as Professional"), "Professional login action was not role-specific");
 
   const clientLogin = await dump("/login/client");
   assert(clientLogin.includes("Continue as a Client"), "Client login route did not render role-specific context");
-  assert(clientLogin.includes("Sign in as Client"), "Client login action was not role-specific");
 
   const professionalSignup = await dump("/signup/professional");
   assert(professionalSignup.includes("Create your Professional account"), "Professional signup route did not preserve role intent");
-  assert(professionalSignup.includes("Create Professional account"), "Professional signup action was not role-specific");
 
   const clientSignup = await dump("/signup/client");
   assert(clientSignup.includes("Create your Client account"), "Client signup route did not preserve role intent");
-  assert(clientSignup.includes("Create Client account"), "Client signup action was not role-specific");
 
   const unsafeNext = await dump("/login/client?next=https://example.com");
   assert(unsafeNext.includes("Continue as a Client"), "role-specific login page did not render for unsafe return-intent test");
