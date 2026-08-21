@@ -53,7 +53,8 @@ requirePath("Content · Canonical SabiForum member feed", "frontend/app/sabiforu
 requireText("Content · Guest/member resolver", "frontend/app/sabiforum/SabiForumEntry.tsx", ["GuestSabiForum", "SabiForumExperience", "/login?next=%2Fsabiforum"]);
 requireText("Content · Member session/realtime boundary", "frontend/app/sabiforum/SabiForumExperience.tsx", ["useAuthStore", "auth: { token: access }", "RenderPostList"]);
 rejectText("Content · Member feed avoids direct browser credential access", "frontend/app/sabiforum/SabiForumExperience.tsx", ['localStorage.getItem("access")', 'localStorage.setItem("access")', "document.cookie"]);
-requireText("Content · Legacy Community compatibility", "frontend/app/community/page.tsx", ['redirect("/sabiforum")']);
+requireText("Content · Legacy Community page fallback", "frontend/app/community/page.tsx", ['redirect("/sabiforum")']);
+requireText("Content · Routing-layer legacy Community redirect", "frontend/next.config.ts", ['source: "/community"', 'destination: "/sabiforum"', "permanent: true"]);
 requireText("Content · Canonical app navigation", "frontend/app/config/accessPolicy.ts", ['{ href: "/sabiforum", label: "SabiForum" }', '{ prefix: "/sabiforum", access: "GUEST_CAPABLE" }', '{ prefix: "/community/moderation", access: "STAFF_ONLY" }']);
 rejectText("Content · Navigation avoids legacy Community target", "frontend/app/config/accessPolicy.ts", ['href: "/community", label: "SabiForum"']);
 requirePath("Content · Mobile", "mobile/src/community/CommunityScreen.tsx");
