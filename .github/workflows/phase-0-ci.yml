@@ -140,6 +140,8 @@ jobs:
         run: node scripts/verify-phase6-professional-onboarding.mjs
       - name: Verify Phase 7 controlled demo isolation contract
         run: node scripts/verify-phase7-demo-environment.mjs
+      - name: Verify Phase 8 Client shell and home contract
+        run: node scripts/verify-phase8-client-shell-home.mjs
       - name: TypeScript
         run: npm run type-check
       - name: Lint
@@ -208,6 +210,18 @@ jobs:
             */login?next=%2Fonboarding%2Fprofessional%3Fnext%3D%252Fmarketplace) ;;
             *) echo "Unexpected Professional onboarding redirect: $location"; exit 1 ;;
           esac
+      - name: Verify Client workspace routes require authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in jobs bookings; do
+            location=$(curl --silent --head "http://127.0.0.1:3100/${route}" | tr -d '\r' | awk 'tolower($1)=="location:" {print $2}')
+            expected="%2F${route}"
+            case "$location" in
+              */login?next=$expected) ;;
+              *) echo "Unexpected /${route} redirect: $location"; exit 1 ;;
+            esac
+          done
       - name: Verify controlled demo routes remain public while production app stays protected
         shell: bash
         run: |
