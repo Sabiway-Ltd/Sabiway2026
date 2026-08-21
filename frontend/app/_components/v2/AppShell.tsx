@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, Home, LogOut, MessageCircle, UserRound, UsersRound } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, Home, LogOut, MessageCircle, Search, UserRound, UsersRound, WalletCards } from "lucide-react";
 
 import Button from "@/app/_components/common/Button";
 import { Avatar, Skeleton } from "@/app/_components/common/DesignPrimitives";
@@ -13,12 +13,17 @@ import { useAuthStore } from "@/app/store/useAuthStore";
 
 const icons = {
   Home,
-  "Find services": BriefcaseBusiness,
+  "Find services": Search,
+  "My Jobs": BriefcaseBusiness,
   Opportunities: BriefcaseBusiness,
   Messages: MessageCircle,
+  Bookings: CalendarDays,
+  SabiPay: WalletCards,
   SabiForum: UsersRound,
   Profile: UserRound,
 };
+
+const clientMobileLabels = new Set(["Home", "Find services", "My Jobs", "Messages", "Profile"]);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -63,10 +68,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const role: AccountRole = user.role === "professional" ? "professional" : "client";
   const navigation = appNavigation[role];
+  const mobileNavigation = role === "client" ? navigation.filter(({ label }) => clientMobileLabels.has(label)) : navigation;
   const displayName = user.full_name || "SabiWay member";
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[240px_1fr]">
+    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[252px_1fr]">
       <aside className="hidden border-r border-border bg-card lg:flex lg:min-h-screen lg:flex-col lg:p-4">
         <Link href="/home" className="flex min-h-11 items-center rounded-[var(--sabi-radius-md)] px-3" aria-label="SabiWay home">
           <Image src="/Footerlogo.svg" alt="SabiWay" width={118} height={38} priority />
@@ -89,6 +95,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {role === "client" ? (
+          <div className="mt-5 rounded-[var(--sabi-radius-lg)] bg-muted p-3">
+            <p className="text-xs font-black uppercase tracking-[.1em] text-muted-foreground">Client workspace</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Jobs, bookings and protected payments stay connected to the same SabiWay account.</p>
+          </div>
+        ) : null}
 
         <div className="mt-auto border-t border-border pt-4">
           <div className="flex items-center gap-3 px-3">
@@ -119,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-border bg-card px-1 pb-[max(env(safe-area-inset-bottom),4px)] pt-1 lg:hidden" aria-label={`${role === "professional" ? "Professional" : "Client"} primary navigation`}>
-        {navigation.map(({ href, label }) => {
+        {mobileNavigation.map(({ href, label }) => {
           const Icon = icons[label as keyof typeof icons] ?? Home;
           const active = pathname === href || (href !== "/home" && pathname.startsWith(`${href}/`));
           return (
