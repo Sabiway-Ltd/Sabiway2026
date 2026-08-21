@@ -16,13 +16,13 @@ export function MarketplaceShell({ children }: { children: React.ReactNode }) {
     setHydrated(true);
   }, [loadUserFromStorage]);
 
-  if (!hydrated) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4" aria-live="polite">
-        <p className="text-sm font-semibold text-muted-foreground">Loading SabiWay marketplace…</p>
-      </main>
-    );
+  // Marketplace is intentionally guest-capable. Render the useful public
+  // discovery surface immediately, then upgrade to the authenticated AppShell
+  // after the existing browser session has been hydrated. Authentication still
+  // controls protected actions and routes; hydration must not blank public UX.
+  if (!hydrated || !access) {
+    return <PublicShell>{children}</PublicShell>;
   }
 
-  return access ? <AppShell>{children}</AppShell> : <PublicShell>{children}</PublicShell>;
+  return <AppShell>{children}</AppShell>;
 }
