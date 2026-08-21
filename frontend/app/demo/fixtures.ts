@@ -20,6 +20,8 @@ export type DemoWorkspace = {
   primary: DemoCard[];
   messages: DemoCard[];
   bookings: DemoCard[];
+  payments: DemoCard[];
+  community: DemoCard[];
   notifications: DemoCard[];
   trust: DemoCard[];
 };
@@ -48,11 +50,20 @@ const clientDefault: DemoWorkspace = {
   bookings: [
     { id: "client-booking-1", title: "Tap repair with David Okafor", description: "Booking accepted. Contact sharing is available within the protected booking flow.", meta: "Saturday · 10:00 · £95 estimate", status: "active" },
   ],
+  payments: [
+    { id: "client-pay-1", title: "£95 held for tap repair", description: "Demo SabiPay state showing funds held until the booking moves through the agreed completion flow.", meta: "Protected payment · Demo only", status: "active" },
+    { id: "client-pay-2", title: "£140 released for appliance repair", description: "Completed transaction fixture used to inspect receipts, history and dispute-entry context.", meta: "Released 8 Aug · Demo only", status: "complete" },
+  ],
+  community: [
+    { id: "client-community-1", title: "How do you compare quotes fairly?", description: "A SabiForum discussion about scope, materials, trust evidence and avoiding price-only decisions.", meta: "12 replies · Home services", status: "active" },
+    { id: "client-community-2", title: "Saved local-service checklist", description: "Community insight fixture showing how educational content can support marketplace decisions.", meta: "Saved · Demo content", status: "complete" },
+  ],
   notifications: [
     { id: "client-note-1", title: "New response to your painting job", description: "A Professional sent a proposal for your review.", meta: "Today", status: "attention" },
   ],
   trust: [
     { id: "client-trust-1", title: "Payment protection", description: "Demo transaction states show how SabiPay should communicate holds, releases and disputes.", meta: "Demo evidence only", status: "complete" },
+    { id: "client-review-1", title: "Your review of appliance repair", description: "4.8/5 review fixture tied to completed work rather than an unverified profile endorsement.", meta: "Completed-work review · Demo", status: "complete" },
   ],
 };
 
@@ -80,6 +91,14 @@ const professionalDefault: DemoWorkspace = {
     { id: "pro-booking-1", title: "Tap repair · Amina Bello", description: "Accepted booking with schedule and payment state visible.", meta: "Saturday · 10:00 · £95 estimate", status: "active" },
     { id: "pro-booking-2", title: "Kitchen sink inspection", description: "Completed job awaiting Client review.", meta: "Completed yesterday", status: "complete" },
   ],
+  payments: [
+    { id: "pro-pay-1", title: "£285 pending release", description: "Demo earnings fixture showing protected funds across completed and in-progress bookings.", meta: "SabiPay demo balance", status: "waiting" },
+    { id: "pro-pay-2", title: "£420 available earnings", description: "Released balance fixture used to inspect payout and transaction-history hierarchy.", meta: "Available · Demo only", status: "complete" },
+  ],
+  community: [
+    { id: "pro-community-1", title: "Plumbing Professionals: quoting hidden faults", description: "SabiForum fixture about communicating uncertainty without creating misleading fixed-price expectations.", meta: "18 replies · Professional practice", status: "active" },
+    { id: "pro-community-2", title: "Your answer helped 14 members", description: "Contribution/reputation fixture separated from completed-work review reputation.", meta: "Community contribution · Demo", status: "complete" },
+  ],
   notifications: [
     { id: "pro-note-1", title: "New nearby opportunity", description: "A plumbing job matching your service area has been posted.", meta: "Today", status: "attention" },
   ],
@@ -98,6 +117,8 @@ function scenarioWorkspace(base: DemoWorkspace, scenario: DemoScenario): DemoWor
       primary: [],
       messages: [],
       bookings: [],
+      payments: [],
+      community: [],
       notifications: [],
       trust: base.trust,
     };
@@ -107,6 +128,8 @@ function scenarioWorkspace(base: DemoWorkspace, scenario: DemoScenario): DemoWor
     primary: [],
     messages: [],
     bookings: [],
+    payments: [],
+    community: [],
     notifications: [
       { id: `${base.role}-error`, title: "Demo data unavailable", description: "This deterministic state is used to inspect retry, recovery and outage communication without breaking production APIs.", meta: "Simulated error state", status: "attention" },
     ],
