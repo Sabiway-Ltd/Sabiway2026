@@ -42,7 +42,7 @@ export default function ClientJobsPage() {
 
   useEffect(() => {
     if (!user || !access) return;
-    if (user.role !== "client") { window.location.href = "/home"; return; }
+    if (user.role === "professional") { window.location.href = "/home"; return; }
     void loadJobs();
   }, [user, access, loadJobs]);
 
