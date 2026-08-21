@@ -59,7 +59,7 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/earnings", access: "PROFESSIONAL_ONLY" },
   { prefix: "/bookings", access: "PARTICIPANT_SCOPED" },
   { prefix: "/community/moderation", access: "STAFF_ONLY" },
-  { prefix: "/community", access: "AUTHENTICATED_SHARED" },
+  { prefix: "/community", access: "GUEST_CAPABLE" },
   { prefix: "/home", access: "AUTHENTICATED_SHARED" },
   { prefix: "/notifications", access: "AUTHENTICATED_SHARED" },
   { prefix: "/profile", access: "AUTHENTICATED_SHARED", exact: true },
