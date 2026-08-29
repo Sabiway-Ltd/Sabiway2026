@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/Sabiway-Ltd/Sabiway2026#readme",
   "dependencies": {
-    "axios": "^1.13.2",
+    "axios": "^1.20.0",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "multer": "^2.0.2",
