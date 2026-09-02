@@ -45,8 +45,6 @@
 }
 
 :root {
-  /* Phase 2 semantic aliases. These deliberately derive from the canonical
-     generated SabiWay tokens so web surfaces stop inventing local hex values. */
   --sabi-surface-elevated: var(--sabi-surface);
   --sabi-surface-selected: color-mix(in srgb, var(--sabi-primary) 8%, var(--sabi-surface));
   --sabi-primary-soft: color-mix(in srgb, var(--sabi-primary) 10%, var(--sabi-surface));
@@ -109,12 +107,15 @@
 
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter), var(--sabi-font-family);
     min-width: 320px;
+    overflow-wrap: anywhere;
   }
 
   :focus-visible {
@@ -125,6 +126,13 @@
   ::selection {
     background: var(--sabi-primary-soft);
     color: var(--sabi-text);
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
   }
 }
 
@@ -168,10 +176,22 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .animate-marquee,
   .animate-fadeIn {
-    animation: none;
+    animation: none !important;
   }
 }
 
