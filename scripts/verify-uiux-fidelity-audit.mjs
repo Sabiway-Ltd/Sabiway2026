@@ -40,10 +40,12 @@ const checks = [
 for (const [label, pass] of checks) console.log(`${pass ? "PASS" : "FAIL"}  ${label}`);
 if (checks.some(([, pass]) => !pass)) process.exit(1);
 
-if (fs.existsSync(path.join(root, "scripts/verify-phase3-homepage.mjs"))) {
-  execFileSync(process.execPath, ["scripts/verify-phase3-homepage.mjs"], { cwd: root, stdio: "inherit" });
-}
-
-if (fs.existsSync(path.join(root, "scripts/verify-phase16-sabipay-transaction-experience.mjs"))) {
-  execFileSync(process.execPath, ["scripts/verify-phase16-sabipay-transaction-experience.mjs"], { cwd: root, stdio: "inherit" });
+for (const script of [
+  "scripts/verify-phase3-homepage.mjs",
+  "scripts/verify-phase16-sabipay-transaction-experience.mjs",
+  "scripts/verify-phase17-profile-settings-support.mjs",
+]) {
+  if (fs.existsSync(path.join(root, script))) {
+    execFileSync(process.execPath, [script], { cwd: root, stdio: "inherit" });
+  }
 }

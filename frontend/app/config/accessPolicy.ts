@@ -63,6 +63,7 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/home", access: "AUTHENTICATED_SHARED" },
   { prefix: "/notifications", access: "AUTHENTICATED_SHARED" },
   { prefix: "/profile", access: "AUTHENTICATED_SHARED", exact: true },
+  { prefix: "/settings", access: "AUTHENTICATED_SHARED" },
   { prefix: "/messages", access: "PARTICIPANT_SCOPED" },
   { prefix: "/sabipay", access: "PARTICIPANT_SCOPED" },
   { prefix: "/verification", access: "PROFESSIONAL_ONLY" },
@@ -106,6 +107,7 @@ export const appNavigation: Record<AccountRole, Array<{ href: string; label: str
     { href: "/sabipay", label: "SabiPay" },
     { href: "/sabiforum", label: "SabiForum" },
     { href: "/profile", label: "Profile" },
+    { href: "/settings", label: "Settings" },
   ],
   professional: [
     { href: "/home", label: "Home" },
@@ -119,5 +121,6 @@ export const appNavigation: Record<AccountRole, Array<{ href: string; label: str
     { href: "/verification", label: "Verification" },
     { href: "/sabiforum", label: "SabiForum" },
     { href: "/profile", label: "Profile" },
+    { href: "/settings", label: "Settings" },
   ],
 };

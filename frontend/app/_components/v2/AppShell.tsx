@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BadgeCheck, Bell, BriefcaseBusiness, CalendarDays, FileText, Home, LogOut, MessageCircle, Search, Store, UserRound, UsersRound, WalletCards } from "lucide-react";
+import { BadgeCheck, Bell, BriefcaseBusiness, CalendarDays, FileText, Home, LogOut, MessageCircle, Search, Settings, Store, UserRound, UsersRound, WalletCards } from "lucide-react";
 
 import Button from "@/app/_components/common/Button";
 import { Avatar, Skeleton } from "@/app/_components/common/DesignPrimitives";
@@ -26,6 +26,7 @@ const icons = {
   Verification: BadgeCheck,
   SabiForum: UsersRound,
   Profile: UserRound,
+  Settings,
 };
 
 const clientMobileLabels = new Set(["Home", "Find services", "My Jobs", "Messages", "Profile"]);
