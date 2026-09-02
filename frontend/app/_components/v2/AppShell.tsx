@@ -8,6 +8,7 @@ import { BadgeCheck, Bell, BriefcaseBusiness, CalendarDays, FileText, Home, LogO
 
 import Button from "@/app/_components/common/Button";
 import { Avatar, Skeleton } from "@/app/_components/common/DesignPrimitives";
+import { SkipLink } from "@/app/_components/common/SkipLink";
 import { appNavigation, safeInternalNext, type AccountRole } from "@/app/config/accessPolicy";
 import { useAuthStore } from "@/app/store/useAuthStore";
 
@@ -64,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!hydrated || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4" aria-live="polite" aria-busy="true">
+      <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-background px-4" aria-live="polite" aria-busy="true">
         <div className="w-full max-w-xs space-y-3 text-center">
           <Skeleton className="mx-auto h-10 w-32" />
           <p className="text-sm font-semibold text-muted-foreground">Loading your SabiWay account…</p>
@@ -82,6 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[252px_1fr]">
+      <SkipLink />
       <aside className="hidden border-r border-border bg-card lg:flex lg:min-h-screen lg:flex-col lg:p-4">
         <Link href="/home" className="flex min-h-11 items-center rounded-[var(--sabi-radius-md)] px-3" aria-label="SabiWay home">
           <Image src="/Footerlogo.svg" alt="SabiWay" width={118} height={38} priority />
@@ -138,13 +140,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link href="/notifications" className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none" aria-label="Open notifications">
                 <Bell size={20} aria-hidden="true" />
               </Link>
-              <Link href="/profile" className="rounded-full focus-visible:outline-none" aria-label="Open profile">
+              <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-none" aria-label="Open profile">
                 <Avatar src={user.profile_pic} name={displayName} size={40} />
               </Link>
             </div>
           </div>
         </header>
-        {children}
+        <div id="main-content" tabIndex={-1} className="min-w-0 outline-none">
+          {children}
+        </div>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-border bg-card px-1 pb-[max(env(safe-area-inset-bottom),4px)] pt-1 lg:hidden" aria-label={`${role === "professional" ? "Professional" : "Client"} primary navigation`}>
