@@ -205,20 +205,25 @@ export function StatePanel({
   );
 }
 
+type InlineAlertTone = Exclude<StateTone, "empty"> | "danger";
 export function InlineAlert({
   children,
   tone = "info",
+  title,
   className,
 }: {
   children: ReactNode;
-  tone?: Exclude<StateTone, "empty">;
+  tone?: InlineAlertTone;
+  title?: string;
   className?: string;
 }) {
+  const resolvedTone: Exclude<StateTone, "empty"> = tone === "danger" ? "error" : tone;
   return (
     <div
-      role={tone === "error" ? "alert" : "status"}
-      className={clsx("rounded-[var(--sabi-radius-md)] border px-4 py-3 text-sm font-medium leading-6", stateTone[tone], className)}
+      role={resolvedTone === "error" ? "alert" : "status"}
+      className={clsx("rounded-[var(--sabi-radius-md)] border px-4 py-3 text-sm font-medium leading-6", stateTone[resolvedTone], className)}
     >
+      {title ? <p className="mb-1 font-bold text-foreground">{title}</p> : null}
       {children}
     </div>
   );
