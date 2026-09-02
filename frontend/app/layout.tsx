@@ -3,6 +3,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { ProductAnalytics } from "./_components/ProductAnalytics";
+import { defaultLocale } from "./i18n/config";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -19,12 +20,12 @@ export const viewport = { width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={defaultLocale} suppressHydrationWarning>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context":"https://schema.org","@type":"Organization",name:"SabiWay",url:"https://www.sabiway.com",logo:"https://www.sabiway.com/android-chrome-512x512.png",description:"SabiWay is a location-based services marketplace, optimising first for Nigeria and the UK while remaining global by design.",sameAs:["https://x.com/sabiway","https://www.instagram.com/sabiway","https://www.linkedin.com/company/sabiway"] }) }} />
       <body className={`${inter.variable} antialiased`}>
         <ProductAnalytics />
         {children}
-        <Toaster position="top-right" toastOptions={{duration:4500,style:{background:"var(--sabi-surface)",color:"var(--sabi-text)",border:"1px solid var(--sabi-border)"},success:{iconTheme:{primary:"var(--sabi-success)",secondary:"var(--sabi-on-primary)"}},error:{iconTheme:{primary:"var(--sabi-danger)",secondary:"#FFFFFF"}}}} />
+        <Toaster position="top-right" toastOptions={{duration:4500,style:{background:"var(--sabi-surface)",color:"var(--sabi-text)",border:"1px solid var(--sabi-border)"},success:{iconTheme:{primary:"var(--sabi-success)",secondary:"var(--sabi-on-primary)"}},error:{iconTheme:{primary:"var(--sabi-danger)",secondary:"var(--sabi-on-primary)"}}}} />
       </body>
     </html>
   );
