@@ -70,6 +70,8 @@ async function main() {
 
   await assertProtected("/messages");
   await assertProtected("/notifications");
+  await assertProtected("/profile");
+  await assertProtected("/settings");
 
   const genericLogin = await dump("/login");
   assert(genericLogin.includes("Choose sign-in journey"), "generic login did not expose the Client/Professional choice");
@@ -89,7 +91,7 @@ async function main() {
   const unsafeNext = await dump("/login/client?next=https://example.com");
   assert(unsafeNext.includes("Continue as a Client"), "role-specific login page did not render for unsafe return-intent test");
 
-  console.log("Browser access, homepage, role-entry, marketplace, SabiForum, messaging and notifications regression suite passed.");
+  console.log("Browser access, homepage, role-entry, marketplace, SabiForum, messaging, notifications and Phase 17 account-route regression suite passed.");
 }
 
 main().catch((error) => {
